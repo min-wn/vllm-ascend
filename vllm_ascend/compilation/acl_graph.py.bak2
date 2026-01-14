@@ -188,7 +188,6 @@ class ACLGraphWrapper:
                 f"during replay. Expected {entry.input_addresses}, "
                 f"got {new_input_addresses}")
 
-        logger.info(f"[ACL_DEBUG] About to replay graph for descriptor: {batch_descriptor}, entry_id: {id(entry)}")
         logger.info_once("Replaying aclgraph")
         # In async scheduling or multi-threaded (MT) scenarios, it is possible that
         # the CPU's record event (from update_attn_params) for the iteration i completes
@@ -198,10 +197,6 @@ class ACLGraphWrapper:
         torch.npu.current_stream().synchronize() # FIXED: stream-level sync to avoid split-batch deadlock
         logger.info(f"replay_stream_id={torch.npu.current_stream().stream_id}")
         entry.aclgraph.replay()
-        logger.info(f"[DEBUG] After replay(), before return output")
-        # CRITICAL: Synchronize after replay to ensure graph execution completes
-        # before the next replay or any other operations on the same stream
-        torch.npu.current_stream().synchronize()
         return entry.output
 
 

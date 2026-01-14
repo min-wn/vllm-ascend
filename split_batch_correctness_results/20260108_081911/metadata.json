@@ -1,0 +1,52 @@
+{
+  "timestamp": "20260108_081911",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "tokenizer": "Qwen/Qwen2.5-0.5B-Instruct",
+  "seed": 0,
+  "batch_size": 8,
+  "max_tokens": 64,
+  "max_model_len": null,
+  "gpu_memory_utilization": 0.9,
+  "num_splits": 2,
+  "enable_parallel_streams": false,
+  "min_batch_size_for_split": 4,
+  "compilation_config": {
+    "level": 3,
+    "cudagraph_mode": "FULL_DECODE_ONLY",
+    "cudagraph_capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64,
+      96,
+      128,
+      160,
+      192,
+      224,
+      256,
+      288,
+      320,
+      352,
+      384,
+      416,
+      448,
+      480,
+      512
+    ]
+  },
+  "run": "enabled",
+  "compare_mode": "subprocess",
+  "profile_enabled": false,
+  "profile_dir": "./torch_profiler",
+  "profile_target": "enabled",
+  "profile_record_shapes": false,
+  "profile_with_stack": false,
+  "output_file": null,
+  "output_dir": "./split_batch_correctness_results/20260108_081911",
+  "notes": {
+    "inproc_v1": false
+  }
+}

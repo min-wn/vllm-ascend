@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
 from typing import Optional
+from dataclasses import dataclass
 
 import numpy as np
 import torch
@@ -272,3 +273,192 @@ def create_core_control_context(aic_core: int, aiv_core: int):
     return NPUCoreControlContextManager(comm_aiv_core=comm_aiv_core,
                                         comm_aic_core=comm_aic_core,
                                         curren_stream=current_stream)
+
+
+# ==================== Split Batch Support ====================
+# Split batch is similar to DBO (ubatch) but with different conditions:
+# - DBO: splits batch for overlapping compute/communication
+# - Split batch: splits large decode batches for memory/performance optimization
+# They never conflict because they are enabled under different conditions.
+
+@dataclass
+class SplitBatchSlice:
+    """Represents a slice of the batch for split batch execution."""
+    request_slice: slice  # Slice of requests
+    token_slice: slice    # Slice of tokens
+    
+    @property
+    def num_requests(self) -> int:
+        return self.request_slice.stop - self.request_slice.start
+    
+    @property
+    def num_tokens(self) -> int:
+        return self.token_slice.stop - self.token_slice.start
+    def is_empty(self) -> bool:
+        return (
+            self.request_slice.start == self.request_slice.stop
+            or self.token_slice.start == self.token_slice.stop
+        )
+
+
+SplitBatchSlices = list[SplitBatchSlice]
+
+
+def create_split_batch_slices(
+    num_scheduled_tokens_per_request: np.ndarray,
+    num_splits: int,
+    custom_split_sizes: Optional[list[int]] = None,
+) -> SplitBatchSlices:
+    """Create split batch slices by dividing requests evenly.
+    
+    Unlike DBO which splits by token count, split batch divides by request count
+    for uniform decode batches (where each request has 1 token).
+    
+    Args:
+        num_scheduled_tokens_per_request: Array of token counts per request
+        num_splits: Number of splits to create
+        custom_split_sizes: Optional list of exact split sizes (number of requests per split).
+                          If provided, must sum to total number of requests.
+        
+    Returns:
+        List of SplitBatchSlice objects
+    """
+    num_reqs = len(num_scheduled_tokens_per_request)
+    
+    # Compute cumulative token counts
+    cu_num_tokens = np.zeros(num_reqs + 1, dtype=np.int32)
+    np.cumsum(num_scheduled_tokens_per_request, dtype=np.int32, out=cu_num_tokens[1:])
+    
+    # Validate custom_split_sizes if provided
+    if custom_split_sizes is not None:
+        if sum(custom_split_sizes) != num_reqs:
+            raise ValueError(
+                f"Sum of custom_split_sizes ({sum(custom_split_sizes)}) "
+                f"must equal total number of requests ({num_reqs})"
+            )
+        if len(custom_split_sizes) != num_splits:
+            raise ValueError(
+                f"Length of custom_split_sizes ({len(custom_split_sizes)}) "
+                f"must equal num_splits ({num_splits})"
+            )
+    
+    
+    slices = []
+    if custom_split_sizes is not None:
+        # Use custom split sizes
+        start_req = 0
+        for split_size in custom_split_sizes:
+            end_req = start_req + split_size
+            
+            if start_req >= num_reqs:
+                break
+                
+            token_start = int(cu_num_tokens[start_req])
+            token_end = int(cu_num_tokens[end_req])
+            
+            slices.append(SplitBatchSlice(
+                request_slice=slice(start_req, end_req),
+                token_slice=slice(token_start, token_end),
+            ))
+            
+            start_req = end_req
+    else:
+        # Calculate requests per split (ceil division for even distribution)
+        reqs_per_split = (num_reqs + num_splits - 1) // num_splits
+        
+        for i in range(num_splits):
+            start_req = i * reqs_per_split
+            end_req = min((i + 1) * reqs_per_split, num_reqs)
+            
+            if start_req >= num_reqs:
+                break
+                
+            token_start = int(cu_num_tokens[start_req])
+            token_end = int(cu_num_tokens[end_req])
+            
+            slices.append(SplitBatchSlice(
+                request_slice=slice(start_req, end_req),
+                token_slice=slice(token_start, token_end),
+            ))
+    
+    return slices
+
+
+def split_batch_split(
+    num_scheduled_tokens_per_request: np.ndarray,
+    num_tokens_unpadded: int,
+    num_tokens_padded: int,
+    vllm_config: VllmConfig,
+    cudagraph_capture_sizes: Optional[set] = None,
+    custom_split_sizes: Optional[list[int]] = None,
+) -> tuple[Optional[SplitBatchSlices], Optional[int]]:
+    """
+    Determine if and how to split the batch for split batch execution.
+    
+    Split batch is designed for:
+    - Large batch sizes that exceed min_batch_size_for_split
+    - FULL graph mode where each split can use a captured graph
+    
+    Args:
+        num_scheduled_tokens_per_request: Token counts per request
+        num_tokens_unpadded: Total tokens without padding
+        num_tokens_padded: Total tokens with padding
+        vllm_config: vLLM configuration
+        cudagraph_capture_sizes: Set of captured graph sizes (for validation)
+        custom_split_sizes: Optional list of exact split sizes (number of requests per split).
+                          If provided, must sum to total number of requests.
+        
+    Returns:
+        tuple[Optional[SplitBatchSlices], Optional[int]]:
+            - split_slices: List of SplitBatchSlice if splitting, None otherwise
+            - padded_total_tokens: Total tokens after padding each split
+    """
+    from vllm_ascend.ascend_config import get_ascend_config
+    
+    ascend_config = get_ascend_config()
+    split_config = ascend_config.split_batch_config
+    
+    # Check if split batch is enabled
+    if not split_config.enabled:
+        return (None, None)
+    
+    num_reqs = len(num_scheduled_tokens_per_request)
+    
+    # Check minimum batch size threshold
+    if num_reqs < split_config.min_batch_size_for_split:
+        return (None, None)
+    
+    num_splits = split_config.num_splits
+    
+    # Create split slices
+    split_slices = create_split_batch_slices(
+        num_scheduled_tokens_per_request,
+        num_splits,
+        custom_split_sizes,
+    )
+    
+    # If we couldn't create valid splits, return None
+    if not split_slices or len(split_slices) < 2:
+        return (None, None)
+    
+    # Validate that each split size has a corresponding captured graph
+    # (only relevant when cudagraph is enabled)
+    if cudagraph_capture_sizes:
+        padded_total = 0
+        for split_slice in split_slices:
+            split_size = split_slice.num_tokens
+            # Find the smallest capture size >= split_size
+            padded_size = None
+            for cs in sorted(cudagraph_capture_sizes):
+                if cs >= split_size:
+                    padded_size = cs
+                    break
+            if padded_size is None:
+                # Split size exceeds all capture sizes, can't use graph
+                padded_size = max(cudagraph_capture_sizes)
+            padded_total += padded_size
+        return (split_slices, padded_total)
+    
+    return (split_slices, num_tokens_padded)
+
+

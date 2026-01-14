@@ -446,7 +446,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
         graph_params = get_graph_params()
         forward_context: ForwardContext = get_forward_context()
         num_tokens = query.shape[0]
-        if forward_context.capturing:
+        if getattr(forward_context, "capturing", False):
             # Get workspace from cache or calculate it if not present.
             workspace = graph_params.workspaces.get(num_tokens)
             if workspace is None:
@@ -569,7 +569,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
                                       attn_metadata: AscendMetadata,
                                       output: torch.Tensor):
         forward_context: ForwardContext = get_forward_context()
-        if forward_context.capturing:
+        if getattr(forward_context, "capturing", False):
             attn_output, num_tokens = self.full_graph_fia(
                 query, key, value, attn_metadata, output)
             output[:num_tokens] = attn_output[:num_tokens]
@@ -612,7 +612,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
         output: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         forward_context: ForwardContext = get_forward_context()
-        if forward_context.capturing:
+        if getattr(forward_context, "capturing", False):
             return self.full_graph_pa(query, attn_metadata, output)
         torch_npu._npu_paged_attention(query=query,
                                        key_cache=self.key_cache,

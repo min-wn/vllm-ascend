@@ -82,6 +82,10 @@ class AscendConfig:
         self.weight_prefetch_config = WeightPrefetchConfig(
             weight_prefetch_config)
 
+        # Split-batch (decode micro-splitting across requests)
+        split_batch_config = additional_config.get("split_batch_config", {})
+        self.split_batch_config = SplitBatchConfig(split_batch_config)
+
         # Todo: Once https://github.com/vllm-project/vllm/issues/22246 is merged in vllm. Remove this config
         self.expert_map_path = additional_config.get("expert_map_path", None)
         self.eplb_policy_type = additional_config.get("eplb_policy_type", 1)
@@ -305,6 +309,27 @@ class WeightPrefetchConfig:
         self.enabled = weight_prefetch_config.get("enabled", False)
         self.prefetch_ratio = weight_prefetch_config.get(
             "prefetch_ratio", self.prefetch_ratio)
+
+
+class SplitBatchConfig:
+    """Configuration object for split_batch_config from additional_config.
+
+    This is used by NPUModelRunner/AscendSplitBatchWrapper.
+    """
+
+    def __init__(self, split_batch_config: dict):
+        self.enabled: bool = bool(split_batch_config.get("enabled", False))
+        self.enable_parallel_streams: bool = bool(
+            split_batch_config.get("enable_parallel_streams", False))
+        self.num_splits: int = int(split_batch_config.get("num_splits", 2))
+        self.min_batch_size_for_split: int = int(
+            split_batch_config.get("min_batch_size_for_split", 4))
+
+        if self.num_splits < 2:
+            raise ValueError("split_batch_config.num_splits must be >= 2")
+        if self.min_batch_size_for_split < 1:
+            raise ValueError(
+                "split_batch_config.min_batch_size_for_split must be >= 1")
 
 
 _ASCEND_CONFIG: Optional[AscendConfig] = None
