@@ -31,7 +31,7 @@ logger = init_logger(__name__)
 class AscendSplitBatchWrapper:
 
     def __init__(self, runnable: Callable, vllm_config: VllmConfig,
-                 runtime_mode: CUDAGraphMode, device: torch.npu.device):
+                 runtime_mode: CUDAGraphMode, device: torch.npu.device,update_stream: Optional[torch.npu.Stream] = None):
         self.runnable = runnable
         self.vllm_config = vllm_config
         self.compilation_config = vllm_config.compilation_config
@@ -39,7 +39,7 @@ class AscendSplitBatchWrapper:
         self.device = device
         
         # Create update stream for overlapping parameter updates
-        self.update_stream = torch.npu.Stream(device=device)
+        self.update_stream = update_stream
 
         # Use ACLGraphWrapper instead of manual graph management
         self.aclgraph_wrapper = None
@@ -93,7 +93,7 @@ class AscendSplitBatchWrapper:
                     self.update_stream, forward_context, num_tokens,
                     self.vllm_config)
 
-    def _run_ubatches(self, ubatch_metadata: list[AscendUbatchMetadata]) -> torch.Tensor:
+    def _run_ubatches(self,*args, **kwargs) -> torch.Tensor:
         """
         Run two ubatches sequentially with parameter updates after each execution.
         
@@ -103,6 +103,35 @@ class AscendSplitBatchWrapper:
         3. Replay ubatch[1] on default stream  
         4. Update ubatch[1] params on update_stream (after execution, for next use)
         """
+        forward_context = get_forward_context()
+        batch_descriptor = forward_context.batch_descriptor
+        ubatch_slices = forward_context.ubatch_slices
+        cudagraph_runtime_mode = forward_context.cudagraph_runtime_mode
+        attn_metadata = forward_context.attn_metadata
+         # Ubatching path: split batch into ubatches
+        input_ids = kwargs['input_ids']
+        positions = kwargs['positions']
+        intermediate_tensors = kwargs['intermediate_tensors']
+        inputs_embeds = kwargs['inputs_embeds']
+        compute_stream = torch.npu.current_stream()
+        dp_metadata = forward_context.dp_metadata
+
+        # Create metadata for each ubatch
+        # Important: We pass the desired cudagraph_runtime_mode here
+        # For ubatching with graphs, you might want to use FULL mode per ubatch
+        ubatch_cudagraph_mode = CUDAGraphMode.FULL if cudagraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
+        
+        ubatch_metadata = self._make_ubatch_metadata(
+            ubatch_slices=ubatch_slices,
+            attn_metadata=attn_metadata,
+            input_ids=input_ids,
+            positions=positions,
+            intermediate_tensors=intermediate_tensors,
+            inputs_embeds=inputs_embeds,
+            compute_stream=compute_stream,
+            dp_metadata=dp_metadata,
+            batch_descriptor=batch_descriptor,
+            cudagraph_runtime_mode=ubatch_cudagraph_mode)
         results: list[torch.Tensor] = []
         
         # CRITICAL: Save the original forward context BEFORE we start modifying it
@@ -119,7 +148,8 @@ class AscendSplitBatchWrapper:
                 
                 # Execute current ubatch (replay graph on default stream)
                 with override_forward_context(fc):
-                    if self.aclgraph_wrapper is not None:
+                    #if self.aclgraph_wrapper is not None:
+                    if fc.cudagraph_runtime_mode != CUDAGraphMode.NONE:
                         logger.info(f"[SPLIT_DEBUG] ubatch {ubatch_id}: calling aclgraph_wrapper, stream_id={torch.npu.current_stream().stream_id}")
                         model_output = self.aclgraph_wrapper(
                             input_ids=md.input_ids,
@@ -146,15 +176,12 @@ class AscendSplitBatchWrapper:
                     self._update_attn_params_for_ubatch(fc, md.num_tokens, ubatch_id)
                     
                     # Wait for update to complete before next ubatch
-                    if ubatch_id < len(ubatch_metadata) - 1:
-                        self.default_stream.wait_stream(self.update_stream)
         
         # CRITICAL: Restore the ORIGINAL forward context for post-processing
         # This ensures we use the correct global flags (sp_enabled, dbo_enabled)
         # while still accessing per-ubatch properties (pad_size) from ubatch_metadata[i].context
         with override_forward_context(original_forward_context):
             sorted_results = results
-
             # Use global sp_enabled flag from original context
             # But access per-ubatch pad_size from each ubatch's context
             if get_forward_context().sp_enabled and get_pp_group().is_last_rank:
@@ -284,10 +311,7 @@ class AscendSplitBatchWrapper:
 
     def __call__(self, *args, **kwargs):
         forward_context = get_forward_context()
-        batch_descriptor = forward_context.batch_descriptor
         ubatch_slices = forward_context.ubatch_slices
-        cudagraph_runtime_mode = forward_context.cudagraph_runtime_mode
-        attn_metadata = forward_context.attn_metadata
         
         # If there's no ubatching, delegate directly to ACLGraphWrapper or runnable
         if ubatch_slices is None:
@@ -298,32 +322,7 @@ class AscendSplitBatchWrapper:
                 # Eager mode (NONE)
                 return self.runnable(*args, **kwargs)
 
-        # Ubatching path: split batch into ubatches
-        input_ids = kwargs['input_ids']
-        positions = kwargs['positions']
-        intermediate_tensors = kwargs['intermediate_tensors']
-        inputs_embeds = kwargs['inputs_embeds']
-        compute_stream = torch.npu.current_stream()
-        dp_metadata = forward_context.dp_metadata
-
-        # Create metadata for each ubatch
-        # Important: We pass the desired cudagraph_runtime_mode here
-        # For ubatching with graphs, you might want to use FULL mode per ubatch
-        ubatch_cudagraph_mode = CUDAGraphMode.FULL if cudagraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
-        
-        ubatch_metadata = self._make_ubatch_metadata(
-            ubatch_slices=ubatch_slices,
-            attn_metadata=attn_metadata,
-            input_ids=input_ids,
-            positions=positions,
-            intermediate_tensors=intermediate_tensors,
-            inputs_embeds=inputs_embeds,
-            compute_stream=compute_stream,
-            dp_metadata=dp_metadata,
-            batch_descriptor=batch_descriptor,
-            cudagraph_runtime_mode=ubatch_cudagraph_mode)
-        
-        return self._run_ubatches(ubatch_metadata)
+        return self._run_ubatches(*args, **kwargs)
 
     def _merge_intermediate_tensors(self, intermediate_tensor_list):
         assert len(intermediate_tensor_list) == 2

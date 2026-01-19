@@ -34,7 +34,7 @@ def parse_args():
   parser = argparse.ArgumentParser(description="Offline Inference with Profiling")
   parser.add_argument(
       "--enable-profiling",
-      default=True,
+      default=False,
       action="store_true",
       help="Enable PyTorch profiling"
   )
@@ -47,7 +47,7 @@ def parse_args():
   parser.add_argument(
       "--model",
       type=str,
-      default="Qwen/Qwen2.5-0.5B-Instruct",
+      default="Qwen/Qwen3-4B",
       help="Model name or path"
   )
   parser.add_argument(
@@ -77,7 +77,7 @@ def main():
   
   compilation_config = {
       "level": 3,
-      "cudagraph_mode": "FULL_DECODE_ONLY",
+      "cudagraph_mode": "PIECEWISE",
   }
   
   # Create a sampling params object.

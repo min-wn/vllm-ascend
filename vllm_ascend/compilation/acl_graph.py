@@ -195,13 +195,12 @@ class ACLGraphWrapper:
         # before the grph replay of iteration i-1.
         # To ensure proper ordering, we must call synchronize here before replaying,
         # so that update_attn_params only executes after the previous graph replay has fully completed.
-        torch.npu.current_stream().synchronize() # FIXED: stream-level sync to avoid split-batch deadlock
+        torch.npu.synchronize() # FIXED: stream-level sync to avoid split-batch deadlock
         logger.info(f"replay_stream_id={torch.npu.current_stream().stream_id}")
         entry.aclgraph.replay()
         logger.info(f"[DEBUG] After replay(), before return output")
         # CRITICAL: Synchronize after replay to ensure graph execution completes
         # before the next replay or any other operations on the same stream
-        torch.npu.current_stream().synchronize()
         return entry.output
 
 

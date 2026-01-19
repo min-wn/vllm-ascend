@@ -16,7 +16,8 @@
 # This file is a part of the vllm-ascend project.
 # Adapted from vllm-project/vllm/vllm/worker/gpu_model_runner.py
 #
-
+import os
+import json
 import math
 import time
 from collections import defaultdict
@@ -49,7 +50,9 @@ from vllm.distributed.parallel_state import (get_dcp_group, get_dp_group,
                                              get_pcp_group, get_pp_group,
                                              get_tp_group,
                                              is_global_first_rank)
-from vllm.forward_context import get_forward_context, DPMetadata
+from vllm.forward_context import (BatchDescriptor, DPMetadata,
+                                  get_forward_context,
+                                  override_forward_context)
 from vllm.logger import logger
 from vllm.model_executor.layers.attention_layer_base import AttentionLayerBase
 from vllm.model_executor.layers.mamba.abstract import MambaBase
@@ -124,15 +127,17 @@ from vllm_ascend.utils import (AscendDeviceType, ProfileExecuteDuration,
                                enable_sp, get_ascend_device_type, is_moe_model,
                                lmhead_tp_enable, maybe_trans_nz)
 from vllm_ascend.worker.npu_input_batch import NPUInputBatch
-from vllm_ascend.worker.npu_ubatch_wrapper import AscendUBatchWrapper
-from vllm_ascend.worker.npu_split_wrapper import AscendSplitBatchWrapper
-from vllm_ascend.worker.ubatch_utils import ubatch_split, split_batch_split, SplitBatchSlices
+from vllm_ascend.worker.npu_ubatch_wrapper import (AscendUBatchWrapper,
+                                                   AscendUbatchMetadata)
+from vllm_ascend.worker.ubatch_utils import (SplitBatchSlices,
+                                             split_batch_split, ubatch_split)
 from vllm_ascend.attention.utils import split_attn_metadata
-from vllm.v1.worker.ubatch_utils import UBatchSlices
+from vllm.v1.worker.ubatch_utils import UBatchSlice, UBatchSlices
 
 from vllm_ascend.ascend_forward_context import (  # isort: skip
-    MoECommType, get_mc2_tokens_capacity, select_moe_comm_method,
-    set_ascend_forward_context, set_mc2_mask, set_mc2_tokens_capacity)
+    MoECommType, create_ascend_forward_context, get_mc2_tokens_capacity,
+    select_moe_comm_method, set_ascend_forward_context, set_mc2_mask,
+    set_mc2_tokens_capacity)
 
 if TYPE_CHECKING:
     import xgrammar as xgr  # type: ignore[import-untyped]
@@ -253,6 +258,7 @@ class NPUModelRunner(GPUModelRunner):
         # use_hybrid_blocks: if hybrid blocks is used.
         self.use_hybrid_blocks: bool = False
         self.need_accepted_tokens: bool = False
+
 
         self.is_multimodal_model = self.model_config.is_multimodal_model
         self.block_size = vllm_config.cache_config.block_size
@@ -494,8 +500,7 @@ class NPUModelRunner(GPUModelRunner):
     def get_model(self) -> nn.Module:
         # get raw model out of the aclgraph wrapper.
         if isinstance(self.model,
-                      (ACLGraphWrapper, AscendUBatchWrapper,
-                       AscendSplitBatchWrapper)):
+                      (ACLGraphWrapper, AscendUBatchWrapper)):
             return self.model.unwrap()
         return self.model
 
@@ -566,7 +571,7 @@ class NPUModelRunner(GPUModelRunner):
                torch.Tensor, int, torch.Tensor, SpecDecodeMetadata,
                Optional[torch.Tensor], Optional[torch.Tensor],
                Optional[torch.Tensor], int, Optional[UBatchSlices],
-               Optional[torch.Tensor]]:
+               Optional[SplitBatchSlices], Optional[torch.Tensor]]:
         total_num_scheduled_tokens = scheduler_output.total_num_scheduled_tokens
         assert total_num_scheduled_tokens > 0
         num_reqs = self.input_batch.num_reqs
@@ -678,6 +683,8 @@ class NPUModelRunner(GPUModelRunner):
             ubatch_slices = None
 
 
+        split_batch_slices: Optional[SplitBatchSlices] = None
+        split_ubatch_slices: Optional[UBatchSlices] = None
         # Split batch - compute split slices for large decode batches
         # Split batch and DBO never conflict:
         # - DBO is for overlapping compute/communication
@@ -686,7 +693,7 @@ class NPUModelRunner(GPUModelRunner):
             cudagraph_capture_sizes = set(
                 self.compilation_config.cudagraph_capture_sizes or []
             ) if self.use_aclgraph else None
-            ubatch_slices, _ = split_batch_split(
+            split_batch_slices, _ = split_batch_split(
                 num_scheduled_tokens,
                 num_tokens_unpadded,
                 num_tokens_padded,
@@ -694,6 +701,11 @@ class NPUModelRunner(GPUModelRunner):
                 cudagraph_capture_sizes=cudagraph_capture_sizes,
                 custom_split_sizes=[5,3]
             )
+            if split_batch_slices:
+                split_ubatch_slices = [
+                    UBatchSlice(s.request_slice, s.token_slice)
+                    for s in split_batch_slices
+                ]
 
 
         # TODO: Now that num_input_tokens is basically identical with maybe_padded_num_tokens
@@ -824,8 +836,13 @@ class NPUModelRunner(GPUModelRunner):
         self.num_tokens_across_dp = num_tokens_across_dp
 
         attn_metadata: PerLayerAttnMetadata = {}
+        split_ubatch_slices_for_metadata: Optional[UBatchSlices] = None
         if ubatch_slices is not None:
             attn_metadata = [dict() for _ in range(len(ubatch_slices))]
+            split_ubatch_slices_for_metadata = ubatch_slices
+        elif split_ubatch_slices is not None:
+            attn_metadata = [dict() for _ in range(len(split_ubatch_slices))]
+            split_ubatch_slices_for_metadata = split_ubatch_slices
 
         # Record the index of requests that should not be sampled,
         # so that we could clear the sampled tokens before returning
@@ -932,7 +949,7 @@ class NPUModelRunner(GPUModelRunner):
             if enable_sp():
                 num_input_tokens_with_flashcomm1 = (num_input_tokens +
                                                     tp_size - 1) // tp_size
-                if ubatch_slices is not None:
+                if split_ubatch_slices_for_metadata is not None:
                     # for dbo, we calculate the size of intermediate tensors
                     # later in ubatch_wrapper
                     num_input_tokens_with_dbo = (
@@ -1179,9 +1196,9 @@ class NPUModelRunner(GPUModelRunner):
                         common_attn_metadata=common_attn_metadata,
                         **extra_attn_metadata_args)
 
-                    if ubatch_slices is not None:
+                    if split_ubatch_slices_for_metadata is not None:
                         common_attn_metadata_list = split_attn_metadata(
-                            ubatch_slices, common_attn_metadata,
+                            split_ubatch_slices_for_metadata, common_attn_metadata,
                             self.max_num_tokens)
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
@@ -1209,9 +1226,9 @@ class NPUModelRunner(GPUModelRunner):
                         common_attn_metadata=common_attn_metadata,
                         **extra_attn_metadata_args)
                 else:
-                    if ubatch_slices is not None:
+                    if split_ubatch_slices_for_metadata is not None:
                         common_attn_metadata_list = split_attn_metadata(
-                            ubatch_slices, common_attn_metadata,
+                            split_ubatch_slices_for_metadata, common_attn_metadata,
                             self.max_num_tokens)
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
@@ -1247,7 +1264,7 @@ class NPUModelRunner(GPUModelRunner):
                 maybe_padded_num_tokens, logits_indices, spec_decode_metadata,
                 input_ids, inputs_embeds, intermediate_tensors,
                 max_num_scheduled_tokens, ubatch_slices,
-                num_tokens_after_padding)
+                split_batch_slices, num_tokens_after_padding)
 
     def _generate_process_reqs_hidden_states(self, maybe_padded_num_tokens,
                                              input_ids, positions,
@@ -1264,7 +1281,6 @@ class NPUModelRunner(GPUModelRunner):
         forward_context = get_forward_context()
         if (forward_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
                 and not self.use_sparse
-                and not isinstance(self.model, AscendSplitBatchWrapper)
                 ):
             self._update_attn_params_for_wrapper(forward_context, maybe_padded_num_tokens)
 
@@ -1279,7 +1295,7 @@ class NPUModelRunner(GPUModelRunner):
         """Update attention parameters based on the wrapper type.
         
         Handles different wrapper scenarios:
-        - AscendSplitBatchWrapper: Skip update here, will be done inside wrapper
+        - Split-batch: handled in execute_model
         - ACLGraphWrapper: attn_metadata is a dict, update directly
         - AscendUBatchWrapper: attn_metadata is a list, update each ubatch separately
         """
@@ -1309,6 +1325,263 @@ class NPUModelRunner(GPUModelRunner):
                                        self.vllm_config)
     
  
+    def _update_attn_params_for_split_ubatch(self, forward_context,
+                                             num_tokens: int) -> None:
+        if (forward_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
+                or forward_context.capturing or self.use_sparse):
+            return
+
+        if self.vllm_config.model_config.use_mla:
+            if self.pcp_size * self.dcp_size > 1:
+                update_mla_attn_dcp_pcp_params(self.update_stream,
+                                               forward_context,
+                                               num_tokens)
+            else:
+                update_mla_attn_params(self.update_stream, forward_context,
+                                       num_tokens,
+                                       self.speculative_config)
+        else:
+            if self.pcp_size * self.dcp_size > 1:
+                update_attn_dcp_pcp_params(self.update_stream,
+                                           forward_context,
+                                           num_tokens)
+            else:
+                update_attn_params(self.update_stream, forward_context,
+                                   num_tokens,
+                                   self.vllm_config)
+    def _slice_split_batch_inputs(self, tokens_slice: slice, input_ids,
+                                  positions, inputs_embeds,
+                                  intermediate_tensors):
+        sliced_input_ids = input_ids[tokens_slice] if input_ids is not None else None
+        if positions.ndim == 2:
+            sliced_positions = positions[:, tokens_slice]
+        else:
+            sliced_positions = positions[tokens_slice]
+        sliced_inputs_embeds = inputs_embeds[
+            tokens_slice] if inputs_embeds is not None else None
+
+        if intermediate_tensors is not None:
+            if enable_sp():
+                tp_size = get_tensor_model_parallel_world_size()
+                start = (tokens_slice.start + tp_size - 1) // tp_size
+                if start != 0:
+                    stop = start + (tokens_slice.stop - tokens_slice.start +
+                                    tp_size - 1) // tp_size
+                else:
+                    stop = (tokens_slice.stop + tp_size - 1) // tp_size
+                tokens_slice = slice(start, stop)
+
+            sliced_intermediate_tensors = intermediate_tensors[
+                tokens_slice] if intermediate_tensors else None
+        else:
+            sliced_intermediate_tensors = None
+
+        return (sliced_input_ids, sliced_positions, sliced_inputs_embeds,
+                sliced_intermediate_tensors)
+
+    def _make_split_batch_metadata(
+            self, split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor], positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode) -> list[AscendUbatchMetadata]:
+
+        forward_contexts = []
+        cur_forward_context = get_forward_context()
+        dp_metadata = cur_forward_context.dp_metadata
+
+        ubatch_cudagraph_mode = CUDAGraphMode.FULL if aclgraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
+
+        for i, split_slice in enumerate(split_batch_slices):
+            ubatch_attn_metadata = None
+            if attn_metadata is not None:
+                if isinstance(attn_metadata, list) and i < len(attn_metadata):
+                    ubatch_attn_metadata = attn_metadata[i]
+                else:
+                    ubatch_attn_metadata = attn_metadata
+
+            ubatch_num_tokens = split_slice.num_tokens
+            ubatch_num_reqs = split_slice.num_requests
+            ubatch_batch_descriptor = BatchDescriptor(
+                num_tokens=ubatch_num_tokens,
+                num_reqs=ubatch_num_reqs,
+                uniform=batch_descriptor.uniform,
+                has_lora=batch_descriptor.has_lora,
+            )
+            forward_contexts.append(
+                create_ascend_forward_context(
+                    cur_forward_context,
+                    attn_metadata=ubatch_attn_metadata,
+                    vllm_config=self.vllm_config,
+                    dp_metadata=dp_metadata,
+                    ubatch_slices=split_ubatch_slices,
+                    batch_descriptor=ubatch_batch_descriptor,
+                    cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                    ubatch_num=i,
+                    positions=positions,
+                ))
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
+        for i, split_slice in enumerate(split_batch_slices):
+            sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
+            sliced_intermediate_tensors = self._slice_split_batch_inputs(
+                split_slice.token_slice, input_ids, positions, inputs_embeds,
+                intermediate_tensors)
+            ubatch_metadata.append(
+                AscendUbatchMetadata(
+                    context=forward_contexts[i],
+                    input_ids=sliced_input_ids,
+                    positions=sliced_positions,
+                    inputs_embeds=sliced_inputs_embeds,
+                    intermediate_tensors=sliced_intermediate_tensors,
+                    num_tokens=split_slice.num_tokens))
+
+        return ubatch_metadata
+
+    def _merge_intermediate_tensors(self, intermediate_tensor_list):
+        result = {}
+        for key in intermediate_tensor_list[0].tensors:
+            result[key] = torch.cat(
+                [it.tensors[key] for it in intermediate_tensor_list], dim=0)
+        return IntermediateTensors(result)
+
+    def _merge_split_outputs(self, outputs: list[Any]) -> Any:
+        first = outputs[0]
+        if isinstance(first, IntermediateTensors):
+            return self._merge_intermediate_tensors(outputs)
+        if isinstance(first, tuple):
+            merged = []
+            for idx in range(len(first)):
+                parts = [o[idx] for o in outputs]
+                if isinstance(parts[0], torch.Tensor):
+                    merged.append(torch.cat(parts, dim=0))
+                else:
+                    merged.append(parts)
+            return tuple(merged)
+        return torch.cat(outputs, dim=0)
+
+    def _run_split_batch(
+        self,
+        split_ubatch_slices: UBatchSlices,
+        split_batch_slices: SplitBatchSlices,
+        attn_metadata: PerLayerAttnMetadata,
+        input_ids: Optional[torch.Tensor],
+        positions: torch.Tensor,
+        intermediate_tensors: Optional[IntermediateTensors],
+        inputs_embeds: Optional[torch.Tensor],
+        model_kwargs: dict[str, Any],
+        batch_descriptor: BatchDescriptor,
+        aclgraph_runtime_mode: CUDAGraphMode,
+    ) -> Any:
+        """
+        执行split-batch，确保每个batch重放时地址一致。
+        
+        核心逻辑：
+        - 图捕获时，输入地址在 self.input_ids.gpu、self.positions.gpu 等的起始位置
+        - 第一个ubatch执行时，数据已经在正确位置
+        - 第二个ubatch执行前，将其数据复制到起始位置，然后用起始位置执行
+        """
+        # Step 1: 为所有split准备元数据
+        ubatch_metadata = self._make_split_batch_metadata(
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            batch_descriptor,
+            aclgraph_runtime_mode,
+        )
+        
+        results: list[Any] = []
+        original_forward_context = get_forward_context()
+        raw_model=self.get_model()
+        # 获取第一个 split 的 token 数量，用于确定固定缓冲区大小
+        first_split_num_tokens = split_batch_slices[0].num_tokens
+        
+        # Step 2: 依次执行每个split
+        for slice_idx, split_slice in enumerate(split_batch_slices):
+            metadata = ubatch_metadata[slice_idx]
+            current_num_tokens = split_slice.num_tokens
+            
+            if slice_idx == 0:
+                # 第一个ubatch：数据已在正确位置（self.input_ids.gpu起始处）
+                with override_forward_context(metadata.context):
+                    result = raw_model(
+                        input_ids=metadata.input_ids,
+                        positions=metadata.positions,
+                        inputs_embeds=metadata.inputs_embeds,
+                        intermediate_tensors=metadata.intermediate_tensors,
+                        **model_kwargs,
+                    )
+                    # [关键] 在模型执行之后更新 attention 参数
+                    self._update_attn_params_for_split_ubatch(
+                        metadata.context, current_num_tokens)
+            else:
+                # 后续ubatch：需要将数据复制到第一个ubatch的位置
+                # [关键修复] 同步等待前一个图完成执行
+                torch.npu.synchronize()
+                
+                # [关键修复] 将当前ubatch的数据复制到起始位置
+                # input_ids
+                if metadata.input_ids is not None:
+                    self.input_ids.gpu[:current_num_tokens].copy_(
+                        metadata.input_ids, non_blocking=False)
+                
+                # positions
+                if metadata.positions is not None:
+                    if metadata.positions.ndim == 2:
+                        self.positions.gpu[:, :current_num_tokens].copy_(
+                            metadata.positions, non_blocking=False)
+                    else:
+                        self.positions.gpu[:current_num_tokens].copy_(
+                            metadata.positions, non_blocking=False)
+                
+                # inputs_embeds
+                if metadata.inputs_embeds is not None:
+                    self.inputs_embeds[:current_num_tokens].copy_(
+                        metadata.inputs_embeds, non_blocking=False)
+                
+                # [关键修复] 同步确保复制完成
+                torch.npu.synchronize()
+                
+                # [关键修复] 使用起始位置的张量执行（与图捕获时地址一致）
+                metadata.input_ids = self.input_ids.gpu[:current_num_tokens] if metadata.input_ids is not None else None
+                if metadata.positions.ndim == 2:
+                    metadata.positions = self.positions.gpu[:, :current_num_tokens]
+                else:
+                    metadata.positions = self.positions.gpu[:current_num_tokens]
+                metadata.inputs_embeds = self.inputs_embeds[:current_num_tokens] if metadata.inputs_embeds is not None else None
+                
+                with override_forward_context(metadata.context):
+                    result = raw_model(
+                        input_ids=metadata.input_ids,
+                        positions=metadata.positions,
+                        inputs_embeds=metadata.inputs_embeds,
+                        intermediate_tensors=metadata.intermediate_tensors,
+                        **model_kwargs,
+                    )
+                    # [关键] 在模型执行之后更新 attention 参数
+                    self._update_attn_params_for_split_ubatch(
+                        metadata.context, current_num_tokens)
+            
+            results.append(result)
+        
+        # 恢复forward context并合并结果
+        with override_forward_context(original_forward_context):
+            result = self._merge_split_outputs(results)
+        
+        if not getattr(self, "_split_batch_dumped", False):
+            dump_path = os.path.join(os.getcwd(), "split_batch_merged_first_result_gg.json")
+            with open(dump_path, "w", encoding="utf-8") as f:
+                json.dump(self._to_jsonable(result), f, ensure_ascii=False)
+            self._split_batch_dumped = True
+        
+        return result
 
 
     def _build_attn_state(self, num_reqs, num_scheduled_tokens,
@@ -1500,8 +1773,8 @@ class NPUModelRunner(GPUModelRunner):
              num_input_tokens, num_tokens_across_dp, maybe_padded_num_tokens,
              logits_indices, spec_decode_metadata, input_ids, inputs_embeds,
              intermediate_tensors, max_query_len, ubatch_slices,
-             num_tokens_after_padding) = (self._prepare_inputs(
-                 scheduler_output, intermediate_tensors))
+             split_batch_slices, num_tokens_after_padding) = (
+                 self._prepare_inputs(scheduler_output, intermediate_tensors))
 
             if self.dynamic_eplb:
                 self.eplb_updator.take_update_info_from_eplb_process()
@@ -1532,11 +1805,20 @@ class NPUModelRunner(GPUModelRunner):
                 head_dim=self.model_config.get_vocab_size(),
                 generators=self.input_batch.sampling_metadata.generators)
 
+        split_ubatch_slices = None
+        if split_batch_slices is not None:
+            split_ubatch_slices = [
+                UBatchSlice(s.request_slice, s.token_slice)
+                for s in split_batch_slices
+            ]
+
         # This is currently to get around the assert in the DPMetadata
         # where it wants `num_tokens_across_dp` to align with `num_tokens`
         if ubatch_slices is not None:
             num_input_tokens = ubatch_slices[0].num_tokens
             num_tokens_across_dp = num_tokens_after_padding
+
+        model_kwargs = self._init_model_kwargs(maybe_padded_num_tokens)
         # Run forward pass
         with ProfileExecuteDuration().capture_async("forward"):
             with set_ascend_forward_context(
@@ -1552,13 +1834,27 @@ class NPUModelRunner(GPUModelRunner):
                     prefetch_stream=self.prefetch_stream,
                     model_instance=self.model,
                     weight_prefetch_method=self.weight_prefetch_method,
-                    ubatch_slices=ubatch_slices,
+                    ubatch_slices=(ubatch_slices or split_ubatch_slices),
             ):
                 self.maybe_setup_kv_connector(scheduler_output)
 
-                hidden_states = self._generate_process_reqs_hidden_states(
-                    maybe_padded_num_tokens, input_ids, positions,
-                    intermediate_tensors, inputs_embeds)
+                if split_ubatch_slices is not None:
+                    hidden_states = self._run_split_batch(
+                        split_ubatch_slices,
+                        split_batch_slices,
+                        attn_metadata,
+                        input_ids,
+                        positions,
+                        intermediate_tensors,
+                        inputs_embeds,
+                        model_kwargs,
+                        batch_descriptor,
+                        aclgraph_runtime_mode,
+                    )
+                else:
+                    hidden_states = self._generate_process_reqs_hidden_states(
+                        maybe_padded_num_tokens, input_ids, positions,
+                        intermediate_tensors, inputs_embeds)
 
             self.maybe_wait_for_kv_save()
             finished_sending, finished_recving = self.get_finished_kv_transfer(
@@ -2474,7 +2770,7 @@ class NPUModelRunner(GPUModelRunner):
         # Wrap model with the correct runtime wrapper.
         # Priority (mutually exclusive at runtime):
         # - DBO: AscendUBatchWrapper
-        # - Split-batch: AscendSplitBatchWrapper
+        # - Split-batch: handled in execute_model
         # - Full graph only: ACLGraphWrapper
         split_enabled = bool(
             getattr(self.ascend_config, "split_batch_config",
@@ -2490,18 +2786,6 @@ class NPUModelRunner(GPUModelRunner):
                 self.model = AscendUBatchWrapper(self.model, self.vllm_config,
                                                  CUDAGraphMode.NONE,
                                                  self.device)
-        elif split_enabled:
-            self.update_stream: torch.npu.Stream = torch.npu.Stream()
-            if self.compilation_config.cudagraph_mode.has_full_cudagraphs():
-                self.model = AscendSplitBatchWrapper(self.model,
-                                                     self.vllm_config,
-                                                     CUDAGraphMode.FULL,
-                                                     self.device,self.update_stream)
-            else:
-                self.model = AscendSplitBatchWrapper(self.model,
-                                                     self.vllm_config,
-                                                     CUDAGraphMode.NONE,
-                                                     self.device,self.update_stream)
         elif self.compilation_config.cudagraph_mode.has_full_cudagraphs():
             self.update_stream: torch.npu.Stream = torch.npu.Stream()
             self.model = ACLGraphWrapper(self.model,
@@ -3646,6 +3930,19 @@ class NPUModelRunner(GPUModelRunner):
             self.input_ids_pcp_full.cpu[:total_num_scheduled_tokens_pcp_full],
             non_blocking=True,
         )
+    def _to_jsonable(self, obj: Any) -> Any:
+        if obj is None:
+            return None
+        if isinstance(obj, torch.Tensor):
+            return obj.detach().cpu().tolist()
+        if isinstance(obj, (list, tuple)):
+            return [self._to_jsonable(x) for x in obj]
+        if isinstance(obj, dict):
+            return {k: self._to_jsonable(v) for k, v in obj.items()}
+        # 尝试将对象的属性字典序列化
+        if hasattr(obj, "__dict__"):
+            return {k: self._to_jsonable(v) for k, v in vars(obj).items()}
+        return str(obj)
 
 
 @contextmanager
@@ -3684,3 +3981,5 @@ def _torch_cuda_wrapper():
         torch.cuda.default_stream = torch.npu.default_stream
         torch.cuda.current_stream = torch.npu.current_stream
         torch.cuda.stream = torch.npu.stream
+    
+

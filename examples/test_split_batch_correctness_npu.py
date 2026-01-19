@@ -113,7 +113,7 @@ def create_parser() -> FlexibleArgumentParser:
 
     # Default compilation config: pass explicitly so Ascend platform sees it.
     # IMPORTANT: Only include keys that exist on vLLM's `CompilationConfig`.
-    cudagraph_sizes = [1, 2, 4, 8, 16] + [i * 32 for i in range(1, 17)]
+    cudagraph_sizes = [1,2,3,4,5,6,7,8]
     compilation_config = {
         "level": 3,
         "cudagraph_mode": "FULL_DECODE_ONLY",
