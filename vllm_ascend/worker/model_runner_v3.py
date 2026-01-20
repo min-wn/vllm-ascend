@@ -16,6 +16,7 @@
 # This file is a part of the vllm-ascend project.
 # Adapted from vllm-project/vllm/vllm/worker/gpu_model_runner.py
 #
+#集成npusplitwrapper的modelrunner used for now
 import os
 import json
 import math
@@ -1511,7 +1512,7 @@ class NPUModelRunner(GPUModelRunner):
             if slice_idx == 0:
                 # 第一个ubatch：数据已在正确位置（self.input_ids.gpu起始处）
                 with override_forward_context(metadata.context):
-                    result = raw_model(
+                    result = self.model(
                         input_ids=metadata.input_ids,
                         positions=metadata.positions,
                         inputs_embeds=metadata.inputs_embeds,
@@ -1558,7 +1559,7 @@ class NPUModelRunner(GPUModelRunner):
                 metadata.inputs_embeds = self.inputs_embeds[:current_num_tokens] if metadata.inputs_embeds is not None else None
                 
                 with override_forward_context(metadata.context):
-                    result = raw_model(
+                    result = self.raw_model(
                         input_ids=metadata.input_ids,
                         positions=metadata.positions,
                         inputs_embeds=metadata.inputs_embeds,

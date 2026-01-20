@@ -57,9 +57,9 @@ from vllm_ascend.platform import NPUPlatform
 from vllm_ascend.utils import (AscendDeviceType, check_ascend_device_type,
                                enable_sp, get_ascend_device_type,
                                register_ascend_customop)
-from vllm_ascend.worker.model_runner_v1 import NPUModelRunner
+# from vllm_ascend.worker.model_runner_v1 import NPUModelRunner
 # from vllm_ascend.worker.model_runner_v2 import NPUModelRunner
-# from vllm_ascend.worker.model_runner_v3 import NPUModelRunner
+from vllm_ascend.worker.model_runner_v3 import NPUModelRunner
 torch._dynamo.trace_rules.clear_lru_cache()  # noqa: E402
 from torch._dynamo.variables import TorchInGraphFunctionVariable  # noqa: E402
 

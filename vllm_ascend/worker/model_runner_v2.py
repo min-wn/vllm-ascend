@@ -16,6 +16,7 @@
 # This file is a part of the vllm-ascend project.
 # Adapted from vllm-project/vllm/vllm/worker/gpu_model_runner.py
 #
+#调用splitwrapper的modelrunner not used for now
 
 import math
 import time

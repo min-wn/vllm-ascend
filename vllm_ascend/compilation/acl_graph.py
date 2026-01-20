@@ -149,22 +149,18 @@ class ACLGraphWrapper:
                         patch("torch.npu.empty_cache", lambda: None))
 
                 # mind-exploding: carefully manage the reference and memory.
-                prev_capturing = getattr(forward_context, "capturing", False)
                 forward_context.capturing = True
-                try:
-                    with torch.npu.graph(aclgraph, pool=self.graph_pool):
-                        # `output` is managed by pytorch's aclgraph pool
-                        output = self.runnable(*args, **kwargs)
-                        if self.aclgraph_options.weak_ref_output:
-                            # by converting it to weak ref,
-                            # the original `output` will immediately be released
-                            # to save memory. It is only safe to do this for
-                            # the last graph in piecewise aclgraph mode, because
-                            # the output of the last graph will not be used by
-                            # any other acl graph.
-                            output = weak_ref_tensors(output)
-                finally:
-                    forward_context.capturing = prev_capturing
+                with torch.npu.graph(aclgraph, pool=self.graph_pool):
+                    # `output` is managed by pytorch's aclgraph pool
+                    output = self.runnable(*args, **kwargs)
+                    if self.aclgraph_options.weak_ref_output:
+                        # by converting it to weak ref,
+                        # the original `output` will immediately be released
+                        # to save memory. It is only safe to do this for
+                        # the last graph in piecewise aclgraph mode, because
+                        # the output of the last graph will not be used by
+                        # any other acl graph.
+                        output = weak_ref_tensors(output)
 
             # here we always use weak ref for the output
             # to save memory
@@ -188,19 +184,14 @@ class ACLGraphWrapper:
                 f"during replay. Expected {entry.input_addresses}, "
                 f"got {new_input_addresses}")
 
-        logger.info(f"[ACL_DEBUG] About to replay graph for descriptor: {batch_descriptor}, entry_id: {id(entry)}")
         logger.info_once("Replaying aclgraph")
         # In async scheduling or multi-threaded (MT) scenarios, it is possible that
         # the CPU's record event (from update_attn_params) for the iteration i completes
         # before the grph replay of iteration i-1.
         # To ensure proper ordering, we must call synchronize here before replaying,
         # so that update_attn_params only executes after the previous graph replay has fully completed.
-        torch.npu.synchronize() # FIXED: stream-level sync to avoid split-batch deadlock
-        logger.info(f"replay_stream_id={torch.npu.current_stream().stream_id}")
+        torch.npu.synchronize()
         entry.aclgraph.replay()
-        logger.info(f"[DEBUG] After replay(), before return output")
-        # CRITICAL: Synchronize after replay to ensure graph execution completes
-        # before the next replay or any other operations on the same stream
         return entry.output
 
 

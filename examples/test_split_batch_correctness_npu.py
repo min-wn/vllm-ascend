@@ -242,6 +242,10 @@ def _default_prompts() -> list[str]:
         "The capital of France is",
         "Explain in one sentence: what is split-batch?",
         "Write a short list of 3 items about: apples",
+        "The president of the United States is",
+        "Once upon a time in a land far away,",
+        "In computer science, a binary tree is",
+        "The quick brown fox jumps over the lazy dog.",
     ]
 
 

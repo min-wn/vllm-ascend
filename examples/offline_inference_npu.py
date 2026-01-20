@@ -76,69 +76,19 @@ def main():
   ]
   
   compilation_config = {
-      "level": 3,
-      "cudagraph_mode": "PIECEWISE",
+      "cudagraph_mode": "FULL_DECODE_ONLY",
   }
   
   # Create a sampling params object.
-  sampling_params = SamplingParams(max_tokens=args.max_tokens, temperature=args.temperature)
+  sampling_params = SamplingParams(max_tokens=100, temperature=0.0)
   
   # Create an LLM.
-  llm = LLM(model=args.model, compilation_config=compilation_config)
+  llm = LLM(model="Qwen/Qwen3-0.6B", compilation_config=compilation_config)
 
   # Setup profiling if enabled
-  if args.enable_profiling:
-      try:
-          from torch_npu import profiler as npu_profiler
-      except Exception as e:
-          raise RuntimeError(
-              "--enable-profiling was set but torch_npu.profiler is not available"
-          ) from e
-
-      profile_dir = Path(args.profile_dir)
-      profile_dir.mkdir(parents=True, exist_ok=True)
-      
-      # Create timestamped subdirectory
-      ts = time.strftime("%Y%m%d_%H%M%S")
-      out_dir = profile_dir / f"{ts}_offline_inference"
-      out_dir.mkdir(parents=True, exist_ok=True)
-      
-      print(f"Profiling enabled. Results will be saved to: {out_dir}")
-      
-      activities = [npu_profiler.ProfilerActivity.CPU, npu_profiler.ProfilerActivity.NPU]
-      trace_handler = npu_profiler.tensorboard_trace_handler(str(out_dir))
-      schedule = npu_profiler.schedule(wait=0, warmup=0, active=1, repeat=1)
-      
-      # Synchronize before profiling
-      if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
-          torch.npu.synchronize()
-      
-      print("Starting profiling...")
-      with npu_profiler.profile(
-          activities=activities,
-          schedule=schedule,
-          record_shapes=True,
-          with_stack=True,
-          on_trace_ready=trace_handler,
-          profile_memory=False,
-      ) as prof:
-          # Generate texts from the prompts.
-          print("Starting generation...")
-          outputs = llm.generate(prompts, sampling_params)
-          
-          # Synchronize and step profiler
-          if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
-              torch.npu.synchronize()
-          prof.step()
-          if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
-              torch.npu.synchronize()
-      
-      print(f"Profiling completed. Results saved to: {out_dir}")
-      print(f"View results with: tensorboard --logdir={out_dir}")
-  else:
-      # Generate without profiling
-      print("Starting generation...")
-      outputs = llm.generate(prompts, sampling_params)
+ 
+  print("Starting generation...")
+  outputs = llm.generate(prompts, sampling_params)
   
   # Print results
   for output in outputs:
