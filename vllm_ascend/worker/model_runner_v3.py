@@ -387,6 +387,13 @@ class NPUModelRunner(GPUModelRunner):
         # None in the first PP rank. The rest are set after load_model.
         self.intermediate_tensors: IntermediateTensors | None = None
         self.reorder_batch_threshold: int | None = None
+        #并行新增输入地址
+        self.input_ids_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int32)
+        self.inputs_embeds_parallel_streams=self._make_buffer(
+            self.max_num_tokens, self.inputs_embeds_size, dtype=self.dtype, numpy=False
+        )
+        self.positions_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int64)
+        
 
     def _init_device_properties(self) -> None:
         self.num_sms = None
@@ -1379,6 +1386,94 @@ class NPUModelRunner(GPUModelRunner):
 
         return (sliced_input_ids, sliced_positions, sliced_inputs_embeds,
                 sliced_intermediate_tensors)
+    
+    def _make_split_batch_metadata_parallel_streams(
+            self, split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor], positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode) -> list[AscendUbatchMetadata]:
+
+        forward_contexts = []
+        cur_forward_context = get_forward_context()
+        dp_metadata = cur_forward_context.dp_metadata
+
+        ubatch_cudagraph_mode = CUDAGraphMode.FULL if aclgraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
+
+        for i, split_slice in enumerate(split_batch_slices):
+            ubatch_attn_metadata = None
+            if attn_metadata is not None:
+                if isinstance(attn_metadata, list) and i < len(attn_metadata):
+                    ubatch_attn_metadata = attn_metadata[i]
+                else:
+                    ubatch_attn_metadata = attn_metadata
+
+            ubatch_num_tokens = split_slice.num_tokens
+            ubatch_num_reqs = split_slice.num_requests
+            ubatch_batch_descriptor = BatchDescriptor(
+                num_tokens=ubatch_num_tokens,
+                num_reqs=ubatch_num_reqs,
+                uniform=batch_descriptor.uniform,
+                has_lora=batch_descriptor.has_lora,
+            )
+            forward_contexts.append(
+                create_ascend_forward_context(
+                    cur_forward_context,
+                    attn_metadata=ubatch_attn_metadata,
+                    vllm_config=self.vllm_config,
+                    dp_metadata=dp_metadata,
+                    ubatch_slices=split_ubatch_slices,
+                    batch_descriptor=ubatch_batch_descriptor,
+                    cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                    ubatch_num=i,
+                    positions=positions,
+                ))
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
+        for i, split_slice in enumerate(split_batch_slices):
+            sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
+            sliced_intermediate_tensors = self._slice_split_batch_inputs(
+                split_slice.token_slice, input_ids, positions, inputs_embeds,
+                intermediate_tensors)
+            
+            # When i == 1 (second batch_slice), copy data to parallel_streams buffers
+            if i == 1:
+                num_tokens = split_slice.num_tokens
+                
+                # Copy and replace input_ids
+                if sliced_input_ids is not None:
+                    self.input_ids_parallel_streams.gpu[:num_tokens].copy_(sliced_input_ids)
+                    sliced_input_ids = self.input_ids_parallel_streams.gpu[:num_tokens]
+                
+                # Copy and replace positions (handle M-RoPE ndim==2 case)
+                if sliced_positions is not None:
+                    if sliced_positions.ndim == 2:
+                        # M-RoPE case: positions shape is [num_dims, num_tokens]
+                        self.positions_parallel_streams.gpu[:, :num_tokens].copy_(sliced_positions)
+                        sliced_positions = self.positions_parallel_streams.gpu[:, :num_tokens]
+                    else:
+                        # Normal case: positions shape is [num_tokens]
+                        self.positions_parallel_streams.gpu[:num_tokens].copy_(sliced_positions)
+                        sliced_positions = self.positions_parallel_streams.gpu[:num_tokens]
+                
+                # Copy and replace inputs_embeds
+                if sliced_inputs_embeds is not None:
+                    self.inputs_embeds_parallel_streams.gpu[:num_tokens].copy_(sliced_inputs_embeds)
+                    sliced_inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens]
+            
+            ubatch_metadata.append(
+                AscendUbatchMetadata(
+                    context=forward_contexts[i],
+                    input_ids=sliced_input_ids,
+                    positions=sliced_positions,
+                    inputs_embeds=sliced_inputs_embeds,
+                    intermediate_tensors=sliced_intermediate_tensors,
+                    num_tokens=split_slice.num_tokens))
+
+        return ubatch_metadata
 
     def _make_split_batch_metadata(
             self, split_ubatch_slices: UBatchSlices,
@@ -1431,6 +1526,32 @@ class NPUModelRunner(GPUModelRunner):
             sliced_intermediate_tensors = self._slice_split_batch_inputs(
                 split_slice.token_slice, input_ids, positions, inputs_embeds,
                 intermediate_tensors)
+            
+            # When i == 1 (second batch_slice), copy data to parallel_streams buffers
+            if i == 1:
+                num_tokens = split_slice.num_tokens
+                
+                # Copy and replace input_ids
+                if sliced_input_ids is not None:
+                    self.input_ids_parallel_streams.gpu[:num_tokens].copy_(sliced_input_ids)
+                    sliced_input_ids = self.input_ids_parallel_streams.gpu[:num_tokens]
+                
+                # Copy and replace positions (handle M-RoPE ndim==2 case)
+                if sliced_positions is not None:
+                    if sliced_positions.ndim == 2:
+                        # M-RoPE case: positions shape is [num_dims, num_tokens]
+                        self.positions_parallel_streams.gpu[:, :num_tokens].copy_(sliced_positions)
+                        sliced_positions = self.positions_parallel_streams.gpu[:, :num_tokens]
+                    else:
+                        # Normal case: positions shape is [num_tokens]
+                        self.positions_parallel_streams.gpu[:num_tokens].copy_(sliced_positions)
+                        sliced_positions = self.positions_parallel_streams.gpu[:num_tokens]
+                
+                # Copy and replace inputs_embeds
+                if sliced_inputs_embeds is not None:
+                    self.inputs_embeds_parallel_streams.gpu[:num_tokens].copy_(sliced_inputs_embeds)
+                    sliced_inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens]
+            
             ubatch_metadata.append(
                 AscendUbatchMetadata(
                     context=forward_contexts[i],
@@ -1464,7 +1585,7 @@ class NPUModelRunner(GPUModelRunner):
             return tuple(merged)
         return torch.cat(outputs, dim=0)
 
-    def _run_split_batch(
+    def _run_split_batch_gr(
         self,
         split_ubatch_slices: UBatchSlices,
         split_batch_slices: SplitBatchSlices,
@@ -1569,6 +1690,95 @@ class NPUModelRunner(GPUModelRunner):
                     # [关键] 在模型执行之后更新 attention 参数
                     self._update_attn_params_for_split_ubatch(
                         metadata.context, current_num_tokens)
+            
+            results.append(result)
+        
+        # 恢复forward context并合并结果
+        with override_forward_context(original_forward_context):
+            result = self._merge_split_outputs(results)
+        
+        if not getattr(self, "_split_batch_dumped", False):
+            dump_path = os.path.join(os.getcwd(), "split_batch_merged_first_result_gg.json")
+            with open(dump_path, "w", encoding="utf-8") as f:
+                json.dump(self._to_jsonable(result), f, ensure_ascii=False)
+            self._split_batch_dumped = True
+        
+        return result
+    def _run_split_batch_parallel(
+        self,
+        split_ubatch_slices: UBatchSlices,
+        split_batch_slices: SplitBatchSlices,
+        attn_metadata: PerLayerAttnMetadata,
+        input_ids: Optional[torch.Tensor],
+        positions: torch.Tensor,
+        intermediate_tensors: Optional[IntermediateTensors],
+        inputs_embeds: Optional[torch.Tensor],
+        model_kwargs: dict[str, Any],
+        batch_descriptor: BatchDescriptor,
+        aclgraph_runtime_mode: CUDAGraphMode,
+    ) -> Any:
+        """
+        执行split-batch，确保每个batch重放时地址不一致。
+        
+        核心逻辑：
+        - 图捕获时，输入地址在 self.input_ids.gpu、self.positions.gpu 等的起始位置
+        - 第一个ubatch执行时，数据已经在正确位置
+        - 第二个ubatch执行前，将其数据复制到起始位置，然后用起始位置执行
+        """
+        # Step 1: 为所有split准备元数据
+        ubatch_metadata = self._make_split_batch_metadata_parallel_streams(
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            batch_descriptor,
+            aclgraph_runtime_mode,
+        )
+        
+        results: list[Any] = []
+        original_forward_context = get_forward_context()
+        raw_model=self.get_model()
+        # 获取第一个 split 的 token 数量，用于确定固定缓冲区大小
+        first_split_num_tokens = split_batch_slices[0].num_tokens
+        streams = [torch.npu.Stream(device=self.device),
+                   torch.npu.Stream(device=self.device)]
+
+        
+        # Step 2: 依次执行每个split
+        for slice_idx, split_slice in enumerate(split_batch_slices):
+            metadata = ubatch_metadata[slice_idx]
+            current_num_tokens = split_slice.num_tokens
+            
+            if slice_idx == 0:
+                # 第一个ubatch：数据已在正确位置（self.input_ids.gpu起始处）
+                with torch.npu.stream(streams[slice_idx]):
+                    with override_forward_context(metadata.context):
+                        result = self.model(
+                            input_ids=metadata.input_ids,
+                            positions=metadata.positions,
+                            inputs_embeds=metadata.inputs_embeds,
+                            intermediate_tensors=metadata.intermediate_tensors,
+                            **model_kwargs,
+                        )
+                        # [关键] 在模型执行之后更新 attention 参数
+                        self._update_attn_params_for_split_ubatch(
+                            metadata.context, current_num_tokens)
+            else:
+                with torch.npu.stream(streams[slice_idx]):
+                    with override_forward_context(metadata.context):
+                        result = self.model(
+                            input_ids=metadata.input_ids,
+                            positions=metadata.positions,
+                            inputs_embeds=metadata.inputs_embeds,
+                            intermediate_tensors=metadata.intermediate_tensors,
+                            **model_kwargs,
+                        )
+                        # [关键] 在模型执行之后更新 attention 参数
+                        self._update_attn_params_for_split_ubatch(
+                            metadata.context, current_num_tokens)
             
             results.append(result)
         
@@ -1820,6 +2030,9 @@ class NPUModelRunner(GPUModelRunner):
             num_tokens_across_dp = num_tokens_after_padding
 
         model_kwargs = self._init_model_kwargs(maybe_padded_num_tokens)
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        split_enable_parallel_streams = bool(split_cfg is not None
+                                 and getattr(split_cfg, "enable_parallel_streams", False))
         # Run forward pass
         with ProfileExecuteDuration().capture_async("forward"):
             with set_ascend_forward_context(
@@ -1840,7 +2053,20 @@ class NPUModelRunner(GPUModelRunner):
                 self.maybe_setup_kv_connector(scheduler_output)
 
                 if split_ubatch_slices is not None:
-                    hidden_states = self._run_split_batch(
+                    if split_enable_parallel_streams:
+                        hidden_states = self._run_split_batch_parallel(
+                            split_ubatch_slices,
+                            split_batch_slices,
+                            attn_metadata,
+                            input_ids,
+                            positions,
+                            intermediate_tensors,
+                            inputs_embeds,
+                            model_kwargs,
+                            batch_descriptor,
+                            aclgraph_runtime_mode)
+                    else:
+                        hidden_states = self._run_split_batch_gr(
                         split_ubatch_slices,
                         split_batch_slices,
                         attn_metadata,
@@ -2366,11 +2592,11 @@ class NPUModelRunner(GPUModelRunner):
 
     def _generate_dummy_run_hidden_states(self, input_ids, positions,
                                           num_tokens, intermediate_tensors,
-                                          inputs_embeds):
+                                          inputs_embeds,parallel_streams):
         hidden_states = self.model(input_ids=input_ids,
                                    positions=positions,
                                    intermediate_tensors=intermediate_tensors,
-                                   inputs_embeds=inputs_embeds)
+                                   inputs_embeds=inputs_embeds,parallel_streams=parallel_streams)
         forward_context = get_forward_context()
         assert forward_context is not None
         model_updates_attn_params_internally = bool(
@@ -2444,7 +2670,7 @@ class NPUModelRunner(GPUModelRunner):
         uniform_decode: bool = False,
         is_profile: bool = False,
         allow_microbatching: bool = True,
-        allow_split: bool = True,
+        parallel_streams: bool=False,
     ) -> torch.Tensor:
         # only support eager mode and piecewise graph now
         assert aclgraph_runtime_mode is None or aclgraph_runtime_mode in {
@@ -2537,7 +2763,7 @@ class NPUModelRunner(GPUModelRunner):
             )
          # Split batch - compute split slices for large decode batches (similar to _prepare_inputs)
         # Split batch and DBO never conflict by design
-        if uniform_decode and ubatch_slices is None and allow_split:  # Only split if DBO is not active
+        if uniform_decode and ubatch_slices is None :  # Only split if DBO is not active
             cudagraph_capture_sizes = set(
                 self.compilation_config.cudagraph_capture_sizes or []
             ) if self.use_aclgraph else None
@@ -2612,18 +2838,30 @@ class NPUModelRunner(GPUModelRunner):
             assert num_tokens_padded <= self.max_num_tokens
             if self.is_multimodal_model:
                 input_ids = None
-                inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
             elif self.enable_prompt_embeds:
                 input_ids = None
-                inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
             else:
-                input_ids = self.input_ids.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    input_ids = self.input_ids_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    input_ids = self.input_ids.gpu[:num_tokens_padded]
                 inputs_embeds = None
 
             if self.uses_mrope:
                 positions = self.mrope_positions.gpu[:, :num_tokens_padded]
             else:
-                positions = self.positions.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    positions = self.positions_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    positions = self.positions.gpu[:num_tokens_padded]
 
             # update global cos, sin
             update_cos_sin(positions)
@@ -2683,7 +2921,7 @@ class NPUModelRunner(GPUModelRunner):
                     ubatch_slices=ubatch_slices,):
                 hidden_states = self._generate_dummy_run_hidden_states(
                     input_ids, positions, num_tokens_padded,
-                    intermediate_tensors, inputs_embeds)
+                    intermediate_tensors, inputs_embeds,parallel_streams)
                 dummy_compute_logits(hidden_states)
 
             if self.drafter:
@@ -3494,7 +3732,9 @@ class NPUModelRunner(GPUModelRunner):
 
     def _capture_aclgraphs(self, compilation_cases: list[int],
                            aclgraph_runtime_mode: CUDAGraphMode,
-                           uniform_decode: bool):
+                           uniform_decode: bool,
+                           parallel_streams: bool 
+                           ):
         assert aclgraph_runtime_mode != CUDAGraphMode.NONE and \
             aclgraph_runtime_mode in [CUDAGraphMode.FULL,
                                       CUDAGraphMode.PIECEWISE]
@@ -3531,9 +3771,6 @@ class NPUModelRunner(GPUModelRunner):
                     num_tokens=num_tokens,
                     uniform_decode=uniform_decode,
                 )
-            allow_split = bool(
-            getattr(self.ascend_config, "split_batch_config",None) is not None 
-            and self.ascend_config.split_batch_config.enabled)
             for _ in range(self.compilation_config.cudagraph_num_of_warmups):
                 # Use CUDAGraphRuntimeStyle.NONE (default) for warmup.
                 # But be careful, warm up with `NONE`is orthogonal to
@@ -3545,13 +3782,16 @@ class NPUModelRunner(GPUModelRunner):
                                 force_attention=force_attention,
                                 uniform_decode=uniform_decode,
                                 allow_microbatching=allow_microbatching,
-                                allow_split=False)
+                                allow_parallel_streams=False
+                                )
+            #真正捕获的运行
             self._dummy_run(num_tokens,
                             aclgraph_runtime_mode=aclgraph_runtime_mode,
                             force_attention=force_attention,
                             uniform_decode=uniform_decode,
                             allow_microbatching=allow_microbatching,
-                            allow_split=False)
+                            parallel_streams=parallel_streams
+                            )
 
     def _capture_model(self):
         if not self.use_aclgraph:
@@ -3566,8 +3806,10 @@ class NPUModelRunner(GPUModelRunner):
         # Trigger ACL graph capture for specific shapes.
         # Capture the large shapes first so that the smaller shapes
         # can reuse the memory pool allocated for the large shapes.
+        aclgraph_mode = self.compilation_config.cudagraph_mode
+
+        # First capture (original cases)
         with graph_capture(device=self.device):
-            aclgraph_mode = self.compilation_config.cudagraph_mode
             if aclgraph_mode.mixed_mode() != CUDAGraphMode.NONE:
                 aclgraph_runtime_mode = aclgraph_mode.mixed_mode()
 
@@ -3612,7 +3854,38 @@ class NPUModelRunner(GPUModelRunner):
                 self._capture_aclgraphs(
                     compilation_cases=compilation_cases_decode,
                     aclgraph_runtime_mode=CUDAGraphMode.FULL,
-                    uniform_decode=True)
+                    uniform_decode=True,parallel_streams=False)
+
+        # Second capture (fixed size = 8)
+        if self.ascend_config.split_batch_config.enable_parallel_streams:
+            fixed_size = self.compilation_config.cudagraph_capture_fixed_size
+            with graph_capture(device=self.device):
+                if aclgraph_mode.mixed_mode() != CUDAGraphMode.NONE:
+                    aclgraph_runtime_mode = aclgraph_mode.mixed_mode()
+                    try:
+                        self._capture_aclgraphs(
+                            compilation_cases=[fixed_size],
+                            aclgraph_runtime_mode=aclgraph_runtime_mode,
+                            uniform_decode=False,parallel_streams=True)
+                    except Exception as e:
+                        error_msg = str(e)
+                        error_code = '0x7020023'
+                        pattern = r'retCode=([^,\s\.]+)'
+                        match = re.search(pattern, error_msg)
+                        if match:
+                            retCode = match.group(1)
+                        # Determine whether the error message is caused by stream capture failure.
+                        if match and retCode == error_code:
+                            logger.error(
+                                f"ACLgraph sizes capture fail: {type(e).__name__}:\n"
+                                "ACLgraph has insufficient available streams to capture the configured number of sizes. "
+                                "Please verify both the availability of adequate streams and the appropriateness of the configured size count.\n\n"
+                                "Recommended solutions:\n"
+                                "1. Manually configure the compilation_config parameter "
+                                "with a reduced set of sizes: '{\"cudagraph_capture_sizes\":[size1, size2, size3, ...]}'.\n"
+                                "2. Utilize ACLgraph's full graph mode as an alternative to the piece-wise approach.\n\n"
+                                f"{str(e)}")
+                        raise
 
         # Disable aclgraph capturing globally, so any unexpected aclgraph
         # capturing will be detected and raise an error after here.

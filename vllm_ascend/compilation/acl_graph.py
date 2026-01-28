@@ -77,6 +77,8 @@ class ACLGraphWrapper:
         # need to initialize a ACLGraphWrapper.
         assert self.runtime_mode != CUDAGraphMode.NONE
         self.graph_pool = current_platform.get_global_graph_pool()
+        #可能报错
+        self.graph_pool_parallel_streams = current_platform.get_global_graph_pool()
 
         if cudagraph_options is None:
             cudagraph_options = CUDAGraphOptions()
@@ -98,6 +100,7 @@ class ACLGraphWrapper:
         return self.runnable
 
     def __call__(self, *args, **kwargs):
+        parallel_streams = kwargs.get("parallel_streams", False)
         forward_context = get_forward_context()
         batch_descriptor = forward_context.batch_descriptor
         aclgraph_runtime_mode = forward_context.cudagraph_runtime_mode
@@ -135,6 +138,8 @@ class ACLGraphWrapper:
             ]
             entry.input_addresses = input_addresses
             aclgraph = torch.npu.NPUGraph()
+            selected_pool=(self.graph_pool_parallel_streams
+                     if parallel_streams else self.graph_pool)
 
             with ExitStack() as stack:
                 if self.aclgraph_options.gc_disable:
@@ -150,7 +155,7 @@ class ACLGraphWrapper:
 
                 # mind-exploding: carefully manage the reference and memory.
                 forward_context.capturing = True
-                with torch.npu.graph(aclgraph, pool=self.graph_pool):
+                with torch.npu.graph(aclgraph, pool=selected_pool):
                     # `output` is managed by pytorch's aclgraph pool
                     output = self.runnable(*args, **kwargs)
                     if self.aclgraph_options.weak_ref_output:
