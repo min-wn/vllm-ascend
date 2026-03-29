@@ -1,0 +1,28 @@
+{
+  "timestamp": "20260327_075616",
+  "model": "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-0.5B-Instruct",
+  "tokenizer": "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-0.5B-Instruct",
+  "seed": 0,
+  "batch_size": 8,
+  "max_tokens": 100,
+  "max_model_len": null,
+  "gpu_memory_utilization": 0.9,
+  "num_splits": 2,
+  "enable_parallel_streams": false,
+  "min_batch_size_for_split": 4,
+  "compilation_config": {
+    "level": 3,
+    "cudagraph_mode": "FULL_DECODE_ONLY",
+    "cudagraph_capture_sizes": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "compare_mode": "subprocess"
+}

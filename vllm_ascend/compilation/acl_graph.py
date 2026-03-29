@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
 import dataclasses
+import os
 from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
@@ -33,6 +34,149 @@ class ACLGraphEntry:
     # for aclgraph debugging, track the input addresses
     # during capture, and check if they are the same during replay
     input_addresses: Optional[list[int]] = None
+
+
+_ACL_GRAPH_DIAG_ENABLE = (
+    os.environ.get("VLLM_ASCEND_ACLGRAPH_DIAG", "0") in ("1", "true", "True")
+    or os.environ.get("VLLM_ASCEND_SPLIT_DIAG", "0") in ("1", "true", "True")
+)
+_ACL_GRAPH_DIAG_MAX_LOGS = int(
+    os.environ.get("VLLM_ASCEND_ACLGRAPH_DIAG_MAX_LOGS", "600"))
+_acl_graph_diag_count = 0
+
+
+def _safe_tensor_shape(tensor: Any):
+    if not isinstance(tensor, torch.Tensor):
+        return None
+    try:
+        return list(tensor.shape)
+    except Exception:
+        return None
+
+
+def _safe_tensor_ptr(tensor: Any):
+    if not isinstance(tensor, torch.Tensor):
+        return None
+    try:
+        return int(tensor.data_ptr())
+    except Exception:
+        return None
+
+
+def _safe_tensor_head(tensor: Any, max_items: int = 4):
+    # Keep compatibility for older payload keys; intentionally disabled.
+    return None
+
+
+def _extract_block_table_from_metadata(metadata: Any):
+    metadata_block_table = None
+    metadata_block_source = None
+    for attr in ("block_table", "block_tables", "block_table_tensor"):
+        candidate = getattr(metadata, attr, None)
+        if isinstance(candidate, torch.Tensor):
+            metadata_block_table = candidate
+            metadata_block_source = attr
+            break
+
+    if metadata_block_table is None:
+        decode_metadata = getattr(metadata, "decode", None)
+        for attr in ("block_table", "block_tables", "block_table_tensor"):
+            candidate = getattr(decode_metadata, attr, None)
+            if isinstance(candidate, torch.Tensor):
+                metadata_block_table = candidate
+                metadata_block_source = f"decode.{attr}"
+                break
+
+    return metadata_block_table, metadata_block_source
+
+
+def _extract_graph_param_block_table(runtime_shape: Any):
+    if runtime_shape is None:
+        return None, None
+
+    graph_params = get_graph_params()
+    if graph_params is None:
+        return None, None
+    shape_params = graph_params.attn_params.get(runtime_shape)
+    if not shape_params:
+        return None, None
+
+    first_param = shape_params[0]
+    # Prefer FIA slot first, then PA/MLA-like layouts as fallback.
+    for idx, source in ((3, "fia.param[3]"), (6, "pa.param[6]"), (10, "mla.param[10]")):
+        if len(first_param) > idx and isinstance(first_param[idx], torch.Tensor):
+            return first_param[idx], source
+
+    return None, None
+
+
+def _refresh_block_table_in_place(graph_block_table: Any,
+                                  metadata_block_table: Any) -> bool:
+    """Refresh captured graph block_table from runtime metadata in-place.
+
+    This is intended for split replay path only. Unsplit path should keep
+    original behavior to minimize runtime risk.
+    """
+    if (not isinstance(graph_block_table, torch.Tensor)
+            or not isinstance(metadata_block_table, torch.Tensor)):
+        return False
+
+    # No work needed when both already alias the same storage.
+    if graph_block_table.data_ptr() == metadata_block_table.data_ptr():
+        return False
+
+    try:
+        if graph_block_table.ndim == 2 and metadata_block_table.ndim == 2:
+            rows = min(graph_block_table.shape[0], metadata_block_table.shape[0])
+            cols = min(graph_block_table.shape[1], metadata_block_table.shape[1])
+            if rows <= 0 or cols <= 0:
+                return False
+            graph_block_table[:rows, :cols].copy_(
+                metadata_block_table[:rows, :cols], non_blocking=False)
+            return True
+
+        # Fallback for non-2D layouts.
+        count = min(graph_block_table.numel(), metadata_block_table.numel())
+        if count <= 0:
+            return False
+        graph_block_table.view(-1)[:count].copy_(
+            metadata_block_table.view(-1)[:count], non_blocking=False)
+        return True
+    except Exception:
+        return False
+
+
+def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any) -> dict[str, Any]:
+    attn_metadata = getattr(forward_context, "attn_metadata", None)
+    if not attn_metadata:
+        return {}
+
+    first_key = next(iter(attn_metadata), None)
+    if first_key is None:
+        return {}
+
+    metadata = attn_metadata[first_key]
+    metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(metadata)
+    graph_block_table, graph_block_table_source = _extract_graph_param_block_table(runtime_shape)
+    return {
+        "first_key": first_key,
+        "runtime_shape": runtime_shape,
+        "meta_block_table_source": metadata_block_source,
+        "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
+        "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
+        "graph_block_table_source": graph_block_table_source,
+        "graph_block_table_shape": _safe_tensor_shape(graph_block_table),
+        "graph_block_table_ptr": _safe_tensor_ptr(graph_block_table),
+    }
+
+
+def _maybe_log_acl_graph_diag(tag: str, payload: Any) -> None:
+    global _acl_graph_diag_count
+    if ((not _ACL_GRAPH_DIAG_ENABLE and envs.VLLM_LOGGING_LEVEL != "DEBUG")
+            or _acl_graph_diag_count >= _ACL_GRAPH_DIAG_MAX_LOGS):
+        return
+    logger.info("%s: %s", tag, payload)
+    _acl_graph_diag_count += 1
 
 
 class ACLGraphWrapper:
@@ -115,12 +259,29 @@ class ACLGraphWrapper:
             # runtime modes.
             return self.runnable(*args, **kwargs)
 
-        if batch_descriptor not in self.concrete_aclgraph_entries:
+        is_new_entry = batch_descriptor not in self.concrete_aclgraph_entries
+        if is_new_entry:
             # create a new entry for this batch descriptor
             self.concrete_aclgraph_entries[batch_descriptor] = \
                 ACLGraphEntry(batch_descriptor=batch_descriptor)
 
         entry = self.concrete_aclgraph_entries[batch_descriptor]
+        _maybe_log_acl_graph_diag(
+            "acl_graph_entry_select",
+            {
+                "batch_descriptor": str(batch_descriptor),
+                "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                "parallel_streams": parallel_streams,
+                "entry_created": is_new_entry,
+                "entry_has_graph": entry.aclgraph is not None,
+                "entry_id": id(entry),
+                "runtime_mode": (
+                    aclgraph_runtime_mode.name
+                    if isinstance(aclgraph_runtime_mode, CUDAGraphMode)
+                    else str(aclgraph_runtime_mode)
+                ),
+            },
+        )
 
         if entry.aclgraph is None:
             if self.aclgraph_options.debug_log_enable:
@@ -195,12 +356,38 @@ class ACLGraphWrapper:
         # before the grph replay of iteration i-1.
         # To ensure proper ordering, we must call synchronize here before replaying,
         # so that update_attn_params only executes after the previous graph replay has fully completed.
+        runtime_shape = getattr(batch_descriptor, "num_tokens", None)
+        _maybe_log_acl_graph_diag(
+            "acl_graph_replay",
+            {
+                "entry_id": id(entry),
+                "batch_descriptor": str(batch_descriptor),
+                "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                "parallel_streams": parallel_streams,
+                "phase": "pre",
+                "runtime_shape": runtime_shape,
+            },
+        )
         torch.npu.synchronize()
         entry.aclgraph.replay()
+        replay_post_diag = _build_replay_block_table_diag(
+            forward_context, runtime_shape)
+        _maybe_log_acl_graph_diag(
+            "acl_graph_replay_post",
+            {
+                "entry_id": id(entry),
+                "batch_descriptor": str(batch_descriptor),
+                "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                "parallel_streams": parallel_streams,
+                "phase": "post",
+                **replay_post_diag,
+            },
+        )
         return entry.output
 
 
-def _update_attn_pa_params(update_stream, forward_context, runtime_shape):
+def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
+                           refresh_block_table: bool = False):
     graph_params = get_graph_params()
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
@@ -223,6 +410,32 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape):
                 output,
             ) = param
             seq_lens = forward_context.attn_metadata[key].seq_lens
+
+            metadata = forward_context.attn_metadata[key]
+            metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
+                metadata)
+            block_table_refreshed = False
+            if refresh_block_table:
+                block_table_refreshed = _refresh_block_table_in_place(
+                    block_table, metadata_block_table)
+            _maybe_log_acl_graph_diag(
+                "acl_graph_attn_update_diag",
+                {
+                    "attn_impl": "pa",
+                    "key": key,
+                    "runtime_shape": runtime_shape,
+                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                    "seq_lens_shape": _safe_tensor_shape(seq_lens),
+                    "seq_lens_len": len(seq_lens)
+                    if hasattr(seq_lens, "__len__") else None,
+                    "graph_block_table_shape": _safe_tensor_shape(block_table),
+                    "graph_block_table_ptr": _safe_tensor_ptr(block_table),
+                    "meta_block_table_source": metadata_block_source,
+                    "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
+                    "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
+                    "block_table_refreshed": block_table_refreshed,
+                            },
+            )
 
             # When using FULL_DECODE_ONLY, there are some rare bugs for FULL_DECODE_ONLY
             # mode with GQA. This is triggered by getting workspace for _npu_paged_attention
@@ -258,7 +471,8 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape):
             event.record(update_stream)
 
 
-def _update_attn_fia_params(update_stream, forward_context, runtime_shape):
+def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
+                            refresh_block_table: bool = False):
     graph_params = get_graph_params()
     # For Qwen3-next, since the kv_cache_config has already categorized
     # linear_attn and self_attn, the attn_metadata is first arranged with
@@ -275,9 +489,33 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape):
              seq_lens, query_start_loc, num_kv_heads, num_heads, scale,
              attn_output, softmax_lse) = param
 
-            seq_lens = forward_context.attn_metadata[key].seq_lens_list
-            actual_seq_lengths_q = forward_context.attn_metadata[
-                key].actual_seq_lengths_q
+            metadata = forward_context.attn_metadata[key]
+            seq_lens = metadata.seq_lens_list
+            actual_seq_lengths_q = metadata.actual_seq_lengths_q
+            metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
+                metadata)
+            block_table_refreshed = False
+            if refresh_block_table:
+                block_table_refreshed = _refresh_block_table_in_place(
+                    block_tables, metadata_block_table)
+            _maybe_log_acl_graph_diag(
+                "acl_graph_attn_update_diag",
+                {
+                    "attn_impl": "fia",
+                    "key": key,
+                    "runtime_shape": runtime_shape,
+                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                    "seq_lens_shape": _safe_tensor_shape(seq_lens),
+                    "seq_lens_len": len(seq_lens)
+                    if hasattr(seq_lens, "__len__") else None,
+                    "graph_block_table_shape": _safe_tensor_shape(block_tables),
+                    "graph_block_table_ptr": _safe_tensor_ptr(block_tables),
+                    "meta_block_table_source": metadata_block_source,
+                    "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
+                    "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
+                    "block_table_refreshed": block_table_refreshed,
+                            },
+            )
             torch.npu.graph_task_update_begin(update_stream, handle)
             torch_npu.npu_fused_infer_attention_score.out(
                 query=query,
@@ -307,6 +545,25 @@ def update_attn_params(update_stream, forward_context, runtime_shape,
         _update_attn_pa_params(update_stream, forward_context, runtime_shape)
     else:
         _update_attn_fia_params(update_stream, forward_context, runtime_shape)
+
+
+def update_attn_params_split(update_stream, forward_context,
+                             runtime_shape, vllm_config):
+    """Split-only attn update with block_table in-place refresh enabled."""
+    if using_paged_attention(runtime_shape, vllm_config):
+        _update_attn_pa_params(
+            update_stream,
+            forward_context,
+            runtime_shape,
+            refresh_block_table=True,
+        )
+    else:
+        _update_attn_fia_params(
+            update_stream,
+            forward_context,
+            runtime_shape,
+            refresh_block_table=True,
+        )
 
 
 def update_mla_attn_params(update_stream, forward_context, runtime_shape,

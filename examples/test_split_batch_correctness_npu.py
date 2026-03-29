@@ -25,6 +25,7 @@
 """
 
 import gc
+import logging
 import json
 import os
 import random
@@ -53,6 +54,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from vllm import LLM, SamplingParams  # noqa: E402
 from vllm.engine.arg_utils import EngineArgs  # noqa: E402
+import vllm.logger as vllm_logger_module  # noqa: E402
 from vllm.utils.argparse_utils import FlexibleArgumentParser  # noqa: E402
 
 
@@ -755,6 +757,17 @@ def main() -> int:
     old_stderr = sys.stderr
     sys.stdout = _TeeTextIO(old_stdout, console_f)
     sys.stderr = _TeeTextIO(old_stderr, console_f)
+
+    # Re-bind vLLM logger streams after tee so diagnostics land in console.log.
+    try:
+        vllm_logger_module._configure_vllm_root_logger()
+        for _name in ("vllm", "vllm_ascend"):
+            _lg = logging.getLogger(_name)
+            for _h in _lg.handlers:
+                if isinstance(_h, logging.StreamHandler):
+                    _h.setStream(sys.stderr)
+    except Exception as _e:
+        print(f"Warning: failed to rebind vLLM loggers to tee stream: {_e}")
 
     try:
         print("=== Output ===")
