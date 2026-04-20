@@ -25,12 +25,16 @@
 """
 
 import gc
+import faulthandler
 import logging
+import _thread
 import json
 import os
 import random
 import subprocess
 import sys
+import threading
+import traceback
 import time
 from datetime import datetime
 from pathlib import Path
@@ -92,7 +96,6 @@ class _TeeTextIO:
                 st.flush()
             except Exception:
                 pass
-
     def isatty(self) -> bool:
         for st in self._streams:
             try:
@@ -101,6 +104,33 @@ class _TeeTextIO:
             except Exception:
                 continue
         return False
+
+
+_PROFILER_FLUSH_LOCK = threading.Lock()
+_PROFILER_FLUSH_CALLBACKS: dict[int, Any] = {}
+
+
+def _register_profiler_flush_callback(cb) -> int:
+    token = id(cb)
+    with _PROFILER_FLUSH_LOCK:
+        _PROFILER_FLUSH_CALLBACKS[token] = cb
+    return token
+
+
+def _unregister_profiler_flush_callback(token: int) -> None:
+    with _PROFILER_FLUSH_LOCK:
+        _PROFILER_FLUSH_CALLBACKS.pop(token, None)
+
+
+def _trigger_profiler_flush_callbacks() -> None:
+    with _PROFILER_FLUSH_LOCK:
+        callbacks = list(_PROFILER_FLUSH_CALLBACKS.values())
+    for cb in callbacks:
+        try:
+            cb()
+        except Exception:
+            # Best-effort flush path during timeout handling.
+            pass
 
 
 def create_parser() -> FlexibleArgumentParser:
@@ -215,7 +245,177 @@ def create_parser() -> FlexibleArgumentParser:
         action="store_true",
         help="Record Python call stacks (more overhead).",
     )
+    diag_group = parser.add_argument_group("Hang diagnosis")
+    diag_group.add_argument(
+        "--child-timeout-s",
+        type=float,
+        default=0.0,
+        help=(
+            "Subprocess timeout in seconds when --compare-mode=subprocess. "
+            "0 means no timeout."
+        ),
+    )
+    diag_group.add_argument(
+        "--hard-timeout-grace-s",
+        type=float,
+        default=20.0,
+        help=(
+            "Grace window (seconds) after timeout to allow graceful "
+            "KeyboardInterrupt unwind before force exit."
+        ),
+    )
+    diag_group.add_argument(
+        "--split-thread-timeout-s",
+        type=float,
+        default=0.0,
+        help=(
+            "Set VLLM_ASCEND_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S. "
+            "0 keeps existing behavior."
+        ),
+    )
+    diag_group.add_argument(
+        "--enable-split-parallel-profiling",
+        action="store_true",
+        help="Enable split parallel scheduling profiling in model_runner_v3.",
+    )
+    diag_group.add_argument(
+        "--enable-aclgraph-diag",
+        action="store_true",
+        help="Enable ACL graph replay/block-table diagnostics.",
+    )
+    diag_group.add_argument(
+        "--aclgraph-diag-max-logs",
+        type=int,
+        default=1200,
+        help="Max ACL graph diagnostic log lines when --enable-aclgraph-diag is set.",
+    )
+    diag_group.add_argument(
+        "--aclgraph-skip-sync-for-parallel",
+        action="store_true",
+        help="Set VLLM_ASCEND_ACLGRAPH_SKIP_SYNC_FOR_PARALLEL=1 for parallel replay tests.",
+    )
     return parser
+
+
+def _apply_hang_diag_env(
+    *,
+    split_thread_timeout_s: float,
+    enable_split_parallel_profiling: bool,
+    enable_aclgraph_diag: bool,
+    aclgraph_diag_max_logs: int,
+    aclgraph_skip_sync_for_parallel: bool,
+) -> dict[str, str]:
+    if split_thread_timeout_s > 0:
+        os.environ["VLLM_ASCEND_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S"] = str(
+            float(split_thread_timeout_s))
+    else:
+        os.environ.pop("VLLM_ASCEND_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S", None)
+
+    if enable_split_parallel_profiling:
+        os.environ["VLLM_ASCEND_SPLIT_PARALLEL_PROFILING"] = "1"
+    else:
+        os.environ.pop("VLLM_ASCEND_SPLIT_PARALLEL_PROFILING", None)
+
+    if enable_aclgraph_diag:
+        os.environ["VLLM_ASCEND_ACLGRAPH_DIAG"] = "1"
+        os.environ["VLLM_ASCEND_ACLGRAPH_DIAG_MAX_LOGS"] = str(
+            int(max(1, aclgraph_diag_max_logs)))
+    else:
+        os.environ.pop("VLLM_ASCEND_ACLGRAPH_DIAG", None)
+        os.environ.pop("VLLM_ASCEND_ACLGRAPH_DIAG_MAX_LOGS", None)
+
+    if aclgraph_skip_sync_for_parallel:
+        os.environ["VLLM_ASCEND_ACLGRAPH_SKIP_SYNC_FOR_PARALLEL"] = "1"
+    else:
+        os.environ.pop("VLLM_ASCEND_ACLGRAPH_SKIP_SYNC_FOR_PARALLEL", None)
+
+    keys = [
+        "VLLM_ASCEND_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S",
+        "VLLM_ASCEND_SPLIT_PARALLEL_PROFILING",
+        "VLLM_ASCEND_ACLGRAPH_DIAG",
+        "VLLM_ASCEND_ACLGRAPH_DIAG_MAX_LOGS",
+        "VLLM_ASCEND_ACLGRAPH_SKIP_SYNC_FOR_PARALLEL",
+    ]
+    return {k: os.environ.get(k, "") for k in keys if k in os.environ}
+def _start_hard_timeout_watchdog(timeout_s: float,
+                                 context: str,
+                                 graceful_grace_s: float = 20.0) -> threading.Event:
+    cancel_event = threading.Event()
+    if timeout_s <= 0:
+        return cancel_event
+
+    # Give Python/profiler a brief chance to unwind and flush traces before
+    # using hard process exit.
+    graceful_grace_s = max(0.0, float(graceful_grace_s))
+
+    def _watchdog() -> None:
+        if cancel_event.wait(timeout_s):
+            return
+        msg = (
+            f"HARD TIMEOUT reached: timeout_s={timeout_s}, context={context}. "
+            "Requesting graceful interruption first."
+        )
+        try:
+            print(msg, file=sys.stderr, flush=True)
+        except Exception:
+            pass
+        # Try to flush profiler traces before interrupting the main thread.
+        _trigger_profiler_flush_callbacks()
+        try:
+            _thread.interrupt_main()
+        except Exception:
+            pass
+
+        if cancel_event.wait(graceful_grace_s):
+            return
+
+        try:
+            print(
+                f"Hard-timeout grace window elapsed ({graceful_grace_s}s). "
+                "Force exiting with code 124.",
+                file=sys.stderr,
+                flush=True,
+            )
+        except Exception:
+            pass
+        try:
+            faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
+        except Exception:
+            pass
+
+        # Final best-effort flush before force exit.
+        _trigger_profiler_flush_callbacks()
+
+        # Fallback: dump Python thread stacks even if faulthandler cannot emit
+        # output in this process state.
+        try:
+            print("=== manual thread stack dump (watchdog fallback) ===",
+                  file=sys.stderr,
+                  flush=True)
+            frames = sys._current_frames()
+            for th in threading.enumerate():
+                print(f"--- thread={th.name} ident={th.ident} ---",
+                      file=sys.stderr,
+                      flush=True)
+                if th.ident is None:
+                    continue
+                fr = frames.get(th.ident)
+                if fr is None:
+                    continue
+                for line in traceback.format_stack(fr):
+                    print(line.rstrip("\n"), file=sys.stderr, flush=True)
+        except Exception:
+            pass
+
+        os._exit(124)
+
+    t = threading.Thread(
+        target=_watchdog,
+        name='split-batch-hard-timeout-watchdog',
+        daemon=True,
+    )
+    t.start()
+    return cancel_event
 
 
 def _build_llm_from_args(
@@ -236,8 +436,6 @@ def _extract_first_output(output) -> tuple[list[int], str]:
     token_ids = list(getattr(o0, "token_ids", []) or [])
     text = str(getattr(o0, "text", "") or "")
     return token_ids, text
-
-
 def _default_prompts() -> list[str]:
     return [
         "Hello, my name is",
@@ -375,41 +573,74 @@ def _run_with_torch_profiler(
         return fn()
 
     try:
-        from torch_npu import profiler as npu_profiler
+        import torch_npu.profiler as npu_profiler
     except Exception as e:
-        raise RuntimeError(
-            "--profile was set but torch_npu.profiler is not available"
-        ) from e
+        print(
+            f"Warning: torch_npu.profiler import failed, run without profiling: {e}",
+            file=sys.stderr,
+        )
+        return fn()
 
-    os.makedirs(profile_dir, exist_ok=True)
-    ts = time.strftime("%Y%m%d_%H%M%S")
-    out_dir = os.path.join(profile_dir, f"{ts}_{run_name}")
-    os.makedirs(out_dir, exist_ok=True)
+    trace_root = (Path(profile_dir).expanduser() / run_name /
+                  datetime.now().strftime("%Y%m%d_%H%M%S"))
+    trace_root.mkdir(parents=True, exist_ok=True)
 
-    activities = [npu_profiler.ProfilerActivity.CPU, npu_profiler.ProfilerActivity.NPU]
-    trace_handler = npu_profiler.tensorboard_trace_handler(out_dir)
+    activities = []
+    if hasattr(npu_profiler, "ProfilerActivity"):
+        pa = npu_profiler.ProfilerActivity
+        if hasattr(pa, "CPU"):
+            activities.append(pa.CPU)
+        if hasattr(pa, "NPU"):
+            activities.append(pa.NPU)
 
-    # Use an explicit schedule to avoid "stop while RECORD" edge cases.
-    schedule = npu_profiler.schedule(wait=0, warmup=0, active=1, repeat=1)
+    profile_kwargs: dict[str, Any] = {
+        "record_shapes": bool(record_shapes),
+        "with_stack": bool(with_stack),
+        "on_trace_ready": npu_profiler.tensorboard_trace_handler(
+            str(trace_root)),
+    }
+    if activities:
+        profile_kwargs["activities"] = activities
+    if hasattr(npu_profiler, "schedule"):
+        profile_kwargs["schedule"] = npu_profiler.schedule(wait=0,
+                                                            warmup=0,
+                                                            active=1,
+                                                            repeat=1,
+                                                            skip_first=0)
 
-    if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
-        torch.npu.synchronize()
+    profiler = npu_profiler.profile(**profile_kwargs)
+    flush_state = {"stopped": False}
 
-    with npu_profiler.profile(
-        activities=activities,
-        schedule=schedule,
-        record_shapes=record_shapes,
-        with_stack=with_stack,
-        on_trace_ready=trace_handler,
-        profile_memory=False,
-    ) as prof:
-        result = fn()
-        if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
-            torch.npu.synchronize()
-        prof.step()
-        if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
-            torch.npu.synchronize()
-        return result
+    def _flush_profiler() -> None:
+        if flush_state["stopped"]:
+            return
+        try:
+            if hasattr(profiler, "step"):
+                profiler.step()
+        except Exception:
+            pass
+        try:
+            if hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
+                torch.npu.synchronize()
+        except Exception:
+            pass
+        try:
+            profiler.stop()
+        finally:
+            flush_state["stopped"] = True
+
+    cb_token = _register_profiler_flush_callback(_flush_profiler)
+    try:
+        profiler.start()
+        outputs = fn()
+        _flush_profiler()
+        print(f"Profiler trace written to: {trace_root}")
+        return outputs
+    except Exception:
+        _flush_profiler()
+        raise
+    finally:
+        _unregister_profiler_flush_callback(cb_token)
 
 
 def _build_split_additional_config(
@@ -476,6 +707,8 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "min_batch_size_for_split": ctx["min_batch_size_for_split"],
         "compilation_config": base_args.get("compilation_config"),
         "compare_mode": "subprocess",
+        "child_timeout_s": float(ctx["child_timeout_s"]),
+        "diag_env": dict(ctx.get("diag_env") or {}),
     }
     _save_json(os.path.join(out_dir, "metadata.json"), metadata)
 
@@ -550,7 +783,22 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
     print("Output dir:", out_dir)
 
     print("\n=== Run 1/2: split disabled (child process) ===")
-    r0 = subprocess.run(_child_cmd(child_run="disabled", child_out=outputs_disabled_path))
+    child_timeout_s = float(ctx["child_timeout_s"])
+    try:
+        r0 = subprocess.run(
+            _child_cmd(child_run="disabled", child_out=outputs_disabled_path),
+            timeout=child_timeout_s if child_timeout_s > 0 else None,
+        )
+    except subprocess.TimeoutExpired:
+        print(
+            f"FAIL: child(disabled) timeout after {child_timeout_s:.1f}s",
+            file=sys.stderr,
+        )
+        _save_json(
+            os.path.join(out_dir, "summary.json"),
+            {"status": "FAIL", "reason": "child(disabled) timeout", "timeout_s": child_timeout_s},
+        )
+        return 124
     if r0.returncode != 0:
         print(f"FAIL: child(disabled) exit code={r0.returncode}", file=sys.stderr)
         _save_json(
@@ -564,7 +812,21 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         return r0.returncode or 1
 
     print("\n=== Run 2/2: split enabled (child process) ===")
-    r1 = subprocess.run(_child_cmd(child_run="enabled", child_out=outputs_enabled_path))
+    try:
+        r1 = subprocess.run(
+            _child_cmd(child_run="enabled", child_out=outputs_enabled_path),
+            timeout=child_timeout_s if child_timeout_s > 0 else None,
+        )
+    except subprocess.TimeoutExpired:
+        print(
+            f"FAIL: child(enabled) timeout after {child_timeout_s:.1f}s",
+            file=sys.stderr,
+        )
+        _save_json(
+            os.path.join(out_dir, "summary.json"),
+            {"status": "FAIL", "reason": "child(enabled) timeout", "timeout_s": child_timeout_s},
+        )
+        return 124
     if r1.returncode != 0:
         print(f"FAIL: child(enabled) exit code={r1.returncode}", file=sys.stderr)
         _save_json(
@@ -651,6 +913,31 @@ def main() -> int:
     profile_target = str(args.pop("profile_target"))
     profile_record_shapes = bool(args.pop("profile_record_shapes"))
     profile_with_stack = bool(args.pop("profile_with_stack"))
+    child_timeout_s = float(args.pop("child_timeout_s"))
+    hard_timeout_grace_s = float(args.pop("hard_timeout_grace_s"))
+    split_thread_timeout_s = float(args.pop("split_thread_timeout_s"))
+    enable_split_parallel_profiling = bool(
+        args.pop("enable_split_parallel_profiling"))
+    enable_aclgraph_diag = bool(args.pop("enable_aclgraph_diag"))
+    aclgraph_diag_max_logs = int(args.pop("aclgraph_diag_max_logs"))
+    aclgraph_skip_sync_for_parallel = bool(
+        args.pop("aclgraph_skip_sync_for_parallel"))
+    diag_env = _apply_hang_diag_env(
+        split_thread_timeout_s=split_thread_timeout_s,
+        enable_split_parallel_profiling=enable_split_parallel_profiling,
+        enable_aclgraph_diag=enable_aclgraph_diag,
+        aclgraph_diag_max_logs=aclgraph_diag_max_logs,
+        aclgraph_skip_sync_for_parallel=aclgraph_skip_sync_for_parallel,
+    )
+
+    hard_timeout_cancel: threading.Event | None = None
+    if child_timeout_s > 0 and not (run_mode == "both"
+                                    and compare_mode == "subprocess"):
+        hard_timeout_cancel = _start_hard_timeout_watchdog(
+            child_timeout_s,
+            f"run={run_mode}, compare_mode={compare_mode}",
+            hard_timeout_grace_s,
+        )
 
     # In vLLM V1, setting VLLM_ENABLE_V1_MULTIPROCESSING=0 forces in-proc execution.
     # In this mode, releasing NPU memory fully between two separate engine instantiations
@@ -714,6 +1001,8 @@ def main() -> int:
             profile_target=profile_target,
             profile_record_shapes=profile_record_shapes,
             profile_with_stack=profile_with_stack,
+            child_timeout_s=child_timeout_s,
+            diag_env=diag_env,
         )
 
     # For all non-coordinator paths: always create an output dir and write all artifacts.
@@ -740,6 +1029,8 @@ def main() -> int:
         "profile_dir": profile_dir,
         "profile_target": profile_target,
         "profile_record_shapes": profile_record_shapes,
+        "child_timeout_s": child_timeout_s,
+        "diag_env": diag_env,
         "profile_with_stack": profile_with_stack,
         "output_file": output_file,
         "output_dir": out_dir,
@@ -979,6 +1270,20 @@ def main() -> int:
         )
         return 0
 
+    except KeyboardInterrupt:
+        try:
+            _save_json(
+                os.path.join(out_dir, "summary.json"),
+                {
+                    "status": "TIMEOUT_INTERRUPTED",
+                    "reason": "KeyboardInterrupt",
+                    "console_log": console_path,
+                },
+            )
+        except Exception:
+            pass
+        return 124
+
     except Exception as e:
         try:
             _save_json(
@@ -993,6 +1298,11 @@ def main() -> int:
             pass
         raise
     finally:
+        try:
+            if hard_timeout_cancel is not None:
+                hard_timeout_cancel.set()
+        except Exception:
+            pass
         try:
             sys.stdout = old_stdout
             sys.stderr = old_stderr

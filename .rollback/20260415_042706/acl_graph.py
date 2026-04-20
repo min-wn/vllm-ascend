@@ -3,8 +3,6 @@
 
 import dataclasses
 import os
-import threading
-import time
 from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
@@ -36,10 +34,6 @@ class ACLGraphEntry:
     # for aclgraph debugging, track the input addresses
     # during capture, and check if they are the same during replay
     input_addresses: Optional[list[int]] = None
-
-    # Start offset of this graph's attn params inside
-    # graph_params.attn_params[runtime_shape].
-    attn_params_offset: int = 0
 
 
 _ACL_GRAPH_DIAG_ENABLE = (
@@ -99,8 +93,7 @@ def _extract_block_table_from_metadata(metadata: Any):
     return metadata_block_table, metadata_block_source
 
 
-def _extract_graph_param_block_table(runtime_shape: Any,
-                                    attn_offset: int = 0):
+def _extract_graph_param_block_table(runtime_shape: Any):
     if runtime_shape is None:
         return None, None
 
@@ -111,12 +104,7 @@ def _extract_graph_param_block_table(runtime_shape: Any,
     if not shape_params:
         return None, None
 
-    if attn_offset < 0:
-        attn_offset = 0
-    if attn_offset >= len(shape_params):
-        attn_offset = 0
-
-    first_param = shape_params[attn_offset]
+    first_param = shape_params[0]
     # Prefer FIA slot first, then PA/MLA-like layouts as fallback.
     for idx, source in ((3, "fia.param[3]"), (6, "pa.param[6]"), (10, "mla.param[10]")):
         if len(first_param) > idx and isinstance(first_param[idx], torch.Tensor):
@@ -161,9 +149,7 @@ def _refresh_block_table_in_place(graph_block_table: Any,
         return False
 
 
-def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any,
-                                  parallel_group: int = 0,
-                                  attn_offset: Optional[int] = None) -> dict[str, Any]:
+def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any) -> dict[str, Any]:
     attn_metadata = getattr(forward_context, "attn_metadata", None)
     if not attn_metadata:
         return {}
@@ -174,12 +160,7 @@ def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any,
 
     metadata = attn_metadata[first_key]
     metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(metadata)
-    n = len(attn_metadata)
-    effective_attn_offset = attn_offset if attn_offset is not None else int(parallel_group) * n
-    graph_block_table, graph_block_table_source = _extract_graph_param_block_table(
-        runtime_shape,
-        attn_offset=effective_attn_offset,
-    )
+    graph_block_table, graph_block_table_source = _extract_graph_param_block_table(runtime_shape)
     return {
         "first_key": first_key,
         "runtime_shape": runtime_shape,
@@ -189,9 +170,7 @@ def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any,
         "graph_block_table_source": graph_block_table_source,
         "graph_block_table_shape": _safe_tensor_shape(graph_block_table),
         "graph_block_table_ptr": _safe_tensor_ptr(graph_block_table),
-    "parallel_group": int(parallel_group),
-          "attn_offset": int(effective_attn_offset),
-      }
+    }
 
 
 def _maybe_log_acl_graph_diag(tag: str, payload: Any) -> None:
@@ -244,8 +223,8 @@ class ACLGraphWrapper:
         # assert runtime_mode is not NONE(no aclgraph), otherwise, we don't
         # need to initialize a ACLGraphWrapper.
         assert self.runtime_mode != CUDAGraphMode.NONE
-        self.graph_pool1 = torch.npu.graph_pool_handle()
-        self.graph_pool2=torch.npu.graph_pool_handle()
+        self.graph_pool = current_platform.get_global_graph_pool()
+        self.parallel_pool=torch.npu.graph_pool_handle()
 
         if cudagraph_options is None:
             cudagraph_options = CUDAGraphOptions()
@@ -266,16 +245,6 @@ class ACLGraphWrapper:
         # in case we need to access the original runnable.
         return self.runnable
 
-    def get_attn_params_offset(self,
-                               batch_descriptor: BatchDescriptor,
-                               parallel_streams: bool,
-                               parallel_group: int) -> int:
-        key = (batch_descriptor, bool(parallel_streams), int(parallel_group))
-        entry = self.concrete_aclgraph_entries.get(key)
-        if entry is None:
-            return 0
-        return int(entry.attn_params_offset)
-
     def __call__(self, *args, **kwargs):
         # Remove wrapper-only kwargs before dispatching to runnable.
         kwargs = dict(kwargs)
@@ -284,8 +253,6 @@ class ACLGraphWrapper:
         forward_context = get_forward_context()
         batch_descriptor = forward_context.batch_descriptor
         aclgraph_runtime_mode = forward_context.cudagraph_runtime_mode
-        selected_pool = (self.graph_pool2 if (parallel_streams and parallel_group != 0)
-            else self.graph_pool1)
 
         if aclgraph_runtime_mode == CUDAGraphMode.NONE or \
                             aclgraph_runtime_mode != self.runtime_mode:
@@ -339,19 +306,9 @@ class ACLGraphWrapper:
             ]
             entry.input_addresses = input_addresses
             aclgraph = torch.npu.NPUGraph()
-            
-
-
-            # Record attn_params list length BEFORE capture so we can
-            # compute the correct offset for this graph entry afterwards.
-            _pre_cap_graph_params = get_graph_params()
-            _pre_cap_runtime_shape = getattr(batch_descriptor, "num_tokens", None)
-            _pre_capture_offset = 0
-            if (_pre_cap_graph_params is not None
-                    and _pre_cap_runtime_shape is not None
-                    and _pre_cap_runtime_shape in _pre_cap_graph_params.attn_params):
-                _pre_capture_offset = len(
-                    _pre_cap_graph_params.attn_params[_pre_cap_runtime_shape])
+            selected_pool = (self.parallel_pool if (parallel_streams
+                                            and self.parallel_pool is not None)
+                             else self.graph_pool)
 
             with ExitStack() as stack:
                 if self.aclgraph_options.gc_disable:
@@ -384,12 +341,6 @@ class ACLGraphWrapper:
             entry.output = weak_ref_tensors(output)
             entry.aclgraph = aclgraph
 
-            # Use the pre-capture list length as the offset for this entry.
-            # This is correct regardless of whether attn_metadata is a dict
-            # (normal path) or a list (split-batch path), since we measure
-            # the list boundary before any params are appended by this capture.
-            entry.attn_params_offset = _pre_capture_offset
-
             compilation_counter.num_cudagraph_captured += 1
 
             # important: we need to return the output, rather than
@@ -410,17 +361,11 @@ class ACLGraphWrapper:
         logger.info_once("Replaying aclgraph")
         # In async scheduling or multi-threaded (MT) scenarios, it is possible that
         # the CPU's record event (from update_attn_params) for the iteration i completes
-        # before the graph replay of iteration i-1.
-        # For non-parallel replay path we keep the global sync behavior.
-        # For parallel replay path, a global sync can block across streams and
-        # create circular wait with caller-managed event ordering.
+        # before the grph replay of iteration i-1.
+        # To ensure proper ordering, we must call synchronize here before replaying,
+        # so that update_attn_params only executes after the previous graph replay has fully completed.
         runtime_shape = getattr(batch_descriptor, "num_tokens", None)
-        need_replay_sync = ((not parallel_streams)
-                            and (not _ACL_GRAPH_SKIP_SYNC_FOR_PARALLEL))
-        if parallel_streams and need_replay_sync:
-            logger.error("ACLGraph replay sync is unexpectedly enabled in parallel mode: "
-                         "batch_descriptor=%s parallel_group=%s",
-                         batch_descriptor, parallel_group)
+        need_replay_sync = not (parallel_streams and _ACL_GRAPH_SKIP_SYNC_FOR_PARALLEL)
         _maybe_log_acl_graph_diag(
             "acl_graph_replay",
             {
@@ -432,52 +377,12 @@ class ACLGraphWrapper:
                   "phase": "pre",
                 "runtime_shape": runtime_shape,
                 "replay_sync": need_replay_sync,
-                "graph_pool_id": id(selected_pool),
             },
         )
-
-        # torch.npu.synchronize()
-        replay_t0_ns = time.perf_counter_ns()
-        replay_tid = threading.get_ident()
-        _maybe_log_acl_graph_diag(
-            "acl_graph_replay_timing",
-            {
-                "entry_id": id(entry),
-                "batch_descriptor": str(batch_descriptor),
-                "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                "parallel_streams": parallel_streams,
-                "parallel_group": parallel_group,
-                "phase": "before_replay",
-                "runtime_shape": runtime_shape,
-                "attn_offset": int(getattr(entry, "attn_params_offset", 0)),
-                "thread_id": replay_tid,
-                "t_ns": replay_t0_ns,
-            },
-        )
+        torch.npu.synchronize()
         entry.aclgraph.replay()
-        replay_t1_ns = time.perf_counter_ns()
-        _maybe_log_acl_graph_diag(
-            "acl_graph_replay_timing",
-            {
-                "entry_id": id(entry),
-                "batch_descriptor": str(batch_descriptor),
-                "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                "parallel_streams": parallel_streams,
-                "parallel_group": parallel_group,
-                "phase": "after_replay",
-                "runtime_shape": runtime_shape,
-                "attn_offset": int(getattr(entry, "attn_params_offset", 0)),
-                "thread_id": replay_tid,
-                "t_ns": replay_t1_ns,
-                "dur_us": (replay_t1_ns - replay_t0_ns) / 1000.0,
-            },
-        )
         replay_post_diag = _build_replay_block_table_diag(
-              forward_context,
-              runtime_shape,
-              parallel_group=parallel_group,
-              attn_offset=int(getattr(entry, "attn_params_offset", 0)),
-          )
+            forward_context, runtime_shape)
         _maybe_log_acl_graph_diag(
             "acl_graph_replay_post",
             {
@@ -494,23 +399,16 @@ class ACLGraphWrapper:
 
 
 def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
-                           refresh_block_table: bool = False,
-                           parallel_group: int = 0,
-                           attn_offset: Optional[int] = None):
+                           refresh_block_table: bool = False):
     graph_params = get_graph_params()
-    n = len(forward_context.attn_metadata)
-    offset = attn_offset if attn_offset is not None else parallel_group * n
-    attn_params_slice = graph_params.attn_params[runtime_shape][offset:offset + n]
-    handles_slice = graph_params.handles[runtime_shape][offset:offset + n]
-    events_slice = graph_params.events[runtime_shape][offset:offset + n]
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                attn_params_slice,
-                handles_slice,
-                events_slice,
+                graph_params.attn_params[runtime_shape],
+                graph_params.handles[runtime_shape],
+                graph_params.events[runtime_shape],
         ):
             (
                 query,
@@ -539,8 +437,6 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                     "key": key,
                     "runtime_shape": runtime_shape,
                     "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                      "parallel_group": int(parallel_group),
-                      "attn_offset": int(offset),
                     "seq_lens_shape": _safe_tensor_shape(seq_lens),
                     "seq_lens_len": len(seq_lens)
                     if hasattr(seq_lens, "__len__") else None,
@@ -588,15 +484,8 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
 
 
 def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
-                            refresh_block_table: bool = False,
-                            parallel_group: int = 0,
-                            attn_offset: Optional[int] = None):
+                            refresh_block_table: bool = False):
     graph_params = get_graph_params()
-    n = len(forward_context.attn_metadata)
-    offset = attn_offset if attn_offset is not None else parallel_group * n
-    attn_params_slice = graph_params.attn_params[runtime_shape][offset:offset + n]
-    handles_slice = graph_params.handles[runtime_shape][offset:offset + n]
-    events_slice = graph_params.events[runtime_shape][offset:offset + n]
     # For Qwen3-next, since the kv_cache_config has already categorized
     # linear_attn and self_attn, the attn_metadata is first arranged with
     # self_attn followed by linear_attn. Therefore, using zip directly
@@ -604,9 +493,9 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                attn_params_slice,
-                handles_slice,
-                events_slice,
+                graph_params.attn_params[runtime_shape],
+                graph_params.handles[runtime_shape],
+                graph_params.events[runtime_shape],
         ):
             (query, key_cache, value, block_tables, attn_mask, block_size,
              seq_lens, query_start_loc, num_kv_heads, num_heads, scale,
@@ -628,8 +517,6 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                     "key": key,
                     "runtime_shape": runtime_shape,
                     "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                      "parallel_group": int(parallel_group),
-                      "attn_offset": int(offset),
                     "seq_lens_shape": _safe_tensor_shape(seq_lens),
                     "seq_lens_len": len(seq_lens)
                     if hasattr(seq_lens, "__len__") else None,
@@ -665,26 +552,15 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
 
 
 def update_attn_params(update_stream, forward_context, runtime_shape,
-                       vllm_config, parallel_group: int = 0,
-                       attn_offset: Optional[int] = None):
+                       vllm_config):
     if using_paged_attention(runtime_shape, vllm_config):
-        _update_attn_pa_params(update_stream,
-                               forward_context,
-                               runtime_shape,
-                               parallel_group=parallel_group,
-                               attn_offset=attn_offset)
+        _update_attn_pa_params(update_stream, forward_context, runtime_shape)
     else:
-        _update_attn_fia_params(update_stream,
-                                forward_context,
-                                runtime_shape,
-                                parallel_group=parallel_group,
-                                attn_offset=attn_offset)
+        _update_attn_fia_params(update_stream, forward_context, runtime_shape)
 
 
 def update_attn_params_split(update_stream, forward_context,
-                             runtime_shape, vllm_config,
-                             parallel_group: int = 0,
-                             attn_offset: Optional[int] = None):
+                             runtime_shape, vllm_config):
     """Split-only attn update with block_table in-place refresh enabled."""
     if using_paged_attention(runtime_shape, vllm_config):
         _update_attn_pa_params(
@@ -692,8 +568,6 @@ def update_attn_params_split(update_stream, forward_context,
             forward_context,
             runtime_shape,
             refresh_block_table=True,
-            parallel_group=parallel_group,
-            attn_offset=attn_offset,
         )
     else:
         _update_attn_fia_params(
@@ -701,29 +575,22 @@ def update_attn_params_split(update_stream, forward_context,
             forward_context,
             runtime_shape,
             refresh_block_table=True,
-            parallel_group=parallel_group,
-            attn_offset=attn_offset,
         )
 
 
 
 
 def _refresh_attn_pa_block_table_only(update_stream, forward_context,
-                                      runtime_shape,
-                                      parallel_group: int = 0,
-                                      attn_offset: Optional[int] = None):
+                                      runtime_shape):
     graph_params = get_graph_params()
     if graph_params is None:
         return
     attn_params = graph_params.attn_params.get(runtime_shape)
     if attn_params is None:
         return
-    n = len(forward_context.attn_metadata)
-    offset = attn_offset if attn_offset is not None else parallel_group * n
-    attn_params_slice = attn_params[offset:offset + n]
 
     with torch.npu.stream(update_stream):
-        for key, param in zip(forward_context.attn_metadata, attn_params_slice):
+        for key, param in zip(forward_context.attn_metadata, attn_params):
             if len(param) <= 6:
                 continue
             block_table = param[6]
@@ -751,21 +618,16 @@ def _refresh_attn_pa_block_table_only(update_stream, forward_context,
 
 
 def _refresh_attn_fia_block_table_only(update_stream, forward_context,
-                                       runtime_shape,
-                                       parallel_group: int = 0,
-                                       attn_offset: Optional[int] = None):
+                                       runtime_shape):
     graph_params = get_graph_params()
     if graph_params is None:
         return
     attn_params = graph_params.attn_params.get(runtime_shape)
     if attn_params is None:
         return
-    n = len(forward_context.attn_metadata)
-    offset = attn_offset if attn_offset is not None else parallel_group * n
-    attn_params_slice = attn_params[offset:offset + n]
 
     with torch.npu.stream(update_stream):
-        for key, param in zip(forward_context.attn_metadata, attn_params_slice):
+        for key, param in zip(forward_context.attn_metadata, attn_params):
             if len(param) <= 3:
                 continue
             block_tables = param[3]
@@ -793,40 +655,29 @@ def _refresh_attn_fia_block_table_only(update_stream, forward_context,
 
 
 def refresh_attn_block_table_for_split(update_stream, forward_context,
-                                       runtime_shape, vllm_config,
-                                       parallel_group: int = 0,
-                                       attn_offset: Optional[int] = None):
+                                       runtime_shape, vllm_config):
     """Split-only block_table refresh without full attn task update."""
     if using_paged_attention(runtime_shape, vllm_config):
         _refresh_attn_pa_block_table_only(update_stream, forward_context,
-                                          runtime_shape,
-                                          parallel_group=parallel_group,
-                                          attn_offset=attn_offset)
+                                          runtime_shape)
     else:
         _refresh_attn_fia_block_table_only(update_stream, forward_context,
-                                           runtime_shape,
-                                           parallel_group=parallel_group,
-                                           attn_offset=attn_offset)
+                                           runtime_shape)
 
 def update_mla_attn_params(update_stream, forward_context, runtime_shape,
-                           speculative_config, parallel_group: int = 0):
+                           speculative_config):
     if forward_context.is_mtp_model:
         graph_params = get_mtp_graph_params()
     else:
         graph_params = get_graph_params()
-    n = len(forward_context.attn_metadata)
-    offset = 0 if forward_context.is_mtp_model else parallel_group * n
-    attn_params_slice = graph_params.attn_params[runtime_shape][offset:offset + n]
-    handles_slice = graph_params.handles[runtime_shape][offset:offset + n]
-    events_slice = graph_params.events[runtime_shape][offset:offset + n]
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                attn_params_slice,
-                handles_slice,
-                events_slice,
+                graph_params.attn_params[runtime_shape],
+                graph_params.handles[runtime_shape],
+                graph_params.events[runtime_shape],
         ):
             (q_nope, k_nope, q_pe, k_pe, num_heads, num_kv_heads, input_layout,
              spec_attn_mask, sparse_mode, scale, block_table, block_size,

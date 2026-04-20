@@ -336,10 +336,10 @@ def create_split_batch_slices(
                 f"Sum of custom_split_sizes ({sum(custom_split_sizes)}) "
                 f"must equal total number of requests ({num_reqs})"
             )
-        if len(custom_split_sizes) != num_splits:
+        if len(custom_split_sizes) > num_splits:
             raise ValueError(
                 f"Length of custom_split_sizes ({len(custom_split_sizes)}) "
-                f"must equal num_splits ({num_splits})"
+                f"must be not greater than num_splits ({num_splits})"
             )
     
     
@@ -428,7 +428,7 @@ def split_batch_split(
     if num_reqs < split_config.min_batch_size_for_split:
         return (None, None)
     
-    num_splits = split_config.num_splits
+    num_splits = split_config.max_num_splits
     
     # Create split slices
     split_slices = create_split_batch_slices(

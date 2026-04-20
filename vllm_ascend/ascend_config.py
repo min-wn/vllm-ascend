@@ -321,12 +321,15 @@ class SplitBatchConfig:
         self.enabled: bool = bool(split_batch_config.get("enabled", False))
         self.enable_parallel_streams: bool = bool(
             split_batch_config.get("enable_parallel_streams", False))
-        self.num_splits: int = int(split_batch_config.get("num_splits", 2))
+        self.max_num_splits: int = int(split_batch_config.get("num_splits", 5))
         self.min_batch_size_for_split: int = int(
             split_batch_config.get("min_batch_size_for_split", 4))
+        self.cudagraph_capture_fixed_size: int=int(
+            split_batch_config.get("cudagraph_capture_fixed_size",4)
+        )
 
-        if self.num_splits < 2:
-            raise ValueError("split_batch_config.num_splits must be >= 2")
+        if self.max_num_splits < 2:
+            raise ValueError("split_batch_config.max_num_splits must be >= 2")
         if self.min_batch_size_for_split < 1:
             raise ValueError(
                 "split_batch_config.min_batch_size_for_split must be >= 1")

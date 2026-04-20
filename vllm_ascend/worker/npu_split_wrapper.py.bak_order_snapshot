@@ -19,7 +19,6 @@ from vllm_ascend.ascend_forward_context import create_ascend_forward_context
 from vllm_ascend.worker.npu_ubatch_wrapper import AscendUbatchMetadata
 from vllm.v1.worker.ubatch_utils import UBatchSlice
 from vllm_ascend.compilation.acl_graph import ACLGraphWrapper
-from vllm_ascend.ascend_config import SplitBatchConfig
 # Import update functions
 from vllm_ascend.compilation.acl_graph import (
     update_mla_attn_params,
@@ -88,24 +87,12 @@ class AscendSplitBatchWrapper:
 
     def __init__(self, runnable: Callable, vllm_config: VllmConfig,
                  runtime_mode: CUDAGraphMode, device: torch.npu.device,
-                 update_stream: Optional[torch.npu.Stream] = None,
-                 split_config: Optional[SplitBatchConfig] = None):
+                 update_stream: Optional[torch.npu.Stream] = None):
         self.runnable = runnable
         self.vllm_config = vllm_config
         self.compilation_config = vllm_config.compilation_config
         self.default_stream = torch.npu.default_stream(device)
-        self.parallel_stream = torch.npu.Stream()
         self.device = device
-        self.pool = torch.npu.graph_pool_handle()
-        self.enable_parallel = getattr(split_config, "enable_parallel_streams", False)
-        self.extra_graph_size = getattr(split_config,
-                                        "cudagraph_capture_fixed_size", 0)
-        self.tag = False
-        self._tag_lock = threading.Lock()
-        self._parallel_input_ids = None
-        self._parallel_positions = None
-        self._parallel_inputs_embeds = None
-        self._parallel_slot_mapping = None
 
         # Create update stream for overlapping parameter updates
         self.update_stream = update_stream
@@ -126,21 +113,6 @@ class AscendSplitBatchWrapper:
     def unwrap(self) -> Callable:
         # in case we need to access the original runnable.
         return self.runnable
-
-    def _claim_dedicated_pool_capture(self, num_tokens: int) -> bool:
-        if not self.enable_parallel or self.aclgraph_wrapper is None:
-            return False
-        if self.extra_graph_size <= 0 or num_tokens != self.extra_graph_size:
-            return False
-        with self._tag_lock:
-            if self.tag:
-                return False
-            self.tag = True
-            return True
-
-    def _rollback_dedicated_pool_capture(self) -> None:
-        with self._tag_lock:
-            self.tag = False
 
     def _update_attn_params_for_ubatch(self, forward_context, num_tokens,
                                        ubatch_id: int):
@@ -200,22 +172,6 @@ class AscendSplitBatchWrapper:
                                            num_tokens,
                                            self.vllm_config)
 
-    def _snapshot_split_output(self, output: Any) -> Any:
-        if isinstance(output, torch.Tensor):
-            return output.clone()
-        if isinstance(output, IntermediateTensors):
-            return IntermediateTensors(
-                {k: v.clone() for k, v in output.tensors.items()})
-        if isinstance(output, tuple):
-            return tuple(self._snapshot_split_output(x) for x in output)
-        if isinstance(output, list):
-            return [self._snapshot_split_output(x) for x in output]
-        if isinstance(output, dict):
-            return {
-                k: self._snapshot_split_output(v)
-                for k, v in output.items()
-            }
-        return output
 
     def _run_ubatches(self, *args, **kwargs) -> torch.Tensor:
         """
@@ -239,18 +195,7 @@ class AscendSplitBatchWrapper:
 
         if not ubatch_slices:
             if self.aclgraph_wrapper is not None:
-                use_dedicated_pool = self._claim_dedicated_pool_capture(
-                    int(getattr(batch_descriptor, "num_tokens", 0)))
-                aclgraph_kwargs = dict(kwargs)
-                aclgraph_kwargs["parallel_streams"] = self.enable_parallel
-                if use_dedicated_pool:
-                    aclgraph_kwargs["graph_pool"] = self.pool
-                try:
-                    return self.aclgraph_wrapper(*args, **aclgraph_kwargs)
-                except Exception:
-                    if use_dedicated_pool:
-                        self._rollback_dedicated_pool_capture()
-                    raise
+                return self.aclgraph_wrapper(*args, **kwargs)
             return self.runnable(*args, **kwargs)
 
         first_slice = ubatch_slices[0]
@@ -314,7 +259,8 @@ class AscendSplitBatchWrapper:
             num_tokens=first_num_tokens,
         )
 
-        results_with_order: list[tuple[int, Any, int]] = []
+        results: list[Any] = []
+        result_pad_sizes: list[int] = []
 
         try:
             with override_forward_context(None):
@@ -438,22 +384,12 @@ class AscendSplitBatchWrapper:
                         if (metadata.context.cudagraph_runtime_mode !=
                                 CUDAGraphMode.NONE
                                 and self.aclgraph_wrapper is not None):
-                            use_dedicated_pool = self._claim_dedicated_pool_capture(
-                                current_num_tokens)
-                            try:
-                                model_output = self.aclgraph_wrapper(
-                                    input_ids=metadata.input_ids,
-                                    positions=metadata.positions,
-                                    intermediate_tensors=metadata.intermediate_tensors,
-                                    inputs_embeds=metadata.inputs_embeds,
-                                    parallel_streams=self.enable_parallel,
-                                    graph_pool=(self.pool
-                                                if use_dedicated_pool else None),
-                                )
-                            except Exception:
-                                if use_dedicated_pool:
-                                    self._rollback_dedicated_pool_capture()
-                                raise
+                            model_output = self.aclgraph_wrapper(
+                                input_ids=metadata.input_ids,
+                                positions=metadata.positions,
+                                intermediate_tensors=metadata.intermediate_tensors,
+                                inputs_embeds=metadata.inputs_embeds,
+                            )
                         else:
                             model_output = self.runnable(
                                 input_ids=metadata.input_ids,
@@ -468,22 +404,16 @@ class AscendSplitBatchWrapper:
                             self._update_attn_params_for_ubatch(
                                 metadata.context, current_num_tokens, ubatch_id)
 
-                    request_start = int(ubatch_slice.request_slice.start)
-                    model_output = self._snapshot_split_output(model_output)
-                    results_with_order.append(
-                        (request_start, model_output,
-                         getattr(metadata.context, "pad_size", 0))
-                    )
+                    results.append(model_output)
+                    result_pad_sizes.append(getattr(metadata.context, "pad_size", 0))
 
             with override_forward_context(original_forward_context):
-                sorted_entries = sorted(results_with_order, key=lambda x: x[0])
-                sorted_results = [entry[1] for entry in sorted_entries]
-                sorted_pad_sizes = [entry[2] for entry in sorted_entries]
+                sorted_results = results
                 if get_forward_context().sp_enabled and get_pp_group().is_last_rank:
                     for i in range(len(sorted_results)):
                         sorted_results[i] = tensor_model_parallel_all_gather(
                             sorted_results[i], 0)
-                        pad_size = sorted_pad_sizes[i]
+                        pad_size = result_pad_sizes[i]
                         if pad_size > 0:
                             sorted_results[i] = sorted_results[i][:-pad_size, :]
 
@@ -515,344 +445,6 @@ class AscendSplitBatchWrapper:
                 base_slot_mapping[:slot_mapping_backup_len].copy_(
                     backup_slot_mapping, non_blocking=False)
 
-            torch.npu.synchronize()
-    def _should_use_parallel_ubatches(self, ubatch_slices) -> bool:
-        if (not self.enable_parallel or self.extra_graph_size <= 0
-                or ubatch_slices is None or len(ubatch_slices) <= 1):
-            return False
-        return True
-
-    def _ensure_parallel_replay_buffers(self, max_tokens: int, input_ids,
-                                        positions, inputs_embeds) -> None:
-        if max_tokens <= 0:
-            return
-
-        if input_ids is not None:
-            if (self._parallel_input_ids is None
-                    or self._parallel_input_ids.dtype != input_ids.dtype
-                    or self._parallel_input_ids.device != input_ids.device
-                    or int(self._parallel_input_ids.shape[0]) < max_tokens):
-                self._parallel_input_ids = torch.empty(
-                    (max_tokens, ),
-                    dtype=input_ids.dtype,
-                    device=input_ids.device,
-                )
-
-        if positions is not None:
-            if positions.ndim == 2:
-                desired_shape = (int(positions.shape[0]), max_tokens)
-                need_realloc = (
-                    self._parallel_positions is None
-                    or self._parallel_positions.dtype != positions.dtype
-                    or self._parallel_positions.device != positions.device
-                    or self._parallel_positions.ndim != 2
-                    or int(self._parallel_positions.shape[0])
-                    != desired_shape[0]
-                    or int(self._parallel_positions.shape[1])
-                    < desired_shape[1])
-            else:
-                desired_shape = (max_tokens, )
-                need_realloc = (
-                    self._parallel_positions is None
-                    or self._parallel_positions.dtype != positions.dtype
-                    or self._parallel_positions.device != positions.device
-                    or self._parallel_positions.ndim != 1
-                    or int(self._parallel_positions.shape[0])
-                    < desired_shape[0])
-            if need_realloc:
-                self._parallel_positions = torch.empty(
-                    desired_shape,
-                    dtype=positions.dtype,
-                    device=positions.device,
-                )
-
-        if inputs_embeds is not None:
-            desired_shape = (max_tokens, ) + tuple(inputs_embeds.shape[1:])
-            if (self._parallel_inputs_embeds is None
-                    or self._parallel_inputs_embeds.dtype != inputs_embeds.dtype
-                    or self._parallel_inputs_embeds.device != inputs_embeds.device
-                    or tuple(self._parallel_inputs_embeds.shape[1:])
-                    != desired_shape[1:]
-                    or int(self._parallel_inputs_embeds.shape[0])
-                    < desired_shape[0]):
-                self._parallel_inputs_embeds = torch.empty(
-                    desired_shape,
-                    dtype=inputs_embeds.dtype,
-                    device=inputs_embeds.device,
-                )
-
-    def _refresh_parallel_slot_mapping(self, attn_metadata: Any,
-                                       num_tokens: int):
-        split_slot_mapping = _get_slot_mapping_from_attn_metadata(attn_metadata)
-        if split_slot_mapping is None:
-            return None
-        if int(split_slot_mapping.shape[0]) < num_tokens:
-            raise RuntimeError(
-                "parallel split slot_mapping length mismatch: "
-                f"required={num_tokens}, available={int(split_slot_mapping.shape[0])}")
-
-        if (self._parallel_slot_mapping is None
-                or self._parallel_slot_mapping.dtype != split_slot_mapping.dtype
-                or self._parallel_slot_mapping.device != split_slot_mapping.device
-                or self._parallel_slot_mapping.ndim != split_slot_mapping.ndim
-                or tuple(self._parallel_slot_mapping.shape[1:])
-                != tuple(split_slot_mapping.shape[1:])
-                or int(self._parallel_slot_mapping.shape[0])
-                < int(split_slot_mapping.shape[0])):
-            self._parallel_slot_mapping = torch.empty_like(split_slot_mapping)
-
-        self._parallel_slot_mapping[:num_tokens].copy_(
-            split_slot_mapping[:num_tokens], non_blocking=False)
-        parallel_slot_view = self._parallel_slot_mapping[:num_tokens]
-        _set_slot_mapping_for_attn_metadata(attn_metadata, parallel_slot_view)
-        return (attn_metadata, split_slot_mapping)
-
-    def _run_parallel_ubatches(self, *args, **kwargs) -> torch.Tensor:
-        forward_context = get_forward_context()
-        batch_descriptor = forward_context.batch_descriptor
-        ubatch_slices = forward_context.ubatch_slices
-        cudagraph_runtime_mode = forward_context.cudagraph_runtime_mode
-        attn_metadata = forward_context.attn_metadata
-        original_forward_context = forward_context
-
-        if not self._should_use_parallel_ubatches(ubatch_slices):
-            return self._run_ubatches(*args, **kwargs)
-
-        input_ids = kwargs["input_ids"]
-        positions = kwargs["positions"]
-        intermediate_tensors = kwargs["intermediate_tensors"]
-        inputs_embeds = kwargs["inputs_embeds"]
-
-        first_slice = ubatch_slices[0]
-        first_num_tokens = first_slice.token_slice.stop - first_slice.token_slice.start
-        first_num_reqs = first_slice.request_slice.stop - first_slice.request_slice.start
-
-        small_slices = ubatch_slices[1:]
-        max_small_tokens = max(
-            int(s.token_slice.stop - s.token_slice.start) for s in small_slices)
-        self._ensure_parallel_replay_buffers(max_small_tokens, input_ids,
-                                             positions, inputs_embeds)
-
-        first_attn_metadata = attn_metadata[0] if isinstance(attn_metadata,
-                                                             list) else attn_metadata
-        first_input_ids, first_positions, first_inputs_embeds, first_intermediate = \
-            self._slice_model_inputs(first_slice.token_slice, input_ids,
-                                     positions, inputs_embeds,
-                                     intermediate_tensors)
-
-        ubatch_cudagraph_mode = CUDAGraphMode.FULL if cudagraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
-        first_batch_descriptor = BatchDescriptor(
-            num_tokens=first_num_tokens,
-            num_reqs=first_num_reqs,
-            uniform=batch_descriptor.uniform,
-            has_lora=batch_descriptor.has_lora,
-        )
-        first_context = create_ascend_forward_context(
-            original_forward_context,
-            attn_metadata=first_attn_metadata,
-            vllm_config=self.vllm_config,
-            dp_metadata=original_forward_context.dp_metadata,
-            ubatch_slices=ubatch_slices,
-            batch_descriptor=first_batch_descriptor,
-            cudagraph_runtime_mode=ubatch_cudagraph_mode,
-            ubatch_num=0,
-            positions=positions,
-        )
-
-        results_with_order: list[tuple[int, Any, int]] = []
-        slot_restore_entries = []
-
-        try:
-            with override_forward_context(None):
-                torch.npu.set_device(self.device)
-
-                with torch.npu.stream(self.default_stream):
-                    with override_forward_context(first_context):
-                        self._refresh_block_table_for_ubatch(
-                            first_context, first_num_tokens)
-
-                        if (first_context.cudagraph_runtime_mode !=
-                                CUDAGraphMode.NONE
-                                and self.aclgraph_wrapper is not None):
-                            first_output = self.aclgraph_wrapper(
-                                input_ids=first_input_ids,
-                                positions=first_positions,
-                                intermediate_tensors=first_intermediate,
-                                inputs_embeds=first_inputs_embeds,
-                                parallel_streams=False,
-                            )
-                        else:
-                            first_output = self.runnable(
-                                input_ids=first_input_ids,
-                                positions=first_positions,
-                                intermediate_tensors=first_intermediate,
-                                inputs_embeds=first_inputs_embeds,
-                            )
-
-                        if (first_context.cudagraph_runtime_mode ==
-                                CUDAGraphMode.FULL
-                                and not first_context.capturing):
-                            self._update_attn_params_for_ubatch(
-                                first_context, first_num_tokens, 0)
-
-                results_with_order.append(
-                    (int(first_slice.request_slice.start), first_output,
-                     getattr(first_context, "pad_size", 0)))
-
-                for ubatch_id in range(1, len(ubatch_slices)):
-                    ubatch_slice = ubatch_slices[ubatch_id]
-                    current_num_tokens = (
-                        ubatch_slice.token_slice.stop - ubatch_slice.token_slice.start)
-                    current_num_reqs = (
-                        ubatch_slice.request_slice.stop - ubatch_slice.request_slice.start)
-
-                    split_attn_metadata = attn_metadata
-                    if isinstance(attn_metadata, list):
-                        split_attn_metadata = attn_metadata[ubatch_id]
-
-                    restore_entry = self._refresh_parallel_slot_mapping(
-                        split_attn_metadata, current_num_tokens)
-                    if restore_entry is not None:
-                        slot_restore_entries.append(restore_entry)
-
-                    (cur_input_ids, cur_positions, cur_inputs_embeds,
-                     cur_intermediate) = self._slice_model_inputs(
-                         ubatch_slice.token_slice,
-                         input_ids,
-                         positions,
-                         inputs_embeds,
-                         intermediate_tensors,
-                     )
-
-                    run_input_ids = None
-                    if cur_input_ids is not None:
-                        self._parallel_input_ids[:current_num_tokens].copy_(
-                            cur_input_ids, non_blocking=False)
-                        run_input_ids = self._parallel_input_ids[:current_num_tokens]
-
-                    run_positions = None
-                    if cur_positions is not None:
-                        if cur_positions.ndim == 2:
-                            self._parallel_positions[:, :current_num_tokens].copy_(
-                                cur_positions, non_blocking=False)
-                            run_positions = self._parallel_positions[:,
-                                                                    :current_num_tokens]
-                        else:
-                            self._parallel_positions[:current_num_tokens].copy_(
-                                cur_positions, non_blocking=False)
-                            run_positions = self._parallel_positions[:current_num_tokens]
-
-                    run_inputs_embeds = None
-                    if cur_inputs_embeds is not None:
-                        self._parallel_inputs_embeds[:current_num_tokens].copy_(
-                            cur_inputs_embeds, non_blocking=False)
-                        run_inputs_embeds = self._parallel_inputs_embeds[:current_num_tokens]
-
-                    if _SPLIT_LOCAL_CONTEXT_REBUILD:
-                        rebuild_ubatch_slices = [
-                            UBatchSlice(
-                                slice(0, current_num_reqs),
-                                slice(0, current_num_tokens),
-                            )
-                        ]
-                        rebuild_positions = (
-                            run_positions if run_positions is not None else positions)
-                        rebuild_ubatch_num = 0
-                    else:
-                        rebuild_ubatch_slices = ubatch_slices
-                        rebuild_positions = positions
-                        rebuild_ubatch_num = ubatch_id
-
-                    split_batch_descriptor = BatchDescriptor(
-                        num_tokens=current_num_tokens,
-                        num_reqs=current_num_reqs,
-                        uniform=batch_descriptor.uniform,
-                        has_lora=batch_descriptor.has_lora,
-                    )
-                    split_context = create_ascend_forward_context(
-                        original_forward_context,
-                        attn_metadata=split_attn_metadata,
-                        vllm_config=self.vllm_config,
-                        dp_metadata=original_forward_context.dp_metadata,
-                        ubatch_slices=rebuild_ubatch_slices,
-                        batch_descriptor=split_batch_descriptor,
-                        cudagraph_runtime_mode=ubatch_cudagraph_mode,
-                        ubatch_num=rebuild_ubatch_num,
-                        positions=rebuild_positions,
-                    )
-
-                    with torch.npu.stream(self.parallel_stream):
-                        with override_forward_context(split_context):
-                            self._refresh_block_table_for_ubatch(
-                                split_context, current_num_tokens)
-
-                            if (split_context.cudagraph_runtime_mode !=
-                                    CUDAGraphMode.NONE
-                                    and self.aclgraph_wrapper is not None):
-                                use_dedicated_pool = self._claim_dedicated_pool_capture(
-                                    current_num_tokens)
-                                try:
-                                    split_output = self.aclgraph_wrapper(
-                                        input_ids=run_input_ids,
-                                        positions=run_positions,
-                                        intermediate_tensors=cur_intermediate,
-                                        inputs_embeds=run_inputs_embeds,
-                                        parallel_streams=True,
-                                        graph_pool=(self.pool
-                                                    if use_dedicated_pool else None),
-                                    )
-                                except Exception:
-                                    if use_dedicated_pool:
-                                        self._rollback_dedicated_pool_capture()
-                                    raise
-                            else:
-                                split_output = self.runnable(
-                                    input_ids=run_input_ids,
-                                    positions=run_positions,
-                                    intermediate_tensors=cur_intermediate,
-                                    inputs_embeds=run_inputs_embeds,
-                                )
-
-                            if (split_context.cudagraph_runtime_mode ==
-                                    CUDAGraphMode.FULL
-                                    and not split_context.capturing):
-                                self._update_attn_params_for_ubatch(
-                                    split_context, current_num_tokens,
-                                    ubatch_id)
-
-                    results_with_order.append(
-                        (int(ubatch_slice.request_slice.start), split_output,
-                         getattr(split_context, "pad_size", 0)))
-
-                self.default_stream.synchronize()
-                self.parallel_stream.synchronize()
-
-            with override_forward_context(original_forward_context):
-                sorted_entries = sorted(results_with_order, key=lambda x: x[0])
-                sorted_results = [
-                    self._snapshot_split_output(entry[1])
-                    for entry in sorted_entries
-                ]
-                sorted_pad_sizes = [entry[2] for entry in sorted_entries]
-                if get_forward_context().sp_enabled and get_pp_group().is_last_rank:
-                    for i in range(len(sorted_results)):
-                        sorted_results[i] = tensor_model_parallel_all_gather(
-                            sorted_results[i], 0)
-                        pad_size = sorted_pad_sizes[i]
-                        if pad_size > 0:
-                            sorted_results[i] = sorted_results[i][:-pad_size, :]
-
-                if not get_pp_group().is_last_rank:
-                    result = self._merge_intermediate_tensors(sorted_results)
-                else:
-                    result = torch.cat(sorted_results, dim=0)
-
-                get_forward_context().dbo_enabled = False
-                return result
-        finally:
-            for slot_attn_metadata, original_slot_mapping in slot_restore_entries:
-                _set_slot_mapping_for_attn_metadata(slot_attn_metadata,
-                                                    original_slot_mapping)
             torch.npu.synchronize()
 
     def _make_ubatch_metadata(
@@ -960,25 +552,25 @@ class AscendSplitBatchWrapper:
         forward_context = get_forward_context()
         ubatch_slices = forward_context.ubatch_slices
 
-        aclgraph_kwargs = dict(kwargs)
-        aclgraph_kwargs["parallel_streams"] = self.enable_parallel
-
-        # Keep one-time dedicated-pool capture for fixed-size graph.
+        # If there's no ubatching, delegate directly to ACLGraphWrapper or runnable
         if ubatch_slices is None:
             if self.aclgraph_wrapper is not None:
-                return self.aclgraph_wrapper(*args, **aclgraph_kwargs)
-            return self.runnable(*args, **kwargs)
-        if self._should_use_parallel_ubatches(ubatch_slices):
-            return self._run_parallel_ubatches(*args, **aclgraph_kwargs)
+                # ACLGraphWrapper handles FULL/PIECEWISE mode automatically
+                return self.aclgraph_wrapper(*args, **kwargs)
+            else:
+                # Eager mode (NONE)
+                return self.runnable(*args, **kwargs)
 
-        return self._run_ubatches(*args, **aclgraph_kwargs)
+        return self._run_ubatches(*args, **kwargs)
 
     def _merge_intermediate_tensors(self, intermediate_tensor_list):
-        assert len(intermediate_tensor_list) > 0
+        assert len(intermediate_tensor_list) == 2
         result = {}
         for key in intermediate_tensor_list[0].tensors:
-            result[key] = torch.cat(
-                [x.tensors[key] for x in intermediate_tensor_list], dim=0)
+            result[key] = torch.cat([
+                intermediate_tensor_list[0].tensors[key],
+                intermediate_tensor_list[1].tensors[key]
+            ], dim=0)
 
         res = IntermediateTensors(result)
         return res

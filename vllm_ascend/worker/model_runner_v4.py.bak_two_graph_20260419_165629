@@ -16,10 +16,14 @@
 # This file is a part of the vllm-ascend project.
 # Adapted from vllm-project/vllm/vllm/worker/gpu_model_runner.py
 #
-#调用splitwrapper的modelrunner not used for now
-
+#集成npusplitwrapper的modelrunner used for now
+import os
+import json
 import math
+import sys
 import time
+import threading
+import traceback
 from collections import defaultdict
 from contextlib import contextmanager, nullcontext
 from copy import copy, deepcopy
@@ -50,7 +54,9 @@ from vllm.distributed.parallel_state import (get_dcp_group, get_dp_group,
                                              get_pcp_group, get_pp_group,
                                              get_tp_group,
                                              is_global_first_rank)
-from vllm.forward_context import get_forward_context, DPMetadata
+from vllm.forward_context import (BatchDescriptor, DPMetadata,
+                                  get_forward_context,
+                                  override_forward_context)
 from vllm.logger import logger
 from vllm.model_executor.layers.attention_layer_base import AttentionLayerBase
 from vllm.model_executor.layers.mamba.abstract import MambaBase
@@ -98,12 +104,15 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
 # yapf conflicts with isort for this block
 # yapf: disable
 from vllm_ascend.compilation.acl_graph import (ACLGraphWrapper,
+                                               refresh_attn_block_table_for_split,
                                                set_graph_params,
                                                set_mtp_graph_params,
                                                update_attn_dcp_pcp_params,
                                                update_attn_params,
                                                update_mla_attn_dcp_pcp_params,
-                                               update_mla_attn_params)
+                                               update_mla_attn_params,
+                                               update_attn_params_split
+                                               )
 # yapf: enable
 from vllm_ascend.eplb.adaptor.vllm_adaptor import VllmEplbAdaptor
 from vllm_ascend.eplb.core.eplb_device_transfer_loader import \
@@ -125,15 +134,17 @@ from vllm_ascend.utils import (AscendDeviceType, ProfileExecuteDuration,
                                enable_sp, get_ascend_device_type, is_moe_model,
                                lmhead_tp_enable, maybe_trans_nz)
 from vllm_ascend.worker.npu_input_batch import NPUInputBatch
-from vllm_ascend.worker.npu_ubatch_wrapper import AscendUBatchWrapper
-from vllm_ascend.worker.npu_split_wrapper import AscendSplitBatchWrapper
-from vllm_ascend.worker.ubatch_utils import ubatch_split, split_batch_split, SplitBatchSlices
+from vllm_ascend.worker.npu_ubatch_wrapper import (AscendUBatchWrapper,
+                                                   AscendUbatchMetadata)
+from vllm_ascend.worker.ubatch_utils import (SplitBatchSlices,
+                                             split_batch_split, ubatch_split)
 from vllm_ascend.attention.utils import split_attn_metadata
-from vllm.v1.worker.ubatch_utils import UBatchSlices
+from vllm.v1.worker.ubatch_utils import UBatchSlice, UBatchSlices
 
 from vllm_ascend.ascend_forward_context import (  # isort: skip
-    MoECommType, get_mc2_tokens_capacity, select_moe_comm_method,
-    set_ascend_forward_context, set_mc2_mask, set_mc2_tokens_capacity)
+    MoECommType, create_ascend_forward_context, get_mc2_tokens_capacity,
+    select_moe_comm_method, set_ascend_forward_context, set_mc2_mask,
+    set_mc2_tokens_capacity)
 
 if TYPE_CHECKING:
     import xgrammar as xgr  # type: ignore[import-untyped]
@@ -191,6 +202,201 @@ def graph_capture(device: torch.device):
 
     with torch.npu.stream(stream), maybe_ca_context:
         yield graph_capture_context
+
+
+_SPLIT_METADATA_DEBUG_FILE = os.environ.get(
+    "VLLM_ASCEND_SPLIT_METADATA_DEBUG_FILE",
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "split_metadata_debug.log")
+    ),
+)
+# Rollback switch for split context rebuild coordinate validation.
+# - default "1": use local coordinate slices for rebuilt split context
+# - set VLLM_ASCEND_SPLIT_LOCAL_CONTEXT_REBUILD=0 to restore legacy behavior
+_SPLIT_LOCAL_CONTEXT_REBUILD = os.environ.get(
+    "VLLM_ASCEND_SPLIT_LOCAL_CONTEXT_REBUILD", "1") not in ("0", "false", "False")
+
+# Enable lightweight runtime profiling for split-batch parallel-stream scheduling.
+_SPLIT_PARALLEL_PROFILING = os.environ.get(
+    "VLLM_ASCEND_SPLIT_PARALLEL_PROFILING", "0") not in ("0", "false", "False")
+
+# Experimental switch: force eager mode inside split parallel path to test
+# whether aclgraph replay blocking is the serialization bottleneck.
+_SPLIT_PARALLEL_FORCE_EAGER = os.environ.get(
+    "VLLM_ASCEND_SPLIT_PARALLEL_FORCE_EAGER", "0") not in ("0", "false", "False")
+
+# Enable dual-thread submission for split parallel path.
+_SPLIT_PARALLEL_DUAL_THREAD = os.environ.get(
+    "VLLM_ASCEND_SPLIT_PARALLEL_DUAL_THREAD", "0") not in ("0", "false", "False")
+_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S = float(
+    os.environ.get("VLLM_ASCEND_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S", "0"))
+
+def _update_attn_params_direct(stream, forward_context, num_tokens: int,
+                               vllm_config: VllmConfig,
+                               parallel_group: int = 0,
+                               attn_offset: Optional[int] = None) -> None:
+    """Update split attn params on the target stream without shared locks."""
+    if getattr(forward_context, "capturing", False):
+        return
+
+    if vllm_config.model_config.use_mla:
+        update_mla_attn_params(stream, forward_context, num_tokens,
+                               vllm_config.speculative_config,
+                               parallel_group=parallel_group)
+    else:
+        update_attn_params_split(stream, forward_context, num_tokens, vllm_config,
+                           parallel_group=parallel_group,
+                           attn_offset=attn_offset)
+
+
+def _append_split_metadata_debug(tag: str, payload: Any) -> None:
+    try:
+        with open(_SPLIT_METADATA_DEBUG_FILE, "a", encoding="utf-8") as f:
+            ts = time.strftime("%Y-%m-%d %H:%M:%S")
+            f.write("[{}] {}: {}\n".format(ts, tag, payload))
+    except Exception as e:
+        logger.warning(
+            "Failed to write split metadata debug file %s: %s",
+            _SPLIT_METADATA_DEBUG_FILE,
+            e,
+        )
+
+
+def _safe_tensor_ptr(tensor: Any) -> Optional[int]:
+    if isinstance(tensor, torch.Tensor):
+        return int(tensor.data_ptr())
+    return None
+
+
+def _safe_tensor_head(tensor: Any, max_items: int = 3) -> Any:
+    # Intentionally disabled: .cpu().tolist() introduces a synchronous D2H
+    # transfer that can block in multi-threaded NPU graph replay paths
+    # (e.g., _run_lane -> _slice_split_batch_inputs). The head field in
+    # debug logs is not required for correctness; set to None by default.
+    # To re-enable for offline debugging only, set
+    # VLLM_ASCEND_SPLIT_DEBUG_HEAD=1.
+    if os.environ.get("VLLM_ASCEND_SPLIT_DEBUG_HEAD", "0") not in ("1", "true", "True"):
+        return None
+    if not isinstance(tensor, torch.Tensor):
+        return None
+    try:
+        if tensor.ndim == 2:
+            return tensor[:, :max_items].detach().cpu().tolist()
+        return tensor[:max_items].detach().cpu().tolist()
+    except Exception:
+        return None
+
+
+def _safe_tensor_shape(tensor: Any) -> Optional[list[int]]:
+    if not isinstance(tensor, torch.Tensor):
+        return None
+    try:
+        return list(tensor.shape)
+    except Exception:
+        return None
+
+
+def _safe_context_id(context: Any) -> Optional[int]:
+    if context is None:
+        return None
+    try:
+        return id(context)
+    except Exception:
+        return None
+
+
+def _build_split_tensor_debug(name: str, tensor: Any) -> dict[str, Any]:
+    return {
+        f"{name}_ptr": _safe_tensor_ptr(tensor),
+        f"{name}_shape": _safe_tensor_shape(tensor),
+        f"{name}_head": _safe_tensor_head(tensor),
+    }
+
+
+def _extract_attn_positions(attn_metadata: Any) -> tuple[Optional[int], Any]:
+    candidate = attn_metadata
+    if isinstance(candidate, dict) and candidate:
+        candidate = next(iter(candidate.values()))
+    if isinstance(candidate, list) and candidate:
+        candidate = candidate[0]
+
+    common_attn_metadata = getattr(candidate, "common_attn_metadata", None)
+    if common_attn_metadata is not None:
+        candidate = common_attn_metadata
+
+    positions = getattr(candidate, "positions", None)
+    return _safe_tensor_ptr(positions), _safe_tensor_head(positions)
+
+
+
+
+def _iter_attn_metadata_objects(attn_metadata: Any):
+    if isinstance(attn_metadata, dict):
+        for value in attn_metadata.values():
+            yield from _iter_attn_metadata_objects(value)
+        return
+    if isinstance(attn_metadata, list):
+        for value in attn_metadata:
+            yield from _iter_attn_metadata_objects(value)
+        return
+    if attn_metadata is not None:
+        yield attn_metadata
+
+
+def _get_slot_mapping_from_attn_metadata(
+        attn_metadata: Any) -> Optional[torch.Tensor]:
+    for metadata_obj in _iter_attn_metadata_objects(attn_metadata):
+        slot_mapping = getattr(metadata_obj, "slot_mapping", None)
+        if isinstance(slot_mapping, torch.Tensor):
+            return slot_mapping
+        common_attn_metadata = getattr(metadata_obj, "common_attn_metadata",
+                                       None)
+        slot_mapping = getattr(common_attn_metadata, "slot_mapping", None)
+        if isinstance(slot_mapping, torch.Tensor):
+            return slot_mapping
+    return None
+
+
+def _set_slot_mapping_for_attn_metadata(attn_metadata: Any,
+                                        slot_mapping: torch.Tensor) -> int:
+    updated = 0
+    for metadata_obj in _iter_attn_metadata_objects(attn_metadata):
+        if hasattr(metadata_obj, "slot_mapping"):
+            setattr(metadata_obj, "slot_mapping", slot_mapping)
+            updated += 1
+        common_attn_metadata = getattr(metadata_obj, "common_attn_metadata",
+                                       None)
+        if (common_attn_metadata is not None
+                and hasattr(common_attn_metadata, "slot_mapping")):
+            setattr(common_attn_metadata, "slot_mapping", slot_mapping)
+            updated += 1
+    return updated
+
+
+def _validate_split_attn_metadata_count(
+    tag: str,
+    common_attn_metadata_list: Any,
+    expected_splits: int,
+) -> None:
+    actual_len = len(common_attn_metadata_list) if isinstance(common_attn_metadata_list, list) else None
+    payload = {
+        "tag": tag,
+        "expected_splits": expected_splits,
+        "actual_type": type(common_attn_metadata_list).__name__,
+        "actual_len": actual_len,
+    }
+    _append_split_metadata_debug("split_attn_metadata_count", payload)
+
+    if (
+        not isinstance(common_attn_metadata_list, list)
+        or actual_len is None
+        or actual_len != expected_splits
+    ):
+        raise RuntimeError(
+            "split_attn_metadata returned unexpected split count: "
+            f"expected={expected_splits}, actual_type={type(common_attn_metadata_list).__name__}, "
+            f"actual_len={actual_len}, tag={tag}"
+        )
 
 
 class ExecuteModelState(NamedTuple):
@@ -254,6 +460,7 @@ class NPUModelRunner(GPUModelRunner):
         # use_hybrid_blocks: if hybrid blocks is used.
         self.use_hybrid_blocks: bool = False
         self.need_accepted_tokens: bool = False
+
 
         self.is_multimodal_model = self.model_config.is_multimodal_model
         self.block_size = vllm_config.cache_config.block_size
@@ -381,6 +588,16 @@ class NPUModelRunner(GPUModelRunner):
         # None in the first PP rank. The rest are set after load_model.
         self.intermediate_tensors: IntermediateTensors | None = None
         self.reorder_batch_threshold: int | None = None
+        #并行新增输入地址
+        self.input_ids_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int32)
+        self.inputs_embeds_parallel_streams=self._make_buffer(
+            self.max_num_tokens, self.inputs_embeds_size, dtype=self.dtype, numpy=False
+        )
+        self.positions_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int64)
+        if self.uses_mrope:
+            self.mrope_positions_parallel_streams = self._make_buffer(
+                (3, self.max_num_tokens + 1), dtype=torch.int64)
+        self._split_attn_update_lock = threading.Lock()
 
     def _init_device_properties(self) -> None:
         self.num_sms = None
@@ -495,8 +712,7 @@ class NPUModelRunner(GPUModelRunner):
     def get_model(self) -> nn.Module:
         # get raw model out of the aclgraph wrapper.
         if isinstance(self.model,
-                      (ACLGraphWrapper, AscendUBatchWrapper,
-                       AscendSplitBatchWrapper)):
+                      (ACLGraphWrapper, AscendUBatchWrapper)):
             return self.model.unwrap()
         return self.model
 
@@ -567,7 +783,7 @@ class NPUModelRunner(GPUModelRunner):
                torch.Tensor, int, torch.Tensor, SpecDecodeMetadata,
                Optional[torch.Tensor], Optional[torch.Tensor],
                Optional[torch.Tensor], int, Optional[UBatchSlices],
-               Optional[torch.Tensor]]:
+               Optional[SplitBatchSlices], Optional[torch.Tensor]]:
         total_num_scheduled_tokens = scheduler_output.total_num_scheduled_tokens
         assert total_num_scheduled_tokens > 0
         num_reqs = self.input_batch.num_reqs
@@ -679,23 +895,29 @@ class NPUModelRunner(GPUModelRunner):
             ubatch_slices = None
 
 
+        split_batch_slices: Optional[SplitBatchSlices] = None
+        split_ubatch_slices: Optional[UBatchSlices] = None
         # Split batch - compute split slices for large decode batches
         # Split batch and DBO never conflict:
         # - DBO is for overlapping compute/communication
         # - Split batch is for splitting large uniform decode batches
-        #if uniform_decode and ubatch_slices is None:  # Only split if DBO is not active
-        if ubatch_slices is None:
+        if uniform_decode and ubatch_slices is None:  # Only split if DBO is not active
             cudagraph_capture_sizes = set(
                 self.compilation_config.cudagraph_capture_sizes or []
             ) if self.use_aclgraph else None
-            ubatch_slices, _ = split_batch_split(
+            split_batch_slices, _ = split_batch_split(
                 num_scheduled_tokens,
                 num_tokens_unpadded,
                 num_tokens_padded,
                 vllm_config=self.vllm_config,
                 cudagraph_capture_sizes=cudagraph_capture_sizes,
-                custom_split_sizes=[128,4,4,4]
+                custom_split_sizes=[128,4]
             )
+            if split_batch_slices:
+                split_ubatch_slices = [
+                    UBatchSlice(s.request_slice, s.token_slice)
+                    for s in split_batch_slices
+                ]
 
 
         # TODO: Now that num_input_tokens is basically identical with maybe_padded_num_tokens
@@ -826,8 +1048,13 @@ class NPUModelRunner(GPUModelRunner):
         self.num_tokens_across_dp = num_tokens_across_dp
 
         attn_metadata: PerLayerAttnMetadata = {}
+        split_ubatch_slices_for_metadata: Optional[UBatchSlices] = None
         if ubatch_slices is not None:
             attn_metadata = [dict() for _ in range(len(ubatch_slices))]
+            split_ubatch_slices_for_metadata = ubatch_slices
+        elif split_ubatch_slices is not None:
+            attn_metadata = [dict() for _ in range(len(split_ubatch_slices))]
+            split_ubatch_slices_for_metadata = split_ubatch_slices
 
         # Record the index of requests that should not be sampled,
         # so that we could clear the sampled tokens before returning
@@ -934,7 +1161,7 @@ class NPUModelRunner(GPUModelRunner):
             if enable_sp():
                 num_input_tokens_with_flashcomm1 = (num_input_tokens +
                                                     tp_size - 1) // tp_size
-                if ubatch_slices is not None:
+                if split_ubatch_slices_for_metadata is not None:
                     # for dbo, we calculate the size of intermediate tensors
                     # later in ubatch_wrapper
                     num_input_tokens_with_dbo = (
@@ -1181,10 +1408,23 @@ class NPUModelRunner(GPUModelRunner):
                         common_attn_metadata=common_attn_metadata,
                         **extra_attn_metadata_args)
 
-                    if ubatch_slices is not None:
+                    if split_ubatch_slices_for_metadata is not None:
+                        _append_split_metadata_debug(
+                            "before split_attn_metadata",
+                            common_attn_metadata,
+                        )
                         common_attn_metadata_list = split_attn_metadata(
-                            ubatch_slices, common_attn_metadata,
+                            split_ubatch_slices_for_metadata, common_attn_metadata,
                             self.max_num_tokens)
+                        _append_split_metadata_debug(
+                            "after split_attn_metadata",
+                            common_attn_metadata_list,
+                        )
+                        _validate_split_attn_metadata_count(
+                            "decode_gdn",
+                            common_attn_metadata_list,
+                            len(split_ubatch_slices_for_metadata),
+                        )
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
                             attn_metadata_i = (attn_group.get_metadata_builder(
@@ -1211,10 +1451,23 @@ class NPUModelRunner(GPUModelRunner):
                         common_attn_metadata=common_attn_metadata,
                         **extra_attn_metadata_args)
                 else:
-                    if ubatch_slices is not None:
+                    if split_ubatch_slices_for_metadata is not None:
+                        _append_split_metadata_debug(
+                            "before split_attn_metadata",
+                            common_attn_metadata,
+                        )
                         common_attn_metadata_list = split_attn_metadata(
-                            ubatch_slices, common_attn_metadata,
+                            split_ubatch_slices_for_metadata, common_attn_metadata,
                             self.max_num_tokens)
+                        _append_split_metadata_debug(
+                            "after split_attn_metadata",
+                            common_attn_metadata_list,
+                        )
+                        _validate_split_attn_metadata_count(
+                            "decode_full",
+                            common_attn_metadata_list,
+                            len(split_ubatch_slices_for_metadata),
+                        )
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
                             attn_metadata_i = (attn_group.get_metadata_builder(
@@ -1249,7 +1502,7 @@ class NPUModelRunner(GPUModelRunner):
                 maybe_padded_num_tokens, logits_indices, spec_decode_metadata,
                 input_ids, inputs_embeds, intermediate_tensors,
                 max_num_scheduled_tokens, ubatch_slices,
-                num_tokens_after_padding)
+                split_batch_slices, num_tokens_after_padding)
 
     def _generate_process_reqs_hidden_states(self, maybe_padded_num_tokens,
                                              input_ids, positions,
@@ -1258,7 +1511,7 @@ class NPUModelRunner(GPUModelRunner):
         assert self.model is not None
         hidden_states = self.model(
             input_ids=input_ids,
-            positions=positions,
+                            positions=positions,
             intermediate_tensors=intermediate_tensors,
             inputs_embeds=inputs_embeds,
             **self._init_model_kwargs(maybe_padded_num_tokens))
@@ -1266,7 +1519,6 @@ class NPUModelRunner(GPUModelRunner):
         forward_context = get_forward_context()
         if (forward_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
                 and not self.use_sparse
-                and not isinstance(self.model, AscendSplitBatchWrapper)
                 ):
             self._update_attn_params_for_wrapper(forward_context, maybe_padded_num_tokens)
 
@@ -1281,7 +1533,7 @@ class NPUModelRunner(GPUModelRunner):
         """Update attention parameters based on the wrapper type.
         
         Handles different wrapper scenarios:
-        - AscendSplitBatchWrapper: Skip update here, will be done inside wrapper
+        - Split-batch: handled in execute_model
         - ACLGraphWrapper: attn_metadata is a dict, update directly
         - AscendUBatchWrapper: attn_metadata is a list, update each ubatch separately
         """
@@ -1311,7 +1563,2230 @@ class NPUModelRunner(GPUModelRunner):
                                        self.vllm_config)
     
  
+    def _update_attn_params_for_split_ubatch(self, forward_context,
+                                              num_tokens: int) -> None:
+        with self._split_attn_update_lock:
+            if (forward_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
+                    or forward_context.capturing or self.use_sparse):
+                return
 
+            if self.vllm_config.model_config.use_mla:
+                if self.pcp_size * self.dcp_size > 1:
+                    update_mla_attn_dcp_pcp_params(self.update_stream,
+                                                   forward_context,
+                                                   num_tokens)
+                else:
+                    update_mla_attn_params(self.update_stream, forward_context,
+                                           num_tokens,
+                                           self.speculative_config)
+            else:
+                if self.pcp_size * self.dcp_size > 1:
+                    update_attn_dcp_pcp_params(self.update_stream,
+                                               forward_context,
+                                               num_tokens)
+                else:
+                    update_attn_params(self.update_stream, forward_context,
+                                       num_tokens,
+                                       self.vllm_config)
+
+    def _refresh_block_table_for_split_ubatch(
+            self,
+            forward_context,
+            num_tokens: int,
+            parallel_group: int = 0,
+            attn_offset: Optional[int] = None) -> None:
+        with self._split_attn_update_lock:
+            if (forward_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
+                    or forward_context.capturing or self.use_sparse):
+                return
+
+            if self.vllm_config.model_config.use_mla:
+                return
+            if self.pcp_size * self.dcp_size > 1:
+                return
+
+            refresh_attn_block_table_for_split(
+                self.update_stream,
+                forward_context,
+                num_tokens,
+                self.vllm_config,
+                parallel_group=parallel_group,
+                attn_offset=attn_offset,
+            )
+
+    def _refresh_block_table_for_split_ubatch_on_stream(
+            self, forward_context, num_tokens: int,
+            stream: torch.npu.Stream,
+            parallel_group: int = 0,
+            attn_offset: Optional[int] = None) -> None:
+        # Dual-thread split path must stay lock-free and use per-lane stream
+        # ordering (do not use self.update_stream or shared locks here).
+        if (forward_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
+                or forward_context.capturing or self.use_sparse):
+            return
+
+        if self.vllm_config.model_config.use_mla:
+            return
+        if self.pcp_size * self.dcp_size > 1:
+            return
+
+        refresh_attn_block_table_for_split(
+            stream,
+            forward_context,
+            num_tokens,
+            self.vllm_config,
+            parallel_group=parallel_group,
+            attn_offset=attn_offset,
+        )
+
+    def _slice_split_batch_inputs(self, tokens_slice: slice, input_ids,
+                                  positions, inputs_embeds,
+                                  intermediate_tensors):
+        sliced_input_ids = input_ids[tokens_slice] if input_ids is not None else None
+        if positions.ndim == 2:
+            sliced_positions = positions[:, tokens_slice]
+        else:
+            sliced_positions = positions[tokens_slice]
+        sliced_inputs_embeds = inputs_embeds[
+            tokens_slice] if inputs_embeds is not None else None
+
+        if intermediate_tensors is not None:
+            if enable_sp():
+                tp_size = get_tensor_model_parallel_world_size()
+                start = (tokens_slice.start + tp_size - 1) // tp_size
+                if start != 0:
+                    stop = start + (tokens_slice.stop - tokens_slice.start +
+                                    tp_size - 1) // tp_size
+                else:
+                    stop = (tokens_slice.stop + tp_size - 1) // tp_size
+                tokens_slice = slice(start, stop)
+
+            sliced_intermediate_tensors = intermediate_tensors[
+                tokens_slice] if intermediate_tensors else None
+        else:
+            sliced_intermediate_tensors = None
+
+        _append_split_metadata_debug(
+            "slice_inputs",
+            {
+                "tokens_slice": [tokens_slice.start, tokens_slice.stop, tokens_slice.step],
+                **_build_split_tensor_debug("source_input_ids", input_ids),
+                **_build_split_tensor_debug("sliced_input_ids", sliced_input_ids),
+                **_build_split_tensor_debug("source_positions", positions),
+                **_build_split_tensor_debug("sliced_positions", sliced_positions),
+                **_build_split_tensor_debug("source_inputs_embeds", inputs_embeds),
+                **_build_split_tensor_debug("sliced_inputs_embeds", sliced_inputs_embeds),
+            },
+        )
+        if sliced_intermediate_tensors is not None:
+            _append_split_metadata_debug(
+                "slice_intermediate",
+                {
+                    "tokens_slice": [tokens_slice.start, tokens_slice.stop, tokens_slice.step],
+                    "intermediate_len": len(sliced_intermediate_tensors)
+                    if hasattr(sliced_intermediate_tensors, "__len__") else None,
+                },
+            )
+
+        return (sliced_input_ids, sliced_positions, sliced_inputs_embeds,
+                sliced_intermediate_tensors)
+    
+    def _make_split_batch_metadata_parallel_streams(
+            self, split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor], positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode) -> list[AscendUbatchMetadata]:
+
+        forward_contexts = []
+        cur_forward_context = get_forward_context()
+        dp_metadata = cur_forward_context.dp_metadata
+
+        ubatch_cudagraph_mode = CUDAGraphMode.FULL if aclgraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
+
+        for i, split_slice in enumerate(split_batch_slices):
+            ubatch_attn_metadata = None
+            if attn_metadata is not None:
+                if isinstance(attn_metadata, list) and i < len(attn_metadata):
+                    ubatch_attn_metadata = attn_metadata[i]
+                else:
+                    ubatch_attn_metadata = attn_metadata
+
+            ubatch_num_tokens = split_slice.num_tokens
+            ubatch_num_reqs = split_slice.num_requests
+            ubatch_batch_descriptor = BatchDescriptor(
+                num_tokens=ubatch_num_tokens,
+                num_reqs=ubatch_num_reqs,
+                uniform=batch_descriptor.uniform,
+                has_lora=batch_descriptor.has_lora,
+            )
+            forward_contexts.append(
+                create_ascend_forward_context(
+                    cur_forward_context,
+                    attn_metadata=ubatch_attn_metadata,
+                    vllm_config=self.vllm_config,
+                    dp_metadata=dp_metadata,
+                    ubatch_slices=split_ubatch_slices,
+                    batch_descriptor=ubatch_batch_descriptor,
+                    cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                    ubatch_num=i,
+                    positions=positions,
+                ))
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
+        for i, split_slice in enumerate(split_batch_slices):
+            sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
+            sliced_intermediate_tensors = self._slice_split_batch_inputs(
+                split_slice.token_slice, input_ids, positions, inputs_embeds,
+                intermediate_tensors)
+            
+            # When i == 1 (second batch_slice), copy data to parallel_streams buffers
+            if i == 1:
+                num_tokens = split_slice.num_tokens
+                
+                # Copy and replace input_ids
+                if sliced_input_ids is not None:
+                    self.input_ids_parallel_streams.gpu[:num_tokens].copy_(sliced_input_ids)
+                    sliced_input_ids = self.input_ids_parallel_streams.gpu[:num_tokens]
+                
+                # Copy and replace positions (handle M-RoPE ndim==2 case)
+                if sliced_positions is not None:
+                    if sliced_positions.ndim == 2:
+                        # M-RoPE case: positions shape is [num_dims, num_tokens]
+                        self.positions_parallel_streams.gpu[:, :num_tokens].copy_(sliced_positions)
+                        sliced_positions = self.positions_parallel_streams.gpu[:, :num_tokens]
+                    else:
+                        # Normal case: positions shape is [num_tokens]
+                        self.positions_parallel_streams.gpu[:num_tokens].copy_(sliced_positions)
+                        sliced_positions = self.positions_parallel_streams.gpu[:num_tokens]
+                
+                # Copy and replace inputs_embeds
+                if sliced_inputs_embeds is not None:
+                    self.inputs_embeds_parallel_streams.gpu[:num_tokens].copy_(sliced_inputs_embeds)
+                    sliced_inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens]
+            
+            ubatch_metadata.append(
+                AscendUbatchMetadata(
+                    context=forward_contexts[i],
+                    input_ids=sliced_input_ids,
+                    positions=sliced_positions,
+                    inputs_embeds=sliced_inputs_embeds,
+                    intermediate_tensors=sliced_intermediate_tensors,
+                    num_tokens=split_slice.num_tokens))
+
+        return ubatch_metadata
+
+    def _make_split_batch_metadata(
+            self, split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor], positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode) -> list[AscendUbatchMetadata]:
+
+        forward_contexts = []
+        cur_forward_context = get_forward_context()
+        dp_metadata = cur_forward_context.dp_metadata
+
+        ubatch_cudagraph_mode = CUDAGraphMode.FULL if aclgraph_runtime_mode != CUDAGraphMode.NONE else CUDAGraphMode.NONE
+
+        for i, split_slice in enumerate(split_batch_slices):
+            ubatch_attn_metadata = None
+            if attn_metadata is not None:
+                if isinstance(attn_metadata, list) and i < len(attn_metadata):
+                    ubatch_attn_metadata = attn_metadata[i]
+                else:
+                    ubatch_attn_metadata = attn_metadata
+
+            ubatch_num_tokens = split_slice.num_tokens
+            ubatch_num_reqs = split_slice.num_requests
+            ubatch_batch_descriptor = BatchDescriptor(
+                num_tokens=ubatch_num_tokens,
+                num_reqs=ubatch_num_reqs,
+                uniform=batch_descriptor.uniform,
+                has_lora=batch_descriptor.has_lora,
+            )
+            forward_contexts.append(
+                create_ascend_forward_context(
+                    cur_forward_context,
+                    attn_metadata=ubatch_attn_metadata,
+                    vllm_config=self.vllm_config,
+                    dp_metadata=dp_metadata,
+                            ubatch_slices=split_ubatch_slices,
+                    batch_descriptor=ubatch_batch_descriptor,
+                    cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                    ubatch_num=i,
+                            positions=positions,
+                ))
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
+        for i, split_slice in enumerate(split_batch_slices):
+            sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
+            sliced_intermediate_tensors = self._slice_split_batch_inputs(
+                split_slice.token_slice, input_ids, positions, inputs_embeds,
+                intermediate_tensors)
+            
+            
+            ubatch_metadata.append(
+                AscendUbatchMetadata(
+                    context=forward_contexts[i],
+                    input_ids=sliced_input_ids,
+                    positions=sliced_positions,
+                    inputs_embeds=sliced_inputs_embeds,
+                    intermediate_tensors=sliced_intermediate_tensors,
+                    num_tokens=split_slice.num_tokens))
+
+        return ubatch_metadata
+
+    def _merge_intermediate_tensors(self, intermediate_tensor_list):
+        result = {}
+        for key in intermediate_tensor_list[0].tensors:
+            result[key] = torch.cat(
+                [it.tensors[key] for it in intermediate_tensor_list], dim=0)
+        return IntermediateTensors(result)
+
+    def _snapshot_split_output(self, output: Any) -> Any:
+        # Snapshot outputs to avoid aliasing when graph replay reuses output buffers.
+        if isinstance(output, torch.Tensor):
+            return output.clone()
+        if isinstance(output, IntermediateTensors):
+            return IntermediateTensors(
+                {k: v.clone() for k, v in output.tensors.items()},
+                kv_connector_output=output.kv_connector_output,
+            )
+        if isinstance(output, tuple):
+            return tuple(self._snapshot_split_output(x) for x in output)
+        if isinstance(output, list):
+            return [self._snapshot_split_output(x) for x in output]
+        if isinstance(output, dict):
+            return {
+                k: self._snapshot_split_output(v) for k, v in output.items()
+            }
+        return output
+
+    def _merge_split_outputs(self, outputs: list[Any]) -> Any:
+        first = outputs[0]
+        if isinstance(first, IntermediateTensors):
+            return self._merge_intermediate_tensors(outputs)
+        if isinstance(first, tuple):
+            merged = []
+            for idx in range(len(first)):
+                parts = [o[idx] for o in outputs]
+                if isinstance(parts[0], torch.Tensor):
+                    merged.append(torch.cat(parts, dim=0))
+                else:
+                    merged.append(parts)
+            return tuple(merged)
+        return torch.cat(outputs, dim=0)
+
+    def _run_split_batch_gr0(
+            self,
+            split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            intermediate_tensors: Optional[IntermediateTensors],
+            inputs_embeds: Optional[torch.Tensor],
+            model_kwargs: dict[str, Any],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode,
+        ) -> Any:
+            """
+            执行split-batch，确保每个batch重放时地址一致。
+
+            核心逻辑：
+            - 图捕获时，输入地址在 self.input_ids.gpu、self.positions.gpu 等的起始位置
+            - 第一个ubatch执行时，数据已经在正确位置
+            - 第二个ubatch执行前，将其数据复制到起始位置，然后用起始位置执行
+            - 函数结束前恢复被覆盖的起始位置数据
+            """
+            # Step 1: 为所有split准备元数据
+            ubatch_metadata = self._make_split_batch_metadata(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+            )
+
+            results: list[Any] = []
+            original_forward_context = get_forward_context()
+
+            # 获取第一个 split 的 token 数量，用于确定固定缓冲区大小
+            first_split_num_tokens = split_batch_slices[0].num_tokens
+
+            # 备份可能被覆盖的前缀区域，函数结束时恢复
+            backup_input_ids = None
+            if input_ids is not None:
+                backup_input_ids = self.input_ids.gpu[:first_split_num_tokens].clone()
+
+            if positions.ndim == 2:
+                backup_positions = self.positions.gpu[:, :first_split_num_tokens].clone()
+            else:
+                backup_positions = self.positions.gpu[:first_split_num_tokens].clone()
+
+            backup_inputs_embeds = None
+            if inputs_embeds is not None:
+                backup_inputs_embeds = self.inputs_embeds[:first_split_num_tokens].clone()
+
+            base_attn_metadata = attn_metadata[0] if isinstance(
+                attn_metadata, list) else attn_metadata
+            base_slot_mapping = _get_slot_mapping_from_attn_metadata(
+                base_attn_metadata)
+            slot_mapping_backup_len = 0
+            backup_slot_mapping = None
+            if base_slot_mapping is not None:
+                slot_mapping_backup_len = min(first_split_num_tokens,
+                                              int(base_slot_mapping.shape[0]))
+                if slot_mapping_backup_len > 0:
+                    backup_slot_mapping = base_slot_mapping[
+                        :slot_mapping_backup_len].clone()
+
+            try:
+                # Step 2: 依次执行每个split
+                for slice_idx, split_slice in enumerate(split_batch_slices):
+                    metadata = ubatch_metadata[slice_idx]
+                    current_num_tokens = split_slice.num_tokens
+                    _append_split_metadata_debug(
+                        "gr0_loop_enter",
+                        {
+                            "slice_idx": slice_idx,
+                            "token_slice": [split_slice.token_slice.start,
+                                            split_slice.token_slice.stop,
+                                            split_slice.token_slice.step],
+                            "request_slice": [split_slice.request_slice.start,
+                                              split_slice.request_slice.stop,
+                                              split_slice.request_slice.step],
+                            "num_tokens": current_num_tokens,
+                            "context_id": _safe_context_id(metadata.context),
+                            **_build_split_tensor_debug("input_ids", metadata.input_ids),
+                            **_build_split_tensor_debug("positions", metadata.positions),
+                        },
+                    )
+
+                    if slice_idx == 0:
+                        # 第一个ubatch：数据已在正确位置（self.input_ids.gpu起始处）
+                        context_attn_positions_ptr, context_attn_positions_head = _extract_attn_positions(
+                            getattr(metadata.context, "attn_metadata", None)
+                        )
+                        _append_split_metadata_debug(
+                            "replay_alignment",
+                            {
+                                "slice_idx": slice_idx,
+                                "num_tokens": current_num_tokens,
+                                "input_ids_ptr": _safe_tensor_ptr(metadata.input_ids),
+                                "input_ids_head": _safe_tensor_head(metadata.input_ids),
+                                "positions_ptr": _safe_tensor_ptr(metadata.positions),
+                                "positions_head": _safe_tensor_head(metadata.positions),
+                                "context_attn_positions_ptr": context_attn_positions_ptr,
+                                "context_attn_positions_head": context_attn_positions_head,
+                            },
+                        )
+                        with override_forward_context(metadata.context):
+                            _append_split_metadata_debug(
+                                "gr0_pre_model",
+                                {
+                                    "slice_idx": slice_idx,
+                                    "context_id": _safe_context_id(metadata.context),
+                                    "num_tokens": current_num_tokens,
+                                },
+                            )
+                            # Refresh attn params before replay to avoid carrying
+                            # stale settings from the previous split.
+
+                            result = self.model(
+                                input_ids=metadata.input_ids,
+                                positions=metadata.positions,
+                                inputs_embeds=metadata.inputs_embeds,
+                                intermediate_tensors=metadata.intermediate_tensors,
+                                **model_kwargs,
+                            )
+                            # [关键] 在模型执行之后更新 attention 参数
+                            self._update_attn_params_for_split_ubatch(
+                                metadata.context, current_num_tokens)
+                            _append_split_metadata_debug(
+                                "gr0_post_model",
+                                {
+                                    "slice_idx": slice_idx,
+                                    "context_id": _safe_context_id(metadata.context),
+                                    "num_tokens": current_num_tokens,
+                                },
+                            )
+                    else:
+                        # 后续ubatch：需要将数据复制到第一个ubatch的位置
+                        # [关键修复] 同步等待前一个图完成执行
+                        torch.npu.synchronize()
+
+                        # [关键修复] 将当前ubatch的数据复制到起始位置
+                        # input_ids
+                        if metadata.input_ids is not None:
+                            self.input_ids.gpu[:current_num_tokens].copy_(
+                                metadata.input_ids, non_blocking=False)
+
+                        # positions
+                        if metadata.positions is not None:
+                            if metadata.positions.ndim == 2:
+                                self.positions.gpu[:, :current_num_tokens].copy_(
+                                    metadata.positions, non_blocking=False)
+                            else:
+                                self.positions.gpu[:current_num_tokens].copy_(
+                                    metadata.positions, non_blocking=False)
+
+                        # inputs_embeds
+                        if metadata.inputs_embeds is not None:
+                            self.inputs_embeds[:current_num_tokens].copy_(
+                                metadata.inputs_embeds, non_blocking=False)
+
+                        # [关键修复] 使用起始位置的张量执行（与图捕获时地址一致）
+                        metadata.input_ids = (
+                            self.input_ids.gpu[:current_num_tokens]
+                            if metadata.input_ids is not None else None
+                        )
+                        if metadata.positions is not None:
+                            if metadata.positions.ndim == 2:
+                                metadata.positions = self.positions.gpu[:, :current_num_tokens]
+                            else:
+                                metadata.positions = self.positions.gpu[:current_num_tokens]
+                        metadata.inputs_embeds = (
+                            self.inputs_embeds[:current_num_tokens]
+                            if metadata.inputs_embeds is not None else None
+                        )
+                        # Rebuild current split forward context to avoid stale context reuse.
+                        ubatch_attn_metadata = None
+                        if attn_metadata is not None:
+                            if isinstance(attn_metadata, list):
+                                _append_split_metadata_debug(
+                                    "gr0_attn_metadata_select",
+                                    {
+                                        "slice_idx": slice_idx,
+                                        "attn_metadata_type": type(attn_metadata).__name__,
+                                        "attn_metadata_len": len(attn_metadata),
+                                    },
+                                )
+                                if slice_idx >= len(attn_metadata):
+                                    raise RuntimeError(
+                                        "gr0 attn_metadata list too short: "
+                                        f"slice_idx={slice_idx}, len={len(attn_metadata)}"
+                                    )
+                                ubatch_attn_metadata = attn_metadata[slice_idx]
+                            else:
+                                ubatch_attn_metadata = attn_metadata
+
+                        split_slot_mapping = _get_slot_mapping_from_attn_metadata(
+                            ubatch_attn_metadata)
+                        if base_slot_mapping is not None and split_slot_mapping is not None:
+                            copy_len = min(current_num_tokens,
+                                           int(base_slot_mapping.shape[0]),
+                                           int(split_slot_mapping.shape[0]))
+                            if copy_len != current_num_tokens:
+                                raise RuntimeError(
+                                    "gr0 slot_mapping length mismatch: "
+                                    f"required={current_num_tokens}, "
+                                    f"base={int(base_slot_mapping.shape[0])}, "
+                                    f"split={int(split_slot_mapping.shape[0])}")
+                            base_slot_mapping[:copy_len].copy_(
+                                split_slot_mapping[:copy_len],
+                                non_blocking=False)
+                            relocated_slot_mapping = base_slot_mapping[:copy_len]
+                            updated_count = _set_slot_mapping_for_attn_metadata(
+                                ubatch_attn_metadata, relocated_slot_mapping)
+                            _append_split_metadata_debug(
+                                "gr0_slot_mapping_relocated",
+                                {
+                                    "slice_idx": slice_idx,
+                                    "copy_len": copy_len,
+                                    "updated_count": updated_count,
+                                    **_build_split_tensor_debug(
+                                        "relocated_slot_mapping",
+                                        relocated_slot_mapping),
+                                },
+                            )
+
+                        ubatch_batch_descriptor = BatchDescriptor(
+                            num_tokens=current_num_tokens,
+                            num_reqs=split_slice.num_requests,
+                            uniform=batch_descriptor.uniform,
+                            has_lora=batch_descriptor.has_lora,
+                        )
+                        ubatch_cudagraph_mode = (
+                            CUDAGraphMode.FULL
+                            if aclgraph_runtime_mode != CUDAGraphMode.NONE
+                            else CUDAGraphMode.NONE
+                        )
+                        if _SPLIT_LOCAL_CONTEXT_REBUILD:
+                            rebuild_ubatch_slices = [
+                                UBatchSlice(
+                                    slice(0, split_slice.num_requests),
+                                    slice(0, current_num_tokens),
+                                )
+                            ]
+                            rebuild_positions = metadata.positions
+                            rebuild_ubatch_num = 0
+                        else:
+                            rebuild_ubatch_slices = split_ubatch_slices
+                            rebuild_positions = positions
+                            rebuild_ubatch_num = slice_idx
+
+                        metadata.context = create_ascend_forward_context(
+                            original_forward_context,
+                            attn_metadata=ubatch_attn_metadata,
+                            vllm_config=self.vllm_config,
+                            dp_metadata=original_forward_context.dp_metadata,
+                            ubatch_slices=rebuild_ubatch_slices,
+                            batch_descriptor=ubatch_batch_descriptor,
+                            cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                            ubatch_num=rebuild_ubatch_num,
+                            positions=rebuild_positions,
+                        )
+                        torch.npu.synchronize()
+                        _append_split_metadata_debug(
+                            "gr0_context_rebuilt",
+                            {
+                                "slice_idx": slice_idx,
+                                "context_id": _safe_context_id(metadata.context),
+                                "num_tokens": current_num_tokens,
+                                **_build_split_tensor_debug("positions", positions),
+                            },
+                        )
+
+                        context_attn_positions_ptr, context_attn_positions_head = _extract_attn_positions(
+                            getattr(metadata.context, "attn_metadata", None)
+                        )
+                        _append_split_metadata_debug(
+                            "replay_alignment",
+                            {
+                                "slice_idx": slice_idx,
+                                "num_tokens": current_num_tokens,
+                                "input_ids_ptr": _safe_tensor_ptr(metadata.input_ids),
+                                "input_ids_head": _safe_tensor_head(metadata.input_ids),
+                                "positions_ptr": _safe_tensor_ptr(metadata.positions),
+                                "positions_head": _safe_tensor_head(metadata.positions),
+                                "context_attn_positions_ptr": context_attn_positions_ptr,
+                                "context_attn_positions_head": context_attn_positions_head,
+                            },
+                        )
+
+                        with override_forward_context(metadata.context):
+                            _append_split_metadata_debug(
+                                "gr0_pre_model",
+                                {
+                                    "slice_idx": slice_idx,
+                                    "context_id": _safe_context_id(metadata.context),
+                                    "num_tokens": current_num_tokens,
+                                },
+                            )
+                            # Refresh attn params before replay to avoid carrying
+                            # stale settings from the previous split.
+                            result = self.model(
+                                input_ids=metadata.input_ids,
+                                positions=metadata.positions,
+                                inputs_embeds=metadata.inputs_embeds,
+                                intermediate_tensors=metadata.intermediate_tensors,
+                                **model_kwargs,
+                            )
+                            self._update_attn_params_for_split_ubatch(
+                                metadata.context, current_num_tokens)
+                            _append_split_metadata_debug(
+                                "gr0_post_model",
+                                {
+                                    "slice_idx": slice_idx,
+                                    "context_id": _safe_context_id(metadata.context),
+                                    "num_tokens": current_num_tokens,
+                                },
+                            )
+
+                    results.append(self._snapshot_split_output(result))
+
+                with override_forward_context(original_forward_context):
+                    result = self._merge_split_outputs(results)
+
+                if not getattr(self, "_split_batch_dumped", False):
+                    dump_path = os.path.join(
+                        os.getcwd(), "split_batch_merged_first_result_gg.json")
+                    with open(dump_path, "w", encoding="utf-8") as f:
+                        json.dump(self._to_jsonable(result), f, ensure_ascii=False)
+                    self._split_batch_dumped = True
+
+                return result
+
+            finally:
+                    if backup_input_ids is not None:
+                        self.input_ids.gpu[:first_split_num_tokens].copy_(
+                            backup_input_ids, non_blocking=False)
+
+                    if positions.ndim == 2:
+                        self.positions.gpu[:, :first_split_num_tokens].copy_(
+                            backup_positions, non_blocking=False)
+                    else:
+                        self.positions.gpu[:first_split_num_tokens].copy_(
+                            backup_positions, non_blocking=False)
+
+                    if backup_inputs_embeds is not None:
+                        self.inputs_embeds[:first_split_num_tokens].copy_(
+                            backup_inputs_embeds, non_blocking=False)
+                    if backup_slot_mapping is not None and base_slot_mapping is not None:
+                        base_slot_mapping[:slot_mapping_backup_len].copy_(
+                            backup_slot_mapping, non_blocking=False)
+                    torch.npu.synchronize()
+
+    def _run_split_batch_gr(
+        self,
+        split_ubatch_slices: UBatchSlices,
+        split_batch_slices: SplitBatchSlices,
+        attn_metadata: PerLayerAttnMetadata,
+        input_ids: Optional[torch.Tensor],
+        positions: torch.Tensor,
+        intermediate_tensors: Optional[IntermediateTensors],
+        inputs_embeds: Optional[torch.Tensor],
+        model_kwargs: dict[str, Any],
+        batch_descriptor: BatchDescriptor,
+        aclgraph_runtime_mode: CUDAGraphMode,
+    ) -> Any:
+        """
+        执行split-batch，确保每个batch重放时地址一致。
+
+        核心逻辑：
+        - 手动构建第一个batch的metadata/context
+        - 第二个及后续batch在第一个metadata基础上原地修改
+        - 第二个及后续batch在replay前搬运到前缀固定地址
+        - 函数结束前恢复被覆盖的前缀区域
+        """
+        results: list[Any] = []
+        original_forward_context = get_forward_context()
+
+        first_split = split_batch_slices[0]
+        first_split_num_tokens = first_split.num_tokens
+
+        backup_input_ids = None
+        if input_ids is not None:
+            backup_input_ids = self.input_ids.gpu[:first_split_num_tokens].clone()
+
+        if positions.ndim == 2:
+            backup_positions = self.positions.gpu[:, :first_split_num_tokens].clone()
+        else:
+            backup_positions = self.positions.gpu[:first_split_num_tokens].clone()
+
+        backup_inputs_embeds = None
+        if inputs_embeds is not None:
+            backup_inputs_embeds = self.inputs_embeds[:first_split_num_tokens].clone()
+
+        first_attn_metadata = attn_metadata
+        if isinstance(attn_metadata, list):
+            first_attn_metadata = attn_metadata[0]
+
+        base_slot_mapping = _get_slot_mapping_from_attn_metadata(
+            first_attn_metadata)
+        slot_mapping_backup_len = 0
+        backup_slot_mapping = None
+        if base_slot_mapping is not None:
+            slot_mapping_backup_len = min(first_split_num_tokens,
+                                          int(base_slot_mapping.shape[0]))
+            if slot_mapping_backup_len > 0:
+                backup_slot_mapping = base_slot_mapping[:slot_mapping_backup_len].clone()
+
+        first_input_ids, first_positions, first_inputs_embeds, first_intermediate = \
+            self._slice_split_batch_inputs(
+                first_split.token_slice,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+            )
+
+        first_batch_descriptor = BatchDescriptor(
+            num_tokens=first_split.num_tokens,
+            num_reqs=first_split.num_requests,
+            uniform=batch_descriptor.uniform,
+            has_lora=batch_descriptor.has_lora,
+        )
+        first_cudagraph_mode = (
+            CUDAGraphMode.FULL
+            if aclgraph_runtime_mode != CUDAGraphMode.NONE
+            else CUDAGraphMode.NONE
+        )
+        first_context = create_ascend_forward_context(
+            original_forward_context,
+            attn_metadata=first_attn_metadata,
+            vllm_config=self.vllm_config,
+            dp_metadata=original_forward_context.dp_metadata,
+            ubatch_slices=split_ubatch_slices,
+            batch_descriptor=first_batch_descriptor,
+            cudagraph_runtime_mode=first_cudagraph_mode,
+            ubatch_num=0,
+            positions=positions,
+        )
+
+        metadata = AscendUbatchMetadata(
+            context=first_context,
+            input_ids=first_input_ids,
+            positions=first_positions,
+            inputs_embeds=first_inputs_embeds,
+            intermediate_tensors=first_intermediate,
+            num_tokens=first_split.num_tokens,
+        )
+
+        try:
+            for slice_idx, split_slice in enumerate(split_batch_slices):
+                current_num_tokens = split_slice.num_tokens
+                _append_split_metadata_debug(
+                    "gr_loop_enter",
+                    {
+                        "slice_idx": slice_idx,
+                        "token_slice": [split_slice.token_slice.start,
+                                         split_slice.token_slice.stop,
+                                         split_slice.token_slice.step],
+                        "request_slice": [split_slice.request_slice.start,
+                                          split_slice.request_slice.stop,
+                                          split_slice.request_slice.step],
+                        "num_tokens": current_num_tokens,
+                        "context_id": _safe_context_id(metadata.context),
+                        **_build_split_tensor_debug("input_ids", metadata.input_ids),
+                        **_build_split_tensor_debug("positions", metadata.positions),
+                    },
+                )
+                current_attn_metadata = first_attn_metadata
+
+                if slice_idx > 0:
+                    split_attn_metadata = attn_metadata
+                    if isinstance(attn_metadata, list):
+                        _append_split_metadata_debug(
+                            "gr_attn_metadata_select",
+                            {
+                                "slice_idx": slice_idx,
+                                "attn_metadata_type": type(attn_metadata).__name__,
+                                "attn_metadata_len": len(attn_metadata),
+                            },
+                        )
+                        if slice_idx >= len(attn_metadata):
+                            raise RuntimeError(
+                                "gr attn_metadata list too short: "
+                                f"slice_idx={slice_idx}, len={len(attn_metadata)}"
+                            )
+                        split_attn_metadata = attn_metadata[slice_idx]
+                    current_attn_metadata = split_attn_metadata
+
+                    split_slot_mapping = _get_slot_mapping_from_attn_metadata(
+                        split_attn_metadata)
+                    if base_slot_mapping is not None and split_slot_mapping is not None:
+                        copy_len = min(current_num_tokens,
+                                       int(base_slot_mapping.shape[0]),
+                                       int(split_slot_mapping.shape[0]))
+                        if copy_len != current_num_tokens:
+                            raise RuntimeError(
+                                "gr slot_mapping length mismatch: "
+                                f"required={current_num_tokens}, "
+                                f"base={int(base_slot_mapping.shape[0])}, "
+                                f"split={int(split_slot_mapping.shape[0])}")
+                        base_slot_mapping[:copy_len].copy_(
+                            split_slot_mapping[:copy_len], non_blocking=False)
+                        relocated_slot_mapping = base_slot_mapping[:copy_len]
+                        updated_count = _set_slot_mapping_for_attn_metadata(
+                            split_attn_metadata, relocated_slot_mapping)
+                        _append_split_metadata_debug(
+                            "gr_slot_mapping_relocated",
+                            {
+                                "slice_idx": slice_idx,
+                                "copy_len": copy_len,
+                                "updated_count": updated_count,
+                                **_build_split_tensor_debug(
+                                    "relocated_slot_mapping",
+                                    relocated_slot_mapping),
+                            },
+                        )
+
+                    cur_input_ids, cur_positions, cur_inputs_embeds, cur_intermediate = \
+                        self._slice_split_batch_inputs(
+                            split_slice.token_slice,
+                            input_ids,
+                            positions,
+                            inputs_embeds,
+                            intermediate_tensors,
+                        )
+
+                    torch.npu.synchronize()
+
+                    if cur_input_ids is not None:
+                        self.input_ids.gpu[:current_num_tokens].copy_(
+                            cur_input_ids, non_blocking=False)
+
+                    if cur_positions is not None:
+                        if cur_positions.ndim == 2:
+                            self.positions.gpu[:, :current_num_tokens].copy_(
+                                cur_positions, non_blocking=False)
+                        else:
+                            self.positions.gpu[:current_num_tokens].copy_(
+                                cur_positions, non_blocking=False)
+
+                    if cur_inputs_embeds is not None:
+                        self.inputs_embeds[:current_num_tokens].copy_(
+                            cur_inputs_embeds, non_blocking=False)
+
+                    metadata.input_ids = (
+                        self.input_ids.gpu[:current_num_tokens]
+                        if cur_input_ids is not None else None
+                    )
+                    if cur_positions is not None:
+                        if cur_positions.ndim == 2:
+                            metadata.positions = self.positions.gpu[:, :current_num_tokens]
+                        else:
+                            metadata.positions = self.positions.gpu[:current_num_tokens]
+                    else:
+                        metadata.positions = None
+                    metadata.inputs_embeds = (
+                        self.inputs_embeds[:current_num_tokens]
+                        if cur_inputs_embeds is not None else None
+                    )
+                    metadata.intermediate_tensors = cur_intermediate
+                    metadata.num_tokens = current_num_tokens
+
+                    ubatch_batch_descriptor = BatchDescriptor(
+                        num_tokens=current_num_tokens,
+                        num_reqs=split_slice.num_requests,
+                        uniform=batch_descriptor.uniform,
+                        has_lora=batch_descriptor.has_lora,
+                    )
+                    if _SPLIT_LOCAL_CONTEXT_REBUILD:
+                        rebuild_ubatch_slices = [
+                            UBatchSlice(
+                                slice(0, split_slice.num_requests),
+                                slice(0, current_num_tokens),
+                            )
+                        ]
+                        rebuild_positions = metadata.positions
+                        rebuild_ubatch_num = 0
+                    else:
+                        rebuild_ubatch_slices = split_ubatch_slices
+                        rebuild_positions = positions
+                        rebuild_ubatch_num = slice_idx
+
+                    metadata.context = create_ascend_forward_context(
+                        metadata.context,
+                        attn_metadata=split_attn_metadata,
+                        vllm_config=self.vllm_config,
+                        dp_metadata=original_forward_context.dp_metadata,
+                        ubatch_slices=rebuild_ubatch_slices,
+                        batch_descriptor=ubatch_batch_descriptor,
+                        cudagraph_runtime_mode=first_cudagraph_mode,
+                        ubatch_num=rebuild_ubatch_num,
+                        positions=rebuild_positions,
+                    )
+                    torch.npu.synchronize()
+                    _append_split_metadata_debug(
+                        "gr_context_rebuilt",
+                        {
+                            "slice_idx": slice_idx,
+                            "context_id": _safe_context_id(metadata.context),
+                            "num_tokens": current_num_tokens,
+                            "attn_metadata_type": type(split_attn_metadata).__name__
+                            if split_attn_metadata is not None else None,
+                            **_build_split_tensor_debug("positions", metadata.positions),
+                        },
+                    )
+
+                context_attn_positions_ptr, context_attn_positions_head = _extract_attn_positions(
+                    getattr(metadata.context, "attn_metadata", None)
+                )
+                _append_split_metadata_debug(
+                    "replay_alignment",
+                    {
+                        "slice_idx": slice_idx,
+                        "num_tokens": current_num_tokens,
+                        "input_ids_ptr": _safe_tensor_ptr(metadata.input_ids),
+                        "input_ids_head": _safe_tensor_head(metadata.input_ids),
+                        "positions_ptr": _safe_tensor_ptr(metadata.positions),
+                        "positions_head": _safe_tensor_head(metadata.positions),
+                        "context_attn_positions_ptr": context_attn_positions_ptr,
+                        "context_attn_positions_head": context_attn_positions_head,
+                    },
+                )
+
+                with override_forward_context(metadata.context):
+                    _append_split_metadata_debug(
+                        "gr_pre_model",
+                        {
+                            "slice_idx": slice_idx,
+                            "context_id": _safe_context_id(metadata.context),
+                            "num_tokens": current_num_tokens,
+                        },
+                    )
+                    # Refresh attn params before replay to avoid carrying
+                    # stale settings from the previous split.
+                    self._refresh_block_table_for_split_ubatch(
+                        metadata.context, current_num_tokens)
+                    result = self.model(
+                        input_ids=metadata.input_ids,
+                        positions=metadata.positions,
+                        inputs_embeds=metadata.inputs_embeds,
+                        intermediate_tensors=metadata.intermediate_tensors,
+                        **model_kwargs,
+                    )
+                    self._update_attn_params_for_split_ubatch(
+                        metadata.context, current_num_tokens)
+                    _append_split_metadata_debug(
+                        "gr_post_model",
+                        {
+                            "slice_idx": slice_idx,
+                            "context_id": _safe_context_id(metadata.context),
+                            "num_tokens": current_num_tokens,
+                        },
+                    )
+
+                results.append(self._snapshot_split_output(result))
+
+            with override_forward_context(original_forward_context):
+                result = self._merge_split_outputs(results)
+
+            if not getattr(self, "_split_batch_dumped", False):
+                dump_path = os.path.join(
+                    os.getcwd(), "split_batch_merged_first_result_gg.json")
+                with open(dump_path, "w", encoding="utf-8") as f:
+                    json.dump(self._to_jsonable(result), f, ensure_ascii=False)
+                self._split_batch_dumped = True
+
+            return result
+
+        finally:
+            if backup_input_ids is not None:
+                self.input_ids.gpu[:first_split_num_tokens].copy_(
+                    backup_input_ids, non_blocking=False)
+
+            if positions.ndim == 2:
+                self.positions.gpu[:, :first_split_num_tokens].copy_(
+                    backup_positions, non_blocking=False)
+            else:
+                self.positions.gpu[:first_split_num_tokens].copy_(
+                    backup_positions, non_blocking=False)
+
+            if backup_inputs_embeds is not None:
+                self.inputs_embeds[:first_split_num_tokens].copy_(
+                    backup_inputs_embeds, non_blocking=False)
+
+            if backup_slot_mapping is not None and base_slot_mapping is not None:
+                base_slot_mapping[:slot_mapping_backup_len].copy_(
+                    backup_slot_mapping, non_blocking=False)
+
+            torch.npu.synchronize()
+
+    def _run_split_batch_parallel(
+        self,
+        split_ubatch_slices: UBatchSlices,        # 微批次切片信息（用于 ubatch 粒度的上下文重建）
+        split_batch_slices: SplitBatchSlices,      # 分割后的批次切片列表，每个元素描述一个子批次
+        attn_metadata: PerLayerAttnMetadata,       # 注意力元数据（可以是列表，每个子批次一份）
+        input_ids: Optional[torch.Tensor],         # 输入 token ID（可选，与 inputs_embeds 二选一）
+        positions: torch.Tensor,                   # 位置编码张量
+        intermediate_tensors: Optional[IntermediateTensors],  # 流水线并行中间层张量
+        inputs_embeds: Optional[torch.Tensor],     # 输入嵌入向量（可选）
+        model_kwargs: dict[str, Any],              # 模型额外参数
+        batch_descriptor: BatchDescriptor,         # 批次描述符（token数、请求数等元信息）
+        aclgraph_runtime_mode: CUDAGraphMode,      # ACL Graph（类 CUDA Graph）运行模式
+    ) -> Any:
+        """Run split-batch with parallel replay buffers and per-split context rebuild.
+        
+        核心逻辑：将一个大批次拆分成多个子批次（split），
+        通过并行流（NPU Stream）或双线程方式并发执行，
+        最终合并各子批次的输出结果。
+        """
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【快速退出】若切片数 <= 1，退化为串行执行路径，无需并行
+        # ─────────────────────────────────────────────────────────────────
+        if not split_batch_slices or len(split_batch_slices) <= 1:
+            return self._run_split_batch_gr(
+                split_ubatch_slices, split_batch_slices, attn_metadata,
+                input_ids, positions, intermediate_tensors, inputs_embeds,
+                model_kwargs, batch_descriptor, aclgraph_runtime_mode,
+            )
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【第一个子批次的基础信息准备】
+        # ─────────────────────────────────────────────────────────────────
+        original_forward_context = get_forward_context()  # 保存当前全局前向上下文，后续恢复用
+        first_split = split_batch_slices[0]               # 取第一个子批次切片
+        first_num_tokens = first_split.num_tokens          # 第一个子批次的 token 数量
+        first_num_reqs = first_split.num_requests          # 第一个子批次的请求数量
+
+        # 获取第一个子批次对应的注意力元数据
+        first_attn_metadata = (attn_metadata[0]
+                            if isinstance(attn_metadata, list)
+                            else attn_metadata)
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【slot_mapping 备份】
+        # slot_mapping 是 KV Cache 写入位置的映射表。
+        # 由于后续子批次会复用/覆盖 base_slot_mapping，
+        # 这里先备份第一个子批次的 slot_mapping，以便 finally 中恢复。
+        # ─────────────────────────────────────────────────────────────────
+        base_slot_mapping = _get_slot_mapping_from_attn_metadata(first_attn_metadata)
+        slot_mapping_backup_len = 0
+        backup_slot_mapping = None
+        if base_slot_mapping is not None:
+            # 备份长度取 min(first_num_tokens, slot_mapping实际长度)，防止越界
+            slot_mapping_backup_len = min(first_num_tokens, int(base_slot_mapping.shape[0]))
+            if slot_mapping_backup_len > 0:
+                backup_slot_mapping = base_slot_mapping[:slot_mapping_backup_len].clone()
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【切分第一个子批次的输入张量】
+        # 根据 token_slice 从全量输入中切出第一个子批次对应的部分
+        # ─────────────────────────────────────────────────────────────────
+        first_input_ids, first_positions, first_inputs_embeds, first_intermediate = \
+            self._slice_split_batch_inputs(
+                first_split.token_slice,
+                input_ids, positions, inputs_embeds, intermediate_tensors,
+            )
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【确定子批次的 CUDAGraph 运行模式】
+        # 若整体使用 FULL 模式，则子批次也用 FULL；否则强制 NONE（eager 模式）
+        # _SPLIT_PARALLEL_FORCE_EAGER 为调试开关，强制走 eager
+        # ─────────────────────────────────────────────────────────────────
+        ubatch_cudagraph_mode = (
+            CUDAGraphMode.FULL
+            if aclgraph_runtime_mode != CUDAGraphMode.NONE
+            else CUDAGraphMode.NONE
+        )
+        if _SPLIT_PARALLEL_FORCE_EAGER:
+            ubatch_cudagraph_mode = CUDAGraphMode.NONE
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【为第一个子批次构建前向上下文】
+        # BatchDescriptor 描述该子批次的规模和特性
+        # create_ascend_forward_context 创建华为 Ascend 专用的前向上下文
+        # ─────────────────────────────────────────────────────────────────
+        first_batch_descriptor = BatchDescriptor(
+            num_tokens=first_num_tokens,
+            num_reqs=first_num_reqs,
+            uniform=batch_descriptor.uniform,
+            has_lora=batch_descriptor.has_lora,
+        )
+        first_context = create_ascend_forward_context(
+            original_forward_context,
+            attn_metadata=first_attn_metadata,
+            vllm_config=self.vllm_config,
+            dp_metadata=original_forward_context.dp_metadata,
+            ubatch_slices=split_ubatch_slices,
+            batch_descriptor=first_batch_descriptor,
+            cudagraph_runtime_mode=ubatch_cudagraph_mode,
+            ubatch_num=0,           # 第一个子批次编号为 0
+            positions=positions,
+        )
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【结果收集容器】
+        # results_with_order: [(request_slice.start, output, pad_size), ...]
+        # 用 request_slice.start 作为排序键，最终按请求顺序合并
+        # slot_restore_entries: 需要在 finally 中恢复的 slot_mapping 列表
+        # ─────────────────────────────────────────────────────────────────
+        results_with_order: list[tuple[int, Any, int]] = []
+        slot_restore_entries: list[tuple[Any, torch.Tensor]] = []
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【NPU 流准备】
+        # parallel_stream: 用于并行执行后续子批次的 NPU 流
+        # default_stream:  默认 NPU 流，用于第一个子批次
+        # lane_update_streams: 各 lane 的参数更新流（CUDAGraph 回放后更新注意力参数用）
+        # ─────────────────────────────────────────────────────────────────
+        parallel_stream = torch.npu.Stream(device=self.device)
+        default_stream = torch.npu.default_stream(self.device)
+        default_update_stream = getattr(self, "update_stream", default_stream)
+        lane_update_streams = getattr(self, "lane_update_streams",
+                [default_update_stream, parallel_stream])
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【性能分析（Profiling）初始化】
+        # _SPLIT_PARALLEL_PROFILING 为全局开关
+        # ─────────────────────────────────────────────────────────────────
+        profiling_enabled = _SPLIT_PARALLEL_PROFILING
+        prof_t0 = time.perf_counter() if profiling_enabled else 0.0
+        prof_t1 = 0.0
+        prof_t_end = 0.0
+        prof_records: list[dict[str, Any]] = []
+        default_submit_event = None
+        default_done_event = None
+        if profiling_enabled:
+            # NPU Event 用于精确测量 GPU/NPU 端耗时
+            default_submit_event = torch.npu.Event(enable_timing=True)
+            default_done_event = torch.npu.Event(enable_timing=True)
+
+        # ─────────────────────────────────────────────────────────────────
+        # 【双线程并行模式判断】
+        # use_acl_parallel_streams: 模型是否为 ACLGraphWrapper（支持并行流）
+        # dual_thread_enabled: 满足以下所有条件时启用双线程并行：
+        #   1. 全局开关 _SPLIT_PARALLEL_DUAL_THREAD 开启
+        #   2. 模型支持 ACL 并行流
+        #   3. attn_metadata 是列表（每个子批次有独立的注意力元数据）
+        #   4. 子批次数量 > 1
+        # ─────────────────────────────────────────────────────────────────
+        use_acl_parallel_streams = isinstance(self.model, ACLGraphWrapper)
+        dual_thread_enabled = (
+            _SPLIT_PARALLEL_DUAL_THREAD
+            and use_acl_parallel_streams
+            and isinstance(attn_metadata, list)
+            and len(split_batch_slices) > 1
+        )
+
+        try:
+            with override_forward_context(None):  # 临时清空全局前向上下文，避免干扰
+                torch.npu.set_device(self.device)
+
+                # ubatch_range_start/end 控制串行后处理循环的范围
+                # 双线程模式下，所有子批次都在线程中处理，串行循环跳过
+                ubatch_range_start = 1
+                ubatch_range_end = len(split_batch_slices)
+
+                # ═════════════════════════════════════════════════════════
+                # 【分支 A：双线程并行模式】
+                # Lane 0 处理子批次 0（第一个），Lane 1 处理子批次 1..N
+                # 两个 lane 各自在独立线程中运行，使用不同的 NPU 流
+                # ═════════════════════════════════════════════════════════
+                if dual_thread_enabled:
+                    # Lane 0 使用 default_stream，Lane 1 使用新创建的流
+                    lane_streams = [
+                        default_stream,
+                        torch.npu.Stream(device=self.device),
+                    ]
+                    # lane_assignments[0] = [0]，lane_assignments[1] = [1, 2, ...]
+                    lane_assignments: list[list[int]] = [
+                        [0],
+                        list(range(1, len(split_batch_slices))),
+                    ]
+
+                    # ── 为 Lane 1 准备独立的输入缓冲区 ──
+                    # Lane 1 使用预分配的 parallel_streams 缓冲区，
+                    # 避免与 Lane 0 的输入张量产生数据竞争
+                    lane_input_ids: list[Optional[torch.Tensor]] = [None, None]
+                    if input_ids is not None:
+                        lane_input_ids[1] = self.input_ids_parallel_streams.gpu
+
+                    lane_positions: list[Optional[torch.Tensor]] = [None, None]
+                    if positions is not None:
+                        if positions.ndim == 2:
+                            # MRoPE（多维旋转位置编码）场景，shape 为 [3, seq_len]
+                            lane_positions[1] = self.mrope_positions.gpu
+                        else:
+                            lane_positions[1] = self.positions_parallel_streams.gpu
+
+                    lane_inputs_embeds: list[Optional[torch.Tensor]] = [None, None]
+                    if inputs_embeds is not None:
+                        lane_inputs_embeds[1] = self.inputs_embeds_parallel_streams.gpu
+
+                    # 线程安全的结果收集锁和错误收集列表
+                    results_lock = threading.Lock()
+                    worker_errors: list[Optional[Exception]] = [None, None]
+
+                    # ── 线程工作函数 ──
+                    def _run_lane(lane_id: int) -> None:
+                        """每个 lane 的工作函数，在独立线程中运行。"""
+                        local_results: list[tuple[int, Any, int]] = []
+                        local_slots: list[tuple[Any, torch.Tensor]] = []
+                        local_prof_records: list[dict[str, Any]] = []
+                        lane_stream = lane_streams[lane_id]
+                        lane_input_ids_buf = lane_input_ids[lane_id]
+                        lane_positions_buf = lane_positions[lane_id]
+                        lane_inputs_embeds_buf = lane_inputs_embeds[lane_id]
+
+                        with torch.inference_mode():  # 推理模式，禁用梯度计算
+                            try:
+                                torch.npu.set_device(self.device)  # 线程内需重新绑定设备
+
+                                for ubatch_id in lane_assignments[lane_id]:
+                                    # ── 子批次 0（Lane 0 专属）──
+                                    if ubatch_id == 0:
+                                        # 直接使用预先准备好的第一个子批次数据
+                                        split_slice = first_split
+                                        current_num_tokens = first_num_tokens
+                                        current_num_reqs = first_num_reqs
+                                        split_context = first_context
+                                        run_input_ids = first_input_ids
+                                        run_positions = first_positions
+                                        run_inputs_embeds = first_inputs_embeds
+                                        cur_intermediate = first_intermediate
+                                    else:
+                                        # ── 子批次 1..N（Lane 1 处理）──
+                                        split_slice = split_batch_slices[ubatch_id]
+                                        current_num_tokens = int(split_slice.num_tokens)
+                                        current_num_reqs = int(split_slice.num_requests)
+
+                                        # 获取该子批次的注意力元数据和 slot_mapping
+                                        split_attn_metadata = attn_metadata[ubatch_id]
+                                        split_slot_mapping = _get_slot_mapping_from_attn_metadata(
+                                            split_attn_metadata)
+
+                                        if split_slot_mapping is not None:
+                                            # 校验 slot_mapping 长度是否足够
+                                            if int(split_slot_mapping.shape[0]) < current_num_tokens:
+                                                raise RuntimeError(
+                                                    'parallel split slot_mapping length mismatch: '
+                                                    f'required={current_num_tokens}, '
+                                                    f'available={int(split_slot_mapping.shape[0])}')
+                                            # 为该子批次创建独立的 slot_mapping 副本，
+                                            # 防止并发写入时与其他子批次冲突
+                                            parallel_slot_mapping = torch.empty_like(split_slot_mapping)
+                                            #改为no_blocking以并行，以下同理
+                                            parallel_slot_mapping[:current_num_tokens].copy_(
+                                                split_slot_mapping[:current_num_tokens],
+                                                non_blocking=True)
+                                            _set_slot_mapping_for_attn_metadata(
+                                                split_attn_metadata,
+                                                parallel_slot_mapping[:current_num_tokens])
+                                            # 记录原始 slot_mapping，finally 中恢复
+                                            local_slots.append(
+                                                (split_attn_metadata, split_slot_mapping))
+
+                                        # 切分该子批次的输入张量
+                                        cur_input_ids, cur_positions, cur_inputs_embeds, cur_intermediate = \
+                                            self._slice_split_batch_inputs(
+                                                split_slice.token_slice,
+                                                input_ids, positions, inputs_embeds, intermediate_tensors,
+                                            )
+
+                                        # 将输入数据拷贝到 Lane 1 专属缓冲区（避免数据竞争）
+                                        run_input_ids = None
+                                        if cur_input_ids is not None:
+                                            assert lane_input_ids_buf is not None
+                                            lane_input_ids_buf[:current_num_tokens].copy_(
+                                                cur_input_ids, non_blocking=True)
+                                            run_input_ids = lane_input_ids_buf[:current_num_tokens]
+
+                                        run_positions = None
+                                        if cur_positions is not None:
+                                            assert lane_positions_buf is not None
+                                            if cur_positions.ndim == 2:
+                                                # MRoPE：shape [3, seq_len]
+                                                lane_positions_buf[:, :current_num_tokens].copy_(
+                                                    cur_positions, non_blocking=True)
+                                                run_positions = lane_positions_buf[:, :current_num_tokens]
+                                            else:
+                                                lane_positions_buf[:current_num_tokens].copy_(
+                                                    cur_positions, non_blocking=True)
+                                                run_positions = lane_positions_buf[:current_num_tokens]
+
+                                        run_inputs_embeds = None
+                                        if cur_inputs_embeds is not None:
+                                            assert lane_inputs_embeds_buf is not None
+                                            lane_inputs_embeds_buf[:current_num_tokens].copy_(
+                                                cur_inputs_embeds, non_blocking=True)
+                                            run_inputs_embeds = lane_inputs_embeds_buf[:current_num_tokens]
+
+                                        # ── 重建前向上下文 ──
+                                        # _SPLIT_LOCAL_CONTEXT_REBUILD: 是否为每个子批次
+                                        # 构建局部上下文（ubatch_num 归零，切片从 0 开始）
+                                        if _SPLIT_LOCAL_CONTEXT_REBUILD:
+                                            rebuild_ubatch_slices = [
+                                                UBatchSlice(
+                                                    slice(0, current_num_reqs),
+                                                    slice(0, current_num_tokens),
+                                                )
+                                            ]
+                                            rebuild_positions = (
+                                                run_positions if run_positions is not None else positions)
+                                            rebuild_ubatch_num = 0
+                                        else:
+                                            # 保持全局切片视图，ubatch_num 为真实编号
+                                            rebuild_ubatch_slices = split_ubatch_slices
+                                            rebuild_positions = positions
+                                            rebuild_ubatch_num = ubatch_id
+
+                                        split_batch_descriptor = BatchDescriptor(
+                                            num_tokens=current_num_tokens,
+                                            num_reqs=current_num_reqs,
+                                            uniform=batch_descriptor.uniform,
+                                            has_lora=batch_descriptor.has_lora,
+                                        )
+                                        split_context = create_ascend_forward_context(
+                                            original_forward_context,
+                                            attn_metadata=split_attn_metadata,
+                                            vllm_config=self.vllm_config,
+                                            dp_metadata=original_forward_context.dp_metadata,
+                                            ubatch_slices=rebuild_ubatch_slices,
+                                            batch_descriptor=split_batch_descriptor,
+                                            cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                                            ubatch_num=rebuild_ubatch_num,
+                                            positions=rebuild_positions,
+                                        )
+
+                                    # ── Profiling 记录点初始化 ──
+                                    prof_record: dict[str, Any] | None = None
+                                    parallel_submit_event = None
+                                    parallel_done_event = None
+                                    if profiling_enabled:
+                                        prof_record = {
+                                            'ubatch_id': ubatch_id,
+                                            'lane_id': lane_id,
+                                            'num_tokens': current_num_tokens,
+                                            'num_reqs': current_num_reqs,
+                                            't2_copy_start': time.perf_counter(),
+                                        }
+                                        parallel_submit_event = torch.npu.Event(enable_timing=True)
+                                        parallel_done_event = torch.npu.Event(enable_timing=True)
+                                        prof_record['t3_before_parallel_submit'] = time.perf_counter()
+
+                                    # ── 在 lane 专属流上执行模型前向 ──
+                                    with torch.npu.stream(lane_stream):
+                                        if parallel_submit_event is not None:
+                                            parallel_submit_event.record(lane_stream)
+                                            # Lane 0 同时记录 default_stream 的提交事件
+                                            if lane_id == 0 and default_submit_event is not None:
+                                                default_submit_event.record(lane_stream)
+
+                                        with override_forward_context(split_context):
+                                            # update_parallel_group: 0 表示第一个子批次，1 表示后续
+                                            update_parallel_group = 0 if ubatch_id == 0 else 1
+                                            refresh_attn_offset = None
+                                            if use_acl_parallel_streams:
+                                                refresh_attn_offset = self.model.get_attn_params_offset(
+                                                    split_context.batch_descriptor,
+                                                    parallel_streams=True,
+                                                    parallel_group=update_parallel_group,
+                                                )
+
+                                            # 刷新 KV Cache 块表（在当前流上异步执行）
+                                            self._refresh_block_table_for_split_ubatch_on_stream(
+                                                split_context,
+                                                current_num_tokens,
+                                                lane_stream,
+                                                parallel_group=update_parallel_group,
+                                                attn_offset=refresh_attn_offset,
+                                            )
+
+                                            split_model_kwargs = dict(model_kwargs)
+                                            if use_acl_parallel_streams:
+                                                # 告知模型使用并行流模式，并指定 group 编号
+                                                split_model_kwargs['parallel_streams'] = True
+                                                split_model_kwargs['parallel_group'] = update_parallel_group
+
+                                            # 执行模型前向推理
+                                            split_output = self.model(
+                                                input_ids=run_input_ids,
+                                                positions=run_positions,
+                                                inputs_embeds=run_inputs_embeds,
+                                                intermediate_tensors=cur_intermediate,
+                                                **split_model_kwargs,
+                                            )
+
+                                            if parallel_done_event is not None:
+                                                parallel_done_event.record(lane_stream)
+                                                if lane_id == 0 and default_done_event is not None:
+                                                    default_done_event.record(lane_stream)
+
+                                    # ── CUDAGraph 回放后的注意力参数更新 ──
+                                    # 仅在 FULL 模式且非 capture 阶段执行
+                                    if (split_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                                            and not split_context.capturing):
+                                        attn_offset = None
+                                        if use_acl_parallel_streams:
+                                            attn_offset = self.model.get_attn_params_offset(
+                                                split_context.batch_descriptor,
+                                                parallel_streams=True,
+                                                parallel_group=update_parallel_group,
+                                            )
+                                        lane_update_stream = lane_update_streams[lane_id]
+                                        _update_attn_params_direct(
+                                            lane_update_stream,
+                                            split_context,
+                                            current_num_tokens,
+                                            self.vllm_config,
+                                            parallel_group=update_parallel_group,
+                                            attn_offset=attn_offset,
+                                        )
+
+                                    # 记录 profiling 时间戳
+                                    if prof_record is not None:
+                                        prof_record['t4_after_parallel_submit'] = time.perf_counter()
+                                        prof_record['parallel_submit_event'] = parallel_submit_event
+                                        prof_record['parallel_done_event'] = parallel_done_event
+                                        local_prof_records.append(prof_record)
+
+                                    # 快照输出（将 NPU 张量拷贝到安全位置，防止被后续覆盖）
+                                    local_results.append(
+                                        (int(split_slice.request_slice.start),
+                                        self._snapshot_split_output(split_output),
+                                        int(getattr(split_context, 'pad_size', 0))))
+
+                            except Exception as exc:  # noqa: BLE001
+                                worker_errors[lane_id] = exc  # 捕获线程异常，主线程检查
+
+                            finally:
+                                # 线程结束时，将本地结果合并到共享容器（加锁保护）
+                                with results_lock:
+                                    if local_slots:
+                                        slot_restore_entries.extend(local_slots)
+                                    if local_prof_records:
+                                        prof_records.extend(local_prof_records)
+                                    if local_results:
+                                        results_with_order.extend(local_results)
+
+                    # ── 启动两个 lane 线程 ──
+                    threads: list[tuple[int, threading.Thread]] = []
+                    for lane_id in range(2):
+                        if not lane_assignments[lane_id]:
+                            continue  # 跳过空 lane
+                        thread = threading.Thread(
+                            target=_run_lane,
+                            args=(lane_id,),
+                            name=f'split-parallel-lane-{lane_id}',
+                            daemon=True,  # 守护线程，主进程退出时自动终止
+                        )
+                        threads.append((lane_id, thread))
+                        thread.start()
+
+                    if profiling_enabled:
+                        prof_t1 = time.perf_counter()  # 记录线程启动完成时间
+
+                    # ── 等待所有线程完成 ──
+                    for lane_id, thread in threads:
+                        if _SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S > 0:
+                            # 带超时的 join，超时后记录线程栈并抛出 TimeoutError
+                            thread.join(timeout=_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S)
+                            if thread.is_alive() and worker_errors[lane_id] is None:
+                                timeout_msg = (
+                                    'split parallel lane thread timed out: '
+                                    f'lane_id={lane_id}, '
+                                    f'timeout_s={_SPLIT_PARALLEL_THREAD_JOIN_TIMEOUT_S}')
+                                stack_dump = ''
+                                try:
+                                    if thread.ident is not None:
+                                        # 获取超时线程的调用栈，便于调试
+                                        frame = sys._current_frames().get(thread.ident)
+                                        if frame is not None:
+                                            stack_dump = ''.join(traceback.format_stack(frame))
+                                except Exception as stack_err:  # noqa: BLE001
+                                    stack_dump = f'<failed to collect lane stack: {stack_err}>'
+
+                                logger.error(
+                                    '%s thread_name=%s ident=%s active_threads=%s\n%s',
+                                    timeout_msg, thread.name, thread.ident,
+                                    [t.name for t in threading.enumerate()],
+                                    stack_dump,
+                                )
+                                worker_errors[lane_id] = TimeoutError(timeout_msg)
+                        else:
+                            thread.join()  # 无限等待
+
+                    # 检查线程是否有异常，有则重新抛出
+                    for err in worker_errors:
+                        if err is not None:
+                            raise err
+
+                    # 同步所有 lane 流，确保 NPU 计算完成
+                    for lane_stream in lane_streams:
+                        lane_stream.synchronize()
+
+                    # 双线程模式下，所有子批次已处理完毕，串行循环无需执行
+                    ubatch_range_start = ubatch_range_end
+
+                # ═════════════════════════════════════════════════════════
+                # 【分支 B：单流串行模式（非双线程）】
+                # 先在 default_stream 上执行第一个子批次
+                # ═════════════════════════════════════════════════════════
+                else:
+                    with torch.npu.stream(default_stream):
+                        with override_forward_context(first_context):
+                            refresh_attn_offset = None
+                            if use_acl_parallel_streams:
+                                refresh_attn_offset = self.model.get_attn_params_offset(
+                                    first_context.batch_descriptor,
+                                    parallel_streams=True,
+                                    parallel_group=0,
+                                )
+                            # 刷新第一个子批次的块表
+                            self._refresh_block_table_for_split_ubatch_on_stream(
+                                first_context,
+                                first_num_tokens,
+                                default_stream,
+                                parallel_group=0,
+                                attn_offset=refresh_attn_offset,
+                            )
+                            if default_submit_event is not None:
+                                default_submit_event.record(default_stream)
+
+                            first_model_kwargs = dict(model_kwargs)
+                            if use_acl_parallel_streams:
+                                first_model_kwargs['parallel_streams'] = True
+                                first_model_kwargs['parallel_group'] = 0  # 第一个子批次用 group 0
+
+                            # 执行第一个子批次的模型前向
+                            first_output = self.model(
+                                input_ids=first_input_ids,
+                                positions=first_positions,
+                                inputs_embeds=first_inputs_embeds,
+                                intermediate_tensors=first_intermediate,
+                                **first_model_kwargs,
+                            )
+                            if default_done_event is not None:
+                                default_done_event.record(default_stream)
+
+                    # CUDAGraph 回放后更新注意力参数
+                    if (first_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                            and not first_context.capturing):
+                        attn_offset = None
+                        if use_acl_parallel_streams:
+                            attn_offset = self.model.get_attn_params_offset(
+                                first_context.batch_descriptor,
+                                parallel_streams=True,
+                                parallel_group=0,
+                            )
+                        _update_attn_params_direct(
+                            lane_update_streams[0],
+                            first_context,
+                            first_num_tokens,
+                            self.vllm_config,
+                            parallel_group=0,
+                            attn_offset=attn_offset,
+                        )
+
+                    # 收集第一个子批次的结果
+                    results_with_order.append(
+                        (int(first_split.request_slice.start),
+                        self._snapshot_split_output(first_output),
+                        int(getattr(first_context, 'pad_size', 0))))
+
+                    if profiling_enabled:
+                        prof_t1 = time.perf_counter()
+
+                # ═════════════════════════════════════════════════════════
+                # 【串行后处理循环：处理剩余子批次（非双线程模式）】
+                # dual_thread_enabled 时 ubatch_range_start == ubatch_range_end，循环不执行
+                # ═════════════════════════════════════════════════════════
+                for ubatch_id in range(ubatch_range_start, ubatch_range_end):
+                    split_slice = split_batch_slices[ubatch_id]
+                    current_num_tokens = int(split_slice.num_tokens)
+                    current_num_reqs = int(split_slice.num_requests)
+
+                    # Profiling 初始化
+                    prof_record: dict[str, Any] | None = None
+                    parallel_submit_event = None
+                    parallel_done_event = None
+                    if profiling_enabled:
+                        prof_record = {
+                            "ubatch_id": ubatch_id,
+                            "num_tokens": current_num_tokens,
+                            "num_reqs": current_num_reqs,
+                            "t2_copy_start": time.perf_counter(),
+                        }
+                        parallel_submit_event = torch.npu.Event(enable_timing=True)
+                        parallel_done_event = torch.npu.Event(enable_timing=True)
+
+                    # 获取当前子批次的注意力元数据
+                    split_attn_metadata = attn_metadata
+                    if isinstance(attn_metadata, list):
+                        split_attn_metadata = attn_metadata[ubatch_id]
+
+                    # ── slot_mapping 复用策略 ──
+                    # 非双线程模式下，后续子批次的 slot_mapping 被拷贝到
+                    # base_slot_mapping（第一个子批次的缓冲区），复用其内存
+                    split_slot_mapping = _get_slot_mapping_from_attn_metadata(split_attn_metadata)
+                    if base_slot_mapping is not None and split_slot_mapping is not None:
+                        copy_len = min(current_num_tokens,
+                                    int(base_slot_mapping.shape[0]),
+                                    int(split_slot_mapping.shape[0]))
+                        if copy_len != current_num_tokens:
+                            raise RuntimeError(
+                                "parallel split slot_mapping length mismatch: "
+                                f"required={current_num_tokens}, "
+                                f"base={int(base_slot_mapping.shape[0])}, "
+                                f"split={int(split_slot_mapping.shape[0])}")
+                        # 将当前子批次的 slot_mapping 写入 base_slot_mapping
+                        base_slot_mapping[:copy_len].copy_(
+                            split_slot_mapping[:copy_len], non_blocking=False)
+                        _set_slot_mapping_for_attn_metadata(
+                            split_attn_metadata, base_slot_mapping[:copy_len])
+
+                    # 切分当前子批次的输入张量
+                    cur_input_ids, cur_positions, cur_inputs_embeds, cur_intermediate = \
+                        self._slice_split_batch_inputs(
+                            split_slice.token_slice,
+                            input_ids, positions, inputs_embeds, intermediate_tensors,
+                        )
+
+                    # 将输入拷贝到 parallel_streams 专属缓冲区
+                    run_input_ids = None
+                    if cur_input_ids is not None:
+                        self.input_ids_parallel_streams.gpu[:current_num_tokens].copy_(
+                            cur_input_ids, non_blocking=False)
+                        run_input_ids = self.input_ids_parallel_streams.gpu[:current_num_tokens]
+
+                    run_positions = None
+                    if cur_positions is not None:
+                        if cur_positions.ndim == 2:
+                            self.mrope_positions.gpu[:, :current_num_tokens].copy_(
+                                cur_positions, non_blocking=False)
+                            run_positions = self.mrope_positions.gpu[:, :current_num_tokens]
+                        else:
+                            self.positions_parallel_streams.gpu[:current_num_tokens].copy_(
+                                cur_positions, non_blocking=False)
+                            run_positions = self.positions_parallel_streams.gpu[:current_num_tokens]
+
+                    run_inputs_embeds = None
+                    if cur_inputs_embeds is not None:
+                        self.inputs_embeds_parallel_streams.gpu[:current_num_tokens].copy_(
+                            cur_inputs_embeds, non_blocking=False)
+                        run_inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:current_num_tokens]
+
+                    # 重建前向上下文（同双线程分支逻辑）
+                    if _SPLIT_LOCAL_CONTEXT_REBUILD:
+                        rebuild_ubatch_slices = [
+                            UBatchSlice(slice(0, current_num_reqs), slice(0, current_num_tokens))
+                        ]
+                        rebuild_positions = (run_positions if run_positions is not None else positions)
+                        rebuild_ubatch_num = 0
+                    else:
+                        rebuild_ubatch_slices = split_ubatch_slices
+                        rebuild_positions = positions
+                        rebuild_ubatch_num = ubatch_id
+
+                    split_batch_descriptor = BatchDescriptor(
+                        num_tokens=current_num_tokens,
+                        num_reqs=current_num_reqs,
+                        uniform=batch_descriptor.uniform,
+                        has_lora=batch_descriptor.has_lora,
+                    )
+                    split_context = create_ascend_forward_context(
+                        original_forward_context,
+                        attn_metadata=split_attn_metadata,
+                        vllm_config=self.vllm_config,
+                        dp_metadata=original_forward_context.dp_metadata,
+                        ubatch_slices=rebuild_ubatch_slices,
+                        batch_descriptor=split_batch_descriptor,
+                        cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                        ubatch_num=rebuild_ubatch_num,
+                        positions=rebuild_positions,
+                    )
+
+                    if prof_record is not None:
+                        prof_record["t3_before_parallel_submit"] = time.perf_counter()
+
+                    # ── 在 parallel_stream 上执行当前子批次的前向推理 ──
+                    # 注意：此时 default_stream 上的第一个子批次可能仍在执行，
+                    # 两者通过不同流实现并发（硬件层面的流并行）
+                    with torch.npu.stream(parallel_stream):
+                        if parallel_submit_event is not None:
+                            parallel_submit_event.record(parallel_stream)
+                        with override_forward_context(split_context):
+                            update_parallel_group = 0 if ubatch_id == 0 else 1
+                            refresh_attn_offset = None
+                            if use_acl_parallel_streams:
+                                refresh_attn_offset = self.model.get_attn_params_offset(
+                                    split_context.batch_descriptor,
+                                    parallel_streams=True,
+                                    parallel_group=update_parallel_group,
+                                )
+                            self._refresh_block_table_for_split_ubatch_on_stream(
+                                split_context,
+                                current_num_tokens,
+                                parallel_stream,
+                                parallel_group=update_parallel_group,
+                                attn_offset=refresh_attn_offset,
+                            )
+                            split_model_kwargs = dict(model_kwargs)
+                            if use_acl_parallel_streams:
+                                split_model_kwargs["parallel_streams"] = True
+                                split_model_kwargs["parallel_group"] = update_parallel_group
+                            split_output = self.model(
+                                input_ids=run_input_ids,
+                                positions=run_positions,
+                                inputs_embeds=run_inputs_embeds,
+                                intermediate_tensors=cur_intermediate,
+                                **split_model_kwargs,
+                            )
+                            if parallel_done_event is not None:
+                                parallel_done_event.record(parallel_stream)
+
+                    # CUDAGraph 回放后更新注意力参数（使用 lane 1 的 update stream）
+                    if (split_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                            and not split_context.capturing):
+                        attn_offset = None
+                        if use_acl_parallel_streams:
+                            attn_offset = self.model.get_attn_params_offset(
+                                split_context.batch_descriptor,
+                                parallel_streams=True,
+                                parallel_group=update_parallel_group,
+                            )
+                        _update_attn_params_direct(
+                            lane_update_streams[1],
+                            split_context,
+                            current_num_tokens,
+                            self.vllm_config,
+                            parallel_group=update_parallel_group,
+                            attn_offset=attn_offset,
+                        )
+
+                    if prof_record is not None:
+                        prof_record["t4_after_parallel_submit"] = time.perf_counter()
+                        prof_record["parallel_submit_event"] = parallel_submit_event
+                        prof_record["parallel_done_event"] = parallel_done_event
+                        prof_records.append(prof_record)
+
+                    results_with_order.append(
+                        (int(split_slice.request_slice.start),
+                        self._snapshot_split_output(split_output),
+                        int(getattr(split_context, "pad_size", 0))))
+
+                # ── 非双线程模式：同步两个流，确保所有子批次计算完成 ──
+                if not dual_thread_enabled:
+                    default_stream.synchronize()
+                    parallel_stream.synchronize()
+
+                if profiling_enabled:
+                    prof_t_end = time.perf_counter()
+
+            # ─────────────────────────────────────────────────────────────
+            # 【结果合并阶段】恢复原始前向上下文后执行
+            # ─────────────────────────────────────────────────────────────
+            with override_forward_context(original_forward_context):
+                # 按 request_slice.start 排序，保证输出顺序与输入请求顺序一致
+                sorted_entries = sorted(results_with_order, key=lambda x: x[0])
+                sorted_results = [entry[1] for entry in sorted_entries]
+                sorted_pad_sizes = [entry[2] for entry in sorted_entries]
+
+                # ── 序列并行（SP）场景：all-gather 合并各 TP rank 的输出 ──
+                if get_forward_context().sp_enabled and get_pp_group().is_last_rank:
+                    for i in range(len(sorted_results)):
+                        if isinstance(sorted_results[i], torch.Tensor):
+                            # 跨 tensor parallel rank 收集输出
+                            sorted_results[i] = tensor_model_parallel_all_gather(
+                                sorted_results[i], 0)
+                            # 去除 padding（pad_size > 0 时裁剪尾部）
+                            pad_size = sorted_pad_sizes[i]
+                            if pad_size > 0:
+                                sorted_results[i] = sorted_results[i][:-pad_size, :]
+
+                # 将多个子批次的输出合并为最终结果
+                result = self._merge_split_outputs(sorted_results)
+                get_forward_context().dbo_enabled = False  # 关闭 DBO（动态批次优化）标志
+
+            # ─────────────────────────────────────────────────────────────
+            # 【调试：首次运行时将合并结果转储为 JSON 文件】
+            # _split_batch_dumped 标志确保只转储一次
+            # ─────────────────────────────────────────────────────────────
+            if not getattr(self, "_split_batch_dumped", False):
+                dump_path = os.path.join(os.getcwd(), "split_batch_merged_first_result_gg.json")
+                with open(dump_path, "w", encoding="utf-8") as f:
+                    json.dump(self._to_jsonable(result), f, ensure_ascii=False)
+                self._split_batch_dumped = True
+
+            # ─────────────────────────────────────────────────────────────
+            # 【Profiling 日志输出】
+            # ─────────────────────────────────────────────────────────────
+            if profiling_enabled:
+                # 整体耗时统计
+                first_submit_delay_ms = ((prof_t1 - prof_t0) * 1000.0 if prof_t1 > 0 else -1.0)
+                host_total_ms = ((prof_t_end - prof_t0) * 1000.0 if prof_t_end > 0 else -1.0)
+                default_elapsed_ms = -1.0
+                if default_submit_event is not None and default_done_event is not None:
+                    # elapsed_time 返回两个 NPU Event 之间的 GPU 端耗时（毫秒）
+                    default_elapsed_ms = default_submit_event.elapsed_time(default_done_event)
+
+                logger.info(
+                    "split_parallel_profile summary: total_ms=%.3f first_submit_delay_ms=%.3f "
+                    "default_elapsed_ms=%.3f ubatch_count=%d",
+                    host_total_ms, first_submit_delay_ms, default_elapsed_ms, len(prof_records),
+                )
+
+                # 逐子批次输出详细耗时
+                for rec in prof_records:
+                    t2 = float(rec.get("t2_copy_start", 0.0))
+                    t3 = float(rec.get("t3_before_parallel_submit", 0.0))
+                    t4 = float(rec.get("t4_after_parallel_submit", 0.0))
+                    copy_stage_ms = ((t3 - t2) * 1000.0 if t3 > 0 and t2 > 0 else -1.0)    # 数据拷贝耗时
+                    submit_stage_ms = ((t4 - t3) * 1000.0 if t4 > 0 and t3 > 0 else -1.0)  # 提交耗时
+                    delay_from_first_ms = ((t3 - prof_t1) * 1000.0                           # 相对第一批次的延迟
+                                        if t3 > 0 and prof_t1 > 0 else -1.0)
+
+                    parallel_elapsed_ms = -1.0
+                    submit_ev = rec.get("parallel_submit_event")
+                    done_ev = rec.get("parallel_done_event")
+                    if submit_ev is not None and done_ev is not None:
+                        parallel_elapsed_ms = submit_ev.elapsed_time(done_ev)  # NPU 端实际执行耗时
+
+                    logger.info(
+                        "split_parallel_profile ubatch=%s tokens=%s reqs=%s "
+                        "delay_from_first_ms=%.3f copy_stage_ms=%.3f "
+                        "submit_stage_ms=%.3f parallel_elapsed_ms=%.3f",
+                        rec.get("ubatch_id"), rec.get("num_tokens"), rec.get("num_reqs"),
+                        delay_from_first_ms, copy_stage_ms, submit_stage_ms, parallel_elapsed_ms,
+                    )
+
+            return result
+
+        finally:
+            # ─────────────────────────────────────────────────────────────
+            # 【资源恢复（无论是否异常，必须执行）】
+            # ─────────────────────────────────────────────────────────────
+
+            # 1. 恢复第一个子批次的 slot_mapping（已被后续子批次覆盖）
+            if backup_slot_mapping is not None and base_slot_mapping is not None:
+                base_slot_mapping[:slot_mapping_backup_len].copy_(
+                    backup_slot_mapping, non_blocking=False)
+
+            # 2. 恢复双线程模式下各子批次独立副本的 slot_mapping 指针
+            for slot_attn_metadata, original_slot_mapping in slot_restore_entries:
+                _set_slot_mapping_for_attn_metadata(slot_attn_metadata, original_slot_mapping)
+
+            # 3. 全局 NPU 同步，确保所有异步操作完成后再返回
+            torch.npu.synchronize()
+
+    def _run_split_batch_parallel_two_graph(
+        self,
+        split_ubatch_slices: UBatchSlices,
+        split_batch_slices: SplitBatchSlices,
+        attn_metadata: PerLayerAttnMetadata,
+        input_ids: Optional[torch.Tensor],
+        positions: torch.Tensor,
+        intermediate_tensors: Optional[IntermediateTensors],
+        inputs_embeds: Optional[torch.Tensor],
+        model_kwargs: dict[str, Any],
+        batch_descriptor: BatchDescriptor,
+        aclgraph_runtime_mode: CUDAGraphMode,
+    ) -> Any:
+        """Two-graph split parallel path using two NPU streams.
+
+        This path is intentionally constrained to exactly two splits:
+        - split 0 runs on default stream / parallel_group=0
+        - split 1 runs on parallel stream / parallel_group=1
+        """
+        if (not split_batch_slices or len(split_batch_slices) <= 1
+                or not isinstance(attn_metadata, list)
+                or len(attn_metadata) < 2):
+            return self._run_split_batch_gr(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                intermediate_tensors,
+                inputs_embeds,
+                model_kwargs,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+            )
+
+        if len(split_batch_slices) != 2:
+            return self._run_split_batch_parallel(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                intermediate_tensors,
+                inputs_embeds,
+                model_kwargs,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+            )
+
+        original_forward_context = get_forward_context()
+        first_split = split_batch_slices[0]
+        second_split = split_batch_slices[1]
+        first_num_tokens = int(first_split.num_tokens)
+        first_num_reqs = int(first_split.num_requests)
+        second_num_tokens = int(second_split.num_tokens)
+        second_num_reqs = int(second_split.num_requests)
+
+        first_attn_metadata = attn_metadata[0]
+        second_attn_metadata = attn_metadata[1]
+
+        use_acl_parallel_streams = isinstance(self.model, ACLGraphWrapper)
+
+        base_slot_mapping = _get_slot_mapping_from_attn_metadata(first_attn_metadata)
+        slot_mapping_backup_len = 0
+        backup_slot_mapping = None
+        if base_slot_mapping is not None:
+            slot_mapping_backup_len = min(first_num_tokens,
+                                          int(base_slot_mapping.shape[0]))
+            if slot_mapping_backup_len > 0:
+                backup_slot_mapping = base_slot_mapping[:slot_mapping_backup_len].clone()
+
+        second_original_slot_mapping = _get_slot_mapping_from_attn_metadata(
+            second_attn_metadata)
+        second_parallel_slot_mapping = None
+        if second_original_slot_mapping is not None:
+            if int(second_original_slot_mapping.shape[0]) < second_num_tokens:
+                raise RuntimeError(
+                    "parallel split slot_mapping length mismatch: "
+                    f"required={second_num_tokens}, "
+                    f"available={int(second_original_slot_mapping.shape[0])}")
+            second_parallel_slot_mapping = torch.empty_like(second_original_slot_mapping)
+            second_parallel_slot_mapping[:second_num_tokens].copy_(
+                second_original_slot_mapping[:second_num_tokens],
+                non_blocking=False,
+            )
+            _set_slot_mapping_for_attn_metadata(
+                second_attn_metadata,
+                second_parallel_slot_mapping[:second_num_tokens],
+            )
+
+        first_input_ids, first_positions, first_inputs_embeds, first_intermediate =             self._slice_split_batch_inputs(
+                first_split.token_slice,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+            )
+        second_input_ids, second_positions, second_inputs_embeds, second_intermediate =             self._slice_split_batch_inputs(
+                second_split.token_slice,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+            )
+
+        run_second_input_ids = None
+        if second_input_ids is not None:
+            self.input_ids_parallel_streams.gpu[:second_num_tokens].copy_(
+                second_input_ids, non_blocking=False)
+            run_second_input_ids = self.input_ids_parallel_streams.gpu[:second_num_tokens]
+
+        run_second_positions = None
+        if second_positions is not None:
+            if second_positions.ndim == 2:
+                self.mrope_positions_parallel_streams.gpu[:, :second_num_tokens].copy_(
+                    second_positions, non_blocking=False)
+                run_second_positions = self.mrope_positions_parallel_streams.gpu[:, :second_num_tokens]
+            else:
+                self.positions_parallel_streams.gpu[:second_num_tokens].copy_(
+                    second_positions, non_blocking=False)
+                run_second_positions = self.positions_parallel_streams.gpu[:second_num_tokens]
+
+        run_second_inputs_embeds = None
+        if second_inputs_embeds is not None:
+            self.inputs_embeds_parallel_streams.gpu[:second_num_tokens].copy_(
+                second_inputs_embeds, non_blocking=False)
+            run_second_inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:second_num_tokens]
+
+        ubatch_cudagraph_mode = (
+            CUDAGraphMode.FULL
+            if aclgraph_runtime_mode != CUDAGraphMode.NONE
+            else CUDAGraphMode.NONE
+        )
+        if _SPLIT_PARALLEL_FORCE_EAGER:
+            ubatch_cudagraph_mode = CUDAGraphMode.NONE
+
+        first_batch_descriptor = BatchDescriptor(
+            num_tokens=first_num_tokens,
+            num_reqs=first_num_reqs,
+            uniform=batch_descriptor.uniform,
+            has_lora=batch_descriptor.has_lora,
+        )
+        first_context = create_ascend_forward_context(
+            original_forward_context,
+            attn_metadata=first_attn_metadata,
+            vllm_config=self.vllm_config,
+            dp_metadata=original_forward_context.dp_metadata,
+            ubatch_slices=split_ubatch_slices,
+            batch_descriptor=first_batch_descriptor,
+            cudagraph_runtime_mode=ubatch_cudagraph_mode,
+            ubatch_num=0,
+            positions=positions,
+        )
+
+        if _SPLIT_LOCAL_CONTEXT_REBUILD:
+            second_rebuild_ubatch_slices = [
+                UBatchSlice(slice(0, second_num_reqs), slice(0, second_num_tokens))
+            ]
+            second_rebuild_positions = (
+                run_second_positions if run_second_positions is not None else positions)
+            second_rebuild_ubatch_num = 0
+        else:
+            second_rebuild_ubatch_slices = split_ubatch_slices
+            second_rebuild_positions = positions
+            second_rebuild_ubatch_num = 1
+
+        second_batch_descriptor = BatchDescriptor(
+            num_tokens=second_num_tokens,
+            num_reqs=second_num_reqs,
+            uniform=batch_descriptor.uniform,
+            has_lora=batch_descriptor.has_lora,
+        )
+        second_context = create_ascend_forward_context(
+            original_forward_context,
+            attn_metadata=second_attn_metadata,
+            vllm_config=self.vllm_config,
+            dp_metadata=original_forward_context.dp_metadata,
+            ubatch_slices=second_rebuild_ubatch_slices,
+            batch_descriptor=second_batch_descriptor,
+            cudagraph_runtime_mode=ubatch_cudagraph_mode,
+            ubatch_num=second_rebuild_ubatch_num,
+            positions=second_rebuild_positions,
+        )
+
+        parallel_stream = torch.npu.Stream(device=self.device)
+        default_stream = torch.npu.default_stream(self.device)
+        default_update_stream = getattr(self, "update_stream", default_stream)
+        lane_update_streams = getattr(
+            self,
+            "lane_update_streams",
+            [default_update_stream, parallel_stream],
+        )
+
+        first_done_event = torch.npu.Event(enable_timing=False)
+        second_done_event = torch.npu.Event(enable_timing=False)
+
+        result = None
+
+        first_result = None
+        second_result = None
+
+        try:
+            with override_forward_context(None):
+                torch.npu.set_device(self.device)
+
+                with torch.npu.stream(default_stream):
+                    with override_forward_context(first_context):
+                        first_refresh_attn_offset = None
+                        if use_acl_parallel_streams:
+                            first_refresh_attn_offset = self.model.get_attn_params_offset(
+                                first_context.batch_descriptor,
+                                parallel_streams=True,
+                                parallel_group=0,
+                            )
+                        self._refresh_block_table_for_split_ubatch_on_stream(
+                            first_context,
+                            first_num_tokens,
+                            default_stream,
+                            parallel_group=0,
+                            attn_offset=first_refresh_attn_offset,
+                        )
+
+                        first_model_kwargs = dict(model_kwargs)
+                        if use_acl_parallel_streams:
+                            first_model_kwargs["parallel_streams"] = True
+                            first_model_kwargs["parallel_group"] = 0
+
+                        first_output = self.model(
+                            input_ids=first_input_ids,
+                            positions=first_positions,
+                            inputs_embeds=first_inputs_embeds,
+                            intermediate_tensors=first_intermediate,
+                            **first_model_kwargs,
+                        )
+
+                    if (first_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                            and not first_context.capturing):
+                        first_attn_offset = None
+                        if use_acl_parallel_streams:
+                            first_attn_offset = self.model.get_attn_params_offset(
+                                first_context.batch_descriptor,
+                                parallel_streams=True,
+                                parallel_group=0,
+                            )
+                        _update_attn_params_direct(
+                            lane_update_streams[0],
+                            first_context,
+                            first_num_tokens,
+                            self.vllm_config,
+                            parallel_group=0,
+                            attn_offset=first_attn_offset,
+                        )
+
+                    first_result = self._snapshot_split_output(first_output)
+                    first_done_event.record(default_stream)
+
+                with torch.npu.stream(parallel_stream):
+                    with override_forward_context(second_context):
+                        second_refresh_attn_offset = None
+                        if use_acl_parallel_streams:
+                            second_refresh_attn_offset = self.model.get_attn_params_offset(
+                                second_context.batch_descriptor,
+                                parallel_streams=True,
+                                parallel_group=1,
+                            )
+                        self._refresh_block_table_for_split_ubatch_on_stream(
+                            second_context,
+                            second_num_tokens,
+                            parallel_stream,
+                            parallel_group=1,
+                            attn_offset=second_refresh_attn_offset,
+                        )
+
+                        second_model_kwargs = dict(model_kwargs)
+                        if use_acl_parallel_streams:
+                            second_model_kwargs["parallel_streams"] = True
+                            second_model_kwargs["parallel_group"] = 1
+
+                        second_output = self.model(
+                            input_ids=run_second_input_ids,
+                            positions=run_second_positions,
+                            inputs_embeds=run_second_inputs_embeds,
+                            intermediate_tensors=second_intermediate,
+                            **second_model_kwargs,
+                        )
+
+                    if (second_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                            and not second_context.capturing):
+                        second_attn_offset = None
+                        if use_acl_parallel_streams:
+                            second_attn_offset = self.model.get_attn_params_offset(
+                                second_context.batch_descriptor,
+                                parallel_streams=True,
+                                parallel_group=1,
+                            )
+                        _update_attn_params_direct(
+                            lane_update_streams[1],
+                            second_context,
+                            second_num_tokens,
+                            self.vllm_config,
+                            parallel_group=1,
+                            attn_offset=second_attn_offset,
+                        )
+
+                    second_result = self._snapshot_split_output(second_output)
+                    second_done_event.record(parallel_stream)
+
+                default_stream.wait_event(first_done_event)
+                default_stream.wait_event(second_done_event)
+
+                with override_forward_context(original_forward_context):
+                    sorted_entries = sorted(
+                        [
+                            (int(first_split.request_slice.start),
+                             first_result,
+                             int(getattr(first_context, "pad_size", 0))),
+                            (int(second_split.request_slice.start),
+                             second_result,
+                             int(getattr(second_context, "pad_size", 0))),
+                        ],
+                        key=lambda x: x[0],
+                    )
+                    sorted_results = [entry[1] for entry in sorted_entries]
+                    sorted_pad_sizes = [entry[2] for entry in sorted_entries]
+
+                    if (get_forward_context().sp_enabled
+                            and get_pp_group().is_last_rank):
+                        for i in range(len(sorted_results)):
+                            if isinstance(sorted_results[i], torch.Tensor):
+                                sorted_results[i] = tensor_model_parallel_all_gather(
+                                    sorted_results[i], 0)
+                                pad_size = sorted_pad_sizes[i]
+                                if pad_size > 0:
+                                    sorted_results[i] = sorted_results[i][:-pad_size, :]
+
+                    result = self._merge_split_outputs(sorted_results)
+                    get_forward_context().dbo_enabled = False
+
+            return result
+
+        finally:
+            if backup_slot_mapping is not None and base_slot_mapping is not None:
+                base_slot_mapping[:slot_mapping_backup_len].copy_(
+                    backup_slot_mapping, non_blocking=False)
+            if (second_original_slot_mapping is not None
+                    and second_parallel_slot_mapping is not None):
+                _set_slot_mapping_for_attn_metadata(
+                    second_attn_metadata,
+                    second_original_slot_mapping,
+                )
+            # torch.npu.synchronize()
 
     def _build_attn_state(self, num_reqs, num_scheduled_tokens,
                           num_valid_tokens):
@@ -1502,8 +3977,8 @@ class NPUModelRunner(GPUModelRunner):
              num_input_tokens, num_tokens_across_dp, maybe_padded_num_tokens,
              logits_indices, spec_decode_metadata, input_ids, inputs_embeds,
              intermediate_tensors, max_query_len, ubatch_slices,
-             num_tokens_after_padding) = (self._prepare_inputs(
-                 scheduler_output, intermediate_tensors))
+             split_batch_slices, num_tokens_after_padding) = (
+                 self._prepare_inputs(scheduler_output, intermediate_tensors))
 
             if self.dynamic_eplb:
                 self.eplb_updator.take_update_info_from_eplb_process()
@@ -1534,11 +4009,23 @@ class NPUModelRunner(GPUModelRunner):
                 head_dim=self.model_config.get_vocab_size(),
                 generators=self.input_batch.sampling_metadata.generators)
 
+        split_ubatch_slices = None
+        if split_batch_slices is not None:
+            split_ubatch_slices = [
+                UBatchSlice(s.request_slice, s.token_slice)
+                for s in split_batch_slices
+            ]
+
         # This is currently to get around the assert in the DPMetadata
         # where it wants `num_tokens_across_dp` to align with `num_tokens`
         if ubatch_slices is not None:
             num_input_tokens = ubatch_slices[0].num_tokens
             num_tokens_across_dp = num_tokens_after_padding
+
+        model_kwargs = self._init_model_kwargs(maybe_padded_num_tokens)
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        split_enable_parallel_streams = bool(split_cfg is not None
+                                 and getattr(split_cfg, "enable_parallel_streams", False))
         # Run forward pass
         with ProfileExecuteDuration().capture_async("forward"):
             with set_ascend_forward_context(
@@ -1554,13 +4041,55 @@ class NPUModelRunner(GPUModelRunner):
                     prefetch_stream=self.prefetch_stream,
                     model_instance=self.model,
                     weight_prefetch_method=self.weight_prefetch_method,
-                    ubatch_slices=ubatch_slices,
+                    ubatch_slices=(ubatch_slices or split_ubatch_slices),
             ):
                 self.maybe_setup_kv_connector(scheduler_output)
 
-                hidden_states = self._generate_process_reqs_hidden_states(
-                    maybe_padded_num_tokens, input_ids, positions,
-                    intermediate_tensors, inputs_embeds)
+                if split_ubatch_slices is not None:
+                    if split_enable_parallel_streams:
+                        if (len(split_batch_slices) == 2
+                                and isinstance(attn_metadata, list)
+                                and len(attn_metadata) >= 2):
+                            hidden_states = self._run_split_batch_parallel_two_graph(
+                                split_ubatch_slices,
+                                split_batch_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                intermediate_tensors,
+                                inputs_embeds,
+                                model_kwargs,
+                                batch_descriptor,
+                                aclgraph_runtime_mode)
+                        else:
+                            hidden_states = self._run_split_batch_parallel(
+                                split_ubatch_slices,
+                                split_batch_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                intermediate_tensors,
+                                inputs_embeds,
+                                model_kwargs,
+                                batch_descriptor,
+                                aclgraph_runtime_mode)
+                    else:
+                        hidden_states = self._run_split_batch_gr(
+                        split_ubatch_slices,
+                        split_batch_slices,
+                        attn_metadata,
+                        input_ids,
+                        positions,
+                        intermediate_tensors,
+                        inputs_embeds,
+                        model_kwargs,
+                        batch_descriptor,
+                        aclgraph_runtime_mode,
+                    )
+                else:
+                    hidden_states = self._generate_process_reqs_hidden_states(
+                        maybe_padded_num_tokens, input_ids, positions,
+                        intermediate_tensors, inputs_embeds)
 
             self.maybe_wait_for_kv_save()
             finished_sending, finished_recving = self.get_finished_kv_transfer(
@@ -1939,9 +4468,11 @@ class NPUModelRunner(GPUModelRunner):
         aclgraph_runtime_mode: Optional[CUDAGraphMode] = None,
         force_attention: bool = False,
         ubatch_slices=None,
+        parallel_group: int = 0,
     ) -> Optional[PerLayerAttnMetadata]:
 
         attn_metadata: Optional[PerLayerAttnMetadata] = None
+        req_offset = int(parallel_group) * int(num_reqs)
 
         if force_attention or aclgraph_runtime_mode == CUDAGraphMode.FULL:
             assert with_prefill is False, \
@@ -1971,6 +4502,16 @@ class NPUModelRunner(GPUModelRunner):
                     self.kv_cache_config.kv_cache_groups):
                 block_table_tensor = self.input_batch.block_table[
                     kv_cache_group_id].get_device_tensor()
+                block_table_rows = int(block_table_tensor.shape[0])
+                req_end = req_offset + int(num_reqs)
+                if req_offset < 0 or req_end > block_table_rows:
+                    raise ValueError(
+                        "Dummy block_table_tensor slice out of range: "
+                        f"parallel_group={parallel_group}, num_reqs={num_reqs}, "
+                        f"offset={req_offset}, rows={block_table_rows}, "
+                        f"kv_cache_group_id={kv_cache_group_id}")
+                dummy_block_table = block_table_tensor[req_offset:req_end]
+
                 slot_mapping = self.input_batch.block_table[
                     kv_cache_group_id].slot_mapping
                 self.cp_kv_recover_idx = torch.zeros(self.max_num_tokens,
@@ -2001,7 +4542,7 @@ class NPUModelRunner(GPUModelRunner):
                     num_actual_tokens=num_tokens,
                     num_input_tokens=num_tokens,
                     actual_seq_lengths_q=self.actual_seq_lengths_q,
-                    block_table_tensor=block_table_tensor[:num_reqs],
+                    block_table_tensor=dummy_block_table,
                     slot_mapping=slot_mapping.gpu,
                     num_computed_tokens_cpu=num_computed_tokens_cpu,
                     positions=self.positions.gpu,
@@ -2013,8 +4554,19 @@ class NPUModelRunner(GPUModelRunner):
                     prefill_context_parallel_metadata=long_seq_metadata,
                 )
                 if self.pcp_size > 1:
+                    pcp_rows = int(num_reqs) * int(self.decode_threshold)
+                    pcp_offset = req_offset * int(self.decode_threshold)
+                    pcp_end = pcp_offset + pcp_rows
+                    block_table_rows = int(block_table_tensor.shape[0])
+                    if pcp_offset < 0 or pcp_end > block_table_rows:
+                        raise ValueError(
+                            "PCP block_table_tensor slice out of range: "
+                            f"parallel_group={parallel_group}, num_reqs={num_reqs}, "
+                            f"decode_threshold={self.decode_threshold}, "
+                            f"offset={pcp_offset}, end={pcp_end}, rows={block_table_rows}, "
+                            f"kv_cache_group_id={kv_cache_group_id}")
                     common_attn_metadata.block_table_tensor = \
-                        block_table_tensor[:num_reqs * self.decode_threshold]
+                        block_table_tensor[pcp_offset:pcp_end]
                 attn_state = AscendAttentionState.DecodeOnly
                 if self.speculative_config and \
                         self.speculative_config.method == "mtp":
@@ -2028,7 +4580,7 @@ class NPUModelRunner(GPUModelRunner):
                     seq_lens=self.seq_lens.cpu[:num_reqs],
                     num_reqs=num_reqs,
                     num_actual_tokens=num_tokens,
-                    block_table_tensor=block_table_tensor[:num_reqs],
+                    block_table_tensor=dummy_block_table,
                     slot_mapping=slot_mapping.gpu,
                     _num_computed_tokens_cpu=num_computed_tokens_cpu,
                     max_query_len=max_query_len,
@@ -2038,9 +4590,22 @@ class NPUModelRunner(GPUModelRunner):
                     builder = attn_group.get_metadata_builder()
                     if ubatch_slices is not None:
                         # TODO: check dummy attn construct logic
+                        _append_split_metadata_debug(
+                            "before split_attn_metadata (dummy/capture path)",
+                            common_attn_metadata,
+                        )
                         common_attn_metadata_list = split_attn_metadata(
                             ubatch_slices, common_attn_metadata,
                             self.max_num_tokens)
+                        _append_split_metadata_debug(
+                            "after split_attn_metadata (dummy/capture path)",
+                            common_attn_metadata_list,
+                        )
+                        _validate_split_attn_metadata_count(
+                            "dummy_capture",
+                            common_attn_metadata_list,
+                            len(ubatch_slices),
+                        )
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
                             assert common_attn_metadata.max_query_len == 1
@@ -2071,13 +4636,49 @@ class NPUModelRunner(GPUModelRunner):
 
     def _generate_dummy_run_hidden_states(self, input_ids, positions,
                                           num_tokens, intermediate_tensors,
-                                          inputs_embeds):
-        hidden_states = self.model(input_ids=input_ids,
-                                   positions=positions,
-                                   intermediate_tensors=intermediate_tensors,
-                                   inputs_embeds=inputs_embeds)
+                                          inputs_embeds, parallel_streams,
+                                          parallel_group: int = 0):
+        model_call_kwargs = {
+            "input_ids": input_ids,
+            "positions": positions,
+            "intermediate_tensors": intermediate_tensors,
+            "inputs_embeds": inputs_embeds,
+        }
+        if isinstance(self.model, ACLGraphWrapper):
+            model_call_kwargs["parallel_streams"] = parallel_streams
+            model_call_kwargs["parallel_group"] = int(parallel_group)
+        hidden_states = self.model(**model_call_kwargs)
         forward_context = get_forward_context()
         assert forward_context is not None
+
+        # After a graph capture completes, run one update on the matching
+        # lane-specific update stream so first replay can observe recorded
+        # events from the expected stream.
+        if (isinstance(self.model, ACLGraphWrapper)
+                and forward_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                and forward_context.capturing and not self.use_sparse
+                and not self.vllm_config.model_config.use_mla
+                and self.pcp_size * self.dcp_size == 1):
+            current_parallel_group = int(parallel_group)
+            attn_offset = self.model.get_attn_params_offset(
+                forward_context.batch_descriptor,
+                parallel_streams=parallel_streams,
+                parallel_group=current_parallel_group,
+            )
+            lane_update_streams = getattr(self, "lane_update_streams", None)
+            if lane_update_streams is not None and len(lane_update_streams) >= 2:
+                warmup_update_stream = (
+                    lane_update_streams[1]
+                    if current_parallel_group == 1 else self.update_stream)
+            else:
+                warmup_update_stream = self.update_stream
+            update_attn_params_split(warmup_update_stream,
+                                     forward_context,
+                                     num_tokens,
+                                     self.vllm_config,
+                                     attn_offset=attn_offset)
+            warmup_update_stream.synchronize()
+
         model_updates_attn_params_internally = bool(
             getattr(self.model, "updates_attn_params_internally", False))
         if (forward_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
@@ -2149,7 +4750,8 @@ class NPUModelRunner(GPUModelRunner):
         uniform_decode: bool = False,
         is_profile: bool = False,
         allow_microbatching: bool = True,
-        allow_split: bool = True,
+        parallel_streams: bool = False,
+        parallel_group: int = 0,
     ) -> torch.Tensor:
         # only support eager mode and piecewise graph now
         assert aclgraph_runtime_mode is None or aclgraph_runtime_mode in {
@@ -2242,7 +4844,7 @@ class NPUModelRunner(GPUModelRunner):
             )
          # Split batch - compute split slices for large decode batches (similar to _prepare_inputs)
         # Split batch and DBO never conflict by design
-        if uniform_decode and ubatch_slices is None and allow_split:  # Only split if DBO is not active
+        if uniform_decode and ubatch_slices is None :  # Only split if DBO is not active
             cudagraph_capture_sizes = set(
                 self.compilation_config.cudagraph_capture_sizes or []
             ) if self.use_aclgraph else None
@@ -2308,6 +4910,7 @@ class NPUModelRunner(GPUModelRunner):
             aclgraph_runtime_mode=aclgraph_runtime_mode,
             force_attention=force_attention,
             num_scheduled_tokens=num_scheduled_tokens,
+            parallel_group=parallel_group,
         )
 
         with self.maybe_dummy_run_with_lora(self.lora_config,
@@ -2317,18 +4920,30 @@ class NPUModelRunner(GPUModelRunner):
             assert num_tokens_padded <= self.max_num_tokens
             if self.is_multimodal_model:
                 input_ids = None
-                inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
             elif self.enable_prompt_embeds:
                 input_ids = None
-                inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
             else:
-                input_ids = self.input_ids.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    input_ids = self.input_ids_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    input_ids = self.input_ids.gpu[:num_tokens_padded]
                 inputs_embeds = None
 
             if self.uses_mrope:
                 positions = self.mrope_positions.gpu[:, :num_tokens_padded]
             else:
-                positions = self.positions.gpu[:num_tokens_padded]
+                if parallel_streams:
+                    positions = self.positions_parallel_streams.gpu[:num_tokens_padded]
+                else:
+                    positions = self.positions.gpu[:num_tokens_padded]
 
             # update global cos, sin
             update_cos_sin(positions)
@@ -2388,7 +5003,8 @@ class NPUModelRunner(GPUModelRunner):
                     ubatch_slices=ubatch_slices,):
                 hidden_states = self._generate_dummy_run_hidden_states(
                     input_ids, positions, num_tokens_padded,
-                    intermediate_tensors, inputs_embeds)
+                    intermediate_tensors, inputs_embeds, parallel_streams,
+                    parallel_group)
                 dummy_compute_logits(hidden_states)
 
             if self.drafter:
@@ -2476,7 +5092,7 @@ class NPUModelRunner(GPUModelRunner):
         # Wrap model with the correct runtime wrapper.
         # Priority (mutually exclusive at runtime):
         # - DBO: AscendUBatchWrapper
-        # - Split-batch: AscendSplitBatchWrapper
+        # - Split-batch: handled in execute_model
         # - Full graph only: ACLGraphWrapper
         split_enabled = bool(
             getattr(self.ascend_config, "split_batch_config",
@@ -2492,20 +5108,15 @@ class NPUModelRunner(GPUModelRunner):
                 self.model = AscendUBatchWrapper(self.model, self.vllm_config,
                                                  CUDAGraphMode.NONE,
                                                  self.device)
-        elif split_enabled:
-            self.update_stream: torch.npu.Stream = torch.npu.Stream()
-            if self.compilation_config.cudagraph_mode.has_full_cudagraphs():
-                self.model = AscendSplitBatchWrapper(self.model,
-                                                     self.vllm_config,
-                                                     CUDAGraphMode.FULL,
-                                                     self.device,self.update_stream,self.ascend_config.split_batch_config)
-            else:
-                self.model = AscendSplitBatchWrapper(self.model,
-                                                     self.vllm_config,
-                                                     CUDAGraphMode.NONE,
-                                                     self.device,self.update_stream,self.ascend_config.split_batch_config)
         elif self.compilation_config.cudagraph_mode.has_full_cudagraphs():
             self.update_stream: torch.npu.Stream = torch.npu.Stream()
+            # Dedicated update streams for split-parallel lanes.
+            # Keep update streams separate from replay streams and rely on
+            # NPU events for cross-stream ordering.
+            self.lane_update_streams: list[torch.npu.Stream] = [
+                self.update_stream,
+                torch.npu.Stream(),
+            ]
             self.model = ACLGraphWrapper(self.model,
                                          self.vllm_config,
                                          runtime_mode=CUDAGraphMode.FULL)
@@ -2963,7 +5574,7 @@ class NPUModelRunner(GPUModelRunner):
             """How many metadata builders we need per AttentionGroup.
 
             - DBO(ubatch): 2 builders (ubatch_id=0/1).
-            - Split-batch: N builders, N = split_config.num_splits.
+            - Split-batch: N builders, N = split_config.max_num_splits.
             - Default: 1 builder.
             """
             if self.parallel_config.enable_dbo:
@@ -2973,7 +5584,7 @@ class NPUModelRunner(GPUModelRunner):
             split_enabled = bool(split_cfg is not None
                                  and getattr(split_cfg, "enabled", False))
             if split_enabled:
-                n = int(getattr(split_cfg, "max_num_splits", 1))
+                n = int(getattr(split_cfg, "max_num_splits", getattr(split_cfg, "num_splits", 1)))
                 return max(1, n)
 
             return 1
@@ -3211,7 +5822,10 @@ class NPUModelRunner(GPUModelRunner):
 
     def _capture_aclgraphs(self, compilation_cases: list[int],
                            aclgraph_runtime_mode: CUDAGraphMode,
-                           uniform_decode: bool):
+                           uniform_decode: bool,
+                           parallel_streams: bool = False,
+                           parallel_group: int = 0,
+                           ):
         assert aclgraph_runtime_mode != CUDAGraphMode.NONE and \
             aclgraph_runtime_mode in [CUDAGraphMode.FULL,
                                       CUDAGraphMode.PIECEWISE]
@@ -3239,7 +5853,6 @@ class NPUModelRunner(GPUModelRunner):
                             uniform_decode=uniform_decode)
         # We skip EPLB here since we don't want to record dummy metrics
         for num_tokens in compilation_cases:
-
             allow_microbatching = self.parallel_config.enable_dbo \
                 and aclgraph_runtime_mode == CUDAGraphMode.FULL \
                 and uniform_decode \
@@ -3248,10 +5861,6 @@ class NPUModelRunner(GPUModelRunner):
                     num_tokens=num_tokens,
                     uniform_decode=uniform_decode,
                 )
-            allow_split = bool(
-            getattr(self.ascend_config, "split_batch_config",None) is not None 
-            and self.ascend_config.split_batch_config.enabled)
-            #增加额外捕获逻辑
             for _ in range(self.compilation_config.cudagraph_num_of_warmups):
                 # Use CUDAGraphRuntimeStyle.NONE (default) for warmup.
                 # But be careful, warm up with `NONE`is orthogonal to
@@ -3263,13 +5872,17 @@ class NPUModelRunner(GPUModelRunner):
                                 force_attention=force_attention,
                                 uniform_decode=uniform_decode,
                                 allow_microbatching=allow_microbatching,
-                                allow_split=False)
+                                # allow_parallel_streams=False
+                                )
+            #真正捕获的运行
             self._dummy_run(num_tokens,
                             aclgraph_runtime_mode=aclgraph_runtime_mode,
                             force_attention=force_attention,
                             uniform_decode=uniform_decode,
                             allow_microbatching=allow_microbatching,
-                            allow_split=False)
+                            parallel_streams=parallel_streams,
+                              parallel_group=parallel_group
+                              )
 
     def _capture_model(self):
         if not self.use_aclgraph:
@@ -3284,8 +5897,10 @@ class NPUModelRunner(GPUModelRunner):
         # Trigger ACL graph capture for specific shapes.
         # Capture the large shapes first so that the smaller shapes
         # can reuse the memory pool allocated for the large shapes.
+        aclgraph_mode = self.compilation_config.cudagraph_mode
+
+        # First capture (original cases)
         with graph_capture(device=self.device):
-            aclgraph_mode = self.compilation_config.cudagraph_mode
             if aclgraph_mode.mixed_mode() != CUDAGraphMode.NONE:
                 aclgraph_runtime_mode = aclgraph_mode.mixed_mode()
 
@@ -3330,7 +5945,78 @@ class NPUModelRunner(GPUModelRunner):
                 self._capture_aclgraphs(
                     compilation_cases=compilation_cases_decode,
                     aclgraph_runtime_mode=CUDAGraphMode.FULL,
-                    uniform_decode=True)
+                    uniform_decode=True,parallel_streams=False)
+
+        # Second capture: group0 covers runtime decode sizes, group1 stays fixed-size only.
+        if self.ascend_config.split_batch_config.enable_parallel_streams:
+            fixed_size = self.ascend_config.split_batch_config.cudagraph_capture_fixed_size
+            parallel_capture_cases_group0 = [fixed_size]
+            parallel_capture_cases_group1 = [fixed_size]
+
+            if (aclgraph_mode.decode_mode() == CUDAGraphMode.FULL
+                    and aclgraph_mode.separate_routine()):
+                max_num_tokens = (self.scheduler_config.max_num_seqs
+                                  * self.uniform_decode_query_len)
+                decode_parallel_cases = [
+                    x for x in self.cudagraph_batch_sizes
+                    if x <= max_num_tokens and x >= self.uniform_decode_query_len
+                ]
+                if decode_parallel_cases:
+                    parallel_capture_cases_group0 = list(
+                        reversed(decode_parallel_cases))
+                    if fixed_size not in parallel_capture_cases_group0:
+                        parallel_capture_cases_group0.append(fixed_size)
+
+            with graph_capture(device=self.device):
+                if aclgraph_mode.mixed_mode() != CUDAGraphMode.NONE:
+                    aclgraph_runtime_mode = aclgraph_mode.mixed_mode()
+                    self._capture_aclgraphs(
+                        compilation_cases=parallel_capture_cases_group0,
+                        aclgraph_runtime_mode=aclgraph_runtime_mode,
+                        uniform_decode=True,
+                        parallel_streams=True,
+                        parallel_group=0)
+                    if _SPLIT_PARALLEL_DUAL_THREAD:
+                        self._capture_aclgraphs(
+                            compilation_cases=parallel_capture_cases_group1,
+                            aclgraph_runtime_mode=aclgraph_runtime_mode,
+                            uniform_decode=True,
+                            parallel_streams=True,
+                            parallel_group=1)
+                try:
+                    aclgraph_runtime_mode = aclgraph_mode.decode_mode()
+                    self._capture_aclgraphs(
+                        compilation_cases=parallel_capture_cases_group0,
+                        aclgraph_runtime_mode=aclgraph_runtime_mode,
+                        uniform_decode=True,
+                        parallel_streams=True,
+                        parallel_group=0)
+                    if _SPLIT_PARALLEL_DUAL_THREAD:
+                        self._capture_aclgraphs(
+                            compilation_cases=parallel_capture_cases_group1,
+                            aclgraph_runtime_mode=aclgraph_runtime_mode,
+                            uniform_decode=True,
+                            parallel_streams=True,
+                            parallel_group=1)
+                except Exception as e:
+                    error_msg = str(e)
+                    error_code = '0x7020023'
+                    pattern = r'retCode=([^,\s\.]+)'
+                    match = re.search(pattern, error_msg)
+                    if match:
+                        retCode = match.group(1)
+                    # Determine whether the error message is caused by stream capture failure.
+                    if match and retCode == error_code:
+                        logger.error(
+                            f"ACLgraph sizes capture fail: {type(e).__name__}:\n"
+                            "ACLgraph has insufficient available streams to capture the configured number of sizes. "
+                            "Please verify both the availability of adequate streams and the appropriateness of the configured size count.\n\n"
+                            "Recommended solutions:\n"
+                            "1. Manually configure the compilation_config parameter "
+                            "with a reduced set of sizes: '{\"cudagraph_capture_sizes\":[size1, size2, size3, ...]}'.\n"
+                            "2. Utilize ACLgraph's full graph mode as an alternative to the piece-wise approach.\n\n"
+                            f"{str(e)}")
+                    raise
 
         # Disable aclgraph capturing globally, so any unexpected aclgraph
         # capturing will be detected and raise an error after here.
@@ -3649,6 +6335,19 @@ class NPUModelRunner(GPUModelRunner):
             self.input_ids_pcp_full.cpu[:total_num_scheduled_tokens_pcp_full],
             non_blocking=True,
         )
+    def _to_jsonable(self, obj: Any) -> Any:
+        if obj is None:
+            return None
+        if isinstance(obj, torch.Tensor):
+            return obj.detach().cpu().tolist()
+        if isinstance(obj, (list, tuple)):
+            return [self._to_jsonable(x) for x in obj]
+        if isinstance(obj, dict):
+            return {k: self._to_jsonable(v) for k, v in obj.items()}
+        # 尝试将对象的属性字典序列化
+        if hasattr(obj, "__dict__"):
+            return {k: self._to_jsonable(v) for k, v in vars(obj).items()}
+        return str(obj)
 
 
 @contextmanager
@@ -3687,3 +6386,5 @@ def _torch_cuda_wrapper():
         torch.cuda.default_stream = torch.npu.default_stream
         torch.cuda.current_stream = torch.npu.current_stream
         torch.cuda.stream = torch.npu.stream
+    
+
