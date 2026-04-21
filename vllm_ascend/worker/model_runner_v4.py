@@ -594,6 +594,7 @@ class NPUModelRunner(GPUModelRunner):
             self.max_num_tokens, self.inputs_embeds_size, dtype=self.dtype, numpy=False
         )
         self.positions_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int64)
+        self.slot_mapping_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int32)
         if self.uses_mrope:
             self.mrope_positions_parallel_streams = self._make_buffer(
                 (3, self.max_num_tokens + 1), dtype=torch.int64)
@@ -3509,23 +3510,22 @@ class NPUModelRunner(GPUModelRunner):
 
         second_original_slot_mapping = _get_slot_mapping_from_attn_metadata(
             second_attn_metadata)
-        second_parallel_slot_mapping = None
         if second_original_slot_mapping is not None:
             if int(second_original_slot_mapping.shape[0]) < second_num_tokens:
                 raise RuntimeError(
                     "parallel split slot_mapping length mismatch: "
                     f"required={second_num_tokens}, "
                     f"available={int(second_original_slot_mapping.shape[0])}")
-            second_parallel_slot_mapping = torch.empty_like(second_original_slot_mapping)
-            second_parallel_slot_mapping[:second_num_tokens].copy_(
-                second_original_slot_mapping[:second_num_tokens],
+            # 直接拷贝到预分配的并行缓冲区
+            self.slot_mapping_parallel_streams.gpu[:second_num_tokens].copy_(
+                second_original_slot_mapping,
                 non_blocking=False,
             )
+            # 使用并行缓冲区的切片更新 metadata
             _set_slot_mapping_for_attn_metadata(
                 second_attn_metadata,
-                second_parallel_slot_mapping[:second_num_tokens],
+                self.slot_mapping_parallel_streams.gpu[:second_num_tokens],
             )
-
         first_input_ids, first_positions, first_inputs_embeds, first_intermediate =             self._slice_split_batch_inputs(
                 first_split.token_slice,
                 input_ids,
@@ -3680,6 +3680,16 @@ class NPUModelRunner(GPUModelRunner):
                                 parallel_streams=True,
                                 parallel_group=0,
                             )
+                        logger.info(
+                            "two_graph_pre_update_diag: %s",
+                            {
+                            "lane": "first",
+                            "parallel_group": 0,
+                            "batch_descriptor": str(first_context.batch_descriptor),
+                            "first_attn_offset": first_attn_offset,
+                            "num_tokens": first_num_tokens,
+                            },
+                            )
                         _update_attn_params_direct(
                             lane_update_streams[0],
                             first_context,
@@ -3731,6 +3741,16 @@ class NPUModelRunner(GPUModelRunner):
                                 parallel_streams=True,
                                 parallel_group=1,
                             )
+                        logger.info(
+                            "two_graph_pre_update_diag: %s",
+                            {
+                            "lane": "second",
+                            "parallel_group": 1,
+                            "batch_descriptor": str(second_context.batch_descriptor),
+                            "second_attn_offset": second_attn_offset,
+                            "num_tokens": second_num_tokens,
+                            },
+                            )
                         _update_attn_params_direct(
                             lane_update_streams[1],
                             second_context,
@@ -3780,8 +3800,7 @@ class NPUModelRunner(GPUModelRunner):
             if backup_slot_mapping is not None and base_slot_mapping is not None:
                 base_slot_mapping[:slot_mapping_backup_len].copy_(
                     backup_slot_mapping, non_blocking=False)
-            if (second_original_slot_mapping is not None
-                    and second_parallel_slot_mapping is not None):
+            if second_original_slot_mapping is not None:
                 _set_slot_mapping_for_attn_metadata(
                     second_attn_metadata,
                     second_original_slot_mapping,
@@ -4511,9 +4530,12 @@ class NPUModelRunner(GPUModelRunner):
                         f"offset={req_offset}, rows={block_table_rows}, "
                         f"kv_cache_group_id={kv_cache_group_id}")
                 dummy_block_table = block_table_tensor[req_offset:req_end]
-
                 slot_mapping = self.input_batch.block_table[
                     kv_cache_group_id].slot_mapping
+                active_slot_mapping = slot_mapping.gpu
+                
+                if parallel_group > 0:
+                    active_slot_mapping = self.slot_mapping_parallel_streams.gpu
                 self.cp_kv_recover_idx = torch.zeros(self.max_num_tokens,
                                                      dtype=torch.int32,
                                                      device=self.device)
@@ -4543,7 +4565,7 @@ class NPUModelRunner(GPUModelRunner):
                     num_input_tokens=num_tokens,
                     actual_seq_lengths_q=self.actual_seq_lengths_q,
                     block_table_tensor=dummy_block_table,
-                    slot_mapping=slot_mapping.gpu,
+                    slot_mapping=active_slot_mapping,
                     num_computed_tokens_cpu=num_computed_tokens_cpu,
                     positions=self.positions.gpu,
                     attn_mask=self.attn_mask,
@@ -4650,34 +4672,6 @@ class NPUModelRunner(GPUModelRunner):
         hidden_states = self.model(**model_call_kwargs)
         forward_context = get_forward_context()
         assert forward_context is not None
-
-        # After a graph capture completes, run one update on the matching
-        # lane-specific update stream so first replay can observe recorded
-        # events from the expected stream.
-        if (isinstance(self.model, ACLGraphWrapper)
-                and forward_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
-                and forward_context.capturing and not self.use_sparse
-                and not self.vllm_config.model_config.use_mla
-                and self.pcp_size * self.dcp_size == 1):
-            current_parallel_group = int(parallel_group)
-            attn_offset = self.model.get_attn_params_offset(
-                forward_context.batch_descriptor,
-                parallel_streams=parallel_streams,
-                parallel_group=current_parallel_group,
-            )
-            lane_update_streams = getattr(self, "lane_update_streams", None)
-            if lane_update_streams is not None and len(lane_update_streams) >= 2:
-                warmup_update_stream = (
-                    lane_update_streams[1]
-                    if current_parallel_group == 1 else self.update_stream)
-            else:
-                warmup_update_stream = self.update_stream
-            update_attn_params_split(warmup_update_stream,
-                                     forward_context,
-                                     num_tokens,
-                                     self.vllm_config,
-                                     attn_offset=attn_offset)
-            warmup_update_stream.synchronize()
 
         model_updates_attn_params_internally = bool(
             getattr(self.model, "updates_attn_params_internally", False))
@@ -4920,18 +4914,18 @@ class NPUModelRunner(GPUModelRunner):
             assert num_tokens_padded <= self.max_num_tokens
             if self.is_multimodal_model:
                 input_ids = None
-                if parallel_streams:
+                if parallel_streams and parallel_group>0:
                     inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens_padded]
                 else:
                     inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
             elif self.enable_prompt_embeds:
                 input_ids = None
-                if parallel_streams:
+                if parallel_streams and parallel_group>0:
                     inputs_embeds = self.inputs_embeds_parallel_streams.gpu[:num_tokens_padded]
                 else:
                     inputs_embeds = self.inputs_embeds.gpu[:num_tokens_padded]
             else:
-                if parallel_streams:
+                if parallel_streams and parallel_group>0:
                     input_ids = self.input_ids_parallel_streams.gpu[:num_tokens_padded]
                 else:
                     input_ids = self.input_ids.gpu[:num_tokens_padded]
@@ -4940,7 +4934,7 @@ class NPUModelRunner(GPUModelRunner):
             if self.uses_mrope:
                 positions = self.mrope_positions.gpu[:, :num_tokens_padded]
             else:
-                if parallel_streams:
+                if parallel_streams and parallel_group>0:
                     positions = self.positions_parallel_streams.gpu[:num_tokens_padded]
                 else:
                     positions = self.positions.gpu[:num_tokens_padded]
@@ -6387,4 +6381,3 @@ def _torch_cuda_wrapper():
         torch.cuda.current_stream = torch.npu.current_stream
         torch.cuda.stream = torch.npu.stream
     
-

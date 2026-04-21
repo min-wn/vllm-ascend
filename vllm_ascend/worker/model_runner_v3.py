@@ -864,7 +864,7 @@ class NPUModelRunner(GPUModelRunner):
                 num_tokens_padded,
                 vllm_config=self.vllm_config,
                 cudagraph_capture_sizes=cudagraph_capture_sizes,
-                custom_split_sizes=[128,4,4,4]
+                custom_split_sizes=[128,4]
             )
             if split_batch_slices:
                 split_ubatch_slices = [
@@ -1801,7 +1801,6 @@ class NPUModelRunner(GPUModelRunner):
                     merged.append(parts)
             return tuple(merged)
         return torch.cat(outputs, dim=0)
-
     def _run_split_batch_gr0(
             self,
             split_ubatch_slices: UBatchSlices,
@@ -3037,17 +3036,32 @@ class NPUModelRunner(GPUModelRunner):
 
                 if split_ubatch_slices is not None:
                     if split_enable_parallel_streams:
-                        hidden_states = self._run_split_batch_parallel(
-                            split_ubatch_slices,
-                            split_batch_slices,
-                            attn_metadata,
-                            input_ids,
-                            positions,
-                            intermediate_tensors,
-                            inputs_embeds,
-                            model_kwargs,
-                            batch_descriptor,
-                            aclgraph_runtime_mode)
+                        if (len(split_batch_slices) == 2
+                                and isinstance(attn_metadata, list)
+                                and len(attn_metadata) >= 2):
+                            hidden_states = self._run_split_batch_parallel_two_graph(
+                                split_ubatch_slices,
+                                split_batch_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                intermediate_tensors,
+                                inputs_embeds,
+                                model_kwargs,
+                                batch_descriptor,
+                                aclgraph_runtime_mode)
+                        else:
+                            hidden_states = self._run_split_batch_parallel(
+                                split_ubatch_slices,
+                                split_batch_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                intermediate_tensors,
+                                inputs_embeds,
+                                model_kwargs,
+                                batch_descriptor,
+                                aclgraph_runtime_mode)
                     else:
                         hidden_states = self._run_split_batch_gr(
                         split_ubatch_slices,
@@ -4849,7 +4863,7 @@ class NPUModelRunner(GPUModelRunner):
                 self._capture_aclgraphs(
                     compilation_cases=compilation_cases_decode,
                     aclgraph_runtime_mode=CUDAGraphMode.FULL,
-                    uniform_decode=True,parallel_streams=False)
+                    uniform_decode=True,parallel_streams=self.ascend_config.split_batch_config.enable_parallel_streams)
 
         # Second capture (fixed size = 8)
         if self.ascend_config.split_batch_config.enable_parallel_streams:

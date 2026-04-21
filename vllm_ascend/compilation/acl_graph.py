@@ -273,6 +273,16 @@ class ACLGraphWrapper:
         key = (batch_descriptor, bool(parallel_streams), int(parallel_group))
         entry = self.concrete_aclgraph_entries.get(key)
         if entry is None:
+            _maybe_log_acl_graph_diag(
+                "acl_graph_attn_offset_lookup_miss",
+                {
+                "batch_descriptor": str(batch_descriptor),
+                "parallel_streams": bool(parallel_streams),
+                "parallel_group": int(parallel_group),
+                "key": repr(key),
+                "entry_count": len(self.concrete_aclgraph_entries),
+                },
+                )
             return 0
         return int(entry.attn_params_offset)
 
