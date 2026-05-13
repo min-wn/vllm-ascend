@@ -163,6 +163,7 @@ AttnMetadataDict: TypeAlias = dict[str, AttentionMetadata]
 # list when ubatching is enabled
 PerLayerAttnMetadata: TypeAlias = Union[list[AttnMetadataDict],
                                         AttnMetadataDict]
+_SPLIT_BATCH_FIXED_TOKENS = 64
 
 
 
@@ -1453,10 +1454,9 @@ class NPUModelRunner(GPUModelRunner):
             ) if self.use_aclgraph else None
             # Dynamic split sizes: when num_reqs exceeds the threshold,
             # reserve part of the batch for the parallel (second) stream.
-            _PARALLEL_FIXED_TOKENS = 64
             custom_split_sizes = None
-            if num_reqs >= _PARALLEL_FIXED_TOKENS:
-                parallel_reqs = min(_PARALLEL_FIXED_TOKENS, num_reqs // 2)
+            if num_reqs >= _SPLIT_BATCH_FIXED_TOKENS:
+                parallel_reqs = min(_SPLIT_BATCH_FIXED_TOKENS, num_reqs // 2)
                 main_reqs = num_reqs - parallel_reqs
                 custom_split_sizes = [main_reqs, parallel_reqs]
             exact_shape_num_tokens = int(num_input_tokens) if _SPLIT_EXACT_SHAPE else None
@@ -7483,6 +7483,8 @@ class NPUModelRunner(GPUModelRunner):
             self.cudagraph_batch_sizes = (capture_sizes
                                           if capture_sizes is not None else [])
 
+        self._add_disabled_split_exact_decode_capture_size()
+
         # NOTE: Since aclgraph_batch_sizes cannot be determined until here,
         # we set the graph params right before initializing the keys.
         set_graph_params(self.cudagraph_batch_sizes)
@@ -7495,6 +7497,62 @@ class NPUModelRunner(GPUModelRunner):
         self.cudagraph_dispatcher.initialize_cudagraph_keys(
             self.compilation_config.cudagraph_mode,
             self.uniform_decode_query_len)
+
+    def _add_disabled_split_exact_decode_capture_size(self) -> None:
+        """Avoid padding the split-disabled full decode graph to a larger shape.
+
+        Split-batch correctness compares the split-enabled path with the
+        split-disabled path. When split is disabled, a full uniform decode batch
+        can otherwise be padded from max_num_seqs to the next configured ACL
+        graph size. On NPU full graphs this larger shape can change bf16 logits
+        by one quantization step and flip greedy choices near ties.
+        """
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        if split_cfg is None or split_cfg.enabled:
+            return
+        if self.compilation_config.cudagraph_mode.decode_mode() != CUDAGraphMode.FULL:
+            return
+        if not self.compilation_config.cudagraph_mode.separate_routine():
+            return
+
+        exact_decode_tokens = (self.scheduler_config.max_num_seqs *
+                               self.uniform_decode_query_len)
+        if exact_decode_tokens <= 0:
+            return
+
+        capture_sizes = list(self.cudagraph_batch_sizes)
+        if not capture_sizes:
+            return
+
+        max_capture_size = self.compilation_config.max_cudagraph_capture_size
+        sizes_to_add: set[int] = set()
+        if exact_decode_tokens <= max_capture_size:
+            sizes_to_add.add(exact_decode_tokens)
+
+        # If the disabled run reuses split-enabled capture sizes, the list can
+        # contain the two split graph sizes (for example 64 and 68 for a
+        # 132-request batch) without the corresponding full-batch size. Capture
+        # that full shape so disabled does not replay a larger padded graph.
+        fixed_tokens = _SPLIT_BATCH_FIXED_TOKENS * self.uniform_decode_query_len
+        if fixed_tokens in capture_sizes:
+            for size in capture_sizes:
+                if size <= 0 or (size & (size - 1)) == 0:
+                    continue
+                full_size = fixed_tokens + size
+                if full_size <= max_capture_size:
+                    sizes_to_add.add(full_size)
+
+        sizes_to_add.difference_update(capture_sizes)
+        if not sizes_to_add:
+            return
+
+        capture_sizes = sorted(set(capture_sizes).union(sizes_to_add))
+        self.cudagraph_batch_sizes = capture_sizes
+        self.compilation_config.cudagraph_capture_sizes = capture_sizes
+        self.compilation_config.compute_bs_to_padded_graph_size()
+        logger.info(
+            "Added split-disabled decode ACL graph capture sizes %s",
+            sorted(sizes_to_add))
 
     def _capture_aclgraphs(self, compilation_cases: list[int],
                            aclgraph_runtime_mode: CUDAGraphMode,
