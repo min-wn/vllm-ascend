@@ -210,6 +210,38 @@ def create_parser() -> FlexibleArgumentParser:
             "the output directory is derived from this path."
         ),
     )
+    test_group.add_argument(
+        "--dump-logits-debug",
+        action="store_true",
+        help=(
+            "Dump per-step top-k logits diagnostics for selected requests. "
+            "Artifacts are written under the run output directory."
+        ),
+    )
+    test_group.add_argument(
+        "--logits-debug-indices",
+        type=str,
+        default="",
+        help=(
+            "Comma-separated prompt indices to trace in logits diagnostics, "
+            "for example: 1,11,18,72."
+        ),
+    )
+    test_group.add_argument(
+        "--logits-debug-steps",
+        type=str,
+        default="",
+        help=(
+            "Comma-separated decode steps to trace in logits diagnostics. "
+            "Empty means all steps."
+        ),
+    )
+    test_group.add_argument(
+        "--logits-debug-topk",
+        type=int,
+        default=5,
+        help="Top-k width to store for each traced logits row.",
+    )
 
     prof_group = parser.add_argument_group("PyTorch Profiler (torch_npu)")
     prof_group.add_argument(
@@ -446,16 +478,141 @@ def _default_prompts() -> list[str]:
         "Once upon a time in a land far away,",
         "In computer science, a binary tree is",
         "The quick brown fox jumps over the lazy dog.",
+        "The largest ocean on Earth is",
+        "In mathematics, the number pi is approximately",
+        "Water boils at a temperature of",
+        "The chemical symbol for gold is",
+        "A haiku is a form of poetry that",
+        "The tallest mountain in the world is",
+        "Python is a programming language that",
+        "The speed of light in vacuum is roughly",
+        "My favorite color is",
+        "Today's weather forecast predicts",
+        "To make a cup of coffee, you need to",
+        "The three primary colors are",
+        "The human body has a total of",
+        "Mars is known as the",
+        "A sonnet is a poem consisting of",
+        "In Greek mythology, Zeus is",
+        "The Great Wall of China was built to",
+        "DNA stands for",
+        "Photosynthesis is the process by which",
+        "The Eiffel Tower is located in",
+        "Albert Einstein is famous for",
+        "A black hole is an astronomical object that",
+        "The Amazon rainforest produces about",
+        "Shakespeare wrote a play called",
+        "The Pythagorean theorem states that",
+        "An octopus has how many hearts?",
+        "The currency of Japan is",
+        "To lose weight, one should",
+        "Leonardo da Vinci painted the",
+        "The first man to walk on the moon was",
+        "A balanced diet should include",
+        "The freezing point of water is",
+        "Mount Everest is part of the",
+        "The longest river in the world is",
+        "In chess, the queen can move",
+        "A haiku traditionally contains",
+        "The main ingredient in guacamole is",
+        "Electric current is measured in",
+        "The periodic table organizes elements by",
+        "A prime number is a number that",
+        "The Statue of Liberty was a gift from",
+        "Sound travels faster in",
+        "The Milky Way is a",
+        "Climate change is caused primarily by",
+        "A kangaroo is a marsupial native to",
+        "The boiling point of water at high altitude is",
+        "The Mona Lisa is displayed in",
+        "An isosceles triangle has",
+        "The Internet was originally developed by",
+        "A decade is a period of",
+        "The largest desert in the world is",
+        "Beethoven was a famous",
+        "The color of a flamingo is due to",
+        "In baseball, a home run is when",
+        "The capital of Canada is",
+        "Granite is a type of",
+        "The Pacific Ocean borders",
+        "A limerick is a type of",
+        "The human heart has how many chambers?",
+        "Gravity is a force that",
+        "The Sahara Desert covers much of",
+        "An ecosystem consists of",
+        "The wheel was invented in",
+        "In soccer, a hat-trick means",
+        "A constellation is a group of",
+        "The printing press was invented by",
+        "Diamonds are made of",
+        "The Nile River flows through",
+        "A verb is a part of speech that",
+        "The Magna Carta was signed in",
+        "Turtles are reptiles that",
+        "Lightning is caused by",
+        "The leaning tower of Pisa is in",
+        "An adjective describes a",
+        "The Industrial Revolution began in",
+        "A solar eclipse occurs when",
+        "The Earth's core is composed mainly of",
+        "Caffeine is a stimulant found in",
+        "The violin is a string instrument that",
+        "A century is equal to",
+        "Bees produce honey from",
+        "The Roman Empire was founded by",
+        "An adverb modifies a",
+        "The atmosphere of Earth is mostly",
+        "Volcanoes erupt when",
+        "The Taj Mahal was built as a",
+        "A synonym is a word that",
+        "Photosynthesis requires sunlight and",
+        "The first Olympics were held in",
+        "An octagon has how many sides?",
+        "Steel is an alloy of iron and",
+        "The capital of Australia is",
+        "A palindrome is a word that",
+        "The Renaissance was a period of",
+        "Honey never spoils because",
+        "An earthquake is measured with a",
+        "The largest mammal in the world is",
+        "In tennis, love means",
+        "The color wheel shows relationships between",
+        "Goldfish can live for up to",
+        "A metaphor is a figure of speech that",
+        "The Chinese New Year is based on",
+        "Giraffes have long necks to",
+        "The boiling point of alcohol is",
+        "An archipelago is a group of",
+        "Velociraptors were dinosaurs that",
+        "The longest word in English is often considered",
+        "A rhombus is a quadrilateral with",
+        "The speed of sound is approximately",
+        "Penguins are birds that cannot",
+        "The Rosetta Stone helped decode",
+        "Coffee originated in",
+        "A polygon with five sides is called",
+        "The Louvre Museum is famous for",
+        "The human brain weighs about",
+        "Sound is measured in units called",
+        "The capital of Brazil is",
+        "Jupiter is the largest planet in",
+        "A proverb is a short saying that",
+        "Plastic is made from",
+        "where is my book",
+        "Do you like dumplings",
+        "Can you speak chinese",
+        "how are u today",
     ]
 
 
-def _generate_prompts(*, batch_size: int, seed: int | None) -> list[str]:
-    base = _default_prompts()
-    prompts = (base * ((batch_size + len(base) - 1) // len(base)))[:batch_size]
 
-    # Make prompt order deterministic but seed-dependent.
-    rng = random.Random(int(seed or 0))
-    rng.shuffle(prompts)
+def _generate_prompts(*, batch_size: int, seed: int | None) -> list[str]:
+    prompts = _default_prompts()
+
+
+    # # Make prompt order deterministic but seed-dependent.
+    # rng = random.Random(int(seed or 0))
+    # rng.shuffle(prompts)
     return prompts
 
 
@@ -660,6 +817,60 @@ def _build_split_additional_config(
     }
 
 
+def _parse_csv_ints(raw: str | None) -> list[int]:
+    if not raw:
+        return []
+    values: list[int] = []
+    for item in str(raw).split(","):
+        item = item.strip()
+        if not item:
+            continue
+        values.append(int(item))
+    return values
+
+
+def _apply_logits_debug_env(
+    *,
+    enabled: bool,
+    run_name: str,
+    out_dir: str,
+    indices: list[int],
+    steps: list[int],
+    topk: int,
+) -> dict[str, str | None]:
+    keys = (
+        "VLLM_ASCEND_SPLIT_LOGITS_DEBUG",
+        "VLLM_ASCEND_SPLIT_LOGITS_DEBUG_RUN_NAME",
+        "VLLM_ASCEND_SPLIT_LOGITS_DEBUG_FILE",
+        "VLLM_ASCEND_SPLIT_LOGITS_DEBUG_INDICES",
+        "VLLM_ASCEND_SPLIT_LOGITS_DEBUG_STEPS",
+        "VLLM_ASCEND_SPLIT_LOGITS_DEBUG_TOPK",
+    )
+    old_env = {k: os.environ.get(k) for k in keys}
+    if enabled:
+        os.environ["VLLM_ASCEND_SPLIT_LOGITS_DEBUG"] = "1"
+        os.environ["VLLM_ASCEND_SPLIT_LOGITS_DEBUG_RUN_NAME"] = run_name
+        os.environ["VLLM_ASCEND_SPLIT_LOGITS_DEBUG_FILE"] = os.path.join(
+            out_dir, f"logits_debug_{run_name}.jsonl")
+        os.environ["VLLM_ASCEND_SPLIT_LOGITS_DEBUG_INDICES"] = ",".join(
+            str(v) for v in indices)
+        os.environ["VLLM_ASCEND_SPLIT_LOGITS_DEBUG_STEPS"] = ",".join(
+            str(v) for v in steps)
+        os.environ["VLLM_ASCEND_SPLIT_LOGITS_DEBUG_TOPK"] = str(max(1, topk))
+    else:
+        for key in keys:
+            os.environ.pop(key, None)
+    return old_env
+
+
+def _restore_env(old_env: dict[str, str | None]) -> None:
+    for key, value in old_env.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+
 def _run_single(
     *,
     llm_args: dict[str, Any],
@@ -672,17 +883,98 @@ def _run_single(
     profile_record_shapes: bool,
     profile_with_stack: bool,
     run_name: str,
+    out_dir: str,
+    logits_debug_enabled: bool,
+    logits_debug_indices: list[int],
+    logits_debug_steps: list[int],
+    logits_debug_topk: int,
 ):
-    llm = _build_llm_from_args(llm_args, additional_config=additional_config)
-    outputs = _run_with_torch_profiler(
-        enabled=profile_enabled and profile_target in (run_name, "both"),
-        profile_dir=profile_dir,
-        run_name=f"split_{run_name}",
-        record_shapes=profile_record_shapes,
-        with_stack=profile_with_stack,
-        fn=lambda: llm.generate(prompts, sampling),
+    old_env = _apply_logits_debug_env(
+        enabled=logits_debug_enabled,
+        run_name=run_name,
+        out_dir=out_dir,
+        indices=logits_debug_indices,
+        steps=logits_debug_steps,
+        topk=logits_debug_topk,
     )
+    try:
+        llm = _build_llm_from_args(llm_args, additional_config=additional_config)
+        outputs = _run_with_torch_profiler(
+            enabled=profile_enabled and profile_target in (run_name, "both"),
+            profile_dir=profile_dir,
+            run_name=f"split_{run_name}",
+            record_shapes=profile_record_shapes,
+            with_stack=profile_with_stack,
+            fn=lambda: llm.generate(prompts, sampling),
+        )
+    finally:
+        _restore_env(old_env)
     return outputs, llm
+
+
+def _load_jsonl(path: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if not os.path.exists(path):
+        return rows
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            rows.append(json.loads(line))
+    return rows
+
+
+def _summarize_logits_debug(
+    disabled_path: str,
+    enabled_path: str,
+    out_dir: str,
+) -> str | None:
+    disabled_rows = _load_jsonl(disabled_path)
+    enabled_rows = _load_jsonl(enabled_path)
+    if not disabled_rows or not enabled_rows:
+        return None
+
+    def _key(row: dict[str, Any]) -> tuple[int, int]:
+        return int(row["prompt_index"]), int(row["decode_step"])
+
+    disabled_by_key = {_key(row): row for row in disabled_rows}
+    enabled_by_key = {_key(row): row for row in enabled_rows}
+    common_keys = sorted(set(disabled_by_key) & set(enabled_by_key))
+
+    divergences: list[dict[str, Any]] = []
+    for key in common_keys:
+        dis = disabled_by_key[key]
+        ena = enabled_by_key[key]
+        if dis.get("sampled_token_id") == ena.get("sampled_token_id"):
+            continue
+        divergences.append({
+            "prompt_index": key[0],
+            "decode_step": key[1],
+            "disabled_sampled_token_id": dis.get("sampled_token_id"),
+            "enabled_sampled_token_id": ena.get("sampled_token_id"),
+            "disabled_top_token_ids": dis.get("top_token_ids"),
+            "enabled_top_token_ids": ena.get("top_token_ids"),
+            "disabled_top_logits": dis.get("top_logits"),
+            "enabled_top_logits": ena.get("top_logits"),
+            "disabled_margin_top1_top2": dis.get("margin_top1_top2"),
+            "enabled_margin_top1_top2": ena.get("margin_top1_top2"),
+        })
+
+    report_path = os.path.join(out_dir, "logits_debug_report.json")
+    _save_json(
+        report_path,
+        {
+            "disabled_path": disabled_path,
+            "enabled_path": enabled_path,
+            "disabled_rows": len(disabled_rows),
+            "enabled_rows": len(enabled_rows),
+            "common_rows": len(common_keys),
+            "divergence_total": len(divergences),
+            "first_divergences": divergences[:20],
+        },
+    )
+    return report_path
 
 
 def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **ctx) -> int:
@@ -907,6 +1199,10 @@ def main() -> int:
     output_dir_base = str(args.pop("output_dir"))
     prompts_file = args.pop("prompts_file")
     output_file = args.pop("output_file")
+    dump_logits_debug = bool(args.pop("dump_logits_debug"))
+    logits_debug_indices = _parse_csv_ints(args.pop("logits_debug_indices"))
+    logits_debug_steps = _parse_csv_ints(args.pop("logits_debug_steps"))
+    logits_debug_topk = int(args.pop("logits_debug_topk"))
 
     profile_enabled = bool(args.pop("profile"))
     profile_dir = str(args.pop("profile_dir"))
@@ -1037,6 +1333,12 @@ def main() -> int:
         "notes": {
             "inproc_v1": inproc_v1,
         },
+        "logits_debug": {
+            "enabled": dump_logits_debug,
+            "indices": logits_debug_indices,
+            "steps": logits_debug_steps,
+            "topk": logits_debug_topk,
+        },
     }
     _save_json(os.path.join(out_dir, "metadata.json"), metadata)
 
@@ -1107,6 +1409,11 @@ def main() -> int:
                 profile_record_shapes=profile_record_shapes,
                 profile_with_stack=profile_with_stack,
                 run_name="disabled",
+                out_dir=out_dir,
+                logits_debug_enabled=dump_logits_debug,
+                logits_debug_indices=logits_debug_indices,
+                logits_debug_steps=logits_debug_steps,
+                logits_debug_topk=logits_debug_topk,
             )
 
             disabled_payload = {
@@ -1144,6 +1451,11 @@ def main() -> int:
                 profile_record_shapes=profile_record_shapes,
                 profile_with_stack=profile_with_stack,
                 run_name="enabled",
+                out_dir=out_dir,
+                logits_debug_enabled=dump_logits_debug,
+                logits_debug_indices=logits_debug_indices,
+                logits_debug_steps=logits_debug_steps,
+                logits_debug_topk=logits_debug_topk,
             )
 
             enabled_payload = {
@@ -1227,6 +1539,13 @@ def main() -> int:
         disabled_rows = _serialize_outputs(prompts, out0)
         enabled_rows = _serialize_outputs(prompts, out1)
         mismatches = _compare_serialized(disabled_rows, enabled_rows)
+        logits_debug_report = None
+        if dump_logits_debug:
+            logits_debug_report = _summarize_logits_debug(
+                os.path.join(out_dir, "logits_debug_disabled.jsonl"),
+                os.path.join(out_dir, "logits_debug_enabled.jsonl"),
+                out_dir,
+            )
 
         if mismatches:
             diff_path = os.path.join(out_dir, "diff.json")
@@ -1245,6 +1564,7 @@ def main() -> int:
                     "outputs_disabled_path": outputs_disabled_path,
                     "outputs_enabled_path": outputs_enabled_path,
                     "console_log": console_path,
+                    "logits_debug_report": logits_debug_report,
                 },
             )
             return 1
@@ -1266,6 +1586,7 @@ def main() -> int:
                 "outputs_disabled_path": outputs_disabled_path,
                 "outputs_enabled_path": outputs_enabled_path,
                 "console_log": console_path,
+                "logits_debug_report": logits_debug_report,
             },
         )
         return 0

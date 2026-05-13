@@ -101,11 +101,11 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
 # yapf conflicts with isort for this block
 # yapf: disable
 from vllm_ascend.compilation.acl_graph import (ACLGraphWrapper,
-                                               refresh_attn_block_table_for_split,
                                                set_graph_params,
                                                set_mtp_graph_params,
                                                update_attn_dcp_pcp_params,
                                                update_attn_params,
+                                               update_attn_params_split,
                                                update_mla_attn_dcp_pcp_params,
                                                update_mla_attn_params)
 # yapf: enable
@@ -550,7 +550,6 @@ class NPUModelRunner(GPUModelRunner):
         )
         self.positions_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int64)
         
-        
 
     def _init_device_properties(self) -> None:
         self.num_sms = None
@@ -864,7 +863,10 @@ class NPUModelRunner(GPUModelRunner):
                 num_tokens_padded,
                 vllm_config=self.vllm_config,
                 cudagraph_capture_sizes=cudagraph_capture_sizes,
-                custom_split_sizes=[128,4]
+                custom_split_sizes=(
+                    [num_reqs - min(64, num_reqs // 2),
+                     min(64, num_reqs // 2)]
+                    if num_reqs >= 64 else None)
             )
             if split_batch_slices:
                 split_ubatch_slices = [
@@ -1537,26 +1539,10 @@ class NPUModelRunner(GPUModelRunner):
                                            forward_context,
                                            num_tokens)
             else:
-                update_attn_params(self.update_stream, forward_context,
-                                   num_tokens,
-                                   self.vllm_config)
-
-    def _refresh_block_table_for_split_ubatch(self, forward_context,
-                                              num_tokens: int) -> None:
-        if (forward_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
-                or forward_context.capturing or self.use_sparse):
-            return
-
-        if self.vllm_config.model_config.use_mla:
-            return
-        if self.pcp_size * self.dcp_size > 1:
-            return
-
-        refresh_attn_block_table_for_split(self.update_stream,
-                                           forward_context,
-                                           num_tokens,
-                                           self.vllm_config)
-
+                update_attn_params_split(self.update_stream,
+                                         forward_context,
+                                         num_tokens,
+                                         self.vllm_config)
     def _slice_split_batch_inputs(self, tokens_slice: slice, input_ids,
                                   positions, inputs_embeds,
                                   intermediate_tensors):
@@ -1801,6 +1787,7 @@ class NPUModelRunner(GPUModelRunner):
                     merged.append(parts)
             return tuple(merged)
         return torch.cat(outputs, dim=0)
+
     def _run_split_batch_gr0(
             self,
             split_ubatch_slices: UBatchSlices,
@@ -1920,7 +1907,8 @@ class NPUModelRunner(GPUModelRunner):
                             )
                             # Refresh attn params before replay to avoid carrying
                             # stale settings from the previous split.
-
+                            self._update_attn_params_for_split_ubatch(
+                                metadata.context, current_num_tokens)
                             result = self.model(
                                 input_ids=metadata.input_ids,
                                 positions=metadata.positions,
@@ -2104,6 +2092,8 @@ class NPUModelRunner(GPUModelRunner):
                             )
                             # Refresh attn params before replay to avoid carrying
                             # stale settings from the previous split.
+                            self._update_attn_params_for_split_ubatch(
+                                metadata.context, current_num_tokens)
                             result = self.model(
                                 input_ids=metadata.input_ids,
                                 positions=metadata.positions,
@@ -2151,9 +2141,11 @@ class NPUModelRunner(GPUModelRunner):
                     if backup_inputs_embeds is not None:
                         self.inputs_embeds[:first_split_num_tokens].copy_(
                             backup_inputs_embeds, non_blocking=False)
+
                     if backup_slot_mapping is not None and base_slot_mapping is not None:
                         base_slot_mapping[:slot_mapping_backup_len].copy_(
                             backup_slot_mapping, non_blocking=False)
+
                     torch.npu.synchronize()
 
     def _run_split_batch_gr(
@@ -2438,7 +2430,7 @@ class NPUModelRunner(GPUModelRunner):
                     )
                     # Refresh attn params before replay to avoid carrying
                     # stale settings from the previous split.
-                    self._refresh_block_table_for_split_ubatch(
+                    self._update_attn_params_for_split_ubatch(
                         metadata.context, current_num_tokens)
                     result = self.model(
                         input_ids=metadata.input_ids,
@@ -2507,275 +2499,91 @@ class NPUModelRunner(GPUModelRunner):
         batch_descriptor: BatchDescriptor,
         aclgraph_runtime_mode: CUDAGraphMode,
     ) -> Any:
-        """Run split-batch with parallel replay buffers and per-split context rebuild."""
-        if not split_batch_slices or len(split_batch_slices) <= 1:
-            return self._run_split_batch_gr(
-                split_ubatch_slices,
-                split_batch_slices,
-                attn_metadata,
-                input_ids,
-                positions,
-                intermediate_tensors,
-                inputs_embeds,
-                model_kwargs,
-                batch_descriptor,
-                aclgraph_runtime_mode,
-            )
-
+        """
+        执行split-batch，确保每个batch重放时地址不一致。
+        
+        核心逻辑：
+        - 图捕获时，输入地址在 self.input_ids.gpu、self.positions.gpu 等的起始位置
+        - 第一个ubatch执行时，数据已经在正确位置
+        - 第二个ubatch执行前，将其数据复制到起始位置，然后用起始位置执行
+        """
+        # Step 1: 为所有split准备元数据
+        ubatch_metadata = self._make_split_batch_metadata_parallel_streams(
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            batch_descriptor,
+            aclgraph_runtime_mode,
+        )
+        
+        results: list[Any] = []
         original_forward_context = get_forward_context()
-        first_split = split_batch_slices[0]
-        first_num_tokens = first_split.num_tokens
-        first_num_reqs = first_split.num_requests
+        raw_model=self.get_model()
+        # 获取第一个 split 的 token 数量，用于确定固定缓冲区大小
+        first_split_num_tokens = split_batch_slices[0].num_tokens
+        streams = [torch.npu.Stream(device=self.device),
+                   torch.npu.Stream(device=self.device)]
 
-        small_slices = split_batch_slices[1:]
-        max_small_tokens = max(int(s.num_tokens) for s in small_slices)
-
-        parallel_input_ids = None
-        if input_ids is not None:
-            parallel_input_ids = torch.empty(
-                (max_small_tokens, ),
-                dtype=input_ids.dtype,
-                device=input_ids.device,
-            )
-
-        parallel_positions = None
-        if positions is not None:
-            if positions.ndim == 2:
-                parallel_positions = torch.empty(
-                    (int(positions.shape[0]), max_small_tokens),
-                    dtype=positions.dtype,
-                    device=positions.device,
-                )
-            else:
-                parallel_positions = torch.empty(
-                    (max_small_tokens, ),
-                    dtype=positions.dtype,
-                    device=positions.device,
-                )
-
-        parallel_inputs_embeds = None
-        if inputs_embeds is not None:
-            parallel_inputs_embeds = torch.empty(
-                (max_small_tokens, ) + tuple(inputs_embeds.shape[1:]),
-                dtype=inputs_embeds.dtype,
-                device=inputs_embeds.device,
-            )
-
-        first_attn_metadata = (attn_metadata[0]
-                               if isinstance(attn_metadata, list)
-                               else attn_metadata)
-        first_input_ids, first_positions, first_inputs_embeds, first_intermediate = \
-            self._slice_split_batch_inputs(
-                first_split.token_slice,
-                input_ids,
-                positions,
-                inputs_embeds,
-                intermediate_tensors,
-            )
-
-        ubatch_cudagraph_mode = (
-            CUDAGraphMode.FULL
-            if aclgraph_runtime_mode != CUDAGraphMode.NONE
-            else CUDAGraphMode.NONE
-        )
-        first_batch_descriptor = BatchDescriptor(
-            num_tokens=first_num_tokens,
-            num_reqs=first_num_reqs,
-            uniform=batch_descriptor.uniform,
-            has_lora=batch_descriptor.has_lora,
-        )
-        first_context = create_ascend_forward_context(
-            original_forward_context,
-            attn_metadata=first_attn_metadata,
-            vllm_config=self.vllm_config,
-            dp_metadata=original_forward_context.dp_metadata,
-            ubatch_slices=split_ubatch_slices,
-            batch_descriptor=first_batch_descriptor,
-            cudagraph_runtime_mode=ubatch_cudagraph_mode,
-            ubatch_num=0,
-            positions=positions,
-        )
-
-        results_with_order: list[tuple[int, Any, int]] = []
-        slot_restore_entries: list[tuple[Any, torch.Tensor]] = []
-        parallel_stream = torch.npu.Stream(device=self.device)
-        default_stream = torch.npu.default_stream(self.device)
-
-        try:
-            with override_forward_context(None):
-                torch.npu.set_device(self.device)
-
-                with torch.npu.stream(default_stream):
-                    with override_forward_context(first_context):
-                        self._refresh_block_table_for_split_ubatch(
-                            first_context, first_num_tokens)
-                        first_output = self.model(
-                            input_ids=first_input_ids,
-                            positions=first_positions,
-                            inputs_embeds=first_inputs_embeds,
-                            intermediate_tensors=first_intermediate,
+        
+        # Step 2: 依次执行每个split
+        for slice_idx, split_slice in enumerate(split_batch_slices):
+            metadata = ubatch_metadata[slice_idx]
+            current_num_tokens = split_slice.num_tokens
+            
+            if slice_idx == 0:
+                # 第一个ubatch：数据已在正确位置（self.input_ids.gpu起始处）
+                with torch.npu.stream(streams[slice_idx]):
+                    with override_forward_context(metadata.context):
+                        # Refresh attn params before replay to avoid carrying
+                        # stale settings from the previous split.
+                        self._update_attn_params_for_split_ubatch(
+                            metadata.context, current_num_tokens)
+                        result = self.model(
+                            input_ids=metadata.input_ids,
+                            positions=metadata.positions,
+                            inputs_embeds=metadata.inputs_embeds,
+                            intermediate_tensors=metadata.intermediate_tensors,
                             **model_kwargs,
                         )
-                        if (first_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
-                                and not first_context.capturing):
-                            self._update_attn_params_for_split_ubatch(
-                                first_context, first_num_tokens)
-
-                results_with_order.append(
-                    (int(first_split.request_slice.start),
-                     self._snapshot_split_output(first_output),
-                     int(getattr(first_context, "pad_size", 0))))
-
-                for ubatch_id in range(1, len(split_batch_slices)):
-                    split_slice = split_batch_slices[ubatch_id]
-                    current_num_tokens = int(split_slice.num_tokens)
-                    current_num_reqs = int(split_slice.num_requests)
-
-                    split_attn_metadata = attn_metadata
-                    if isinstance(attn_metadata, list):
-                        split_attn_metadata = attn_metadata[ubatch_id]
-
-                    split_slot_mapping = _get_slot_mapping_from_attn_metadata(
-                        split_attn_metadata)
-                    if split_slot_mapping is not None:
-                        if int(split_slot_mapping.shape[0]) < current_num_tokens:
-                            raise RuntimeError(
-                                "parallel split slot_mapping length mismatch: "
-                                f"required={current_num_tokens}, "
-                                f"available={int(split_slot_mapping.shape[0])}")
-                        parallel_slot_mapping = torch.empty_like(split_slot_mapping)
-                        parallel_slot_mapping[:current_num_tokens].copy_(
-                            split_slot_mapping[:current_num_tokens],
-                            non_blocking=False)
-                        _set_slot_mapping_for_attn_metadata(
-                            split_attn_metadata,
-                            parallel_slot_mapping[:current_num_tokens])
-                        slot_restore_entries.append(
-                            (split_attn_metadata, split_slot_mapping))
-
-                    cur_input_ids, cur_positions, cur_inputs_embeds, cur_intermediate = \
-                        self._slice_split_batch_inputs(
-                            split_slice.token_slice,
-                            input_ids,
-                            positions,
-                            inputs_embeds,
-                            intermediate_tensors,
+                        # [关键] 在模型执行之后更新 attention 参数
+                        self._update_attn_params_for_split_ubatch(
+                            metadata.context, current_num_tokens)
+            else:
+                with torch.npu.stream(streams[slice_idx]):
+                    with override_forward_context(metadata.context):
+                        # Refresh attn params before replay to avoid carrying
+                        # stale settings from the previous split.
+                        self._update_attn_params_for_split_ubatch(
+                            metadata.context, current_num_tokens)
+                        result = self.model(
+                            input_ids=metadata.input_ids,
+                            positions=metadata.positions,
+                            inputs_embeds=metadata.inputs_embeds,
+                            intermediate_tensors=metadata.intermediate_tensors,
+                            **model_kwargs,
                         )
+                        # [关键] 在模型执行之后更新 attention 参数
+                        self._update_attn_params_for_split_ubatch(
+                            metadata.context, current_num_tokens)
+            
+            results.append(self._snapshot_split_output(result))
+        
+        # 恢复forward context并合并结果
+        with override_forward_context(original_forward_context):
+            result = self._merge_split_outputs(results)
+        
+        if not getattr(self, "_split_batch_dumped", False):
+            dump_path = os.path.join(os.getcwd(), "split_batch_merged_first_result_gg.json")
+            with open(dump_path, "w", encoding="utf-8") as f:
+                json.dump(self._to_jsonable(result), f, ensure_ascii=False)
+            self._split_batch_dumped = True
+        
+        return result
 
-                    run_input_ids = None
-                    if cur_input_ids is not None:
-                        assert parallel_input_ids is not None
-                        parallel_input_ids[:current_num_tokens].copy_(
-                            cur_input_ids, non_blocking=False)
-                        run_input_ids = parallel_input_ids[:current_num_tokens]
-
-                    run_positions = None
-                    if cur_positions is not None:
-                        assert parallel_positions is not None
-                        if cur_positions.ndim == 2:
-                            parallel_positions[:, :current_num_tokens].copy_(
-                                cur_positions, non_blocking=False)
-                            run_positions = parallel_positions[:,
-                                                              :current_num_tokens]
-                        else:
-                            parallel_positions[:current_num_tokens].copy_(
-                                cur_positions, non_blocking=False)
-                            run_positions = parallel_positions[:current_num_tokens]
-
-                    run_inputs_embeds = None
-                    if cur_inputs_embeds is not None:
-                        assert parallel_inputs_embeds is not None
-                        parallel_inputs_embeds[:current_num_tokens].copy_(
-                            cur_inputs_embeds, non_blocking=False)
-                        run_inputs_embeds = parallel_inputs_embeds[:current_num_tokens]
-
-                    if _SPLIT_LOCAL_CONTEXT_REBUILD:
-                        rebuild_ubatch_slices = [
-                            UBatchSlice(
-                                slice(0, current_num_reqs),
-                                slice(0, current_num_tokens),
-                            )
-                        ]
-                        rebuild_positions = (
-                            run_positions if run_positions is not None else positions)
-                        rebuild_ubatch_num = 0
-                    else:
-                        rebuild_ubatch_slices = split_ubatch_slices
-                        rebuild_positions = positions
-                        rebuild_ubatch_num = ubatch_id
-
-                    split_batch_descriptor = BatchDescriptor(
-                        num_tokens=current_num_tokens,
-                        num_reqs=current_num_reqs,
-                        uniform=batch_descriptor.uniform,
-                        has_lora=batch_descriptor.has_lora,
-                    )
-                    split_context = create_ascend_forward_context(
-                        original_forward_context,
-                        attn_metadata=split_attn_metadata,
-                        vllm_config=self.vllm_config,
-                        dp_metadata=original_forward_context.dp_metadata,
-                        ubatch_slices=rebuild_ubatch_slices,
-                        batch_descriptor=split_batch_descriptor,
-                        cudagraph_runtime_mode=ubatch_cudagraph_mode,
-                        ubatch_num=rebuild_ubatch_num,
-                        positions=rebuild_positions,
-                    )
-
-                    with torch.npu.stream(parallel_stream):
-                        with override_forward_context(split_context):
-                            self._refresh_block_table_for_split_ubatch(
-                                split_context, current_num_tokens)
-                            split_output = self.model(
-                                input_ids=run_input_ids,
-                                positions=run_positions,
-                                inputs_embeds=run_inputs_embeds,
-                                intermediate_tensors=cur_intermediate,
-                                **model_kwargs,
-                            )
-                            if (split_context.cudagraph_runtime_mode == CUDAGraphMode.FULL
-                                    and not split_context.capturing):
-                                self._update_attn_params_for_split_ubatch(
-                                    split_context, current_num_tokens)
-
-                    results_with_order.append(
-                        (int(split_slice.request_slice.start),
-                         self._snapshot_split_output(split_output),
-                         int(getattr(split_context, "pad_size", 0))))
-
-                default_stream.synchronize()
-                parallel_stream.synchronize()
-
-            with override_forward_context(original_forward_context):
-                sorted_entries = sorted(results_with_order, key=lambda x: x[0])
-                sorted_results = [entry[1] for entry in sorted_entries]
-                sorted_pad_sizes = [entry[2] for entry in sorted_entries]
-
-                if get_forward_context().sp_enabled and get_pp_group().is_last_rank:
-                    for i in range(len(sorted_results)):
-                        if isinstance(sorted_results[i], torch.Tensor):
-                            sorted_results[i] = tensor_model_parallel_all_gather(
-                                sorted_results[i], 0)
-                            pad_size = sorted_pad_sizes[i]
-                            if pad_size > 0:
-                                sorted_results[i] = sorted_results[i][:-pad_size, :]
-
-                result = self._merge_split_outputs(sorted_results)
-                get_forward_context().dbo_enabled = False
-
-            if not getattr(self, "_split_batch_dumped", False):
-                dump_path = os.path.join(
-                    os.getcwd(), "split_batch_merged_first_result_gg.json")
-                with open(dump_path, "w", encoding="utf-8") as f:
-                    json.dump(self._to_jsonable(result), f, ensure_ascii=False)
-                self._split_batch_dumped = True
-
-            return result
-        finally:
-            for slot_attn_metadata, original_slot_mapping in slot_restore_entries:
-                _set_slot_mapping_for_attn_metadata(slot_attn_metadata,
-                                                    original_slot_mapping)
-            torch.npu.synchronize()
 
     def _build_attn_state(self, num_reqs, num_scheduled_tokens,
                           num_valid_tokens):
@@ -3036,34 +2844,19 @@ class NPUModelRunner(GPUModelRunner):
 
                 if split_ubatch_slices is not None:
                     if split_enable_parallel_streams:
-                        if (len(split_batch_slices) == 2
-                                and isinstance(attn_metadata, list)
-                                and len(attn_metadata) >= 2):
-                            hidden_states = self._run_split_batch_parallel_two_graph(
-                                split_ubatch_slices,
-                                split_batch_slices,
-                                attn_metadata,
-                                input_ids,
-                                positions,
-                                intermediate_tensors,
-                                inputs_embeds,
-                                model_kwargs,
-                                batch_descriptor,
-                                aclgraph_runtime_mode)
-                        else:
-                            hidden_states = self._run_split_batch_parallel(
-                                split_ubatch_slices,
-                                split_batch_slices,
-                                attn_metadata,
-                                input_ids,
-                                positions,
-                                intermediate_tensors,
-                                inputs_embeds,
-                                model_kwargs,
-                                batch_descriptor,
-                                aclgraph_runtime_mode)
+                        hidden_states = self._run_split_batch_parallel(
+                            split_ubatch_slices,
+                            split_batch_slices,
+                            attn_metadata,
+                            input_ids,
+                            positions,
+                            intermediate_tensors,
+                            inputs_embeds,
+                            model_kwargs,
+                            batch_descriptor,
+                            aclgraph_runtime_mode)
                     else:
-                        hidden_states = self._run_split_batch_gr(
+                        hidden_states = self._run_split_batch_gr0(
                         split_ubatch_slices,
                         split_batch_slices,
                         attn_metadata,
@@ -4494,7 +4287,7 @@ class NPUModelRunner(GPUModelRunner):
             """How many metadata builders we need per AttentionGroup.
 
             - DBO(ubatch): 2 builders (ubatch_id=0/1).
-            - Split-batch: N builders, N = split_config.max_num_splits.
+            - Split-batch: N builders, N = split_config.num_splits.
             - Default: 1 builder.
             """
             if self.parallel_config.enable_dbo:
@@ -4504,7 +4297,8 @@ class NPUModelRunner(GPUModelRunner):
             split_enabled = bool(split_cfg is not None
                                  and getattr(split_cfg, "enabled", False))
             if split_enabled:
-                n = int(getattr(split_cfg, "max_num_splits", getattr(split_cfg, "num_splits", 1)))
+                n = int(getattr(split_cfg, "max_num_splits",
+                                getattr(split_cfg, "num_splits", 1)))
                 return max(1, n)
 
             return 1
@@ -4743,7 +4537,7 @@ class NPUModelRunner(GPUModelRunner):
     def _capture_aclgraphs(self, compilation_cases: list[int],
                            aclgraph_runtime_mode: CUDAGraphMode,
                            uniform_decode: bool,
-                           parallel_streams: bool = False, 
+                           parallel_streams: bool 
                            ):
         assert aclgraph_runtime_mode != CUDAGraphMode.NONE and \
             aclgraph_runtime_mode in [CUDAGraphMode.FULL,
@@ -4772,6 +4566,7 @@ class NPUModelRunner(GPUModelRunner):
                             uniform_decode=uniform_decode)
         # We skip EPLB here since we don't want to record dummy metrics
         for num_tokens in compilation_cases:
+
             allow_microbatching = self.parallel_config.enable_dbo \
                 and aclgraph_runtime_mode == CUDAGraphMode.FULL \
                 and uniform_decode \
@@ -4863,43 +4658,38 @@ class NPUModelRunner(GPUModelRunner):
                 self._capture_aclgraphs(
                     compilation_cases=compilation_cases_decode,
                     aclgraph_runtime_mode=CUDAGraphMode.FULL,
-                    uniform_decode=True,parallel_streams=self.ascend_config.split_batch_config.enable_parallel_streams)
+                    uniform_decode=True,parallel_streams=False)
 
         # Second capture (fixed size = 8)
         if self.ascend_config.split_batch_config.enable_parallel_streams:
-            fixed_size = self.ascend_config.split_batch_config.cudagraph_capture_fixed_size
+            fixed_size = self.compilation_config.cudagraph_capture_fixed_size
             with graph_capture(device=self.device):
                 if aclgraph_mode.mixed_mode() != CUDAGraphMode.NONE:
                     aclgraph_runtime_mode = aclgraph_mode.mixed_mode()
-                    self._capture_aclgraphs(
-                        compilation_cases=[fixed_size],
-                        aclgraph_runtime_mode=aclgraph_runtime_mode,
-                        uniform_decode=True,parallel_streams=True)
-                try:
-                    aclgraph_runtime_mode=aclgraph_mode.decode_mode()
-                    self._capture_aclgraphs(
-                        compilation_cases=[fixed_size],
-                        aclgraph_runtime_mode=aclgraph_runtime_mode,
-                        uniform_decode=True,parallel_streams=True)
-                except Exception as e:
-                    error_msg = str(e)
-                    error_code = '0x7020023'
-                    pattern = r'retCode=([^,\s\.]+)'
-                    match = re.search(pattern, error_msg)
-                    if match:
-                        retCode = match.group(1)
-                    # Determine whether the error message is caused by stream capture failure.
-                    if match and retCode == error_code:
-                        logger.error(
-                            f"ACLgraph sizes capture fail: {type(e).__name__}:\n"
-                            "ACLgraph has insufficient available streams to capture the configured number of sizes. "
-                            "Please verify both the availability of adequate streams and the appropriateness of the configured size count.\n\n"
-                            "Recommended solutions:\n"
-                            "1. Manually configure the compilation_config parameter "
-                            "with a reduced set of sizes: '{\"cudagraph_capture_sizes\":[size1, size2, size3, ...]}'.\n"
-                            "2. Utilize ACLgraph's full graph mode as an alternative to the piece-wise approach.\n\n"
-                            f"{str(e)}")
-                    raise
+                    try:
+                        self._capture_aclgraphs(
+                            compilation_cases=[fixed_size],
+                            aclgraph_runtime_mode=aclgraph_runtime_mode,
+                            uniform_decode=False,parallel_streams=True)
+                    except Exception as e:
+                        error_msg = str(e)
+                        error_code = '0x7020023'
+                        pattern = r'retCode=([^,\s\.]+)'
+                        match = re.search(pattern, error_msg)
+                        if match:
+                            retCode = match.group(1)
+                        # Determine whether the error message is caused by stream capture failure.
+                        if match and retCode == error_code:
+                            logger.error(
+                                f"ACLgraph sizes capture fail: {type(e).__name__}:\n"
+                                "ACLgraph has insufficient available streams to capture the configured number of sizes. "
+                                "Please verify both the availability of adequate streams and the appropriateness of the configured size count.\n\n"
+                                "Recommended solutions:\n"
+                                "1. Manually configure the compilation_config parameter "
+                                "with a reduced set of sizes: '{\"cudagraph_capture_sizes\":[size1, size2, size3, ...]}'.\n"
+                                "2. Utilize ACLgraph's full graph mode as an alternative to the piece-wise approach.\n\n"
+                                f"{str(e)}")
+                        raise
 
         # Disable aclgraph capturing globally, so any unexpected aclgraph
         # capturing will be detected and raise an error after here.
@@ -5270,4 +5060,3 @@ def _torch_cuda_wrapper():
         torch.cuda.current_stream = torch.npu.current_stream
         torch.cuda.stream = torch.npu.stream
     
-

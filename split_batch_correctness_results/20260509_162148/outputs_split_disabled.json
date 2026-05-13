@@ -1,0 +1,94 @@
+{
+  "config": "split_disabled",
+  "description": "Split-batch disabled",
+  "split_batch_config": {
+    "enabled": false,
+    "num_splits": 2,
+    "enable_parallel_streams": false,
+    "min_batch_size_for_split": 4
+  },
+  "prompts_file": "/tmp/prompts8.json",
+  "prompts_path": "./split_batch_correctness_results/20260509_162148/prompts.json",
+  "outputs": [
+    {
+      "index": 0,
+      "prompt": "Sound travels faster in",
+      "token_ids": [
+        892,
+        315,
+        279
+      ],
+      "text": " which of the"
+    },
+    {
+      "index": 1,
+      "prompt": "Write a short list of 3 items about: apples",
+      "token_ids": [
+        11,
+        84038,
+        11
+      ],
+      "text": ", oranges,"
+    },
+    {
+      "index": 2,
+      "prompt": "Jupiter is the largest planet in",
+      "token_ids": [
+        1039,
+        12941,
+        1849
+      ],
+      "text": " our solar system"
+    },
+    {
+      "index": 3,
+      "prompt": "A verb is a part of speech that",
+      "token_ids": [
+        14807,
+        279,
+        1917
+      ],
+      "text": " indicates the action"
+    },
+    {
+      "index": 4,
+      "prompt": "In Greek mythology, Zeus is",
+      "token_ids": [
+        279,
+        11477,
+        315
+      ],
+      "text": " the king of"
+    },
+    {
+      "index": 5,
+      "prompt": "The Milky Way is a",
+      "token_ids": [
+        33161,
+        429,
+        5610
+      ],
+      "text": " galaxy that contains"
+    },
+    {
+      "index": 6,
+      "prompt": "A haiku traditionally contains",
+      "token_ids": [
+        220,
+        20,
+        47604
+      ],
+      "text": " 5 syll"
+    },
+    {
+      "index": 7,
+      "prompt": "The periodic table organizes elements by",
+      "token_ids": [
+        24510,
+        1372,
+        11
+      ],
+      "text": " atomic number,"
+    }
+  ]
+}

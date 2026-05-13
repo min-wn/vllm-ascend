@@ -1,0 +1,28 @@
+{
+  "timestamp": "20260509_163914",
+  "model": "Qwen/Qwen3-0.6B",
+  "tokenizer": "Qwen/Qwen3-0.6B",
+  "seed": 0,
+  "batch_size": 132,
+  "max_tokens": 3,
+  "max_model_len": 8192,
+  "gpu_memory_utilization": 0.9,
+  "num_splits": 2,
+  "enable_parallel_streams": false,
+  "min_batch_size_for_split": 4,
+  "compilation_config": "{'level': None, 'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': [], 'splitting_ops': None, 'compile_mm_encoder': False, 'compile_sizes': None, 'compile_ranges_split_points': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False}, 'local_cache_dir': None}",
+  "run": "both",
+  "compare_mode": "inproc",
+  "profile_enabled": false,
+  "profile_dir": "./torch_profiler",
+  "profile_target": "enabled",
+  "profile_record_shapes": false,
+  "child_timeout_s": 0.0,
+  "diag_env": {},
+  "profile_with_stack": false,
+  "output_file": null,
+  "output_dir": "./split_batch_correctness_results/20260509_163914",
+  "notes": {
+    "inproc_v1": false
+  }
+}

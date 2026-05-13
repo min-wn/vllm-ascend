@@ -24,10 +24,8 @@ from vllm_ascend.ascend_config import SplitBatchConfig
 from vllm_ascend.compilation.acl_graph import (
     update_mla_attn_params,
     update_attn_params,
-    update_attn_params_split,
     update_mla_attn_dcp_pcp_params,
     update_attn_dcp_pcp_params,
-    refresh_attn_block_table_for_split,
 )
 
 logger = init_logger(__name__)
@@ -155,29 +153,41 @@ class AscendSplitBatchWrapper:
         speculative_config = self.vllm_config.speculative_config
         update_stream = (self.update_stream
                          if self.update_stream is not None else self.default_stream)
+        in_parallel_streams = bool(
+            getattr(forward_context, "in_parallel_streams", False))
 
         logger.debug(
             "Updating attn params for ubatch %s on update_stream, "
-            "num_tokens=%s, stream_id=%s",
+            "num_tokens=%s, stream_id=%s, in_parallel_streams=%s",
             ubatch_id,
             num_tokens,
             update_stream.stream_id,
+            in_parallel_streams,
         )
 
         if use_mla:
             if pcp_size * dcp_size > 1:
-                update_mla_attn_dcp_pcp_params(update_stream, forward_context,
-                                               num_tokens)
+                update_mla_attn_dcp_pcp_params(
+                    update_stream, forward_context, num_tokens,
+                    in_parallel_streams=in_parallel_streams)
             else:
-                update_mla_attn_params(update_stream, forward_context,
-                                       num_tokens, speculative_config)
+                update_mla_attn_params(
+                    update_stream, forward_context, num_tokens,
+                    speculative_config,
+                    in_parallel_streams=in_parallel_streams)
         else:
             if pcp_size * dcp_size > 1:
-                update_attn_dcp_pcp_params(update_stream, forward_context,
-                                           num_tokens)
+                update_attn_dcp_pcp_params(
+                    update_stream, forward_context, num_tokens,
+                    in_parallel_streams=in_parallel_streams)
             else:
-                update_attn_params_split(update_stream, forward_context,
-                                         num_tokens, self.vllm_config)
+                # GPU-aligned: block_table capture address matches runtime write
+                # address (both offset 0 for micro buffers), so use plain
+                # update_attn_params without refresh_block_table=True.
+                update_attn_params(
+                    update_stream, forward_context, num_tokens,
+                    self.vllm_config,
+                    in_parallel_streams=in_parallel_streams)
     def _refresh_block_table_for_ubatch(self, forward_context,
                                         num_tokens: int) -> None:
         """Refresh split block_table in-place before graph replay."""
@@ -195,10 +205,16 @@ class AscendSplitBatchWrapper:
 
         update_stream = (self.update_stream
                          if self.update_stream is not None else self.default_stream)
-        refresh_attn_block_table_for_split(update_stream,
-                                           forward_context,
-                                           num_tokens,
-                                           self.vllm_config)
+        in_parallel_streams = bool(
+            getattr(forward_context, "in_parallel_streams", False))
+        # GPU-aligned: block_table capture address matches runtime write
+        # address (both offset 0 for micro buffers), so no in-place
+        # refresh needed. Use plain update_attn_params instead.
+        update_attn_params(update_stream,
+                           forward_context,
+                           num_tokens,
+                           self.vllm_config,
+                           in_parallel_streams=in_parallel_streams)
 
     def _snapshot_split_output(self, output: Any) -> Any:
         if isinstance(output, torch.Tensor):
@@ -779,6 +795,7 @@ class AscendSplitBatchWrapper:
                         cudagraph_runtime_mode=ubatch_cudagraph_mode,
                         ubatch_num=rebuild_ubatch_num,
                         positions=rebuild_positions,
+                        in_parallel_streams=True,
                     )
 
                     with torch.npu.stream(self.parallel_stream):

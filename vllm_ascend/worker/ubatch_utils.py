@@ -286,6 +286,8 @@ class SplitBatchSlice:
     """Represents a slice of the batch for split batch execution."""
     request_slice: slice  # Slice of requests
     token_slice: slice    # Slice of tokens
+    padded_num_tokens: int = 0  # Padded token count for graph/capture selection
+    physical_num_tokens: int = 0  # Physical execution padding (buffer zero-fill, metadata)
     
     @property
     def num_requests(self) -> int:
@@ -294,6 +296,19 @@ class SplitBatchSlice:
     @property
     def num_tokens(self) -> int:
         return self.token_slice.stop - self.token_slice.start
+
+    @property
+    def exec_num_tokens(self) -> int:
+        """Number of tokens the split actually executes with.
+        
+        Returns physical_num_tokens if set, otherwise falls back to
+        padded_num_tokens, then num_tokens. This is the size used for
+        buffer zero-fill, metadata padding, and backup management.
+        """
+        return int(self.physical_num_tokens
+                   or self.padded_num_tokens
+                   or self.num_tokens)
+
     def is_empty(self) -> bool:
         return (
             self.request_slice.start == self.request_slice.stop
@@ -391,6 +406,7 @@ def split_batch_split(
     vllm_config: VllmConfig,
     cudagraph_capture_sizes: Optional[set] = None,
     custom_split_sizes: Optional[list[int]] = None,
+    exact_shape_num_tokens: Optional[int] = None,
 ) -> tuple[Optional[SplitBatchSlices], Optional[int]]:
     """
     Determine if and how to split the batch for split batch execution.
@@ -407,6 +423,10 @@ def split_batch_split(
         cudagraph_capture_sizes: Set of captured graph sizes (for validation)
         custom_split_sizes: Optional list of exact split sizes (number of requests per split).
                           If provided, must sum to total number of requests.
+        exact_shape_num_tokens: Optional full-batch execution shape hint.
+                          This is only applied when cudagraph capture sizes
+                          are unavailable. When ACL graphs are enabled, each
+                          split keeps its own smallest matching capture size.
         
     Returns:
         tuple[Optional[SplitBatchSlices], Optional[int]]:
@@ -440,7 +460,34 @@ def split_batch_split(
     # If we couldn't create valid splits, return None
     if not split_slices or len(split_slices) < 2:
         return (None, None)
-    
+
+    # if exact_shape_num_tokens is not None and not cudagraph_capture_sizes:
+    if exact_shape_num_tokens is not None:
+        padded_size = int(exact_shape_num_tokens)
+        if padded_size < num_tokens_padded:
+            logger.warning(
+                "Exact-shape split requested with padded_size=%s smaller than "
+                "full padded tokens=%s; ignoring exact-shape override.",
+                padded_size,
+                num_tokens_padded,
+            )
+        else:
+            padded_total = 0
+            for split_slice in split_slices:
+                if padded_size < split_slice.num_tokens:
+                    logger.warning(
+                        "Exact-shape split requested with padded_size=%s smaller "
+                        "than split tokens=%s; ignoring exact-shape override.",
+                        padded_size,
+                        split_slice.num_tokens,
+                    )
+                    break
+                split_slice.padded_num_tokens = padded_size
+                split_slice.physical_num_tokens = padded_size
+                padded_total += padded_size
+            else:
+                return (split_slices, padded_total)
+
     # Validate that each split size has a corresponding captured graph
     # (only relevant when cudagraph is enabled)
     if cudagraph_capture_sizes:
@@ -456,9 +503,19 @@ def split_batch_split(
             if padded_size is None:
                 # Split size exceeds all capture sizes, can't use graph
                 padded_size = max(cudagraph_capture_sizes)
+            split_slice.padded_num_tokens = padded_size
+            split_slice.physical_num_tokens = padded_size
             padded_total += padded_size
         return (split_slices, padded_total)
     
-    return (split_slices, num_tokens_padded)
-
-
+    # Without cudagraph, keep split execution shapes aligned. A later decode
+    # step can shrink 68/64 into 67/64 when one request finishes; pad the odd
+    # split back to 68 so the split path keeps the same shape contract while
+    # callers still trim outputs to the real token count.
+    padded_total = 0
+    for split_slice in split_slices:
+        padded_size = round_up(split_slice.num_tokens, 2)
+        split_slice.padded_num_tokens = padded_size
+        split_slice.physical_num_tokens = padded_size
+        padded_total += padded_size
+    return (split_slices, padded_total)

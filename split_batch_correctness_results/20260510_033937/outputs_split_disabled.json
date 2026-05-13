@@ -1,0 +1,2258 @@
+{
+  "config": "split_disabled",
+  "description": "Split-batch disabled",
+  "split_batch_config": {
+    "enabled": false,
+    "num_splits": 2,
+    "enable_parallel_streams": true,
+    "min_batch_size_for_split": 4
+  },
+  "prompts_file": null,
+  "prompts_path": "./split_batch_correctness_results/20260510_033937/prompts.json",
+  "outputs": [
+    {
+      "index": 0,
+      "prompt": "Sound travels faster in",
+      "token_ids": [
+        892,
+        315,
+        279,
+        2701,
+        97812,
+        30,
+        362,
+        13,
+        3720,
+        11
+      ],
+      "text": " which of the following mediums? A. air,"
+    },
+    {
+      "index": 1,
+      "prompt": "Write a short list of 3 items about: apples",
+      "token_ids": [
+        11,
+        84038,
+        11,
+        323,
+        67342,
+        13,
+        4710,
+        785,
+        3589,
+        1265
+      ],
+      "text": ", oranges, and bananas. \n\nThe items should"
+    },
+    {
+      "index": 2,
+      "prompt": "Jupiter is the largest planet in",
+      "token_ids": [
+        1039,
+        12941,
+        1849,
+        11,
+        323,
+        432,
+        374,
+        279,
+        1172,
+        11580
+      ],
+      "text": " our solar system, and it is the only planet"
+    },
+    {
+      "index": 3,
+      "prompt": "A verb is a part of speech that",
+      "token_ids": [
+        14807,
+        279,
+        1917,
+        476,
+        1584,
+        315,
+        1660,
+        315,
+        264,
+        36921
+      ],
+      "text": " indicates the action or state of being of a noun"
+    },
+    {
+      "index": 4,
+      "prompt": "In Greek mythology, Zeus is",
+      "token_ids": [
+        279,
+        11477,
+        315,
+        279,
+        28813,
+        11,
+        323,
+        566,
+        374,
+        279
+      ],
+      "text": " the king of the gods, and he is the"
+    },
+    {
+      "index": 5,
+      "prompt": "The Milky Way is a",
+      "token_ids": [
+        33161,
+        429,
+        5610,
+        264,
+        3460,
+        1372,
+        315,
+        9759,
+        11,
+        323
+      ],
+      "text": " galaxy that contains a large number of stars, and"
+    },
+    {
+      "index": 6,
+      "prompt": "A haiku traditionally contains",
+      "token_ids": [
+        220,
+        20,
+        47604,
+        4788,
+        11,
+        323,
+        279,
+        1156,
+        323,
+        1537
+      ],
+      "text": " 5 syllables, and the first and last"
+    },
+    {
+      "index": 7,
+      "prompt": "The periodic table organizes elements by",
+      "token_ids": [
+        24510,
+        1372,
+        11,
+        323,
+        1817,
+        2392,
+        702,
+        264,
+        4911,
+        24510
+      ],
+      "text": " atomic number, and each element has a unique atomic"
+    },
+    {
+      "index": 8,
+      "prompt": "The main ingredient in guacamole is",
+      "token_ids": [
+        41719,
+        22815,
+        11,
+        892,
+        374,
+        264,
+        5810,
+        1985,
+        315,
+        279
+      ],
+      "text": " lime juice, which is a natural product of the"
+    },
+    {
+      "index": 9,
+      "prompt": "DNA stands for",
+      "token_ids": [
+        1128,
+        30,
+        3555,
+        374,
+        279,
+        7428,
+        315,
+        279,
+        15552,
+        30
+      ],
+      "text": " what? What is the purpose of the DNA?"
+    },
+    {
+      "index": 10,
+      "prompt": "The Nile River flows through",
+      "token_ids": [
+        279,
+        3146,
+        315,
+        14867,
+        11,
+        323,
+        279,
+        76190,
+        10948,
+        374
+      ],
+      "text": " the country of Egypt, and the Nile River is"
+    },
+    {
+      "index": 11,
+      "prompt": "Coffee originated in",
+      "token_ids": [
+        279,
+        12592,
+        6326,
+        11,
+        714,
+        432,
+        374,
+        1431,
+        264,
+        3644
+      ],
+      "text": " the Middle East, but it is now a global"
+    },
+    {
+      "index": 12,
+      "prompt": "Write a short list of 3 items about: apples",
+      "token_ids": [
+        11,
+        84038,
+        11,
+        323,
+        67342,
+        13,
+        4710,
+        785,
+        3589,
+        1265
+      ],
+      "text": ", oranges, and bananas. \n\nThe items should"
+    },
+    {
+      "index": 13,
+      "prompt": "A rhombus is a quadrilateral with",
+      "token_ids": [
+        678,
+        11067,
+        6144,
+        13,
+        1416,
+        279,
+        84018,
+        1127,
+        315,
+        264
+      ],
+      "text": " all sides equal. If the diagonals of a"
+    },
+    {
+      "index": 14,
+      "prompt": "Python is a programming language that",
+      "token_ids": [
+        374,
+        13570,
+        1483,
+        304,
+        279,
+        2070,
+        315,
+        20443,
+        11229,
+        13
+      ],
+      "text": " is widely used in the field of artificial intelligence."
+    },
+    {
+      "index": 15,
+      "prompt": "The largest desert in the world is",
+      "token_ids": [
+        279,
+        825,
+        304,
+        279,
+        18070,
+        949,
+        315,
+        279,
+        31743,
+        13
+      ],
+      "text": " the one in the southern part of the continent."
+    },
+    {
+      "index": 16,
+      "prompt": "The boiling point of water at high altitude is",
+      "token_ids": [
+        5080,
+        1091,
+        518,
+        9396,
+        2188,
+        13,
+        1096,
+        374,
+        1576,
+        279
+      ],
+      "text": " higher than at sea level. This is because the"
+    },
+    {
+      "index": 17,
+      "prompt": "A solar eclipse occurs when",
+      "token_ids": [
+        279,
+        17330,
+        374,
+        304,
+        264,
+        2309,
+        1380,
+        432,
+        374,
+        304
+      ],
+      "text": " the Moon is in a position where it is in"
+    },
+    {
+      "index": 18,
+      "prompt": "A synonym is a word that",
+      "token_ids": [
+        702,
+        279,
+        1852,
+        7290,
+        438,
+        2441,
+        3409,
+        13,
+        3007,
+        476
+      ],
+      "text": " has the same meaning as another word. True or"
+    },
+    {
+      "index": 19,
+      "prompt": "Caffeine is a stimulant found in",
+      "token_ids": [
+        10799,
+        11,
+        15243,
+        11,
+        323,
+        17931,
+        13,
+        1084,
+        374,
+        264
+      ],
+      "text": " coffee, tea, and chocolate. It is a"
+    },
+    {
+      "index": 20,
+      "prompt": "A prime number is a number that",
+      "token_ids": [
+        702,
+        1172,
+        825,
+        6785,
+        49109,
+        11,
+        892,
+        374,
+        5086,
+        13
+      ],
+      "text": " has only one positive divisor, which is itself."
+    },
+    {
+      "index": 21,
+      "prompt": "An archipelago is a group of",
+      "token_ids": [
+        29000,
+        429,
+        525,
+        8433,
+        553,
+        264,
+        3175,
+        8781,
+        315,
+        29000
+      ],
+      "text": " islands that are connected by a single chain of islands"
+    },
+    {
+      "index": 22,
+      "prompt": "A sonnet is a poem consisting of",
+      "token_ids": [
+        220,
+        16,
+        19,
+        5128,
+        13,
+        576,
+        4438,
+        4711,
+        374,
+        5326
+      ],
+      "text": " 14 lines. The sonnet is written"
+    },
+    {
+      "index": 23,
+      "prompt": "A black hole is an astronomical object that",
+      "token_ids": [
+        374,
+        14122,
+        979,
+        264,
+        10951,
+        6774,
+        86358,
+        1212,
+        1181,
+        1828
+      ],
+      "text": " is formed when a massive star collapses under its own"
+    },
+    {
+      "index": 24,
+      "prompt": "The Chinese New Year is based on",
+      "token_ids": [
+        279,
+        56711,
+        13168,
+        11,
+        323,
+        279,
+        56711,
+        13168,
+        374,
+        3118
+      ],
+      "text": " the lunar calendar, and the lunar calendar is based"
+    },
+    {
+      "index": 25,
+      "prompt": "An octagon has how many sides?",
+      "token_ids": [
+        1527,
+        18491,
+        6113,
+        702,
+        1246,
+        1657,
+        11067,
+        30,
+        1527,
+        18491
+      ],
+      "text": " An octagon has how many sides? An oct"
+    },
+    {
+      "index": 26,
+      "prompt": "The president of the United States is",
+      "token_ids": [
+        279,
+        1852,
+        438,
+        279,
+        4767,
+        315,
+        279,
+        3639,
+        19140,
+        13
+      ],
+      "text": " the same as the president of the United Nations."
+    },
+    {
+      "index": 27,
+      "prompt": "A constellation is a group of",
+      "token_ids": [
+        220,
+        16,
+        17,
+        9759,
+        429,
+        525,
+        7407,
+        304,
+        279,
+        1852
+      ],
+      "text": " 12 stars that are located in the same"
+    },
+    {
+      "index": 28,
+      "prompt": "The largest mammal in the world is",
+      "token_ids": [
+        279,
+        50019,
+        13,
+        2160,
+        429,
+        830,
+        30,
+        7281,
+        11,
+        374
+      ],
+      "text": " the whale. Is that true? Also, is"
+    },
+    {
+      "index": 29,
+      "prompt": "Photosynthesis requires sunlight and",
+      "token_ids": [
+        3015,
+        13,
+        3555,
+        374,
+        279,
+        3476,
+        315,
+        3015,
+        304,
+        279
+      ],
+      "text": " water. What is the role of water in the"
+    },
+    {
+      "index": 30,
+      "prompt": "The Industrial Revolution began in",
+      "token_ids": [
+        279,
+        220,
+        16,
+        23,
+        339,
+        9294,
+        11,
+        323,
+        279,
+        1887
+      ],
+      "text": " the 18th century, and the main"
+    },
+    {
+      "index": 31,
+      "prompt": "Sound is measured in units called",
+      "token_ids": [
+        1622,
+        579,
+        2010,
+        13,
+        576,
+        1622,
+        68595,
+        5452,
+        374,
+        264
+      ],
+      "text": " decibels. The decibel scale is a"
+    },
+    {
+      "index": 32,
+      "prompt": "My favorite color is",
+      "token_ids": [
+        6303,
+        13,
+        358,
+        614,
+        264,
+        6303,
+        15478,
+        11,
+        264,
+        6303
+      ],
+      "text": " blue. I have a blue shirt, a blue"
+    },
+    {
+      "index": 33,
+      "prompt": "Explain in one sentence: what is split-batch?",
+      "token_ids": [
+        3555,
+        374,
+        279,
+        7428,
+        315,
+        6718,
+        1455,
+        754,
+        304,
+        264
+      ],
+      "text": " What is the purpose of split-batch in a"
+    },
+    {
+      "index": 34,
+      "prompt": "The Renaissance was a period of",
+      "token_ids": [
+        2244,
+        12752,
+        323,
+        31592,
+        4401,
+        304,
+        4505,
+        11,
+        7167,
+        304
+      ],
+      "text": " great cultural and artistic development in Europe, beginning in"
+    },
+    {
+      "index": 35,
+      "prompt": "The capital of Australia is",
+      "token_ids": [
+        21273,
+        13,
+        576,
+        6722,
+        315,
+        1532,
+        16911,
+        374,
+        56004,
+        13
+      ],
+      "text": " Sydney. The capital of New Zealand is Wellington."
+    },
+    {
+      "index": 36,
+      "prompt": "A limerick is a type of",
+      "token_ids": [
+        32794,
+        448,
+        264,
+        96934,
+        12859,
+        315,
+        14137,
+        1867,
+        1867,
+        13
+      ],
+      "text": " poem with a rhyme scheme of ABABAB."
+    },
+    {
+      "index": 37,
+      "prompt": "The Mona Lisa is displayed in",
+      "token_ids": [
+        279,
+        9729,
+        48506,
+        16328,
+        304,
+        12095,
+        11,
+        9625,
+        13,
+        576
+      ],
+      "text": " the Louvre Museum in Paris, France. The"
+    },
+    {
+      "index": 38,
+      "prompt": "The speed of light in vacuum is roughly",
+      "token_ids": [
+        220,
+        18,
+        13,
+        15,
+        15,
+        24768,
+        220,
+        16,
+        15,
+        61
+      ],
+      "text": " 3.00 × 10^"
+    },
+    {
+      "index": 39,
+      "prompt": "Velociraptors were dinosaurs that",
+      "token_ids": [
+        12163,
+        2337,
+        279,
+        35584,
+        95514,
+        292,
+        11385,
+        13,
+        2379,
+        525
+      ],
+      "text": " lived during the Mesozoic era. They are"
+    },
+    {
+      "index": 40,
+      "prompt": "The human body has a total of",
+      "token_ids": [
+        220,
+        18,
+        22,
+        82081,
+        13,
+        576,
+        1372,
+        315,
+        82081,
+        304
+      ],
+      "text": " 37 chromosomes. The number of chromosomes in"
+    },
+    {
+      "index": 41,
+      "prompt": "The leaning tower of Pisa is in",
+      "token_ids": [
+        279,
+        6083,
+        315,
+        264,
+        1290,
+        21495,
+        13,
+        576,
+        2608,
+        315
+      ],
+      "text": " the shape of a right triangle. The height of"
+    },
+    {
+      "index": 42,
+      "prompt": "The Statue of Liberty was a gift from",
+      "token_ids": [
+        279,
+        3639,
+        4180,
+        311,
+        279,
+        8585,
+        5429,
+        304,
+        220,
+        16
+      ],
+      "text": " the United States to the French Republic in 1"
+    },
+    {
+      "index": 43,
+      "prompt": "Once upon a time in a land far away,",
+      "token_ids": [
+        1052,
+        572,
+        264,
+        14126,
+        2598,
+        3984,
+        276,
+        13,
+        576,
+        14126
+      ],
+      "text": " there was a village called Elan. The village"
+    },
+    {
+      "index": 44,
+      "prompt": "An ecosystem consists of",
+      "token_ids": [
+        220,
+        16,
+        15,
+        15,
+        15,
+        9419,
+        315,
+        10779,
+        323,
+        220
+      ],
+      "text": " 1000 species of plants and "
+    },
+    {
+      "index": 45,
+      "prompt": "The atmosphere of Earth is mostly",
+      "token_ids": [
+        23415,
+        315,
+        46403,
+        323,
+        23552,
+        11,
+        323,
+        279,
+        1887,
+        2874
+      ],
+      "text": " composed of nitrogen and oxygen, and the main reason"
+    },
+    {
+      "index": 46,
+      "prompt": "The first man to walk on the moon was",
+      "token_ids": [
+        279,
+        1156,
+        883,
+        311,
+        4227,
+        389,
+        279,
+        17788,
+        13,
+        576
+      ],
+      "text": " the first man to walk on the moon. The"
+    },
+    {
+      "index": 47,
+      "prompt": "A kangaroo is a marsupial native to",
+      "token_ids": [
+        8330,
+        13,
+        1084,
+        374,
+        264,
+        4462,
+        315,
+        279,
+        2997,
+        315
+      ],
+      "text": " Australia. It is a member of the family of"
+    },
+    {
+      "index": 48,
+      "prompt": "The human brain weighs about",
+      "token_ids": [
+        220,
+        17,
+        13,
+        20,
+        20972,
+        11,
+        323,
+        279,
+        5461,
+        4680
+      ],
+      "text": " 2.5 kg, and the average weight"
+    },
+    {
+      "index": 49,
+      "prompt": "The tallest mountain in the world is",
+      "token_ids": [
+        10423,
+        86478,
+        11,
+        892,
+        374,
+        7407,
+        304,
+        279,
+        75338,
+        97340
+      ],
+      "text": " Mount Everest, which is located in the Himalayas"
+    },
+    {
+      "index": 50,
+      "prompt": "The currency of Japan is",
+      "token_ids": [
+        279,
+        57340,
+        11,
+        323,
+        279,
+        11413,
+        315,
+        279,
+        3639,
+        4180
+      ],
+      "text": " the yen, and the currency of the United States"
+    },
+    {
+      "index": 51,
+      "prompt": "Mars is known as the",
+      "token_ids": [
+        3731,
+        28835,
+        11,
+        323,
+        432,
+        374,
+        264,
+        11580,
+        429,
+        702
+      ],
+      "text": " Red Planet, and it is a planet that has"
+    },
+    {
+      "index": 52,
+      "prompt": "The capital of Canada is",
+      "token_ids": [
+        32166,
+        11,
+        323,
+        279,
+        6722,
+        315,
+        279,
+        3639,
+        4180,
+        374
+      ],
+      "text": " Ottawa, and the capital of the United States is"
+    },
+    {
+      "index": 53,
+      "prompt": "Bees produce honey from",
+      "token_ids": [
+        308,
+        38816,
+        11,
+        892,
+        374,
+        264,
+        66632,
+        13,
+        3555,
+        374
+      ],
+      "text": " nectar, which is a carbohydrate. What is"
+    },
+    {
+      "index": 54,
+      "prompt": "Volcanoes erupt when",
+      "token_ids": [
+        279,
+        7262,
+        4766,
+        279,
+        9237,
+        374,
+        5880,
+        13,
+        576,
+        7262
+      ],
+      "text": " the pressure inside the Earth is released. The pressure"
+    },
+    {
+      "index": 55,
+      "prompt": "Gravity is a force that",
+      "token_ids": [
+        14056,
+        389,
+        678,
+        6171,
+        304,
+        279,
+        15494,
+        13,
+        1084,
+        374
+      ],
+      "text": " acts on all objects in the universe. It is"
+    },
+    {
+      "index": 56,
+      "prompt": "To lose weight, one should",
+      "token_ids": [
+        8180,
+        2686,
+        11,
+        714,
+        1083,
+        5648,
+        12182,
+        2238,
+        1753,
+        13
+      ],
+      "text": " eat less, but also avoid eating too much."
+    },
+    {
+      "index": 57,
+      "prompt": "The three primary colors are",
+      "token_ids": [
+        2518,
+        11,
+        6303,
+        11,
+        323,
+        13753,
+        13,
+        576,
+        2326,
+        14246
+      ],
+      "text": " red, blue, and yellow. The three secondary"
+    },
+    {
+      "index": 58,
+      "prompt": "In computer science, a binary tree is",
+      "token_ids": [
+        264,
+        4916,
+        1380,
+        1817,
+        2436,
+        702,
+        264,
+        897,
+        323,
+        1378
+      ],
+      "text": " a tree where each node has a value and two"
+    },
+    {
+      "index": 59,
+      "prompt": "The printing press was invented by",
+      "token_ids": [
+        51586,
+        11,
+        323,
+        279,
+        18484,
+        3493,
+        572,
+        35492,
+        553,
+        51586
+      ],
+      "text": " Gutenberg, and the printing press was invented by Gutenberg"
+    },
+    {
+      "index": 60,
+      "prompt": "Beethoven was a famous",
+      "token_ids": [
+        39450,
+        11,
+        323,
+        566,
+        572,
+        1083,
+        264,
+        11245,
+        38744,
+        13
+      ],
+      "text": " composer, and he was also a famous musician."
+    },
+    {
+      "index": 61,
+      "prompt": "Explain in one sentence: what is split-batch?",
+      "token_ids": [
+        3555,
+        374,
+        279,
+        7428,
+        315,
+        6718,
+        1455,
+        754,
+        304,
+        264
+      ],
+      "text": " What is the purpose of split-batch in a"
+    },
+    {
+      "index": 62,
+      "prompt": "The Earth's core is composed mainly of",
+      "token_ids": [
+        11001,
+        323,
+        51249,
+        11,
+        323,
+        279,
+        9237,
+        594,
+        70432,
+        374
+      ],
+      "text": " iron and nickel, and the Earth's mantle is"
+    },
+    {
+      "index": 63,
+      "prompt": "In tennis, love means",
+      "token_ids": [
+        311,
+        2948,
+        11,
+        323,
+        279,
+        1809,
+        374,
+        311,
+        3164,
+        13
+      ],
+      "text": " to love, and the game is to win."
+    },
+    {
+      "index": 64,
+      "prompt": "The capital of France is",
+      "token_ids": [
+        12095,
+        13,
+        576,
+        6722,
+        315,
+        15344,
+        374,
+        21718,
+        13,
+        576
+      ],
+      "text": " Paris. The capital of Italy is Rome. The"
+    },
+    {
+      "index": 65,
+      "prompt": "The Roman Empire was founded by",
+      "token_ids": [
+        279,
+        12751,
+        1251,
+        11,
+        323,
+        279,
+        12751,
+        20448,
+        572,
+        279
+      ],
+      "text": " the Roman people, and the Roman Empire was the"
+    },
+    {
+      "index": 66,
+      "prompt": "A decade is a period of",
+      "token_ids": [
+        882,
+        429,
+        374,
+        6144,
+        311,
+        220,
+        16,
+        15,
+        1635,
+        13
+      ],
+      "text": " time that is equal to 10 years."
+    },
+    {
+      "index": 67,
+      "prompt": "A metaphor is a figure of speech that",
+      "token_ids": [
+        5711,
+        264,
+        1643,
+        457,
+        476,
+        264,
+        45350,
+        311,
+        9429,
+        1378
+      ],
+      "text": " uses a simile or a metaphor to compare two"
+    },
+    {
+      "index": 68,
+      "prompt": "The Amazon rainforest produces about",
+      "token_ids": [
+        220,
+        16,
+        15,
+        15,
+        3526,
+        19608,
+        315,
+        9775,
+        52858,
+        11
+      ],
+      "text": " 100 million tons of annual rainfall,"
+    },
+    {
+      "index": 69,
+      "prompt": "Albert Einstein is famous for",
+      "token_ids": [
+        806,
+        10126,
+        315,
+        1351,
+        43415,
+        11,
+        714,
+        566,
+        1083,
+        1865
+      ],
+      "text": " his theory of relativity, but he also made"
+    },
+    {
+      "index": 70,
+      "prompt": "The Great Wall of China was built to",
+      "token_ids": [
+        6016,
+        279,
+        3146,
+        504,
+        1529,
+        87671,
+        13,
+        576,
+        8513,
+        9736
+      ],
+      "text": " protect the country from invasions. The Great Wall"
+    },
+    {
+      "index": 71,
+      "prompt": "The largest ocean on Earth is",
+      "token_ids": [
+        279,
+        16462,
+        21575,
+        13,
+        2160,
+        419,
+        5114,
+        4396,
+        30,
+        7281
+      ],
+      "text": " the Pacific Ocean. Is this statement correct? Also"
+    },
+    {
+      "index": 72,
+      "prompt": "The longest river in the world is",
+      "token_ids": [
+        279,
+        76190,
+        10948,
+        11,
+        892,
+        27455,
+        1526,
+        279,
+        3146,
+        315
+      ],
+      "text": " the Nile River, which flows through the country of"
+    },
+    {
+      "index": 73,
+      "prompt": "Shakespeare wrote a play called",
+      "token_ids": [
+        330,
+        785,
+        8647,
+        29123,
+        1,
+        323,
+        432,
+        594,
+        738,
+        304
+      ],
+      "text": " \"The Tempest\" and it's set in"
+    },
+    {
+      "index": 74,
+      "prompt": "The boiling point of alcohol is",
+      "token_ids": [
+        220,
+        18,
+        22,
+        13,
+        23,
+        30937,
+        13,
+        3555,
+        374,
+        279
+      ],
+      "text": " 37.8°C. What is the"
+    },
+    {
+      "index": 75,
+      "prompt": "Granite is a type of",
+      "token_ids": [
+        5222,
+        33072,
+        6946,
+        13,
+        15920,
+        315,
+        279,
+        2701,
+        12239,
+        374
+      ],
+      "text": " igneous rock. Which of the following statements is"
+    },
+    {
+      "index": 76,
+      "prompt": "Hello, my name is",
+      "token_ids": [
+        444,
+        2210,
+        13,
+        358,
+        2776,
+        264,
+        220,
+        17,
+        17,
+        4666
+      ],
+      "text": " Lina. I'm a 22-year"
+    },
+    {
+      "index": 77,
+      "prompt": "A proverb is a short saying that",
+      "token_ids": [
+        374,
+        1483,
+        311,
+        3158,
+        264,
+        4586,
+        4522,
+        13,
+        15920,
+        315
+      ],
+      "text": " is used to express a general idea. Which of"
+    },
+    {
+      "index": 78,
+      "prompt": "The chemical symbol for gold is",
+      "token_ids": [
+        32050,
+        13,
+        3555,
+        374,
+        279,
+        11483,
+        7735,
+        369,
+        279,
+        2392
+      ],
+      "text": " Au. What is the chemical symbol for the element"
+    },
+    {
+      "index": 79,
+      "prompt": "The capital of France is",
+      "token_ids": [
+        12095,
+        13,
+        576,
+        6722,
+        315,
+        15344,
+        374,
+        21718,
+        13,
+        576
+      ],
+      "text": " Paris. The capital of Italy is Rome. The"
+    },
+    {
+      "index": 80,
+      "prompt": "The violin is a string instrument that",
+      "token_ids": [
+        374,
+        6342,
+        553,
+        625,
+        46170,
+        279,
+        9069,
+        448,
+        19225,
+        476
+      ],
+      "text": " is played by plucking the strings with fingers or"
+    },
+    {
+      "index": 81,
+      "prompt": "The quick brown fox jumps over the lazy dog.",
+      "token_ids": [
+        576,
+        3974,
+        13876,
+        38835,
+        374,
+        264,
+        3668,
+        304,
+        279,
+        3364
+      ],
+      "text": " The quick brown fox is a character in the story"
+    },
+    {
+      "index": 82,
+      "prompt": "An octopus has how many hearts?",
+      "token_ids": [
+        362,
+        13,
+        220,
+        16,
+        425,
+        13,
+        220,
+        17,
+        356,
+        13
+      ],
+      "text": " A. 1 B. 2 C."
+    },
+    {
+      "index": 83,
+      "prompt": "Hello, my name is",
+      "token_ids": [
+        40135,
+        17765,
+        13,
+        358,
+        2776,
+        264,
+        220,
+        17,
+        20,
+        4666
+      ],
+      "text": " Xiaoming. I'm a 25-year"
+    },
+    {
+      "index": 84,
+      "prompt": "The Internet was originally developed by",
+      "token_ids": [
+        279,
+        3639,
+        4180,
+        3033,
+        11,
+        323,
+        432,
+        374,
+        264,
+        3644
+      ],
+      "text": " the United States government, and it is a global"
+    },
+    {
+      "index": 85,
+      "prompt": "The Louvre Museum is famous for",
+      "token_ids": [
+        1181,
+        12767,
+        4426,
+        315,
+        13833,
+        35036,
+        11,
+        2670,
+        279,
+        11245
+      ],
+      "text": " its vast collection of ancient artifacts, including the famous"
+    },
+    {
+      "index": 86,
+      "prompt": "The wheel was invented in",
+      "token_ids": [
+        220,
+        16,
+        24,
+        15,
+        15,
+        11,
+        323,
+        279,
+        13284,
+        374
+      ],
+      "text": " 1900, and the wheel is"
+    },
+    {
+      "index": 87,
+      "prompt": "Photosynthesis is the process by which",
+      "token_ids": [
+        10779,
+        11,
+        67851,
+        11,
+        323,
+        1045,
+        23157,
+        5508,
+        3100,
+        4802
+      ],
+      "text": " plants, algae, and some bacteria convert light energy"
+    },
+    {
+      "index": 88,
+      "prompt": "An adjective describes a",
+      "token_ids": [
+        36921,
+        11,
+        323,
+        264,
+        36921,
+        374,
+        264,
+        3409,
+        429,
+        19257
+      ],
+      "text": " noun, and a noun is a word that refers"
+    },
+    {
+      "index": 89,
+      "prompt": "Turtles are reptiles that",
+      "token_ids": [
+        614,
+        3040,
+        14201,
+        323,
+        3040,
+        48595,
+        13,
+        576,
+        1372,
+        315
+      ],
+      "text": " have four legs and four limbs. The number of"
+    },
+    {
+      "index": 90,
+      "prompt": "Mount Everest is part of the",
+      "token_ids": [
+        75338,
+        97340,
+        11,
+        323,
+        279,
+        8426,
+        16162,
+        304,
+        279,
+        1879
+      ],
+      "text": " Himalayas, and the highest peak in the world"
+    },
+    {
+      "index": 91,
+      "prompt": "An isosceles triangle has",
+      "token_ids": [
+        264,
+        2331,
+        315,
+        220,
+        16,
+        15,
+        8153,
+        323,
+        264,
+        2608
+      ],
+      "text": " a base of 10 units and a height"
+    },
+    {
+      "index": 92,
+      "prompt": "A polygon with five sides is called",
+      "token_ids": [
+        264,
+        20189,
+        6113,
+        13,
+        362,
+        20189,
+        6113,
+        374,
+        264,
+        7877
+      ],
+      "text": " a pentagon. A pentagon is a closed"
+    },
+    {
+      "index": 93,
+      "prompt": "Plastic is made from",
+      "token_ids": [
+        5810,
+        4963,
+        11,
+        323,
+        12188,
+        12291,
+        374,
+        264,
+        553,
+        3031
+      ],
+      "text": " natural resources, and plastic waste is a byproduct"
+    },
+    {
+      "index": 94,
+      "prompt": "In soccer, a hat-trick means",
+      "token_ids": [
+        429,
+        264,
+        2781,
+        12205,
+        6896,
+        2326,
+        8845,
+        304,
+        264,
+        1809
+      ],
+      "text": " that a player scores exactly three goals in a game"
+    },
+    {
+      "index": 95,
+      "prompt": "The color of a flamingo is due to",
+      "token_ids": [
+        279,
+        43125,
+        315,
+        3100,
+        553,
+        279,
+        2518,
+        323,
+        6303,
+        92859
+      ],
+      "text": " the absorption of light by the red and blue wavelengths"
+    },
+    {
+      "index": 96,
+      "prompt": "In chess, the queen can move",
+      "token_ids": [
+        304,
+        894,
+        5106,
+        11,
+        2670,
+        84018,
+        745,
+        13,
+        576,
+        27906
+      ],
+      "text": " in any direction, including diagonally. The queen"
+    },
+    {
+      "index": 97,
+      "prompt": "A century is equal to",
+      "token_ids": [
+        220,
+        16,
+        15,
+        15,
+        1635,
+        13,
+        2585,
+        1657,
+        1635,
+        525
+      ],
+      "text": " 100 years. How many years are"
+    },
+    {
+      "index": 98,
+      "prompt": "In mathematics, the number pi is approximately",
+      "token_ids": [
+        220,
+        18,
+        13,
+        16,
+        19,
+        16,
+        20,
+        24,
+        17,
+        21
+      ],
+      "text": " 3.1415926"
+    },
+    {
+      "index": 99,
+      "prompt": "The Taj Mahal was built as a",
+      "token_ids": [
+        1102,
+        315,
+        279,
+        8869,
+        315,
+        279,
+        386,
+        7443,
+        278,
+        20448
+      ],
+      "text": " result of the efforts of the Mughal Empire"
+    },
+    {
+      "index": 100,
+      "prompt": "Giraffes have long necks to",
+      "token_ids": [
+        279,
+        1459,
+        315,
+        1660,
+        2952,
+        311,
+        5545,
+        279,
+        1909,
+        315
+      ],
+      "text": " the point of being able to reach the top of"
+    },
+    {
+      "index": 101,
+      "prompt": "The freezing point of water is",
+      "token_ids": [
+        220,
+        15,
+        30937,
+        11,
+        323,
+        279,
+        49837,
+        1459,
+        374,
+        220
+      ],
+      "text": " 0°C, and the boiling point is "
+    },
+    {
+      "index": 102,
+      "prompt": "To make a cup of coffee, you need to",
+      "token_ids": [
+        6514,
+        220,
+        16,
+        14,
+        19,
+        315,
+        264,
+        10525,
+        315,
+        3015
+      ],
+      "text": " mix 1/4 of a cup of water"
+    },
+    {
+      "index": 103,
+      "prompt": "The Magna Carta was signed in",
+      "token_ids": [
+        220,
+        16,
+        21,
+        23,
+        24,
+        11,
+        323,
+        279,
+        1156,
+        4767
+      ],
+      "text": " 1689, and the first president"
+    },
+    {
+      "index": 104,
+      "prompt": "An earthquake is measured with a",
+      "token_ids": [
+        57123,
+        261,
+        5452,
+        11,
+        892,
+        374,
+        3118,
+        389,
+        279,
+        44109
+      ],
+      "text": " Richter scale, which is based on the amplitude"
+    },
+    {
+      "index": 105,
+      "prompt": "An adverb modifies a",
+      "token_ids": [
+        18607,
+        11,
+        264,
+        36921,
+        11,
+        476,
+        264,
+        855,
+        3487,
+        13
+      ],
+      "text": " verb, a noun, or a preposition."
+    },
+    {
+      "index": 106,
+      "prompt": "The Sahara Desert covers much of",
+      "token_ids": [
+        279,
+        11580,
+        594,
+        7329,
+        11,
+        323,
+        432,
+        374,
+        279,
+        7772
+      ],
+      "text": " the planet's surface, and it is the largest"
+    },
+    {
+      "index": 107,
+      "prompt": "The Pythagorean theorem states that",
+      "token_ids": [
+        304,
+        264,
+        1290,
+        21495,
+        11,
+        279,
+        2629,
+        315,
+        279,
+        31340
+      ],
+      "text": " in a right triangle, the sum of the squares"
+    },
+    {
+      "index": 108,
+      "prompt": "Honey never spoils because",
+      "token_ids": [
+        432,
+        594,
+        1865,
+        504,
+        279,
+        25744,
+        21873,
+        315,
+        279,
+        39458
+      ],
+      "text": " it's made from the honeycomb of the bees"
+    },
+    {
+      "index": 109,
+      "prompt": "Lightning is caused by",
+      "token_ids": [
+        279,
+        7203,
+        315,
+        11430,
+        18730,
+        304,
+        279,
+        16566,
+        13,
+        576
+      ],
+      "text": " the movement of charged particles in the atmosphere. The"
+    },
+    {
+      "index": 110,
+      "prompt": "A haiku is a form of poetry that",
+      "token_ids": [
+        17167,
+        315,
+        2326,
+        5128,
+        11,
+        323,
+        1817,
+        1555,
+        702,
+        264
+      ],
+      "text": " consists of three lines, and each line has a"
+    },
+    {
+      "index": 111,
+      "prompt": "The first Olympics were held in",
+      "token_ids": [
+        220,
+        22,
+        22,
+        21,
+        18040,
+        11,
+        323,
+        279,
+        2086,
+        304
+      ],
+      "text": " 776 BC, and the second in"
+    },
+    {
+      "index": 112,
+      "prompt": "The Rosetta Stone helped decode",
+      "token_ids": [
+        279,
+        4128,
+        315,
+        279,
+        13833,
+        32489,
+        34917,
+        13,
+        576,
+        16465
+      ],
+      "text": " the language of the ancient Egyptian civilization. The Ros"
+    },
+    {
+      "index": 113,
+      "prompt": "Leonardo da Vinci painted the",
+      "token_ids": [
+        98783,
+        28556,
+        11,
+        264,
+        11245,
+        18824,
+        13,
+        576,
+        98783,
+        28556
+      ],
+      "text": " Mona Lisa, a famous painting. The Mona Lisa"
+    },
+    {
+      "index": 114,
+      "prompt": "Today's weather forecast predicts",
+      "token_ids": [
+        264,
+        220,
+        17,
+        15,
+        4,
+        6012,
+        315,
+        11174,
+        13,
+        3555
+      ],
+      "text": " a 20% chance of rain. What"
+    },
+    {
+      "index": 115,
+      "prompt": "The Pacific Ocean borders",
+      "token_ids": [
+        279,
+        3639,
+        4180,
+        11,
+        323,
+        279,
+        3639,
+        4180,
+        374,
+        279
+      ],
+      "text": " the United States, and the United States is the"
+    },
+    {
+      "index": 116,
+      "prompt": "The Eiffel Tower is located in",
+      "token_ids": [
+        12095,
+        11,
+        9625,
+        13,
+        576,
+        468,
+        3092,
+        301,
+        21938,
+        374
+      ],
+      "text": " Paris, France. The Eiffel Tower is"
+    },
+    {
+      "index": 117,
+      "prompt": "The speed of sound is approximately",
+      "token_ids": [
+        220,
+        18,
+        19,
+        15,
+        296,
+        2687,
+        13,
+        3555,
+        374,
+        279
+      ],
+      "text": " 340 m/s. What is the"
+    },
+    {
+      "index": 118,
+      "prompt": "The longest word in English is often considered",
+      "token_ids": [
+        311,
+        387,
+        279,
+        3409,
+        330,
+        80016,
+        3263,
+        4354,
+        11,
+        279
+      ],
+      "text": " to be the word \"infinity\". However, the"
+    },
+    {
+      "index": 119,
+      "prompt": "Diamonds are made of",
+      "token_ids": [
+        12499,
+        11,
+        892,
+        374,
+        1865,
+        315,
+        220,
+        21,
+        13,
+        15
+      ],
+      "text": " carbon, which is made of 6.0"
+    },
+    {
+      "index": 120,
+      "prompt": "Electric current is measured in",
+      "token_ids": [
+        1079,
+        712,
+        288,
+        13,
+        3555,
+        374,
+        279,
+        4982,
+        315,
+        9072
+      ],
+      "text": " amperes. What is the unit of electric"
+    },
+    {
+      "index": 121,
+      "prompt": "In baseball, a home run is when",
+      "token_ids": [
+        264,
+        2781,
+        12983,
+        264,
+        4935,
+        429,
+        374,
+        537,
+        304,
+        279
+      ],
+      "text": " a player hits a ball that is not in the"
+    },
+    {
+      "index": 122,
+      "prompt": "A balanced diet should include",
+      "token_ids": [
+        678,
+        315,
+        279,
+        2701,
+        3650,
+        32671,
+        382,
+        32,
+        13,
+        12833
+      ],
+      "text": " all of the following except ______.\n\nA. protein"
+    },
+    {
+      "index": 123,
+      "prompt": "The color wheel shows relationships between",
+      "token_ids": [
+        7987,
+        11,
+        323,
+        1817,
+        1894,
+        374,
+        5815,
+        448,
+        264,
+        3151
+      ],
+      "text": " colors, and each color is associated with a specific"
+    },
+    {
+      "index": 124,
+      "prompt": "A palindrome is a word that",
+      "token_ids": [
+        15804,
+        279,
+        1852,
+        41054,
+        323,
+        28412,
+        13,
+        1752,
+        3110,
+        11
+      ],
+      "text": " reads the same forwards and backwards. For example,"
+    },
+    {
+      "index": 125,
+      "prompt": "Penguins are birds that cannot",
+      "token_ids": [
+        11466,
+        13,
+        2055,
+        11,
+        1128,
+        374,
+        279,
+        4396,
+        4226,
+        311
+      ],
+      "text": " fly. So, what is the correct answer to"
+    },
+    {
+      "index": 126,
+      "prompt": "Climate change is caused primarily by",
+      "token_ids": [
+        3738,
+        7488,
+        11,
+        323,
+        279,
+        1887,
+        2530,
+        315,
+        36547,
+        6819
+      ],
+      "text": " human activities, and the main source of greenhouse gas"
+    },
+    {
+      "index": 127,
+      "prompt": "The capital of Brazil is",
+      "token_ids": [
+        61124,
+        75372,
+        13,
+        576,
+        6722,
+        315,
+        279,
+        3639,
+        4180,
+        374
+      ],
+      "text": " Brasília. The capital of the United States is"
+    },
+    {
+      "index": 128,
+      "prompt": "The human heart has how many chambers?",
+      "token_ids": [
+        362,
+        13,
+        220,
+        17,
+        425,
+        13,
+        220,
+        19,
+        356,
+        13
+      ],
+      "text": " A. 2 B. 4 C."
+    },
+    {
+      "index": 129,
+      "prompt": "Water boils at a temperature of",
+      "token_ids": [
+        220,
+        16,
+        15,
+        15,
+        30937,
+        13,
+        3555,
+        374,
+        279,
+        9315
+      ],
+      "text": " 100°C. What is the temperature"
+    },
+    {
+      "index": 130,
+      "prompt": "Goldfish can live for up to",
+      "token_ids": [
+        220,
+        16,
+        15,
+        1635,
+        11,
+        714,
+        807,
+        646,
+        1083,
+        3887
+      ],
+      "text": " 10 years, but they can also live"
+    },
+    {
+      "index": 131,
+      "prompt": "Steel is an alloy of iron and",
+      "token_ids": [
+        12499,
+        13,
+        3555,
+        374,
+        279,
+        18037,
+        315,
+        9509,
+        304,
+        3793
+      ],
+      "text": " carbon. What is the composition of steel in terms"
+    }
+  ]
+}

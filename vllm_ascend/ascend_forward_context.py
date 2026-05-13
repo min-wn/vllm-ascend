@@ -1,4 +1,5 @@
 import math
+import os
 from contextlib import contextmanager
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional
@@ -24,6 +25,10 @@ else:
     WeightPrefetchMethod = None
 
 
+def _env_enabled(name: str) -> bool:
+    return os.environ.get(name, "0") in ("1", "true", "True")
+
+
 class MoECommType(Enum):
     ALLGATHER = 0
     MC2 = 1
@@ -47,7 +52,8 @@ def set_ascend_forward_context(
         model_instance: torch.nn.Module = None,
         weight_prefetch_method: Optional[WeightPrefetchMethod] = None,
         is_mtp_model=False,
-        ubatch_slices: Optional[UBatchSlices] = None):
+        ubatch_slices: Optional[UBatchSlices] = None,
+        in_parallel_streams: bool = False):
     """A context manager that stores the current forward context,
     can be attention metadata, etc.
     We add some additional param into forward_context.
@@ -79,6 +85,9 @@ def set_ascend_forward_context(
         # NOTE: This cannot be set using set_forward_context
         # due to multiple warmups before actual capturing
         forward_context.capturing = False
+
+        # Mark whether this forward context is for parallel streams replay
+        forward_context.in_parallel_streams = in_parallel_streams
 
         # set for sequence parallelism, 1000 is the batch size concurrency threshold for enabling the flashcomm_v1 or sequence_parallelism feature.
         # Currently, it is an empirical value. In normal scenarios, if the concurrency exceeds this threshold,
@@ -112,6 +121,22 @@ def set_ascend_forward_context(
         forward_context.cos_mla = None
         forward_context.sin_mla = None
         forward_context.dbo_enabled = False
+        if _env_enabled("VLLM_ASCEND_ROPE_FORCE_CONTEXT"):
+            from vllm_ascend.ops.rotary_embedding import (
+                get_cos_and_sin_mla, get_cos_and_sin_slice)
+            cos_slice, sin_slice = get_cos_and_sin_slice()
+            if cos_slice is not None and sin_slice is not None:
+                if _env_enabled("VLLM_ASCEND_ROPE_CONTEXT_NO_CLONE"):
+                    forward_context.cos = cos_slice
+                    forward_context.sin = sin_slice
+                else:
+                    forward_context.cos = cos_slice.clone()
+                    forward_context.sin = sin_slice.clone()
+            cos_mla, sin_mla = get_cos_and_sin_mla()
+            if cos_mla is not None:
+                forward_context.cos_mla = cos_mla[:num_tokens]
+            if sin_mla is not None:
+                forward_context.sin_mla = sin_mla[:num_tokens]
         # set this for sync dbo in the first layer after embedding
         forward_context.dbo_first_layer_sync = True
 
@@ -180,7 +205,7 @@ def create_ascend_forward_context(
     cur_forward_context: Any,
     attn_metadata: Any,
     vllm_config: VllmConfig,
-    ubatch_slices: list[UBatchSlices],
+    ubatch_slices: Optional[list[UBatchSlices]],
     virtual_engine: int = 0,
     ubatch_num: int = 0,
     dp_metadata: Optional[DPMetadata] = None,
@@ -188,6 +213,7 @@ def create_ascend_forward_context(
     batch_descriptor: Optional[BatchDescriptor] = None,
     reserved_mc2_mask: Optional[torch.Tensor] = None,
     positions: Any = None,
+    in_parallel_streams: bool = False,
 ):
     new_forward_context = ForwardContext(
         no_compile_layers=vllm_config.compilation_config.
@@ -243,6 +269,9 @@ def create_ascend_forward_context(
     new_forward_context.prefetch_mlp_enabled = cur_forward_context.prefetch_mlp_enabled
     new_forward_context.weight_prefetch_method = cur_forward_context.weight_prefetch_method
     new_forward_context.is_mtp_model = cur_forward_context.is_mtp_model
+    new_forward_context.in_parallel_streams = bool(
+        getattr(cur_forward_context, "in_parallel_streams", False)
+    ) or in_parallel_streams
 
     if new_forward_context.num_tokens:
         new_forward_context.padded_num_tokens = math.ceil(
@@ -280,8 +309,12 @@ def create_ascend_forward_context(
             decode_token_per_req)
         update_cos_sin(positions)
         cos_slice, sin_slice = get_cos_and_sin_slice()
-        new_forward_context.cos = cos_slice.clone()
-        new_forward_context.sin = sin_slice.clone()
+        if _env_enabled("VLLM_ASCEND_ROPE_CONTEXT_NO_CLONE"):
+            new_forward_context.cos = cos_slice
+            new_forward_context.sin = sin_slice
+        else:
+            new_forward_context.cos = cos_slice.clone()
+            new_forward_context.sin = sin_slice.clone()
 
         cos_mla, sin_mla = get_cos_and_sin_mla()
 
@@ -290,6 +323,26 @@ def create_ascend_forward_context(
 
         new_forward_context.sin_mla = sin_mla[
             mla_slice] if sin_mla is not None else None
+    elif positions is not None:
+        # GPU-like split context can pass already-local positions with
+        # ubatch_slices=None. Keep the RoPE context local to those positions
+        # instead of relying on the parent full-batch cos/sin state.
+        update_cos_sin(positions)
+        cos_slice, sin_slice = get_cos_and_sin_slice()
+        if _env_enabled("VLLM_ASCEND_ROPE_CONTEXT_NO_CLONE"):
+            new_forward_context.cos = cos_slice
+            new_forward_context.sin = sin_slice
+        else:
+            new_forward_context.cos = cos_slice.clone()
+            new_forward_context.sin = sin_slice.clone()
+
+        cos_mla, sin_mla = get_cos_and_sin_mla()
+        new_forward_context.cos_mla = (
+            cos_mla[:new_forward_context.num_tokens]
+            if cos_mla is not None else None)
+        new_forward_context.sin_mla = (
+            sin_mla[:new_forward_context.num_tokens]
+            if sin_mla is not None else None)
 
     return new_forward_context
 

@@ -16,6 +16,7 @@
 #
 
 import math
+import os
 from typing import Optional, Tuple
 
 import torch
@@ -46,6 +47,10 @@ _cos: Optional[torch.Tensor] = None
 _sin: Optional[torch.Tensor] = None
 _cos_slice: Optional[torch.Tensor] = None
 _sin_slice: Optional[torch.Tensor] = None
+
+
+def _env_enabled(name: str) -> bool:
+    return os.environ.get(name, "0") in ("1", "true", "True")
 
 
 def set_cos_and_sin(vllm_config, max_num_reqs, decode_token_per_req, dtype,
@@ -153,6 +158,17 @@ def _rope_forward_oot(
         self.cos_sin_cache = self.cos_sin_cache.to(query.device)
     if self.cos_sin_cache.dtype != query.dtype:
         self.cos_sin_cache = self.cos_sin_cache.to(query.dtype)
+    if _env_enabled("VLLM_ASCEND_ROPE_FORCE_TORCH_IMPL"):
+        query, key = RotaryEmbedding.forward_static(
+            positions,
+            query,
+            key,
+            self.head_size,
+            self.rotary_dim,
+            self.cos_sin_cache,
+            is_neox_style,
+        )
+        return query.view(query_shape), key.view(key_shape)
     # adopt custom kernel path for rotary_embedding
     if _custom_rotary_embedding_enabled(
             query, is_neox_style, self.head_size) and get_ascend_device_type(
@@ -171,8 +187,10 @@ def _rope_forward_oot(
             "Batched rotary embedding is currently not supported on NPU.")
     else:
         cos, sin = get_cos_and_sin_slice()
-        if is_neox_style and self.head_size == 128 and self.cos_sin_cache.shape[
-                -1] == 128 and cos is not None and sin is not None:
+        force_legacy = _env_enabled("VLLM_ASCEND_ROPE_FORCE_LEGACY_KERNEL")
+        if (not force_legacy and is_neox_style and self.head_size == 128
+                and self.cos_sin_cache.shape[-1] == 128 and cos is not None
+                and sin is not None):
             forward_context = get_forward_context()
             # If cos and sin are generated outside, use npu_apply_rotary_pos_emb to avoid redundant calculation.
             # This method requires head_size and rotary_dim equal 128 and neox_style is True
@@ -180,10 +198,15 @@ def _rope_forward_oot(
                                             self.head_size)
             key = key.contiguous().view(1, key.shape[0], -1, self.head_size)
 
-            # currently, we store the cos/sin cache in forward context for dbo
-            if forward_context.dbo_enabled:
+            force_global = _env_enabled("VLLM_ASCEND_ROPE_FORCE_GLOBAL")
+            force_context = _env_enabled("VLLM_ASCEND_ROPE_FORCE_CONTEXT")
+            context_cos = getattr(forward_context, "cos", None)
+            context_sin = getattr(forward_context, "sin", None)
+            use_context_rope = (
+                force_context or forward_context.dbo_enabled) and not force_global
+            if use_context_rope and context_cos is not None and context_sin is not None:
                 query, key = torch_npu.npu_apply_rotary_pos_emb(
-                    query, key, forward_context.cos, forward_context.sin)
+                    query, key, context_cos, context_sin)
             else:
                 # Although this function modifies in-place, please retain the function's return value.
                 # Otherwise, the graph fusion operation may fail.

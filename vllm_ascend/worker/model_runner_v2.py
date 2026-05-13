@@ -694,7 +694,7 @@ class NPUModelRunner(GPUModelRunner):
                 num_tokens_padded,
                 vllm_config=self.vllm_config,
                 cudagraph_capture_sizes=cudagraph_capture_sizes,
-                custom_split_sizes=[128,4,4,4]
+                custom_split_sizes=[68,64]
             )
 
 
