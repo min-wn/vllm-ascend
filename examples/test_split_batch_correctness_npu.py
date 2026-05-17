@@ -184,6 +184,14 @@ def create_parser() -> FlexibleArgumentParser:
         ),
     )
     test_group.add_argument(
+        "--disabled-enforce-eager",
+        action="store_true",
+        help=(
+            "Run only the split-disabled branch in eager mode. "
+            "The split-enabled branch still uses the normal engine args."
+        ),
+    )
+    test_group.add_argument(
         "--output-dir",
         type=str,
         default="./split_batch_correctness_results",
@@ -1196,6 +1204,7 @@ def main() -> int:
     enable_parallel_streams = bool(args.pop("enable_parallel_streams"))
     run_mode = str(args.pop("run"))
     compare_mode = str(args.pop("compare_mode"))
+    disabled_enforce_eager = bool(args.pop("disabled_enforce_eager"))
     output_dir_base = str(args.pop("output_dir"))
     prompts_file = args.pop("prompts_file")
     output_file = args.pop("output_file")
@@ -1321,6 +1330,7 @@ def main() -> int:
         "compilation_config": args.get("compilation_config"),
         "run": run_mode,
         "compare_mode": compare_mode,
+        "disabled_enforce_eager": disabled_enforce_eager,
         "profile_enabled": profile_enabled,
         "profile_dir": profile_dir,
         "profile_target": profile_target,
@@ -1398,8 +1408,11 @@ def main() -> int:
 
         if run_mode in ("both", "disabled"):
             print("\n=== Run: split disabled ===")
+            disabled_llm_args = dict(args)
+            if disabled_enforce_eager:
+                disabled_llm_args["enforce_eager"] = True
             out0, llm0 = _run_single(
-                llm_args=args,
+                llm_args=disabled_llm_args,
                 prompts=prompts,
                 sampling=sampling,
                 additional_config=split_disabled_cfg,
@@ -1419,6 +1432,7 @@ def main() -> int:
             disabled_payload = {
                 "config": "split_disabled",
                 "description": CONFIGS["split_disabled"]["description"],
+                "enforce_eager": disabled_enforce_eager,
                 "split_batch_config": split_disabled_cfg["split_batch_config"],
                 "prompts_file": prompts_file,
                 "prompts_path": prompts_path,
