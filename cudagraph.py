@@ -1,0 +1,342 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+
+import dataclasses
+from contextlib import ExitStack
+from enum import IntEnum
+from typing import Any, Callable, Optional, Union
+from unittest.mock import patch
+
+import torch
+import torch.cuda.nvtx as nvtx
+import vllm.envs as envs
+from vllm.compilation.counter import compilation_counter
+from vllm.compilation.monitor import validate_cudagraph_capturing_enabled
+from vllm.config import CUDAGraphMode, VllmConfig, ReplayMode
+from vllm.distributed.device_communicators.pynccl_allocator import (
+    set_graph_pool_id)
+from vllm.forward_context import BatchDescriptor, get_forward_context
+from vllm.logger import init_logger
+from vllm.platforms import current_platform
+from vllm.utils import weak_ref_tensors
+
+logger = init_logger(__name__)
+
+
+class StreamSlot(IntEnum):
+    """标识使用哪条流/内存池"""
+    PRIMARY = 0
+    SECONDARY = 1
+
+@dataclasses.dataclass
+class CUDAGraphEntry:
+    batch_descriptor: BatchDescriptor
+    cudagraph: Optional[torch.cuda.CUDAGraph] = None
+    output: Optional[Any] = None
+
+    # for cudagraph debugging, track the input addresses
+    # during capture, and check if they are the same during replay
+    input_addresses: Optional[list[int]] = None
+
+    # track attn_metadata tensor addresses for layer 0 and layer 1
+    attn_metadata_addresses: Optional[dict[str, list[tuple[str, int]]]] = None
+
+
+@dataclasses.dataclass
+class CUDAGraphOptions:
+    debug_log_enable: bool = True
+    gc_disable: bool = False
+    weak_ref_output: bool = True
+
+
+class CUDAGraphWrapper:
+    """Wraps a runnable to add CUDA graph capturing and replaying ability. And
+    provide attribute access to the underlying `runnable` via `__getattr__`.
+
+    The workflow of this wrapper in the cudagraph dispatching is as follows:
+    1. At initialization, a runtime mode is assigned to the wrapper (FULL or
+    PIECEWISE). 
+    2. At runtime, the wrapper receives a runtime_mode and a 
+    batch_descriptor(key) from the forward context and blindly trust them
+    for cudagraph dispatching. 
+    3. If runtime_mode is NONE or runtime_mode does not match the mode of the
+    wrapper, just call the runnable directly.
+    4. Otherwise, i.e., the runtime_mode matches the mode of the wrapper,
+    the wrapper will perform cudagraph capture(if key does not exist, create
+    a new entry and cache it) or replay (if key exists in the cache).
+
+    Note: CUDAGraphWrapper does not store persistent buffers or copy any
+    runtime inputs into that buffers for replay. We assume implementing them
+    is done outside of the wrapper. That is because we do not make any 
+    assumption on the dynamic shape (batch size) of the runtime inputs, as a
+    trade-off for staying orthogonal to compilation logic. Nevertheless, 
+    tracing and checking the input addresses to be consistent during replay is
+    guaranteed when VLLM_LOGGING_LEVEL == "DEBUG".
+    """
+
+    def __init__(self,
+                 runnable: Callable,
+                 vllm_config: VllmConfig,
+                 runtime_mode: CUDAGraphMode,
+                 cudagraph_options: Optional[CUDAGraphOptions] = None):
+        self.runnable = runnable
+        self.vllm_config = vllm_config
+        self.runtime_mode = runtime_mode
+        self.compilation_config = vllm_config.compilation_config
+
+        self.first_run_finished = False
+        self.is_debugging_mode = envs.VLLM_LOGGING_LEVEL == "DEBUG"
+
+        # assert runtime_mode is not NONE(no cudagraph), otherwise, we don't
+        # need to initialize a CUDAGraphWrapper.
+        assert self.runtime_mode != CUDAGraphMode.NONE
+        # TODO: in the future, if we want to use multiple
+        # streams, it might not be safe to share a global pool.
+        # only investigate this when we use multiple streams
+        self.graph_pool = current_platform.get_global_graph_pool()
+
+        if cudagraph_options is None:
+            cudagraph_options = CUDAGraphOptions()
+        self.cudagraph_options = cudagraph_options
+        # the entries for different batch descriptors that we need to capture
+        # cudagraphs for.
+        self.concrete_cudagraph_entries: dict[BatchDescriptor, CUDAGraphEntry]\
+                                                                        = {}
+        
+        self.graph_pool_secondary = current_platform.graph_pool_handle() if self.compilation_config.replay_mode == ReplayMode.DUAL_PARALLEL else None
+        self.concrete_cudagraph_entries_secondary: dict[
+                BatchDescriptor, CUDAGraphEntry] = {} 
+
+
+    def __getattr__(self, key: str):
+        # allow accessing the attributes of the runnable.
+        if hasattr(self.runnable, key):
+            return getattr(self.runnable, key)
+        raise AttributeError(f"Attribute {key} not exists in the runnable of "
+                             f"cudagraph wrapper: {self.runnable}")
+
+    def unwrap(self) -> Callable:
+        # in case we need to access the original runnable.
+        return self.runnable
+
+    def __call__(self, *args, **kwargs):
+        forward_context = get_forward_context()
+        batch_descriptor = forward_context.batch_descriptor
+        cudagraph_runtime_mode = forward_context.cudagraph_runtime_mode
+        stream_slot: StreamSlot = forward_context.stream_slot
+        attn_metadata = forward_context.attn_metadata
+
+        if cudagraph_runtime_mode == CUDAGraphMode.NONE or \
+                            cudagraph_runtime_mode != self.runtime_mode:
+            # CUDAGraphMode.NONE could mean the profile run, a warmup run, or
+            # running without cudagraphs.
+            # We do not trigger capture/replay if the runtime mode is not
+            # matches. This enables properly dispatching to the correct
+            # CUDAGraphWrapper when nesting multiple instances with different
+            # runtime modes.
+            if batch_descriptor is not None and batch_descriptor in self.concrete_cudagraph_entries:
+                print(f"Eager on stream {torch.cuda.current_stream()} , num_tokens: {batch_descriptor.num_tokens}")
+
+            return self.runnable(*args, **kwargs)
+        
+        current_entries = self.concrete_cudagraph_entries if stream_slot == StreamSlot.PRIMARY \
+            else self.concrete_cudagraph_entries_secondary
+        current_graph_pool = self.graph_pool if stream_slot == StreamSlot.PRIMARY \
+            else self.graph_pool_secondary
+        
+        if batch_descriptor not in current_entries:
+            # create a new entry for this batch descriptor
+            if stream_slot == StreamSlot.PRIMARY:
+                self.concrete_cudagraph_entries[batch_descriptor] = \
+                    CUDAGraphEntry(batch_descriptor=batch_descriptor)
+            else:
+                self.concrete_cudagraph_entries_secondary[batch_descriptor] = \
+                    CUDAGraphEntry(batch_descriptor=batch_descriptor)
+
+        entry = current_entries[batch_descriptor]
+        if entry.cudagraph is None:
+            # print(f"=== CAPTURE CUDAGRAPH | slot={stream_slot.name} | num_tokens={batch_descriptor.num_tokens} ===")
+            nvtx.range_push(f" CAPTURE CUDAGRAPH | slot={stream_slot.name} | num_tokens={batch_descriptor.num_tokens}")
+            if self.cudagraph_options.debug_log_enable:
+                # Since we capture cudagraph for many different shapes and
+                # capturing is fast, we don't need to log it for every
+                # shape. E.g. we only log it for the first subgraph in
+                # piecewise mode.
+                logger.debug("Capturing a cudagraph on (%s,%s)",
+                             self.runtime_mode.name, entry.batch_descriptor)
+            # validate that cudagraph capturing is legal at this point.
+            validate_cudagraph_capturing_enabled()
+
+            input_addresses = [
+                x.data_ptr() for x in args if isinstance(x, torch.Tensor)
+            ]
+            input_addresses.extend([v.data_ptr() for k, v in kwargs.items() if isinstance(v, torch.Tensor)])
+            entry.input_addresses = input_addresses
+            
+            # 新增代码：记录 attn_metadata 地址
+            if attn_metadata is not None and len(attn_metadata) >= 2:
+                attn_meta_addrs = {}
+                
+                first_layer = list(attn_metadata.keys())[0]
+                second_layer = list(attn_metadata.keys())[1]
+                
+                # 记录第0层
+                layer0_addrs = []
+                attn_metadata_layer0 = attn_metadata[first_layer]
+                for key, tensor in attn_metadata_layer0.__dict__.items():
+                    if isinstance(tensor, torch.Tensor):
+                        layer0_addrs.append((key, tensor.data_ptr()))
+                    # else:
+                    #     layer0_addrs.append((key, id(tensor)))
+                attn_meta_addrs[f'layer_{first_layer}'] = layer0_addrs
+                
+                # 记录第1层
+                layer1_addrs = []
+                attn_metadata_layer1 = attn_metadata[second_layer]
+                for key, tensor in attn_metadata_layer1.__dict__.items():
+                    if isinstance(tensor, torch.Tensor):
+                        layer1_addrs.append((key, tensor.data_ptr()))
+                    # else:
+                    #     layer1_addrs.append((key, id(tensor)))
+                attn_meta_addrs[f'layer_{second_layer}'] = layer1_addrs
+                
+                entry.attn_metadata_addresses = attn_meta_addrs
+
+            cudagraph = torch.cuda.CUDAGraph()
+
+            with ExitStack() as stack:
+                if self.cudagraph_options.gc_disable:
+                    # during every model forward for piecewise cudagraph
+                    # mode, we will capture many pieces of cudagraphs
+                    # (roughly one per layer). running gc again and again
+                    # across layers will make the cudagraph capture very slow.
+                    # therefore, we only run gc for the first graph,
+                    # and disable gc for the rest of the graphs.
+                    stack.enter_context(patch("gc.collect", lambda: None))
+                    stack.enter_context(
+                        patch("torch.cuda.empty_cache", lambda: None))
+
+                if current_graph_pool is not None:
+                    set_graph_pool_id(current_graph_pool)
+                else:
+                    set_graph_pool_id(current_platform.graph_pool_handle())
+                
+                # mind-exploding: carefully manage the reference and memory.
+                with torch.cuda.graph(cudagraph, pool=current_graph_pool):
+                    # `output` is managed by pytorch's cudagraph pool
+                    output = self.runnable(*args, **kwargs)
+                    if self.cudagraph_options.weak_ref_output:
+                        # by converting it to weak ref,
+                        # the original `output` will immediately be released
+                        # to save memory. It is only safe to do this for
+                        # the last graph in piecewise cuadgraph mode, because
+                        # the output of the last graph will not be used by
+                        # any other cuda graph.
+                        output = weak_ref_tensors(output)
+
+            # here we always use weak ref for the output
+            # to save memory
+            entry.output = weak_ref_tensors(output)
+            entry.cudagraph = cudagraph
+
+            compilation_counter.num_cudagraph_captured += 1
+            nvtx.range_pop()
+
+            # important: we need to return the output, rather than
+            # the weak ref of the output, so that pytorch can correctly
+            # manage the memory during cuda graph capture
+            return output
+
+        # replay - cudagraph already captured
+        if self.is_debugging_mode:
+            # check if the input addresses are the same
+            new_input_addresses = [
+                x.data_ptr() for x in args if isinstance(x, torch.Tensor)
+            ]
+            new_input_addresses.extend([v.data_ptr() for k, v in kwargs.items() if isinstance(v, torch.Tensor)])
+            assert new_input_addresses == entry.input_addresses, (
+                f"Input addresses for cudagraphs are different "
+                f"during replay. Expected {entry.input_addresses}, "
+                f"got {new_input_addresses}")
+
+        new_input_addresses = [x.data_ptr() for x in args if isinstance(x, torch.Tensor)]
+        new_input_addresses.extend([v.data_ptr() for k, v in kwargs.items() if isinstance(v, torch.Tensor)])
+        # new_input_addresses = [
+        #         x.data_ptr() if isinstance(x, torch.Tensor) else id(x) for x in args
+        #     ]
+        # new_input_addresses.extend([v.data_ptr() if isinstance(v, torch.Tensor) else id(v) 
+        #                             for _, v in kwargs.items()])
+        assert new_input_addresses == entry.input_addresses, (
+            f"Input addresses for cudagraphs are different "
+            f"during replay. Expected {entry.input_addresses}, "
+            f"got {new_input_addresses}")
+
+        if self.is_debugging_mode:
+            print(f"\nArgs ({len(args)} items):")
+            for i, x in enumerate(args):
+                if isinstance(x, torch.Tensor):
+                    print(f"  [{i}] Tensor: shape={x.shape}, dtype={x.dtype}, addr={x.data_ptr()}")
+                else:
+                    print(f"  [{i}] {type(x).__name__}: value={x}, id={id(x)}")
+
+            print(f"\nKwargs ({len(kwargs)} items):")
+            for k, v in kwargs.items():
+                if isinstance(v, torch.Tensor):
+                    print(f"  {k}: Tensor shape={v.shape}, dtype={v.dtype}, addr={v.data_ptr()}")
+                else:
+                    print(f"  {k}: {type(v).__name__} value={v}, id={id(v)}")
+                    
+        #  新增：比较 attn_metadata 地址
+        if entry.attn_metadata_addresses is not None and attn_metadata is not None:
+            first_layer = list(attn_metadata.keys())[0]
+            second_layer = list(attn_metadata.keys())[1]
+            
+            # 获取当前的 attn_metadata 地址
+            current_attn_addrs = {}
+            
+            # 第0层
+            layer0_addrs = []
+            attn_metadata_layer0 = attn_metadata[first_layer]
+            for key, tensor in attn_metadata_layer0.__dict__.items():
+                if isinstance(tensor, torch.Tensor):
+                    layer0_addrs.append((key, tensor.data_ptr()))
+                # else:
+                #     layer0_addrs.append((key, id(tensor)))
+            current_attn_addrs[f'layer_{first_layer}'] = layer0_addrs
+            
+            # 第1层
+            layer1_addrs = []
+            attn_metadata_layer1 = attn_metadata[second_layer]
+            for key, tensor in attn_metadata_layer1.__dict__.items():
+                if isinstance(tensor, torch.Tensor):
+                    layer1_addrs.append((key, tensor.data_ptr()))
+                # else:
+                #     layer1_addrs.append((key, id(tensor)))
+            current_attn_addrs[f'layer_{second_layer}'] = layer1_addrs
+            
+            # 比较地址
+            if current_attn_addrs != entry.attn_metadata_addresses:
+                print("CUDA GRAPH ATTENTION METADATA ADDRESS MISMATCH DETECTED!")
+                print(f"=== ATTN_METADATA ADDRESS MISMATCH | slot={stream_slot.name} | num_tokens={batch_descriptor.num_tokens} ===")
+                for layer_key in current_attn_addrs.keys():
+                    captured = dict(entry.attn_metadata_addresses[layer_key])
+                    current = dict(current_attn_addrs[layer_key])
+                    for attr_name in captured.keys():
+                        if captured[attr_name] != current.get(attr_name):
+                            print(f"  [{layer_key}] {attr_name}: captured={captured[attr_name]}, current={current.get(attr_name)}")
+                
+                if self.is_debugging_mode:
+                    assert False, (
+                        f"Attn_metadata addresses are different during replay. "
+                        f"Captured: {entry.attn_metadata_addresses}, "
+                        f"Current: {current_attn_addrs}")
+        # print(f"=== REPLAY CUDAGRAPH | slot={stream_slot.name} | num_tokens={batch_descriptor.num_tokens} ===")
+        if stream_slot == StreamSlot.PRIMARY:
+            nvtx.range_push(f"CUDAGraph Replay Primary num_tokens: {batch_descriptor.num_tokens}")
+            entry.cudagraph.replay()
+            nvtx.range_pop()
+        else:
+            nvtx.range_push(f"CUDAGraph Replay Secondary num_tokens: {batch_descriptor.num_tokens}")
+            entry.cudagraph.replay()
+            nvtx.range_pop()
+        return entry.output
