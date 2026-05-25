@@ -78,6 +78,15 @@ env_variables: Dict[str, Callable[[], Any]] = {
     "VLLM_ASCEND_MODEL_EXECUTE_TIME_OBSERVE":
     lambda: bool(int(os.getenv("VLLM_ASCEND_MODEL_EXECUTE_TIME_OBSERVE", '0'))
                  ),
+    # Enable JSONL diagnostics for split-batch inplace migration. This is
+    # disabled by default and should only be enabled for debugging.
+    "VLLM_ASCEND_SPLIT_INPLACE_DEBUG":
+    lambda: bool(
+        int(os.getenv("VLLM_ASCEND_SPLIT_INPLACE_DEBUG", '0'))),
+    # JSONL path used when VLLM_ASCEND_SPLIT_INPLACE_DEBUG is enabled.
+    "VLLM_ASCEND_SPLIT_INPLACE_DEBUG_FILE":
+    lambda: os.getenv("VLLM_ASCEND_SPLIT_INPLACE_DEBUG_FILE",
+                      "/tmp/vllm_ascend_inplace_split.jsonl"),
     # Some models are optimized by vllm ascend. While in some case, e.g. rlhf
     # training, the optimized model may not be suitable. In this case, set this
     # value to False to disable the optimized model.

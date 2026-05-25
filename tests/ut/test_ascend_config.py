@@ -16,8 +16,8 @@
 from vllm.config import VllmConfig
 
 from tests.ut.base import TestBase
-from vllm_ascend.ascend_config import (clear_ascend_config, get_ascend_config,
-                                       init_ascend_config)
+from vllm_ascend.ascend_config import (SplitBatchConfig, clear_ascend_config,
+                                       get_ascend_config, init_ascend_config)
 
 
 class TestAscendConfig(TestBase):
@@ -91,3 +91,104 @@ class TestAscendConfig(TestBase):
         clear_ascend_config()
         with self.assertRaises(RuntimeError):
             get_ascend_config()
+
+    def test_split_batch_config_defaults_keep_parallel_buffer(self):
+        split_config = SplitBatchConfig({})
+
+        self.assertFalse(split_config.enabled)
+        self.assertFalse(split_config.enable_parallel_streams)
+        self.assertEqual(split_config.mode, "parallel_buffer")
+        self.assertEqual(split_config.num_splits, 2)
+        self.assertEqual(split_config.min_batch_size_for_split, 4)
+        self.assertIsNone(split_config.parallel_capture_sizes)
+        self.assertFalse(split_config.force_split)
+        self.assertTrue(split_config.enable_inplace_lazy_capture)
+        self.assertTrue(split_config.inplace_serial_first)
+        self.assertIsNone(split_config.inplace_max_remainder_tokens)
+        self.assertFalse(split_config.inplace_validate_metadata_ptrs)
+        self.assertFalse(split_config.inplace_force_pa_for_offset)
+        self.assertFalse(split_config.enable_inplace_spec_decode)
+        self.assertFalse(split_config.enable_inplace_mrope)
+
+    def test_split_batch_config_legacy_parallel_streams_compat(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "enable_parallel_streams": True,
+            "num_splits": 3,
+            "min_batch_size_for_split": 8,
+            "parallel_capture_sizes": [128, 64],
+            "force_split": True,
+        })
+
+        self.assertTrue(split_config.enabled)
+        self.assertTrue(split_config.enable_parallel_streams)
+        self.assertEqual(split_config.mode, "parallel_buffer")
+        self.assertEqual(split_config.num_splits, 3)
+        self.assertEqual(split_config.min_batch_size_for_split, 8)
+        self.assertEqual(split_config.parallel_capture_sizes, [64, 128])
+        self.assertTrue(split_config.force_split)
+
+    def test_split_batch_config_accepts_inplace_serial(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_serial",
+            "num_splits": 2,
+            "enable_inplace_lazy_capture": False,
+            "inplace_serial_first": False,
+            "inplace_max_remainder_tokens": 64,
+            "inplace_validate_metadata_ptrs": True,
+            "inplace_force_pa_for_offset": False,
+            "enable_inplace_spec_decode": True,
+            "enable_inplace_mrope": True,
+        })
+
+        self.assertEqual(split_config.mode, "inplace_serial")
+        self.assertFalse(split_config.enable_inplace_lazy_capture)
+        self.assertFalse(split_config.inplace_serial_first)
+        self.assertEqual(split_config.inplace_max_remainder_tokens, 64)
+        self.assertTrue(split_config.inplace_validate_metadata_ptrs)
+        self.assertFalse(split_config.inplace_force_pa_for_offset)
+        self.assertTrue(split_config.enable_inplace_spec_decode)
+        self.assertTrue(split_config.enable_inplace_mrope)
+
+    def test_split_batch_config_accepts_inplace_force_pa_for_offset(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_serial",
+            "num_splits": 2,
+            "inplace_force_pa_for_offset": True,
+        })
+
+        self.assertTrue(split_config.inplace_force_pa_for_offset)
+
+    def test_split_batch_config_accepts_inplace_parallel(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_parallel",
+            "num_splits": 2,
+        })
+
+        self.assertEqual(split_config.mode, "inplace_parallel")
+        self.assertEqual(split_config.num_splits, 2)
+
+    def test_split_batch_config_rejects_invalid_mode(self):
+        with self.assertRaisesRegex(ValueError, "split_batch_config.mode"):
+            SplitBatchConfig({"mode": "auto"})
+
+    def test_split_batch_config_rejects_inplace_num_splits_not_two(self):
+        with self.assertRaisesRegex(ValueError, "num_splits=2"):
+            SplitBatchConfig({
+                "mode": "inplace_serial",
+                "num_splits": 3,
+            })
+        with self.assertRaisesRegex(ValueError, "num_splits=2"):
+            SplitBatchConfig({
+                "mode": "inplace_parallel",
+                "num_splits": 3,
+            })
+
+    def test_split_batch_config_rejects_invalid_inplace_max_remainder_tokens(
+            self):
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_max_remainder_tokens"):
+            SplitBatchConfig({"inplace_max_remainder_tokens": 0})

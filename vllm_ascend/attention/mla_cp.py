@@ -26,7 +26,9 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          maybe_save_kv_layer_to_connector,
                                          split_decodes_and_prefills,
                                          wait_for_kv_layer_from_connector)
-from vllm_ascend.compilation.acl_graph import (get_graph_params,
+from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
+                                               get_graph_param_key,
+                                               get_graph_params,
                                                update_graph_params_workspaces)
 from vllm_ascend.ops.rotary_embedding import get_cos_and_sin_mla
 from vllm_ascend.ops.shared_weight_layer import (
@@ -1061,25 +1063,27 @@ class AscendMlaCPImpl(AscendMLAImpl):
         in_parallel_streams = bool(
             getattr(forward_context, "in_parallel_streams", False))
         graph_params = get_graph_params(in_parallel_streams)
+        param_key = get_graph_param_key(forward_context, num_tokens)
+        ensure_graph_param_key(graph_params, param_key)
         if forward_context.capturing:
             stream = torch_npu.npu.current_stream()
             event = torch.npu.ExternalEvent()
             event.wait(stream)
             event.reset(stream)
-            graph_params.events[num_tokens].append(event)
-            workspace = graph_params.workspaces.get(num_tokens)
+            graph_params.events[param_key].append(event)
+            workspace = graph_params.workspaces.get(param_key)
             if workspace is None:
                 workspace = torch_npu.atb._npu_multi_head_latent_attention_get_workspace(
                     q_nope, q_pe, k_nope, k_pe, decode_meta.block_table,
                     seq_len, num_heads, self.scale, self.num_kv_heads,
                     **common_kwargs)
-                update_graph_params_workspaces(num_tokens, workspace,
+                update_graph_params_workspaces(param_key, workspace,
                                               in_parallel_streams=in_parallel_streams)
             attn_output = torch.empty_like(q_nope)
             softmax_lse = torch.empty((num_tokens, num_heads, 1),
                                       dtype=q_nope.dtype,
                                       device=q_nope.device)
-            graph_params.attn_params[num_tokens].append(
+            graph_params.attn_params[param_key].append(
                 (weak_ref_tensors(q_nope), weak_ref_tensors(q_pe),
                  weak_ref_tensors(k_nope), weak_ref_tensors(k_pe),
                  decode_meta.block_table, seq_len, num_heads, self.scale,
@@ -1101,7 +1105,7 @@ class AscendMlaCPImpl(AscendMLAImpl):
                 output=attn_output,
                 lse=softmax_lse)
             handle = torch.npu.graph_task_group_end(stream)
-            graph_params.handles[num_tokens].append(handle)
+            graph_params.handles[param_key].append(handle)
         else:
             attn_output = torch.empty_like(q_nope)
             softmax_lse = torch.empty((num_tokens, num_heads, 1),

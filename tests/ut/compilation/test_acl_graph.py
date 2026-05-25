@@ -13,6 +13,8 @@
 # This file is a part of the vllm-ascend project.
 #
 
+from contextlib import nullcontext
+from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -27,8 +29,13 @@ from vllm_ascend.attention.attention_v1 import (AscendMetadata,
 from vllm_ascend.attention.mla_v1 import (AscendMLADecodeMetadata,
                                           AscendMLAMetadata)
 from vllm_ascend.compilation.acl_graph import (
-    ACLGraphEntry, ACLGraphWrapper, get_graph_params, get_mtp_graph_params,
-    set_graph_params, set_mtp_graph_params, update_attn_dcp_pcp_params,
+    ACLGraphEntry, ACLGraphWrapper, GraphParams, ensure_graph_param_key,
+    _collect_attn_metadata_tensor_infos,
+    get_graph_param_key, get_graph_params, get_mtp_graph_params,
+    graph_param_key_info, maybe_template_fia_seq_lens,
+    require_graph_param_key, set_graph_params, set_mtp_graph_params,
+    update_attn_dcp_pcp_params, _update_attn_fia_params,
+    update_graph_params_workspaces,
     update_mla_attn_dcp_pcp_params, update_mtp_graph_params_workspaces)
 
 
@@ -47,6 +54,7 @@ class TestACLGraphEntry(TestBase):
         self.assertIsNone(entry.aclgraph)
         self.assertIsNone(entry.output)
         self.assertIsNone(entry.input_addresses)
+
 
     def test_aclgraph_entry_with_values(self):
         """Test ACLGraphEntry initialization with specified values"""
@@ -68,6 +76,209 @@ class TestACLGraphEntry(TestBase):
         self.assertEqual(entry.aclgraph, mock_graph)
         self.assertEqual(entry.output, mock_output)
         self.assertEqual(entry.input_addresses, input_addresses)
+
+
+class TestGraphParamKey(TestBase):
+
+    def test_get_graph_param_key_uses_int_for_default_descriptor(self):
+        context = MagicMock()
+        context.is_mtp_model = False
+        context.batch_descriptor = BatchDescriptor(num_tokens=32,
+                                                   num_reqs=32,
+                                                   uniform=True,
+                                                   has_lora=False)
+
+        self.assertEqual(get_graph_param_key(context, 32), 32)
+
+    def test_get_graph_param_key_uses_descriptor_for_offset(self):
+        descriptor = BatchDescriptor(num_tokens=32,
+                                     num_reqs=32,
+                                     uniform=True,
+                                     has_lora=False,
+                                     start_num_tokens=384,
+                                     graph_variant="inplace_serial",
+                                     attention_backend="fia")
+        context = MagicMock()
+        context.is_mtp_model = False
+        context.batch_descriptor = descriptor
+
+        self.assertEqual(get_graph_param_key(context, 32), descriptor)
+
+    def test_get_graph_param_key_keeps_mtp_int_by_default(self):
+        descriptor = BatchDescriptor(num_tokens=32,
+                                     num_reqs=32,
+                                     uniform=True,
+                                     has_lora=False,
+                                     start_num_tokens=384,
+                                     graph_variant="inplace_serial",
+                                     attention_backend="fia")
+        context = MagicMock()
+        context.is_mtp_model = True
+        context.batch_descriptor = descriptor
+
+        self.assertEqual(get_graph_param_key(context, 32), 32)
+
+    def test_offset_keys_are_isolated(self):
+        desc_1 = BatchDescriptor(num_tokens=32,
+                                 num_reqs=32,
+                                 uniform=True,
+                                 has_lora=False,
+                                 start_num_tokens=256)
+        desc_2 = BatchDescriptor(num_tokens=32,
+                                 num_reqs=32,
+                                 uniform=True,
+                                 has_lora=False,
+                                 start_num_tokens=384)
+        graph_params = GraphParams({}, {}, {}, {})
+
+        ensure_graph_param_key(graph_params, desc_1)
+        ensure_graph_param_key(graph_params, desc_2)
+        graph_params.attn_params[desc_1].append("a")
+        graph_params.attn_params[desc_2].append("b")
+
+        self.assertEqual(graph_params.attn_params[desc_1], ["a"])
+        self.assertEqual(graph_params.attn_params[desc_2], ["b"])
+        self.assertNotEqual(graph_params.attn_params[desc_1],
+                            graph_params.attn_params[desc_2])
+
+    def test_require_graph_param_key_rejects_missing_key(self):
+        graph_params = GraphParams({}, {}, {}, {})
+        descriptor = BatchDescriptor(num_tokens=32, start_num_tokens=384)
+
+        with self.assertRaises(KeyError):
+            require_graph_param_key(graph_params,
+                                    descriptor,
+                                    op="unit_test")
+
+    def test_update_graph_params_workspaces_supports_offset_key(self):
+        descriptor = BatchDescriptor(num_tokens=32, start_num_tokens=384)
+        workspace = object()
+        graph_params = GraphParams({}, {}, {}, {})
+
+        with patch('vllm_ascend.compilation.acl_graph._graph_params',
+                   new=graph_params):
+            with patch('vllm_ascend.compilation.acl_graph.weak_ref_tensors',
+                       side_effect=lambda value: value):
+                update_graph_params_workspaces(descriptor, workspace)
+
+        self.assertIs(graph_params.workspaces[descriptor], workspace)
+        self.assertNotIn(32, graph_params.workspaces)
+
+    def test_graph_param_key_info_for_descriptor(self):
+        descriptor = BatchDescriptor(num_tokens=32,
+                                     num_reqs=32,
+                                     uniform=True,
+                                     has_lora=False,
+                                     start_num_tokens=384,
+                                     graph_variant="inplace_serial",
+                                     attention_backend="fia")
+
+        self.assertEqual(
+            graph_param_key_info(descriptor),
+            {
+                "kind": "batch_descriptor",
+                "num_tokens": 32,
+                "num_reqs": 32,
+                "uniform": True,
+                "has_lora": False,
+                "start_num_tokens": 384,
+                "graph_variant": "inplace_serial",
+                "attention_backend": "fia",
+                "capture_metadata_mode": "",
+            },
+        )
+
+    def test_maybe_template_fia_seq_lens_copies_tail_to_target_t(self):
+        descriptor = BatchDescriptor(num_tokens=32,
+                                     num_reqs=32,
+                                     uniform=True,
+                                     has_lora=False,
+                                     start_num_tokens=384,
+                                     graph_variant="inplace_serial",
+                                     attention_backend="fia",
+                                     capture_metadata_mode="template")
+        context = SimpleNamespace(batch_descriptor=descriptor)
+        seq_lens = [9, 9]
+
+        templated_seq_lens = maybe_template_fia_seq_lens(
+            context, seq_lens, target_t=32)
+
+        self.assertEqual(templated_seq_lens, [9, 32])
+        self.assertEqual(seq_lens, [9, 9])
+
+    def test_maybe_template_fia_seq_lens_ignores_regular_fia_descriptor(self):
+        descriptor = BatchDescriptor(num_tokens=384,
+                                     num_reqs=384,
+                                     uniform=True,
+                                     has_lora=False,
+                                     attention_backend="fia")
+        context = SimpleNamespace(batch_descriptor=descriptor)
+        seq_lens = [9, 9]
+
+        templated_seq_lens = maybe_template_fia_seq_lens(
+            context, seq_lens, target_t=32)
+
+        self.assertIs(templated_seq_lens, seq_lens)
+
+    def test_update_attn_fia_params_templates_offset_seq_lens(self):
+        descriptor = BatchDescriptor(num_tokens=32,
+                                     num_reqs=32,
+                                     uniform=True,
+                                     has_lora=False,
+                                     start_num_tokens=384,
+                                     graph_variant="inplace_serial",
+                                     attention_backend="fia",
+                                     capture_metadata_mode="template")
+        forward_context = SimpleNamespace(
+            is_mtp_model=False,
+            batch_descriptor=descriptor,
+            attn_metadata={
+                "layer.0":
+                SimpleNamespace(seq_lens_list=[9, 9],
+                                actual_seq_lengths_q=[32])
+            },
+        )
+        event = SimpleNamespace(record=Mock())
+        param = (
+            "query",
+            torch.empty(32),
+            "value",
+            "block_tables",
+            "attn_mask",
+            256,
+            [9, 9],
+            [32],
+            2,
+            14,
+            1.0,
+            "attn_output",
+            "softmax_lse",
+        )
+        graph_params = GraphParams(
+            events={descriptor: [event]},
+            workspaces={descriptor: "workspace"},
+            handles={descriptor: ["handle"]},
+            attn_params={descriptor: [param]},
+        )
+
+        with patch(
+                "vllm_ascend.compilation.acl_graph.get_graph_params",
+                return_value=graph_params), patch(
+                    "vllm_ascend.compilation.acl_graph.torch.npu.stream",
+                    return_value=nullcontext()), patch(
+                        "vllm_ascend.compilation.acl_graph.torch.npu.graph_task_update_begin"
+                    ), patch(
+                        "vllm_ascend.compilation.acl_graph.torch.npu.graph_task_update_end"
+                    ), patch(
+                        "vllm_ascend.compilation.acl_graph.torch_npu.npu_fused_infer_attention_score.out"
+                    ) as mock_fia:
+            _update_attn_fia_params("stream", forward_context, 32)
+
+        self.assertEqual(
+            mock_fia.call_args.kwargs["actual_seq_lengths_kv"], [9, 32])
+        self.assertEqual(
+            forward_context.attn_metadata["layer.0"].seq_lens_list, [9, 9])
+        event.record.assert_called_once_with("stream")
 
 
 class TestACLGraphWrapper(TestBase):
@@ -664,6 +875,197 @@ class TestACLGraphWrapper(TestBase):
 
                     # Verify debug log was called
                     mock_logger.debug.assert_called_once()
+
+    @patch('vllm_ascend.compilation.acl_graph.torch')
+    @patch('vllm_ascend.compilation.acl_graph.get_forward_context')
+    @patch('vllm_ascend.compilation.acl_graph.current_platform')
+    @patch('vllm_ascend.compilation.acl_graph.envs')
+    @patch('vllm_ascend.compilation.acl_graph.compilation_counter')
+    @patch('vllm_ascend.compilation.acl_graph.weak_ref_tensors')
+    def test_inplace_offset_lazy_capture_temporarily_enables_capture(
+            self, mock_weak_ref_tensors, mock_compilation_counter, mock_envs,
+            mock_current_platform, mock_get_forward_context, mock_torch):
+        mock_envs.VLLM_LOGGING_LEVEL = "INFO"
+        mock_current_platform.get_global_graph_pool.return_value = self.mock_graph_pool
+        descriptor = BatchDescriptor(num_tokens=32,
+                                     num_reqs=32,
+                                     uniform=True,
+                                     has_lora=False,
+                                     start_num_tokens=384,
+                                     graph_variant="inplace_serial",
+                                     attention_backend="fia")
+        self.mock_forward_context.batch_descriptor = descriptor
+        self.mock_forward_context.cudagraph_runtime_mode = CUDAGraphMode.FULL
+        self.mock_forward_context.allow_inplace_lazy_capture = True
+        self.mock_forward_context.split_inplace_mode = "inplace_serial"
+        mock_get_forward_context.return_value = self.mock_forward_context
+
+        mock_npu_graph = MagicMock()
+        mock_torch.npu.NPUGraph.return_value = mock_npu_graph
+        mock_graph_context = MagicMock()
+        mock_torch.npu.graph.return_value = mock_graph_context
+        mock_graph_context.__enter__ = Mock(return_value=None)
+        mock_graph_context.__exit__ = Mock(return_value=None)
+        mock_torch.Tensor = torch.Tensor
+        mock_weak_ref_tensors.return_value = "weak_ref_output"
+        mock_compilation_counter.num_cudagraph_captured = 0
+
+        from vllm.compilation import monitor as compilation_monitor
+        previous_enabled = compilation_monitor.cudagraph_capturing_enabled
+        compilation_monitor.set_cudagraph_capturing_enabled(False)
+        try:
+            wrapper = ACLGraphWrapper(
+                runnable=self.mock_runnable,
+                vllm_config=self.mock_vllm_config,
+                runtime_mode=CUDAGraphMode.FULL,
+                cudagraph_options=self.mock_cudagraph_options)
+
+            result = wrapper(torch.tensor([1, 2, 3]))
+        finally:
+            restored_enabled = compilation_monitor.cudagraph_capturing_enabled
+            compilation_monitor.set_cudagraph_capturing_enabled(
+                previous_enabled)
+
+        self.assertEqual(result, "test_output")
+        self.assertFalse(restored_enabled)
+        self.assertIn(descriptor, wrapper.concrete_aclgraph_entries)
+        mock_torch.npu.NPUGraph.assert_called_once()
+
+    @patch('vllm_ascend.compilation.acl_graph.torch')
+    @patch('vllm_ascend.compilation.acl_graph.get_forward_context')
+    @patch('vllm_ascend.compilation.acl_graph.current_platform')
+    @patch('vllm_ascend.compilation.acl_graph.envs')
+    def test_inplace_offset_capture_requires_context_flag(
+            self, mock_envs, mock_current_platform, mock_get_forward_context,
+            mock_torch):
+        mock_envs.VLLM_LOGGING_LEVEL = "INFO"
+        mock_current_platform.get_global_graph_pool.return_value = self.mock_graph_pool
+        self.mock_forward_context.batch_descriptor = BatchDescriptor(
+            num_tokens=32,
+            num_reqs=32,
+            uniform=True,
+            has_lora=False,
+            start_num_tokens=384,
+            graph_variant="inplace_serial",
+            attention_backend="fia")
+        self.mock_forward_context.cudagraph_runtime_mode = CUDAGraphMode.FULL
+        self.mock_forward_context.allow_inplace_lazy_capture = False
+        self.mock_forward_context.split_inplace_mode = "inplace_serial"
+        mock_get_forward_context.return_value = self.mock_forward_context
+        mock_torch.Tensor = torch.Tensor
+
+        wrapper = ACLGraphWrapper(
+            runnable=self.mock_runnable,
+            vllm_config=self.mock_vllm_config,
+            runtime_mode=CUDAGraphMode.FULL,
+            cudagraph_options=self.mock_cudagraph_options)
+
+        with self.assertRaisesRegex(RuntimeError,
+                                    "Refusing to capture an inplace offset"):
+            wrapper(torch.tensor([1, 2, 3]))
+
+        mock_torch.npu.NPUGraph.assert_not_called()
+
+    @patch('vllm_ascend.compilation.acl_graph.torch')
+    @patch('vllm_ascend.compilation.acl_graph.validate_cudagraph_capturing_enabled')
+    @patch('vllm_ascend.compilation.acl_graph.get_forward_context')
+    @patch('vllm_ascend.compilation.acl_graph.current_platform')
+    @patch('vllm_ascend.compilation.acl_graph.envs')
+    @patch('vllm_ascend.compilation.acl_graph.compilation_counter')
+    @patch('vllm_ascend.compilation.acl_graph.weak_ref_tensors')
+    def test_inplace_input_ptr_validation_without_debug_mode(
+            self, mock_weak_ref_tensors, mock_compilation_counter, mock_envs,
+            mock_current_platform, mock_get_forward_context,
+            mock_validate_cudagraph_capturing_enabled, mock_torch):
+        mock_envs.VLLM_LOGGING_LEVEL = "INFO"
+        mock_current_platform.get_global_graph_pool.return_value = self.mock_graph_pool
+        mock_get_forward_context.return_value = self.mock_forward_context
+        self.mock_forward_context.cudagraph_runtime_mode = CUDAGraphMode.FULL
+        self.mock_forward_context.validate_inplace_input_ptrs = True
+
+        mock_npu_graph = MagicMock()
+        mock_torch.npu.NPUGraph.return_value = mock_npu_graph
+        mock_graph_context = MagicMock()
+        mock_torch.npu.graph.return_value = mock_graph_context
+        mock_graph_context.__enter__ = Mock(return_value=None)
+        mock_graph_context.__exit__ = Mock(return_value=None)
+        mock_torch.Tensor = torch.Tensor
+        mock_weak_ref_tensors.return_value = "weak_ref_output"
+        mock_compilation_counter.num_cudagraph_captured = 0
+
+        wrapper = ACLGraphWrapper(
+            runnable=self.mock_runnable,
+            vllm_config=self.mock_vllm_config,
+            runtime_mode=CUDAGraphMode.FULL,
+            cudagraph_options=self.mock_cudagraph_options)
+
+        tensor1 = torch.arange(1024)
+        tensor2 = torch.arange(2048)
+        wrapper(tensor1)
+        with self.assertRaisesRegex(AssertionError, "Input addresses"):
+            wrapper(tensor2)
+
+    def test_collect_attn_metadata_tensor_infos_recurses_common_shapes(self):
+        metadata = {
+            "layer": SimpleNamespace(
+                common_attn_metadata=SimpleNamespace(
+                    query_start_loc=torch.arange(3, dtype=torch.int32),
+                    seq_lens=torch.arange(2, dtype=torch.int32),
+                ),
+                decode=SimpleNamespace(
+                    block_table=torch.arange(4, dtype=torch.int32).reshape(
+                        2, 2),
+                ),
+            )
+        }
+
+        addresses, infos = _collect_attn_metadata_tensor_infos(metadata)
+
+        self.assertEqual(len(addresses), 3)
+        paths = {info["path"] for info in infos}
+        self.assertIn(
+            "attn_metadata.layer.common_attn_metadata.query_start_loc",
+            paths)
+        self.assertIn("attn_metadata.layer.common_attn_metadata.seq_lens",
+                      paths)
+        self.assertIn("attn_metadata.layer.decode.block_table", paths)
+
+    @patch('vllm_ascend.compilation.acl_graph.torch')
+    @patch('vllm_ascend.compilation.acl_graph.get_forward_context')
+    @patch('vllm_ascend.compilation.acl_graph.current_platform')
+    @patch('vllm_ascend.compilation.acl_graph.envs')
+    def test_inplace_metadata_ptr_validation_mismatch(
+            self, mock_envs, mock_current_platform, mock_get_forward_context,
+            mock_torch):
+        mock_envs.VLLM_LOGGING_LEVEL = "INFO"
+        mock_current_platform.get_global_graph_pool.return_value = self.mock_graph_pool
+        mock_torch.Tensor = torch.Tensor
+        descriptor = self.mock_batch_descriptor
+        self.mock_forward_context.batch_descriptor = descriptor
+        self.mock_forward_context.cudagraph_runtime_mode = CUDAGraphMode.FULL
+        self.mock_forward_context.validate_inplace_metadata_ptrs = True
+        self.mock_forward_context.attn_metadata = {
+            "layer": Mock(seq_lens=torch.arange(2, dtype=torch.int32))
+        }
+        mock_get_forward_context.return_value = self.mock_forward_context
+
+        wrapper = ACLGraphWrapper(
+            runnable=self.mock_runnable,
+            vllm_config=self.mock_vllm_config,
+            runtime_mode=CUDAGraphMode.FULL,
+            cudagraph_options=self.mock_cudagraph_options)
+        entry = ACLGraphEntry(batch_descriptor=descriptor,
+                              aclgraph=MagicMock(),
+                              output="cached",
+                              attn_metadata_addresses=[123],
+                              attn_metadata_tensor_infos=[{
+                                  "path": "old"
+                              }])
+        wrapper.concrete_aclgraph_entries[descriptor] = entry
+
+        with self.assertRaisesRegex(AssertionError,
+                                    "Attention metadata addresses"):
+            wrapper()
 
     def test_getattr_access_runnable_attributes(self):
         """Test __getattr__ method accesses runnable attributes"""

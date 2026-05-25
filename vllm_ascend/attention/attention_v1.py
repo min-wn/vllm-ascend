@@ -36,7 +36,10 @@ from vllm.v1.kv_cache_interface import AttentionSpec
 from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          enable_cp, split_decodes_and_prefills,
                                          using_paged_attention)
-from vllm_ascend.compilation.acl_graph import (get_graph_params,
+from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
+                                               get_graph_param_key,
+                                               get_graph_params,
+                                               maybe_template_fia_seq_lens,
                                                update_graph_params_workspaces)
 from vllm_ascend.utils import (AscendDeviceType, get_ascend_device_type,
                                weak_ref_tensors)
@@ -285,9 +288,10 @@ class AscendAttentionMetadataBuilder:
         attn_mask = common_attn_metadata.attn_mask
         attn_state = common_attn_metadata.attn_state
 
-        # TODO: Yet another unnecessary H2D while we already have a query_start_loc on device
-        query_start_loc = query_start_loc_cpu.pin_memory().to(
-            self.device, non_blocking=True)
+        query_start_loc = common_attn_metadata.query_start_loc[:num_reqs + 1]
+        if query_start_loc.device != self.device:
+            query_start_loc = query_start_loc_cpu.pin_memory().to(
+                self.device, non_blocking=True)
 
         attn_metadata = AscendMetadata(
             num_actual_tokens=num_actual_tokens,
@@ -370,16 +374,21 @@ class AscendAttentionBackendImpl(AttentionImpl):
         key, value, block_size, block_table, actual_seq_lengths_kv \
             = self._get_fia_params(key, value, attn_metadata)
 
+        forward_context = get_forward_context()
         num_tokens = attn_metadata.actual_seq_lengths_q[-1]
         in_parallel_streams = bool(
-            getattr(get_forward_context(), "in_parallel_streams", False))
+            getattr(forward_context, "in_parallel_streams", False))
         graph_params = get_graph_params(in_parallel_streams)
+        param_key = get_graph_param_key(forward_context, num_tokens)
+        ensure_graph_param_key(graph_params, param_key)
         actual_seq_lengths_q = attn_metadata.actual_seq_lengths_q
+        actual_seq_lengths_kv = maybe_template_fia_seq_lens(
+            forward_context, actual_seq_lengths_kv, int(key.shape[0]))
         # Prepare tensors for attention output
         # TODO: Refactor this to step-level instead of layer-level
 
         # Get workspace from cache or calculate it if not present.
-        workspace = graph_params.workspaces.get(num_tokens)
+        workspace = graph_params.workspaces.get(param_key)
         softmax_lse = torch.empty(1, dtype=query.dtype, device=query.device)
         if workspace is None:
             workspace = torch_npu._npu_fused_infer_attention_score_get_max_workspace(
@@ -397,7 +406,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
                 sparse_mode=3,
                 scale=self.scale,
             )
-            update_graph_params_workspaces(num_tokens,
+            update_graph_params_workspaces(param_key,
                                            workspace,
                                            in_parallel_streams=in_parallel_streams)
 
@@ -407,8 +416,8 @@ class AscendAttentionBackendImpl(AttentionImpl):
         event = torch.npu.ExternalEvent()
         event.wait(stream)
         event.reset(stream)
-        graph_params.events[num_tokens].append(event)
-        graph_params.attn_params[num_tokens].append(
+        graph_params.events[param_key].append(event)
+        graph_params.attn_params[param_key].append(
             (weak_ref_tensors(query), weak_ref_tensors(key),
              weak_ref_tensors(value), weak_ref_tensors(block_table),
              weak_ref_tensors(attn_metadata.attn_mask), block_size,
@@ -438,7 +447,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
         output = output.view(num_tokens, self.num_heads, self.head_size)
 
         handle = torch.npu.graph_task_group_end(stream)
-        graph_params.handles[num_tokens].append(handle)
+        graph_params.handles[param_key].append(handle)
         return output, num_tokens
 
     def full_graph_pa(
@@ -452,19 +461,11 @@ class AscendAttentionBackendImpl(AttentionImpl):
             getattr(forward_context, "in_parallel_streams", False))
         graph_params = get_graph_params(in_parallel_streams)
         num_tokens = query.shape[0]
+        param_key = get_graph_param_key(forward_context, num_tokens)
+        ensure_graph_param_key(graph_params, param_key)
         if getattr(forward_context, "capturing", False):
-            import sys
-            _cap_key = f"_cap_cnt_{'par' if in_parallel_streams else 'main'}_{num_tokens}"
-            _cap_cnt = getattr(AscendAttentionBackendImpl, _cap_key, 0)
-            if _cap_cnt < 2:
-                setattr(AscendAttentionBackendImpl, _cap_key, _cap_cnt + 1)
-                print(f"[DBG full_graph_pa CAPTURE] in_parallel={in_parallel_streams} num_tokens={num_tokens} "
-                      f"seq_lens={attn_metadata.seq_lens.tolist() if attn_metadata.seq_lens is not None else None} "
-                      f"block_tables_ptr={attn_metadata.block_tables.data_ptr() if attn_metadata.block_tables is not None else None} "
-                      f"block_tables_shape={list(attn_metadata.block_tables.shape) if attn_metadata.block_tables is not None else None}",
-                      flush=True, file=sys.stderr)
             # Get workspace from cache or calculate it if not present.
-            workspace = graph_params.workspaces.get(num_tokens)
+            workspace = graph_params.workspaces.get(param_key)
             if workspace is None:
                 workspace = torch_npu._npu_paged_attention_get_workspace(
                     query=query,
@@ -476,7 +477,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
                     block_table=attn_metadata.block_tables,
                     context_lens=attn_metadata.seq_lens,
                     out=output)
-                update_graph_params_workspaces(num_tokens,
+                update_graph_params_workspaces(param_key,
                                                weak_ref_tensors(workspace),
                                                in_parallel_streams=in_parallel_streams)
 
@@ -486,8 +487,8 @@ class AscendAttentionBackendImpl(AttentionImpl):
             event = torch.npu.ExternalEvent()
             event.wait(stream)
             event.reset(stream)
-            graph_params.events[num_tokens].append(event)
-            graph_params.attn_params[num_tokens].append((
+            graph_params.events[param_key].append(event)
+            graph_params.attn_params[param_key].append((
                 weak_ref_tensors(query),
                 weak_ref_tensors(self.key_cache),
                 weak_ref_tensors(self.value_cache),
@@ -512,7 +513,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
                 out=output,
                 workspace=workspace)
             handle = torch.npu.graph_task_group_end(stream)
-            graph_params.handles[num_tokens].append(handle)
+            graph_params.handles[param_key].append(handle)
             return output
 
     def _get_fia_params(self, key: torch.Tensor, value: torch.Tensor,
@@ -549,6 +550,14 @@ class AscendAttentionBackendImpl(AttentionImpl):
                 num_block, block_size, -1)
             block_table = attn_metadata.block_tables
             actual_seq_lengths_kv = attn_metadata.seq_lens_list
+        forward_context = get_forward_context()
+        batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+        if (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
+                and getattr(batch_descriptor, "capture_metadata_mode", "")
+                == "template"
+                and getattr(batch_descriptor, "attention_backend", "") == "fia"):
+            actual_seq_lengths_kv = maybe_template_fia_seq_lens(
+                forward_context, actual_seq_lengths_kv, int(key.shape[0]))
         return key, value, block_size, block_table, actual_seq_lengths_kv
 
     def _forward_fia_slidingwindow(self, query: torch.Tensor,
@@ -716,8 +725,10 @@ class AscendAttentionBackendImpl(AttentionImpl):
         output: torch.Tensor,
     ):
         num_tokens = query.shape[0]
+        forward_context: ForwardContext = get_forward_context()
         if (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
-                and using_paged_attention(num_tokens, self.vllm_config)
+                and using_paged_attention(num_tokens, self.vllm_config,
+                                          forward_context)
                 and self.sliding_window is None):
             output = self.forward_paged_attention(query, attn_metadata, output)
         else:

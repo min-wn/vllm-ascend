@@ -4,8 +4,9 @@
 
 Two modes per run (select via --mode):
   eager    : cudagraph_mode=NONE, no split-batch
-  aclgraph : cudagraph_mode=FULL_DECODE_ONLY + split-batch parallel streams
-             (force_split=True so every batch size exercises the split path)
+  aclgraph : cudagraph_mode=FULL_DECODE_ONLY plus selectable split mode
+             (force_split=True for split modes so every batch size exercises
+             the split path)
 
 Metrics written per decode step to VLLM_ASCEND_PERF_STATS_FILE (JSONL):
   replay_ms  : time from replay-worker launch to stream sync done
@@ -88,7 +89,21 @@ def create_parser() -> FlexibleArgumentParser:
         "--mode",
         choices=["eager", "aclgraph"],
         default="aclgraph",
-        help="eager=NONE (no graph), aclgraph=FULL_DECODE_ONLY+split parallel.",
+        help="eager=NONE, aclgraph=FULL_DECODE_ONLY.",
+    )
+    bench.add_argument(
+        "--split-mode",
+        choices=[
+            "disabled",
+            "parallel_buffer",
+            "inplace_serial",
+            "inplace_parallel",
+        ],
+        default="parallel_buffer",
+        help=(
+            "Split mode used when --mode=aclgraph. disabled keeps ACL graph "
+            "enabled but disables split-batch."
+        ),
     )
     bench.add_argument(
         "--experiment",
@@ -141,16 +156,34 @@ def _build_llm_from_args(
     return LLM(**args)
 
 
-def _build_aclgraph_additional_config() -> dict[str, Any]:
-    """additional_config for FULL_DECODE_ONLY + parallel-stream split-batch."""
+def _build_aclgraph_additional_config(split_mode: str) -> dict[str, Any]:
+    """additional_config for FULL_DECODE_ONLY split-batch benchmarking."""
+    if split_mode == "disabled":
+        return {
+            "split_batch_config": {
+                "enabled": False,
+                "mode": "parallel_buffer",
+                "num_splits": 2,
+                "min_batch_size_for_split": 1,
+            }
+        }
+
+    enable_parallel_streams = split_mode in (
+        "parallel_buffer",
+        "inplace_parallel",
+    )
     return {
         "split_batch_config": {
             "enabled": True,
-            "enable_parallel_streams": True,
+            "mode": split_mode,
+            "enable_parallel_streams": enable_parallel_streams,
             "force_split": True,
             "parallel_capture_sizes": PARALLEL_CAPTURE_SIZES,
             "num_splits": 2,
             "min_batch_size_for_split": 1,
+            "enable_inplace_lazy_capture": True,
+            "inplace_validate_metadata_ptrs": False,
+            "inplace_force_pa_for_offset": False,
         }
     }
 
@@ -185,6 +218,10 @@ def _truncate_or_repeat(text: str, target_tokens: int,
 
 
 def _truncate_by_tokens(text: str, target_tokens: int, tokenizer) -> str:
+    # LongBench contexts can be hundreds of thousands of tokens.  Benchmark
+    # cases only need a bounded prompt length, so cap by characters before
+    # tokenization to keep smoke runs from spending minutes in the tokenizer.
+    text = _truncate_or_repeat(text, target_tokens, avg_chars=8.0)
     token_ids = tokenizer.encode(text, add_special_tokens=False)
     if len(token_ids) <= target_tokens:
         return text
@@ -371,6 +408,7 @@ def main() -> None:
 
     # Pop benchmark-specific args (not EngineArgs)
     mode         = args.pop("mode")
+    split_mode   = args.pop("split_mode")
     experiment   = args.pop("experiment")
     batch_sizes_arg = args.pop("batch_sizes")
     dataset_path = args.pop("dataset_path")
@@ -419,10 +457,13 @@ def main() -> None:
     if mode == "eager":
         additional_config = _build_eager_additional_config()
     else:
-        additional_config = _build_aclgraph_additional_config()
+        additional_config = _build_aclgraph_additional_config(split_mode)
 
     print(f"\n{'=' * 70}")
-    print(f"Benchmark: mode={mode}  experiment={experiment}  model={args['model']}")
+    print(
+        f"Benchmark: mode={mode}  split_mode={split_mode}  "
+        f"experiment={experiment}  model={args['model']}"
+    )
     print(f"  capture_sizes (main): {MAIN_CAPTURE_SIZES}")
     if mode == "aclgraph":
         print(f"  capture_sizes (parallel): {PARALLEL_CAPTURE_SIZES}")
@@ -458,6 +499,7 @@ def main() -> None:
             tokenizer=_tokenizer,
         )
         result["mode"] = mode
+        result["split_mode"] = split_mode
         result["model"] = args["model"]
         result["experiment"] = experiment
         results.append(result)
@@ -467,7 +509,8 @@ def main() -> None:
     os.makedirs(output_dir, exist_ok=True)
     ts = time.strftime("%Y%m%d_%H%M%S")
     out_path = os.path.join(output_dir,
-                            f"results_{mode}_exp{experiment}_{ts}.json")
+                            f"results_{mode}_{split_mode}_"
+                            f"exp{experiment}_{ts}.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2, default=str)
     print(f"\nResults saved to: {out_path}")
@@ -477,4 +520,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

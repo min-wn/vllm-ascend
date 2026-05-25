@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import lru_cache
 from typing import Any, List, Optional
 
@@ -11,11 +11,113 @@ from vllm.distributed.kv_transfer import (get_kv_transfer_group,
 from vllm.forward_context import ForwardContext, get_forward_context
 from vllm.v1.worker.ubatch_utils import UBatchSlice
 
+from vllm_ascend import inplace_split_debug as split_debug
 from vllm_ascend.utils import (AscendDeviceType, get_ascend_config,
                                get_ascend_device_type)
 
 
-def using_paged_attention(runtime_shape: int, vllm_config: VllmConfig) -> bool:
+def slice_positions_by_token(positions: torch.Tensor,
+                             token_slice: slice) -> torch.Tensor:
+    if positions.ndim == 2:
+        return positions[:, token_slice]
+    return positions[token_slice]
+
+
+def slice_model_inputs_by_token(
+    input_ids: Optional[torch.Tensor],
+    positions: torch.Tensor,
+    inputs_embeds: Optional[torch.Tensor],
+    token_slice: slice,
+) -> tuple[Optional[torch.Tensor], torch.Tensor, Optional[torch.Tensor]]:
+    sliced_input_ids = None if input_ids is None else input_ids[token_slice]
+    sliced_positions = slice_positions_by_token(positions, token_slice)
+    sliced_inputs_embeds = (None if inputs_embeds is None else
+                            inputs_embeds[token_slice])
+    return sliced_input_ids, sliced_positions, sliced_inputs_embeds
+
+
+def stabilize_inplace_common_attn_metadata(
+    common: "AscendCommonAttentionMetadata",
+    *,
+    split_idx: int,
+    max_num_reqs: int,
+    max_num_tokens: int,
+    query_start_loc_secondary: Any,
+    seq_lens_secondary: Any,
+    slot_mapping_secondary: Any,
+    block_table_secondary: Any = None,
+) -> "AscendCommonAttentionMetadata":
+    if split_idx == 0:
+        return common
+
+    nreq = int(common.num_reqs)
+    ntok = int(common.num_actual_tokens)
+    if nreq + 1 > max_num_reqs + 1:
+        raise ValueError(
+            f"inplace metadata nreq overflow: {nreq} > {max_num_reqs}")
+    if ntok > max_num_tokens:
+        raise ValueError(
+            f"inplace metadata ntok overflow: {ntok} > {max_num_tokens}")
+    if (block_table_secondary is not None
+            and common.block_table_tensor is not None):
+        block_table_width = int(common.block_table_tensor.shape[1])
+        if block_table_secondary.gpu.shape[0] < nreq:
+            raise ValueError(
+                f"inplace metadata block table nreq overflow: {nreq} > "
+                f"{block_table_secondary.gpu.shape[0]}")
+        if block_table_secondary.gpu.shape[1] < block_table_width:
+            raise ValueError(
+                "inplace metadata block table width overflow: "
+                f"{block_table_width} > "
+                f"{block_table_secondary.gpu.shape[1]}")
+
+    query_start_loc_gpu = query_start_loc_secondary.gpu[:nreq + 1]
+    query_start_loc_cpu = query_start_loc_secondary.cpu[:nreq + 1]
+    seq_lens_gpu = seq_lens_secondary.gpu[:nreq]
+    seq_lens_cpu = seq_lens_secondary.cpu[:nreq]
+    slot_mapping = slot_mapping_secondary.gpu[:ntok]
+    block_table_tensor = common.block_table_tensor
+    if block_table_secondary is not None and block_table_tensor is not None:
+        block_table_width = int(block_table_tensor.shape[1])
+        block_table_tensor = block_table_secondary.gpu[:nreq, :
+                                                       block_table_width]
+
+    query_start_loc_gpu.copy_(common.query_start_loc[:nreq + 1])
+    query_start_loc_cpu.copy_(common.query_start_loc_cpu[:nreq + 1])
+    seq_lens_gpu.copy_(common.seq_lens[:nreq])
+    seq_lens_cpu.copy_(common.seq_lens_cpu[:nreq])
+    slot_mapping.copy_(common.slot_mapping[:ntok])
+    if (block_table_secondary is not None
+            and common.block_table_tensor is not None):
+        block_table_tensor.copy_(common.block_table_tensor[:nreq])
+
+    return replace(
+        common,
+        query_start_loc=query_start_loc_gpu,
+        query_start_loc_cpu=query_start_loc_cpu,
+        seq_lens=seq_lens_gpu,
+        seq_lens_cpu=seq_lens_cpu,
+        slot_mapping=slot_mapping,
+        block_table_tensor=block_table_tensor,
+    )
+
+
+def using_paged_attention(runtime_shape: int,
+                          vllm_config: VllmConfig,
+                          forward_context: Any = None) -> bool:
+    forced_backend = getattr(forward_context, "forced_attention_backend", None)
+    if forced_backend == "pa":
+        return True
+    if forced_backend == "fia":
+        return False
+
+    batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+    descriptor_backend = getattr(batch_descriptor, "attention_backend", "")
+    if descriptor_backend == "pa":
+        return True
+    if descriptor_backend == "fia":
+        return False
+
     if vllm_config.speculative_config is not None:
         return False
     if get_ascend_device_type() == AscendDeviceType.A5:
@@ -385,7 +487,7 @@ def _make_metadata_with_slice(
 
     # adapt to Ascend common metadata
     num_input_tokens = token_slice.stop - token_slice.start
-    positions = attn_metadata.positions[token_slice]
+    positions = slice_positions_by_token(attn_metadata.positions, token_slice)
     attn_state = attn_metadata.attn_state
     #if attn_metadata.attn_state != AscendAttentionState.ChunkedPrefill:
     attn_mask = attn_metadata.attn_mask
@@ -431,9 +533,26 @@ def split_attn_metadata(
     Note: This function does not modify common_attn_metadata
     """
     results = []
-    for ubatch_slice in ubatch_slices:
-        results.append(
-            _make_metadata_with_slice(ubatch_slice, common_attn_metadata,
-                                      max_num_tokens))
+    for idx, ubatch_slice in enumerate(ubatch_slices):
+        metadata = _make_metadata_with_slice(ubatch_slice,
+                                             common_attn_metadata,
+                                             max_num_tokens)
+        results.append(metadata)
+        if split_debug.is_enabled():
+            split_debug.log_event(
+                "split_metadata",
+                {
+                    "idx": idx,
+                    "source": "split_attn_metadata",
+                    "request_slice":
+                    split_debug.slice_info(ubatch_slice.request_slice),
+                    "token_slice":
+                    split_debug.slice_info(ubatch_slice.token_slice),
+                    "num_tokens": int(metadata.num_actual_tokens),
+                    "padded_num_tokens": int(max_num_tokens),
+                    "num_reqs": int(metadata.num_reqs),
+                    **split_debug.metadata_tensor_info(metadata),
+                },
+            )
 
     return results

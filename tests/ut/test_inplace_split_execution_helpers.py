@@ -7,8 +7,10 @@ from vllm.config import CUDAGraphMode
 from vllm.forward_context import BatchDescriptor
 from vllm.v1.worker.ubatch_utils import UBatchSlice
 
+from vllm_ascend.attention.attention_v1 import AscendAttentionState
 from vllm_ascend.worker.model_runner_v3 import (
     NPUModelRunner,
+    _inplace_split_precheck_reason,
     _inplace_plan_to_execution_slices,
     _template_fia_seq_lens_list,
 )
@@ -26,6 +28,107 @@ def _plan_416():
     return plan
 
 
+def _precheck_reason(**overrides):
+    kwargs = {
+        "split_enabled": True,
+        "split_mode": "inplace_serial",
+        "enable_parallel_streams": False,
+        "use_aclgraph": True,
+        "num_splits": 2,
+        "uniform_decode": True,
+        "enable_dbo": False,
+        "with_prefill": False,
+        "attn_state": AscendAttentionState.DecodeOnly,
+        "has_spec_decode_tokens": False,
+        "enable_spec_decode": False,
+        "has_lora": False,
+        "uses_mrope": False,
+        "enable_mrope": False,
+        "use_mla": False,
+        "pcp_size": 1,
+        "dcp_size": 1,
+    }
+    kwargs.update(overrides)
+    return _inplace_split_precheck_reason(**kwargs)
+
+
+def test_inplace_split_precheck_accepts_supported_decode_only():
+    assert _precheck_reason() is None
+
+
+def test_inplace_split_precheck_rejects_p12_unsupported_cases():
+    cases = [
+        ({"uniform_decode": False}, "no_split_non_uniform_decode"),
+        ({"with_prefill": True}, "no_split_prefill_or_mixed"),
+        ({"attn_state": AscendAttentionState.SpecDecoding},
+         "no_split_prefill_or_mixed"),
+        ({"enable_dbo": True}, "no_split_dbo_active"),
+        ({"has_spec_decode_tokens": True}, "no_split_spec_decode"),
+        ({"has_lora": True}, "no_split_lora"),
+        ({"uses_mrope": True}, "no_split_mrope"),
+        ({"use_mla": True}, "no_split_mla"),
+        ({"pcp_size": 2}, "no_split_pcp_or_context_parallel"),
+        ({"dcp_size": 2}, "no_split_pcp_or_context_parallel"),
+    ]
+
+    for overrides, expected in cases:
+        assert _precheck_reason(**overrides) == expected
+
+
+def test_inplace_split_precheck_accepts_uniform_spec_decode_when_enabled():
+    assert _precheck_reason(
+        has_spec_decode_tokens=True,
+        enable_spec_decode=True,
+        attn_state=AscendAttentionState.SpecDecoding) is None
+
+
+def test_inplace_split_precheck_keeps_spec_decode_behind_flag():
+    assert (_precheck_reason(
+        has_spec_decode_tokens=True,
+        enable_spec_decode=False,
+        attn_state=AscendAttentionState.SpecDecoding) ==
+            "no_split_spec_decode")
+
+
+def test_inplace_split_precheck_rejects_enabled_spec_decode_attn_state():
+    assert (_precheck_reason(
+        has_spec_decode_tokens=True,
+        enable_spec_decode=True,
+        attn_state=AscendAttentionState.ChunkedPrefill) ==
+            "no_split_spec_decode_attn_state")
+
+
+def test_inplace_split_precheck_accepts_mrope_serial_when_enabled():
+    assert _precheck_reason(uses_mrope=True, enable_mrope=True) is None
+
+
+def test_inplace_split_precheck_keeps_mrope_behind_flag():
+    assert (_precheck_reason(uses_mrope=True, enable_mrope=False) ==
+            "no_split_mrope")
+
+
+def test_inplace_split_precheck_rejects_mrope_parallel_until_verified():
+    assert (_precheck_reason(
+        split_mode="inplace_parallel",
+        enable_parallel_streams=True,
+        uses_mrope=True,
+        enable_mrope=True,
+    ) == "no_split_mrope_parallel")
+
+
+def test_inplace_split_precheck_rejects_config_gates():
+    assert (_precheck_reason(split_enabled=False) ==
+            "no_split_inplace_disabled")
+    assert (_precheck_reason(split_mode="inplace_parallel",
+                             enable_parallel_streams=False) ==
+            "no_split_parallel_streams_disabled")
+    assert _precheck_reason(use_aclgraph=False) == "no_split_no_aclgraph"
+    assert (_precheck_reason(num_splits=3) ==
+            "no_split_num_splits_not_two")
+    assert (_precheck_reason(split_mode="parallel_buffer") ==
+            "no_split_not_inplace_mode")
+
+
 def test_inplace_serial_plan_enables_execution_slices():
     plan = _plan_416()
 
@@ -39,7 +142,7 @@ def test_inplace_serial_plan_enables_execution_slices():
     ]
 
 
-def test_inplace_parallel_plan_stays_dry_run():
+def test_inplace_parallel_plan_stays_dry_run_without_parallel_streams():
     plan = _plan_416()
 
     split_batch_slices, split_ubatch_slices = (
@@ -47,6 +150,22 @@ def test_inplace_parallel_plan_stays_dry_run():
 
     assert split_batch_slices is None
     assert split_ubatch_slices is None
+
+
+def test_inplace_parallel_plan_enables_execution_with_parallel_streams():
+    plan = _plan_416()
+
+    split_batch_slices, split_ubatch_slices = (
+        _inplace_plan_to_execution_slices(
+            "inplace_parallel",
+            plan,
+            enable_parallel_streams=True))
+
+    assert split_batch_slices == plan.split_slices
+    assert split_ubatch_slices == [
+        UBatchSlice(slice(0, 384), slice(0, 384)),
+        UBatchSlice(slice(384, 416), slice(384, 416)),
+    ]
 
 
 def test_trim_and_merge_split_tensor_outputs():
@@ -139,10 +258,101 @@ def test_inplace_serial_metadata_sets_lazy_capture_and_validation_flags():
     assert contexts[1].forced_attention_backend == "fia"
     assert contexts[1].batch_descriptor.graph_variant == "inplace_serial"
     assert contexts[1].batch_descriptor.attention_backend == "fia"
-    assert contexts[1].batch_descriptor.capture_metadata_mode == "template"
+    assert contexts[1].batch_descriptor.capture_metadata_mode == ""
     assert contexts[1].validate_inplace_input_ptrs is True
     assert contexts[1].validate_inplace_metadata_ptrs is True
     assert contexts[1].split_inplace_mode == "inplace_serial"
+
+
+def test_inplace_parallel_metadata_sets_parallel_context_and_offset_views():
+    runner = object.__new__(NPUModelRunner)
+    runner.ascend_config = SimpleNamespace(
+        split_batch_config=SimpleNamespace(enable_inplace_lazy_capture=True,
+                                           inplace_validate_metadata_ptrs=True,
+                                           inplace_force_pa_for_offset=False))
+    runner.vllm_config = SimpleNamespace()
+    runner.stream_main = object()
+    runner.stream_parallel = object()
+    runner.cudagraph_dispatcher = SimpleNamespace()
+    dispatch_calls = []
+
+    def fake_dispatch(**kwargs):
+        dispatch_calls.append(kwargs)
+        return CUDAGraphMode.FULL, BatchDescriptor(
+            num_tokens=kwargs["num_tokens"],
+            num_reqs=kwargs["num_tokens"],
+            uniform=kwargs["uniform_decode"],
+            has_lora=kwargs["has_lora"],
+            start_num_tokens=kwargs["start_num_tokens"],
+            graph_variant=kwargs.get("graph_variant", ""),
+            attention_backend=kwargs.get("attention_backend", ""),
+            capture_metadata_mode=kwargs.get("capture_metadata_mode", ""),
+        )
+
+    class FakeNPUStream:
+
+        def __call__(self, stream):
+            return nullcontext()
+
+    runner.cudagraph_dispatcher.dispatch = fake_dispatch
+    plan = _plan_416()
+    split_batch_slices, split_ubatch_slices = (
+        _inplace_plan_to_execution_slices(
+            "inplace_parallel",
+            plan,
+            enable_parallel_streams=True))
+    current_context = SimpleNamespace(dp_metadata=None)
+    contexts = []
+
+    def fake_create_context(cur_forward_context, **kwargs):
+        context = SimpleNamespace(**kwargs)
+        context.dp_metadata = kwargs.get("dp_metadata")
+        contexts.append(context)
+        return context
+
+    input_ids = torch.arange(416)
+    positions = torch.arange(416)
+
+    with patch("vllm_ascend.worker.model_runner_v3.get_forward_context",
+               return_value=current_context), patch(
+                   "vllm_ascend.worker.model_runner_v3.create_ascend_forward_context",
+                   side_effect=fake_create_context), patch(
+                       "vllm_ascend.worker.model_runner_v3.torch.npu.stream",
+                       new=FakeNPUStream()):
+        metadata = NPUModelRunner._make_split_batch_metadata_inplace_parallel(
+            runner,
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata=None,
+            input_ids=input_ids,
+            positions=positions,
+            inputs_embeds=None,
+            intermediate_tensors=None,
+            batch_descriptor=BatchDescriptor(num_tokens=416,
+                                             num_reqs=416,
+                                             uniform=False,
+                                             has_lora=False),
+            aclgraph_runtime_mode=CUDAGraphMode.FULL,
+            inplace_attention_backend="fia",
+        )
+
+    assert len(metadata) == 2
+    assert [call["uniform_decode"] for call in dispatch_calls] == [True, True]
+    assert metadata[0].input_ids.storage_offset() == 0
+    assert metadata[1].input_ids.storage_offset() == 384
+    assert metadata[1].positions.storage_offset() == 384
+    assert metadata[1].input_ids.data_ptr() == input_ids[384:].data_ptr()
+    assert metadata[1].positions.data_ptr() == positions[384:].data_ptr()
+    assert contexts[0].in_parallel_streams is False
+    assert contexts[1].in_parallel_streams is True
+    assert contexts[1].allow_inplace_lazy_capture is True
+    assert contexts[1].forced_attention_backend == "fia"
+    assert contexts[1].batch_descriptor.graph_variant == "inplace_parallel"
+    assert contexts[1].batch_descriptor.attention_backend == "fia"
+    assert contexts[1].batch_descriptor.capture_metadata_mode == ""
+    assert contexts[1].validate_inplace_input_ptrs is True
+    assert contexts[1].validate_inplace_metadata_ptrs is True
+    assert contexts[1].split_inplace_mode == "inplace_parallel"
 
 
 def test_template_fia_seq_lens_list_sets_tail_to_target_t():
@@ -160,7 +370,7 @@ def test_template_fia_seq_lens_list_sets_tail_to_target_t():
     assert attn_metadata["ignored"].seq_lens_list == []
 
 
-def test_inplace_serial_templates_only_offset_fia_metadata():
+def test_inplace_serial_defaults_to_fia_no_template_for_offset_metadata():
     runner = object.__new__(NPUModelRunner)
     runner.ascend_config = SimpleNamespace(
         split_batch_config=SimpleNamespace(enable_inplace_lazy_capture=True,
@@ -190,10 +400,12 @@ def test_inplace_serial_templates_only_offset_fia_metadata():
         {"layer.0": SimpleNamespace(seq_lens_list=[9, 9])},
         {"layer.0": SimpleNamespace(seq_lens_list=[9, 9])},
     ]
+    contexts = []
 
     def fake_create_context(cur_forward_context, **kwargs):
         context = SimpleNamespace(**kwargs)
         context.dp_metadata = kwargs.get("dp_metadata")
+        contexts.append(context)
         return context
 
     with patch("vllm_ascend.worker.model_runner_v3.get_forward_context",
@@ -218,7 +430,77 @@ def test_inplace_serial_templates_only_offset_fia_metadata():
         )
 
     assert attn_metadata[0]["layer.0"].seq_lens_list == [9, 9]
-    assert attn_metadata[1]["layer.0"].seq_lens_list == [9, 32]
+    assert attn_metadata[1]["layer.0"].seq_lens_list == [9, 9]
+    assert contexts[1].forced_attention_backend == "fia"
+    assert contexts[1].batch_descriptor.attention_backend == "fia"
+    assert contexts[1].batch_descriptor.capture_metadata_mode == ""
+
+
+def test_inplace_serial_uses_pa_for_offset_metadata_when_forced():
+    runner = object.__new__(NPUModelRunner)
+    runner.ascend_config = SimpleNamespace(
+        split_batch_config=SimpleNamespace(enable_inplace_lazy_capture=True,
+                                           inplace_validate_metadata_ptrs=True,
+                                           inplace_force_pa_for_offset=True))
+    runner.vllm_config = SimpleNamespace()
+    runner.block_size = 256
+    runner.cudagraph_dispatcher = SimpleNamespace()
+
+    def fake_dispatch(**kwargs):
+        return CUDAGraphMode.FULL, BatchDescriptor(
+            num_tokens=kwargs["num_tokens"],
+            num_reqs=kwargs["num_tokens"],
+            uniform=kwargs["uniform_decode"],
+            has_lora=kwargs["has_lora"],
+            start_num_tokens=kwargs["start_num_tokens"],
+            graph_variant=kwargs.get("graph_variant", ""),
+            attention_backend=kwargs.get("attention_backend", ""),
+            capture_metadata_mode=kwargs.get("capture_metadata_mode", ""),
+        )
+
+    runner.cudagraph_dispatcher.dispatch = fake_dispatch
+    plan = _plan_416()
+    split_batch_slices, split_ubatch_slices = (
+        _inplace_plan_to_execution_slices("inplace_serial", plan))
+    current_context = SimpleNamespace(dp_metadata=None)
+    attn_metadata = [
+        {"layer.0": SimpleNamespace(seq_lens_list=[9, 9])},
+        {"layer.0": SimpleNamespace(seq_lens_list=[9, 9])},
+    ]
+    contexts = []
+
+    def fake_create_context(cur_forward_context, **kwargs):
+        context = SimpleNamespace(**kwargs)
+        context.dp_metadata = kwargs.get("dp_metadata")
+        contexts.append(context)
+        return context
+
+    with patch("vllm_ascend.worker.model_runner_v3.get_forward_context",
+               return_value=current_context), patch(
+                   "vllm_ascend.worker.model_runner_v3.create_ascend_forward_context",
+                   side_effect=fake_create_context):
+        NPUModelRunner._make_split_batch_metadata_inplace_serial(
+            runner,
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata=attn_metadata,
+            input_ids=torch.arange(416),
+            positions=torch.arange(416),
+            inputs_embeds=None,
+            intermediate_tensors=None,
+            batch_descriptor=BatchDescriptor(num_tokens=416,
+                                             num_reqs=416,
+                                             uniform=False,
+                                             has_lora=False),
+            aclgraph_runtime_mode=CUDAGraphMode.FULL,
+            inplace_attention_backend="fia",
+        )
+
+    assert attn_metadata[0]["layer.0"].seq_lens_list == [9, 9]
+    assert attn_metadata[1]["layer.0"].seq_lens_list == [9, 9]
+    assert contexts[1].forced_attention_backend == "pa"
+    assert contexts[1].batch_descriptor.attention_backend == "pa"
+    assert contexts[1].batch_descriptor.capture_metadata_mode == ""
 
 
 def test_inplace_serial_metadata_uses_split_dispatch_when_outer_is_none():
@@ -307,6 +589,30 @@ def test_inplace_serial_preserves_offset_input_views():
     assert torch.equal(sliced_positions, positions[384:416])
 
 
+def test_inplace_serial_preserves_offset_mrope_position_views():
+    runner = object.__new__(NPUModelRunner)
+    input_ids = torch.arange(416)
+    positions = torch.arange(3 * 416).view(3, 416)
+
+    sliced_input_ids, sliced_positions, _ = (
+        NPUModelRunner._slice_split_batch_inputs(
+            runner,
+            slice(384, 416),
+            input_ids,
+            positions,
+            None,
+            None,
+        )[:3])
+    expected_positions = positions[:, 384:416]
+
+    assert sliced_input_ids.storage_offset() == 384
+    assert sliced_positions.shape == (3, 32)
+    assert sliced_positions.storage_offset() == expected_positions.storage_offset()
+    assert sliced_input_ids.data_ptr() == input_ids[384:].data_ptr()
+    assert sliced_positions.data_ptr() == expected_positions.data_ptr()
+    assert torch.equal(sliced_positions, expected_positions)
+
+
 def test_offset_capture_replays_and_updates_before_return():
     runner = object.__new__(NPUModelRunner)
     runner.compilation_config = SimpleNamespace(cudagraph_num_of_warmups=1)
@@ -380,3 +686,92 @@ def test_offset_capture_replays_and_updates_before_return():
     ]
     assert metadata.context.cudagraph_runtime_mode == CUDAGraphMode.FULL
     assert metadata.context.capturing is False
+
+
+def test_offset_capture_uses_parallel_stream_and_update_when_requested():
+    runner = object.__new__(NPUModelRunner)
+    runner.compilation_config = SimpleNamespace(cudagraph_num_of_warmups=0)
+
+    stream_calls = []
+
+    class FakeSyncStream:
+
+        def __init__(self, name):
+            self.name = name
+
+        def synchronize(self):
+            stream_calls.append(("sync", self.name))
+
+    runner.stream_main = FakeSyncStream("main")
+    runner.stream_parallel = FakeSyncStream("parallel")
+
+    calls = []
+    graph_exists = {"value": False}
+
+    class FakeStream:
+
+        def __call__(self, stream):
+            stream_calls.append(("enter", stream.name))
+            return nullcontext()
+
+    def fake_model(**kwargs):
+        mode = metadata.context.cudagraph_runtime_mode
+        calls.append(("model", mode))
+        if mode == CUDAGraphMode.FULL and not graph_exists["value"]:
+            graph_exists["value"] = True
+            return torch.tensor([100, 101])
+        return torch.tensor([200, 201])
+
+    def fake_has_graph(context):
+        return graph_exists["value"]
+
+    def fake_update(context, num_tokens, parallel_streams=False):
+        calls.append(("update", num_tokens, parallel_streams))
+
+    runner.model = fake_model
+    runner._has_aclgraph_for_context = fake_has_graph
+    runner._update_attn_params_for_split_ubatch = fake_update
+
+    descriptor = BatchDescriptor(num_tokens=32,
+                                 num_reqs=32,
+                                 uniform=True,
+                                 has_lora=False,
+                                 start_num_tokens=384,
+                                 graph_variant="inplace_parallel",
+                                 attention_backend="fia",
+                                 capture_metadata_mode="")
+    metadata = SimpleNamespace(
+        context=SimpleNamespace(cudagraph_runtime_mode=CUDAGraphMode.FULL,
+                                capturing=False,
+                                batch_descriptor=descriptor),
+        input_ids=torch.arange(32),
+        positions=torch.arange(32),
+        inputs_embeds=None,
+        intermediate_tensors=None,
+    )
+    split_slice = SimpleNamespace(num_tokens=32, graph_num_tokens=32)
+
+    with patch("vllm_ascend.worker.model_runner_v3.torch.npu.stream",
+               new=FakeStream()), patch(
+                   "vllm_ascend.worker.model_runner_v3.override_forward_context",
+                   return_value=nullcontext()):
+        result = NPUModelRunner._run_inplace_serial_offset_capture(
+            runner,
+            metadata,
+            split_slice,
+            model_kwargs={},
+            parallel_streams=True,
+        )
+
+    assert torch.equal(result, torch.tensor([200, 201]))
+    assert calls == [
+        ("model", CUDAGraphMode.FULL),
+        ("model", CUDAGraphMode.FULL),
+        ("update", 32, True),
+    ]
+    assert stream_calls == [
+        ("enter", "parallel"),
+        ("sync", "parallel"),
+        ("enter", "parallel"),
+        ("sync", "parallel"),
+    ]

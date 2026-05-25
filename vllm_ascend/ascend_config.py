@@ -321,6 +321,8 @@ class SplitBatchConfig:
         self.enabled: bool = bool(split_batch_config.get("enabled", False))
         self.enable_parallel_streams: bool = bool(
             split_batch_config.get("enable_parallel_streams", False))
+        self.mode: str = str(split_batch_config.get("mode",
+                                                    "parallel_buffer"))
         self.num_splits: int = int(split_batch_config.get("num_splits", 2))
         self.min_batch_size_for_split: int = int(
             split_batch_config.get("min_batch_size_for_split", 4))
@@ -343,11 +345,46 @@ class SplitBatchConfig:
         self.force_split: bool = bool(
             split_batch_config.get("force_split", False))
 
+        self.enable_inplace_lazy_capture: bool = bool(
+            split_batch_config.get("enable_inplace_lazy_capture", True))
+        self.inplace_serial_first: bool = bool(
+            split_batch_config.get("inplace_serial_first", True))
+        raw_inplace_max_remainder_tokens = split_batch_config.get(
+            "inplace_max_remainder_tokens", None)
+        if raw_inplace_max_remainder_tokens is None:
+            self.inplace_max_remainder_tokens: Optional[int] = None
+        else:
+            self.inplace_max_remainder_tokens = int(
+                raw_inplace_max_remainder_tokens)
+        self.inplace_validate_metadata_ptrs: bool = bool(
+            split_batch_config.get("inplace_validate_metadata_ptrs", False))
+        self.inplace_force_pa_for_offset: bool = bool(
+            split_batch_config.get("inplace_force_pa_for_offset", False))
+        self.enable_inplace_spec_decode: bool = bool(
+            split_batch_config.get("enable_inplace_spec_decode", False))
+        self.enable_inplace_mrope: bool = bool(
+            split_batch_config.get("enable_inplace_mrope", False))
+
+        valid_modes = ("parallel_buffer", "inplace_serial",
+                       "inplace_parallel")
+        if self.mode not in valid_modes:
+            raise ValueError(
+                "split_batch_config.mode must be one of "
+                f"{valid_modes}, got {self.mode!r}")
         if self.num_splits < 2:
             raise ValueError("split_batch_config.num_splits must be >= 2")
         if self.min_batch_size_for_split < 1:
             raise ValueError(
                 "split_batch_config.min_batch_size_for_split must be >= 1")
+        if self.mode.startswith("inplace") and self.num_splits != 2:
+            raise ValueError(
+                "inplace split currently supports "
+                "split_batch_config.num_splits=2 only")
+        if (self.inplace_max_remainder_tokens is not None
+                and self.inplace_max_remainder_tokens < 1):
+            raise ValueError(
+                "split_batch_config.inplace_max_remainder_tokens must be >= 1"
+            )
 
 
 _ASCEND_CONFIG: Optional[AscendConfig] = None

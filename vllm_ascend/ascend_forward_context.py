@@ -14,6 +14,7 @@ from vllm.v1.worker.ubatch_utils import UBatchSlices
 
 import vllm_ascend.envs as envs_ascend
 from vllm_ascend.ascend_config import get_ascend_config
+from vllm_ascend.attention.utils import slice_positions_by_token
 from vllm_ascend.utils import (AscendDeviceType, enable_sp, flashcomm2_enable,
                                get_ascend_device_type, has_layer_idx,
                                is_moe_model)
@@ -276,7 +277,7 @@ def create_ascend_forward_context(
     from vllm_ascend.ops.rotary_embedding import update_cos_sin, get_cos_and_sin_slice, get_cos_and_sin_mla
     if ubatch_slices and ubatch_slices[ubatch_num]:
         token_slice = ubatch_slices[ubatch_num].token_slice
-        positions = positions[token_slice]
+        positions = slice_positions_by_token(positions, token_slice)
         # slice cos_mla/sin_mla for dbo
         num_speculative_tokens = (
             vllm_config.speculative_config.num_speculative_tokens

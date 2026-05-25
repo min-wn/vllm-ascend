@@ -30,7 +30,9 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          split_decodes_and_prefills,
                                          trans_rope_weight, transdata,
                                          wait_for_kv_layer_from_connector)
-from vllm_ascend.compilation.acl_graph import (get_graph_params,
+from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
+                                               get_graph_param_key,
+                                               get_graph_params,
                                                get_mtp_graph_params,
                                                update_graph_params_workspaces)
 from vllm_ascend.ops.rotary_embedding import get_cos_and_sin_mla
@@ -1187,33 +1189,41 @@ class AscendMLAImpl(MLAAttentionImpl):
             "actual_seq_lengths_kv": decode_meta.seq_lens_list,
         }
         forward_context: ForwardContext = get_forward_context()
+        in_parallel_streams = bool(
+            getattr(forward_context, "in_parallel_streams", False))
         if forward_context.is_mtp_model:
             graph_params = get_mtp_graph_params()
+            param_key = num_tokens
         else:
-            in_parallel_streams = bool(
-                getattr(forward_context, "in_parallel_streams", False))
             graph_params = get_graph_params(in_parallel_streams)
+            param_key = get_graph_param_key(forward_context, num_tokens)
+        ensure_graph_param_key(graph_params, param_key)
         if forward_context.capturing:
             stream = torch_npu.npu.current_stream()
 
             event = torch.npu.ExternalEvent()
             event.wait(stream)
             event.reset(stream)
-            graph_params.events[num_tokens].append(event)
+            graph_params.events[param_key].append(event)
 
-            workspace = graph_params.workspaces.get(num_tokens)
+            workspace = graph_params.workspaces.get(param_key)
             if workspace is None:
                 workspace = torch_npu._npu_fused_infer_attention_score_get_max_workspace(
                     q_nope, k_nope, k_nope, **common_kwargs)
-                update_graph_params_workspaces(num_tokens, workspace,
-                                              in_parallel_streams=in_parallel_streams)
+                if not forward_context.is_mtp_model:
+                    update_graph_params_workspaces(
+                        param_key,
+                        workspace,
+                        in_parallel_streams=in_parallel_streams)
+                else:
+                    graph_params.workspaces[param_key] = workspace
 
             attn_output = torch.empty_like(q_nope)
             softmax_lse = torch.empty(num_tokens,
                                       dtype=q_nope.dtype,
                                       device=q_nope.device)
 
-            graph_params.attn_params[num_tokens].append(
+            graph_params.attn_params[param_key].append(
                 (weak_ref_tensors(q_nope), weak_ref_tensors(k_nope),
                  weak_ref_tensors(q_pe), weak_ref_tensors(k_pe),
                  self.num_heads, self.num_kv_heads, input_layout,
@@ -1231,7 +1241,7 @@ class AscendMLAImpl(MLAAttentionImpl):
                 workspace=workspace,
                 out=[attn_output, softmax_lse])
             handle = torch.npu.graph_task_group_end(stream)
-            graph_params.handles[num_tokens].append(handle)
+            graph_params.handles[param_key].append(handle)
         else:
             attn_output, _ = torch_npu.npu_fused_infer_attention_score(
                 q_nope, k_nope, k_nope, **common_kwargs)

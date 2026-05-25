@@ -67,6 +67,469 @@ CONFIGS: dict[str, dict[str, Any]] = {
 }
 
 
+def _parse_int_list(raw: str | None) -> list[int] | None:
+    if raw is None:
+        return None
+    values = [int(s.strip()) for s in raw.split(",") if s.strip()]
+    if not values:
+        raise ValueError("expected at least one integer")
+    if any(v <= 0 for v in values):
+        raise ValueError("all values must be positive integers")
+    return values
+
+
+def _apply_capture_sizes(args: dict[str, Any], capture_sizes: list[int]) -> None:
+    compilation_config = args.get("compilation_config") or {}
+    if not isinstance(compilation_config, dict):
+        try:
+            compilation_config = json.loads(str(compilation_config))
+        except Exception as exc:
+            raise ValueError(
+                "--capture-sizes requires compilation_config to be a dict or "
+                "JSON object string") from exc
+    compilation_config = dict(compilation_config)
+    compilation_config["cudagraph_capture_sizes"] = sorted(
+        {int(size) for size in capture_sizes})
+    args["compilation_config"] = compilation_config
+
+
+def _ensure_fixed_batch_graph_capacity(
+    args: dict[str, Any],
+    *,
+    batch_size: int,
+    capture_sizes: list[int] | None,
+) -> None:
+    """Keep padded graph cases from being filtered by max_num_seqs.
+
+    vLLM derives valid decode graph sizes from max_num_seqs. For fixed-batch
+    split probes such as 416 -> 512 padding, max_num_seqs must cover the padded
+    graph size, not only the real request count.
+    """
+    required = int(batch_size)
+    if capture_sizes:
+        required = max(required, max(int(size) for size in capture_sizes))
+
+    max_num_seqs = args.get("max_num_seqs")
+    if max_num_seqs is None:
+        args["max_num_seqs"] = required
+    elif int(max_num_seqs) < required:
+        print(
+            "ERROR: --fixed-batch-size with --capture-sizes requires "
+            f"--max-num-seqs >= {required}, got {max_num_seqs}",
+            file=sys.stderr,
+        )
+        raise ValueError("fixed batch graph capacity is too small")
+
+
+def _expected_inplace_split(batch_size: int,
+                            capture_sizes: list[int]) -> dict[str, int] | None:
+    sizes = sorted({int(size) for size in capture_sizes if int(size) > 0})
+    if not sizes or batch_size <= 0 or batch_size > sizes[-1]:
+        return None
+    if batch_size in sizes:
+        return None
+    lower = [size for size in sizes if size < batch_size]
+    if not lower:
+        return None
+    first = max(lower)
+    second = batch_size - first
+    if second <= 0:
+        return None
+    return {
+        "total_tokens": int(batch_size),
+        "first_tokens": int(first),
+        "second_tokens": int(second),
+        "first_start_num_tokens": 0,
+        "second_start_num_tokens": int(first),
+    }
+
+
+def _load_jsonl(path: str) -> list[dict[str, Any]]:
+    if not path or not os.path.exists(path):
+        return []
+    rows: list[dict[str, Any]] = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict):
+                rows.append(obj)
+    return rows
+
+
+def _tensor_ptr(payload: dict[str, Any], *path: str) -> int | None:
+    cur = _tensor_payload(payload, *path)
+    if cur is None:
+        return None
+    ptr = cur.get("data_ptr", cur.get("ptr"))
+    return int(ptr) if ptr is not None else None
+
+
+def _tensor_payload(payload: dict[str, Any],
+                    *path: str) -> dict[str, Any] | None:
+    cur: Any = payload
+    for key in path:
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(key)
+    if not isinstance(cur, dict):
+        return None
+    return cur
+
+
+def _split_from_slices(row: dict[str, Any]) -> dict[str, int] | None:
+    splits = row.get("splits")
+    if not isinstance(splits, list) or len(splits) < 2:
+        return None
+    return {
+        "total_tokens":
+        int(sum(int(s.get("num_tokens", 0) or 0) for s in splits)),
+        "first_tokens":
+        int(splits[0].get("num_tokens", 0) or 0),
+        "second_tokens":
+        int(splits[1].get("num_tokens", 0) or 0),
+        "first_start_num_tokens":
+        int(splits[0].get("start_num_tokens", 0) or 0),
+        "second_start_num_tokens":
+        int(splits[1].get("start_num_tokens", 0) or 0),
+    }
+
+
+def _split_histogram_key(split: dict[str, int]) -> str:
+    return (
+        f"{split['first_tokens']}+{split['second_tokens']}"
+        f"@{split['second_start_num_tokens']}"
+    )
+
+
+def _descriptor_matches_expected(row: dict[str, Any],
+                                 expected_split: dict[str, int],
+                                 expected_graph_variant: str) -> bool:
+    descriptor = row.get("batch_descriptor") or {}
+    return (
+        int(descriptor.get("num_tokens", row.get("actual_num_tokens", 0)) or 0)
+        == int(expected_split["second_tokens"])
+        and int(descriptor.get("start_num_tokens", 0) or 0)
+        == int(expected_split["second_start_num_tokens"])
+        and str(descriptor.get("graph_variant", expected_graph_variant))
+        == expected_graph_variant
+    )
+
+
+def _execution_matches_expected(row: dict[str, Any],
+                                expected_split: dict[str, int]) -> bool:
+    return (
+        int(row.get("num_tokens", 0) or 0) == int(expected_split["second_tokens"])
+        and int(row.get("start_num_tokens", 0) or 0)
+        == int(expected_split["second_start_num_tokens"])
+    )
+
+
+def _summarize_split_debug_trace(
+    path: str,
+    *,
+    expected_split: dict[str, int] | None,
+    split_mode: str = "inplace_serial",
+    expected_no_split_reason: str | None = None,
+) -> dict[str, Any]:
+    rows = _load_jsonl(path)
+    event_counts: dict[str, int] = {}
+    for row in rows:
+        event = str(row.get("event"))
+        event_counts[event] = event_counts.get(event, 0) + 1
+
+    planner_decisions = [
+        row for row in rows if row.get("event") == "split_planner_decision"
+    ]
+    fallback_reason_histogram: dict[str, int] = {}
+    for row in planner_decisions:
+        reason = row.get("reason")
+        fallback_to = row.get("fallback_to")
+        if reason is None:
+            continue
+        if fallback_to is not None or str(reason).startswith("no_split_"):
+            reason_key = str(reason)
+            fallback_reason_histogram[reason_key] = (
+                fallback_reason_histogram.get(reason_key, 0) + 1)
+    split_slices = [row for row in rows if row.get("event") == "split_slices"]
+    descriptors = [row for row in rows if row.get("event") == "split_descriptor"]
+    inplace_exec_events = {"inplace_serial_execution"}
+    expected_graph_variant = "inplace_serial"
+    if split_mode == "inplace_parallel":
+        inplace_exec_events.add("inplace_parallel_execution")
+        expected_graph_variant = "inplace_parallel"
+    inplace_exec = [
+        row for row in rows if row.get("event") in inplace_exec_events
+    ]
+    captures = [
+        row for row in rows
+        if row.get("event") == "acl_graph_capture"
+        and row.get("phase") == "post"
+        and int((row.get("batch_descriptor") or {}).get(
+            "start_num_tokens", 0) or 0) > 0
+    ]
+    acl_replays = [
+        row for row in rows
+        if row.get("event") == "acl_graph_replay"
+        and row.get("phase") == "post"
+        and int((row.get("batch_descriptor") or {}).get(
+            "start_num_tokens", 0) or 0) > 0
+    ]
+    lazy_capture_complete = [
+        row for row in rows
+        if row.get("event") == "inplace_lazy_capture_complete"
+        and int((row.get("batch_descriptor") or {}).get(
+            "start_num_tokens", 0) or 0) > 0
+    ]
+
+    observed_splits: list[dict[str, Any]] = []
+    observed_split_histogram: dict[str, int] = {}
+    for row in split_slices:
+        split = _split_from_slices(row)
+        if split is None:
+            continue
+        record = {
+            "step_id": row.get("step_id"),
+            **split,
+        }
+        observed_splits.append(record)
+        key = _split_histogram_key(split)
+        observed_split_histogram[key] = observed_split_histogram.get(key, 0) + 1
+
+    expected_observations: list[dict[str, Any]] = []
+    expected_descriptors: list[dict[str, Any]] = []
+    expected_exec: list[dict[str, Any]] = []
+    expected_captures: list[dict[str, Any]] = []
+    expected_lazy_captures: list[dict[str, Any]] = []
+    if expected_split is not None:
+        expected_observations = [
+            row for row in observed_splits
+            if {
+                "total_tokens": row["total_tokens"],
+                "first_tokens": row["first_tokens"],
+                "second_tokens": row["second_tokens"],
+                "first_start_num_tokens": row["first_start_num_tokens"],
+                "second_start_num_tokens": row["second_start_num_tokens"],
+            } == expected_split
+        ]
+        expected_descriptors = [
+            row for row in descriptors
+            if _descriptor_matches_expected(row, expected_split,
+                                            expected_graph_variant)
+        ]
+        expected_exec = [
+            row for row in inplace_exec
+            if _execution_matches_expected(row, expected_split)
+        ]
+        expected_captures = [
+            row for row in captures
+            if _descriptor_matches_expected(row, expected_split,
+                                            expected_graph_variant)
+        ]
+        expected_lazy_captures = [
+            row for row in lazy_capture_complete
+            if _descriptor_matches_expected(row, expected_split,
+                                            expected_graph_variant)
+        ]
+
+    second_exec = expected_exec if expected_split is not None else [
+        row for row in inplace_exec
+        if int(row.get("start_num_tokens", 0) or 0) > 0
+    ]
+    ptr_fields = {
+        "input_ids": ("input_ids", ),
+        "positions": ("positions", ),
+        "query_start_loc": ("metadata", "query_start_loc"),
+        "seq_lens": ("metadata", "seq_lens"),
+        "block_tables": ("metadata", "block_tables"),
+        "slot_mapping": ("metadata", "slot_mapping"),
+    }
+    ptr_stability: dict[str, Any] = {}
+    for name, keys in ptr_fields.items():
+        tensor_payloads = [
+            info for info in (_tensor_payload(row, *keys)
+                              for row in second_exec) if info is not None
+        ]
+        values = []
+        shapes: list[list[int]] = []
+        ndims: list[int] = []
+        storage_offsets: list[int] = []
+        for info in tensor_payloads:
+            ptr = info.get("data_ptr", info.get("ptr"))
+            if ptr is not None:
+                values.append(int(ptr))
+            shape = info.get("shape")
+            if isinstance(shape, list):
+                shapes.append([int(v) for v in shape])
+                ndims.append(int(info.get("ndim", len(shape))))
+            elif "ndim" in info:
+                ndims.append(int(info["ndim"]))
+            if info.get("storage_offset") is not None:
+                storage_offsets.append(int(info["storage_offset"]))
+        unique_shapes = sorted({tuple(shape) for shape in shapes})
+        ptr_stability[name] = {
+            "count": len(values),
+            "unique_count": len(set(values)),
+            "stable": bool(values) and len(set(values)) == 1,
+            "values": sorted(set(values))[:8],
+            "shapes": [list(shape) for shape in unique_shapes[:8]],
+            "ndims": sorted(set(ndims))[:8],
+            "storage_offsets": sorted(set(storage_offsets))[:8],
+        }
+
+    observed_split = None
+    if expected_observations:
+        observed_split = {
+            k: expected_observations[-1][k]
+            for k in (
+                "total_tokens",
+                "first_tokens",
+                "second_tokens",
+                "first_start_num_tokens",
+                "second_start_num_tokens",
+            )
+        }
+    elif observed_splits:
+        observed_split = {
+            k: observed_splits[-1][k]
+            for k in (
+                "total_tokens",
+                "first_tokens",
+                "second_tokens",
+                "first_start_num_tokens",
+                "second_start_num_tokens",
+            )
+        }
+
+    expected_capture_count = (
+        len(expected_lazy_captures) if expected_lazy_captures
+        else len(expected_captures)
+    )
+    inferred_replay_count = (
+        max(0, len(expected_exec) - expected_capture_count)
+        if expected_split is not None else 0
+    )
+    parallel_gate = {
+        "descriptor_parallel_stream_count": sum(
+            1 for row in expected_descriptors
+            if bool(row.get("in_parallel_streams", False))),
+        "execution_parallel_stream_count": sum(
+            1 for row in second_exec
+            if str(row.get("stream", "")) == "parallel"),
+        "original_offset_view_count": sum(
+            1 for row in second_exec
+            if row.get("buffer_source") == "original_offset_view"),
+        "parallel_graph_entry_pool_count": sum(
+            1 for row in second_exec
+            if row.get("graph_entry_pool") == "parallel"),
+        "parallel_graph_params_pool_count": sum(
+            1 for row in second_exec
+            if row.get("graph_params_pool") == "parallel"),
+    }
+
+    failures: list[str] = []
+    if expected_no_split_reason is not None:
+        observed = fallback_reason_histogram.get(expected_no_split_reason, 0)
+        if observed < 1:
+            failures.append(
+                "expected no-split fallback reason not observed: "
+                f"{expected_no_split_reason}")
+        if inplace_exec:
+            failures.append(
+                "inplace execution observed despite expected no-split "
+                f"fallback: {len(inplace_exec)} events")
+    if expected_split is not None:
+        if len(expected_observations) < 3:
+            failures.append(
+                "expected split observed fewer than 3 decode steps: "
+                f"{len(expected_observations)}")
+        if not expected_descriptors:
+            failures.append(
+                f"no split-1 descriptor observed for {expected_split}")
+        if expected_capture_count < 1:
+            failures.append(
+                f"no offset lazy capture observed for {expected_split}")
+        if expected_capture_count > 1:
+            failures.append(
+                f"offset descriptor captured more than once: "
+                f"{expected_capture_count}")
+        if expected_capture_count >= 1 and inferred_replay_count < 1:
+            failures.append(
+                "no inferred replay observed after offset lazy capture")
+    if expected_split is not None and second_exec:
+        unstable = [
+            name for name, info in ptr_stability.items()
+            if info["count"] > 1 and not info["stable"]
+        ]
+        if unstable:
+            failures.append(f"unstable split-1 ptrs: {unstable}")
+        missing = [
+            name for name, info in ptr_stability.items()
+            if info["count"] == 0
+        ]
+        if missing:
+            failures.append(f"missing split-1 ptr observations: {missing}")
+    if expected_split is not None and not second_exec:
+        failures.append("no split-1 inplace execution event observed")
+    if expected_split is not None and split_mode == "inplace_parallel":
+        if parallel_gate["descriptor_parallel_stream_count"] == 0:
+            failures.append("split-1 descriptor did not use parallel stream")
+        if parallel_gate["execution_parallel_stream_count"] == 0:
+            failures.append("split-1 execution did not use parallel stream")
+        if parallel_gate["original_offset_view_count"] == 0:
+            failures.append(
+                "split-1 inplace_parallel execution did not report "
+                "original_offset_view buffer source")
+        if parallel_gate["parallel_graph_entry_pool_count"] == 0:
+            failures.append(
+                "split-1 inplace_parallel execution did not use parallel "
+                "graph entry pool")
+        if parallel_gate["parallel_graph_params_pool_count"] == 0:
+            failures.append(
+                "split-1 inplace_parallel execution did not use parallel "
+                "GraphParams pool")
+
+    return {
+        "path": path,
+        "exists": os.path.exists(path),
+        "num_events": len(rows),
+        "event_counts": event_counts,
+        "latest_planner_decision":
+        planner_decisions[-1] if planner_decisions else None,
+        "fallback_reason_histogram": fallback_reason_histogram,
+        "expected_no_split_reason": expected_no_split_reason,
+        "latest_descriptors": descriptors[-4:],
+        "expected_split": expected_split,
+        "expected_graph_variant": expected_graph_variant,
+        "expected_split_observations": {
+            "count": len(expected_observations),
+            "step_ids": [
+                row.get("step_id") for row in expected_observations
+                if row.get("step_id") is not None
+            ],
+        },
+        "observed_splits": observed_splits[-16:],
+        "observed_split_histogram": observed_split_histogram,
+        "observed_split": observed_split,
+        "offset_graph": {
+            "capture_count": expected_capture_count,
+            "acl_capture_count": len(expected_captures),
+            "lazy_capture_count": len(expected_lazy_captures),
+            "replay_count": len(acl_replays),
+            "inferred_replay_count": inferred_replay_count,
+            "unexpected_capture_count": max(0, expected_capture_count - 1),
+        },
+        "ptr_stability": ptr_stability,
+        "parallel_gate": parallel_gate,
+        "failures": failures,
+    }
+
+
 class _TeeTextIO:
     """Write to multiple text streams (used to tee stdout/stderr to a file)."""
 
@@ -123,8 +586,44 @@ def create_parser() -> FlexibleArgumentParser:
     test_group = parser.add_argument_group("Split-batch correctness test")
     test_group.add_argument("--max-tokens", type=int, default=64)
     test_group.add_argument("--batch-size", type=int, default=8)
+    test_group.add_argument(
+        "--fixed-batch-size",
+        type=int,
+        default=None,
+        help=(
+            "Fixed request batch size. Overrides --batch-size and, when "
+            "--capture-sizes is omitted, defaults capture sizes to "
+            "256,384,512."
+        ),
+    )
+    test_group.add_argument(
+        "--fixed-batch-query-len",
+        type=int,
+        default=1,
+        help=(
+            "Scheduled token count per request for fixed-batch trace "
+            "expectations. Use 1 for normal decode and "
+            "1 + num_speculative_tokens for uniform spec decode."
+        ),
+    )
     test_group.add_argument("--num-splits", type=int, default=2)
     test_group.add_argument("--min-batch-size-for-split", type=int, default=4)
+    test_group.add_argument(
+        "--split-mode",
+        type=str,
+        default="parallel_buffer",
+        choices=["parallel_buffer", "inplace_serial", "inplace_parallel"],
+        help="split_batch_config.mode for the enabled run.",
+    )
+    test_group.add_argument(
+        "--capture-sizes",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated cudagraph capture sizes. Phase-10 example: "
+            "--capture-sizes 256,384,512."
+        ),
+    )
     test_group.add_argument(
         "--enable-parallel-streams",
         action="store_true",
@@ -149,6 +648,96 @@ def create_parser() -> FlexibleArgumentParser:
             "savings (split_batch_config.force_split). Useful for benchmarking "
             "the split path on all batch sizes including exact graph hits."
         ),
+    )
+    test_group.add_argument(
+        "--validate-ptrs",
+        action="store_true",
+        help=(
+            "Enable inplace input/metadata pointer validation for the enabled "
+            "run (split_batch_config.inplace_validate_metadata_ptrs)."
+        ),
+    )
+    force_pa_group = test_group.add_mutually_exclusive_group()
+    force_pa_group.add_argument(
+        "--inplace-force-pa-for-offset",
+        dest="inplace_force_pa_for_offset",
+        action="store_true",
+        default=False,
+        help=(
+            "Diagnostic only: force offset inplace serial microbatches to use "
+            "PA instead of the selected attention backend."
+        ),
+    )
+    force_pa_group.add_argument(
+        "--no-inplace-force-pa-for-offset",
+        dest="inplace_force_pa_for_offset",
+        action="store_false",
+        help=(
+            "Diagnostic only: keep offset inplace serial microbatches on the "
+            "selected attention backend. This is the default."
+        ),
+    )
+    test_group.add_argument(
+        "--enable-inplace-spec-decode",
+        action="store_true",
+        help=(
+            "Allow inplace split for uniform speculative decode. Default is "
+            "off so spec decode keeps the Phase-12 fallback gate."
+        ),
+    )
+    test_group.add_argument(
+        "--enable-inplace-mrope",
+        action="store_true",
+        help=(
+            "Allow inplace_serial split for M-RoPE. Default is off so M-RoPE "
+            "keeps the Phase-12 fallback gate."
+        ),
+    )
+    test_group.add_argument(
+        "--split-debug",
+        action="store_true",
+        help="Collect VLLM_ASCEND_SPLIT_INPLACE_DEBUG JSONL for child runs.",
+    )
+    test_group.add_argument(
+        "--expect-split",
+        type=str,
+        default=None,
+        help=(
+            "Expected first,second split token counts, for example 384,32. "
+            "If omitted with --fixed-batch-size and --split-mode inplace_serial, "
+            "the value is derived from --capture-sizes."
+        ),
+    )
+    test_group.add_argument(
+        "--expect-no-split-reason",
+        type=str,
+        default=None,
+        help=(
+            "Expected split_planner_decision reason when validating an "
+            "intentional inplace fallback, for example no_split_mrope. "
+            "When set, trace validation requires no offset inplace execution."
+        ),
+    )
+    test_group.add_argument(
+        "--force-fixed-prompts",
+        action="store_true",
+        help=(
+            "Use the same prompt for every request and ignore EOS by default, "
+            "so decode steps keep a fixed batch longer."
+        ),
+    )
+    test_group.add_argument(
+        "--fixed-prompt",
+        type=str,
+        default=(
+            "Write one concise sentence about deterministic batch scheduling."
+        ),
+        help="Prompt used when --force-fixed-prompts is set.",
+    )
+    test_group.add_argument(
+        "--ignore-eos",
+        action="store_true",
+        help="Set SamplingParams(ignore_eos=True).",
     )
     test_group.add_argument(
         "--run",
@@ -278,6 +867,10 @@ def _generate_prompts(*, batch_size: int, seed: int | None) -> list[str]:
     return prompts
 
 
+def _generate_fixed_prompts(*, batch_size: int, prompt: str) -> list[str]:
+    return [prompt for _ in range(batch_size)]
+
+
 def _load_prompts(prompts_file: str) -> list[str]:
     with open(prompts_file, "r", encoding="utf-8") as f:
         prompts = json.load(f)
@@ -339,16 +932,37 @@ def _compare_serialized(
             continue
 
         if a.get("token_ids") != b.get("token_ids") or a.get("text") != b.get("text"):
+            disabled_token_ids = list(a.get("token_ids") or [])
+            enabled_token_ids = list(b.get("token_ids") or [])
+            first_token_mismatch = None
+            for token_idx, (disabled_token, enabled_token) in enumerate(
+                    zip(disabled_token_ids, enabled_token_ids)):
+                if disabled_token != enabled_token:
+                    first_token_mismatch = {
+                        "position": token_idx,
+                        "disabled": disabled_token,
+                        "enabled": enabled_token,
+                    }
+                    break
+            if first_token_mismatch is None and (
+                    len(disabled_token_ids) != len(enabled_token_ids)):
+                first_token_mismatch = {
+                    "position": min(
+                        len(disabled_token_ids), len(enabled_token_ids)),
+                    "disabled_len": len(disabled_token_ids),
+                    "enabled_len": len(enabled_token_ids),
+                }
             mismatches.append(
                 {
                     "index": i,
                     "prompt": a.get("prompt"),
+                    "first_token_mismatch": first_token_mismatch,
                     "disabled": {
-                        "token_ids": a.get("token_ids"),
+                        "token_ids": disabled_token_ids,
                         "text": a.get("text"),
                     },
                     "enabled": {
-                        "token_ids": b.get("token_ids"),
+                        "token_ids": enabled_token_ids,
                         "text": b.get("text"),
                     },
                 }
@@ -453,14 +1067,20 @@ def _run_with_torch_profiler(
 def _build_split_additional_config(
     *,
     enabled: bool,
+    split_mode: str,
     num_splits: int,
     enable_parallel_streams: bool,
     min_batch_size_for_split: int,
     parallel_capture_sizes: list[int] | None = None,
     force_split: bool = False,
+    validate_ptrs: bool = False,
+    inplace_force_pa_for_offset: bool = False,
+    enable_inplace_spec_decode: bool = False,
+    enable_inplace_mrope: bool = False,
 ) -> dict[str, Any]:
     cfg: dict[str, Any] = {
         "enabled": enabled,
+        "mode": split_mode,
         "num_splits": num_splits,
         "enable_parallel_streams": enable_parallel_streams,
         "min_batch_size_for_split": min_batch_size_for_split,
@@ -469,6 +1089,13 @@ def _build_split_additional_config(
         cfg["parallel_capture_sizes"] = parallel_capture_sizes
     if force_split:
         cfg["force_split"] = True
+    if split_mode.startswith("inplace"):
+        cfg["enable_inplace_lazy_capture"] = True
+        cfg["inplace_validate_metadata_ptrs"] = bool(validate_ptrs)
+        cfg["inplace_force_pa_for_offset"] = bool(
+            inplace_force_pa_for_offset)
+        cfg["enable_inplace_spec_decode"] = bool(enable_inplace_spec_decode)
+        cfg["enable_inplace_mrope"] = bool(enable_inplace_mrope)
     return {"split_batch_config": cfg}
 
 
@@ -511,12 +1138,22 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "tokenizer": base_args.get("tokenizer") or base_args.get("model"),
         "seed": base_args.get("seed"),
         "batch_size": ctx["batch_size"],
+        "fixed_batch_size": ctx["fixed_batch_size"],
+        "fixed_batch_query_len": ctx["fixed_batch_query_len"],
+        "fixed_batch_total_tokens": ctx["fixed_batch_total_tokens"],
         "max_tokens": ctx["max_tokens"],
         "max_model_len": base_args.get("max_model_len"),
         "gpu_memory_utilization": base_args.get("gpu_memory_utilization"),
+        "split_mode": ctx["split_mode"],
         "num_splits": ctx["num_splits"],
         "enable_parallel_streams": ctx["enable_parallel_streams"],
         "min_batch_size_for_split": ctx["min_batch_size_for_split"],
+        "validate_ptrs": ctx["validate_ptrs"],
+        "enable_inplace_spec_decode": ctx["enable_inplace_spec_decode"],
+        "enable_inplace_mrope": ctx["enable_inplace_mrope"],
+        "split_debug": ctx["split_debug"],
+        "expected_split": ctx["expected_split"],
+        "expected_no_split_reason": ctx["expected_no_split_reason"],
         "compilation_config": base_args.get("compilation_config"),
         "compare_mode": "subprocess",
     }
@@ -524,6 +1161,10 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
 
     outputs_disabled_path = os.path.join(out_dir, "outputs_split_disabled.json")
     outputs_enabled_path = os.path.join(out_dir, "outputs_split_enabled.json")
+    debug_disabled_path = os.path.join(out_dir,
+                                       "split_inplace_debug_disabled.jsonl")
+    debug_enabled_path = os.path.join(out_dir,
+                                      "split_inplace_debug_enabled.jsonl")
 
     script_path = str(Path(__file__).resolve())
 
@@ -589,11 +1230,22 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
                 cmd.append("--profile-with-stack")
         return cmd
 
+    def _child_env(*, child_run: str) -> dict[str, str]:
+        env = os.environ.copy()
+        if ctx["split_debug"]:
+            env["VLLM_ASCEND_SPLIT_INPLACE_DEBUG"] = "1"
+            env["VLLM_ASCEND_SPLIT_INPLACE_DEBUG_FILE"] = (
+                debug_enabled_path
+                if child_run == "enabled" else debug_disabled_path)
+        return env
+
     print("=== Coordinator (subprocess) ===")
     print("Output dir:", out_dir)
 
     print("\n=== Run 1/2: split disabled (child process) ===")
-    r0 = subprocess.run(_child_cmd(child_run="disabled", child_out=outputs_disabled_path))
+    r0 = subprocess.run(
+        _child_cmd(child_run="disabled", child_out=outputs_disabled_path),
+        env=_child_env(child_run="disabled"))
     if r0.returncode != 0:
         print(f"FAIL: child(disabled) exit code={r0.returncode}", file=sys.stderr)
         _save_json(
@@ -607,7 +1259,9 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         return r0.returncode or 1
 
     print("\n=== Run 2/2: split enabled (child process) ===")
-    r1 = subprocess.run(_child_cmd(child_run="enabled", child_out=outputs_enabled_path))
+    r1 = subprocess.run(
+        _child_cmd(child_run="enabled", child_out=outputs_enabled_path),
+        env=_child_env(child_run="enabled"))
     if r1.returncode != 0:
         print(f"FAIL: child(enabled) exit code={r1.returncode}", file=sys.stderr)
         _save_json(
@@ -628,6 +1282,17 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
     disabled_rows = disabled_obj.get("outputs", [])
     enabled_rows = enabled_obj.get("outputs", [])
 
+    split_trace_summary = _summarize_split_debug_trace(
+        debug_enabled_path,
+        expected_split=ctx["expected_split"],
+        split_mode=ctx["split_mode"],
+        expected_no_split_reason=ctx["expected_no_split_reason"],
+    ) if ctx["split_debug"] else None
+    trace_summary_path = None
+    if split_trace_summary is not None:
+        trace_summary_path = os.path.join(out_dir, "split_trace_summary.json")
+        _save_json(trace_summary_path, split_trace_summary)
+
     mismatches = _compare_serialized(disabled_rows, enabled_rows)
     if mismatches:
         diff_path = os.path.join(out_dir, "diff.json")
@@ -638,10 +1303,31 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
                 "status": "FAIL",
                 "mismatch_total": len(mismatches),
                 "diff_path": diff_path,
+                "trace_summary_path": trace_summary_path,
+                "split_trace_summary": split_trace_summary,
             },
         )
         print(f"\nFAIL: {len(mismatches)} mismatches. See {diff_path}", file=sys.stderr)
         return 1
+
+    if split_trace_summary is not None:
+        if split_trace_summary["failures"]:
+            _save_json(
+                os.path.join(out_dir, "summary.json"),
+                {
+                    "status": "FAIL",
+                    "reason": "split trace validation failed",
+                    "trace_summary_path": trace_summary_path,
+                    "trace_failures": split_trace_summary["failures"],
+                    "outputs_disabled_path": outputs_disabled_path,
+                    "outputs_enabled_path": outputs_enabled_path,
+                },
+            )
+            print(
+                "\nFAIL: split trace validation failed. See "
+                f"{trace_summary_path}",
+                file=sys.stderr)
+            return 1
 
     sample = enabled_rows[0] if enabled_rows else {}
     _save_json(
@@ -649,6 +1335,7 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         {
             "status": "PASS",
             "count": len(enabled_rows),
+            "split_trace_summary": split_trace_summary,
             "sample": {
                 "token_ids_len": len(sample.get("token_ids", []) or []),
                 "text_preview": (sample.get("text") or "")[:200],
@@ -680,16 +1367,42 @@ def main() -> int:
 
     max_tokens = int(args.pop("max_tokens"))
     batch_size = int(args.pop("batch_size"))
+    fixed_batch_size = args.pop("fixed_batch_size")
+    if fixed_batch_size is not None:
+        batch_size = int(fixed_batch_size)
+    fixed_batch_query_len = int(args.pop("fixed_batch_query_len"))
+    if fixed_batch_query_len < 1:
+        print("ERROR: --fixed-batch-query-len must be >= 1",
+              file=sys.stderr)
+        return 2
+    fixed_batch_total_tokens = (
+        int(batch_size) * int(fixed_batch_query_len)
+        if fixed_batch_size is not None else None
+    )
     num_splits = int(args.pop("num_splits"))
     min_batch_size_for_split = int(args.pop("min_batch_size_for_split"))
+    split_mode = str(args.pop("split_mode"))
+    _capture_sizes_raw = args.pop("capture_sizes")
+    capture_sizes = _parse_int_list(_capture_sizes_raw)
+    if fixed_batch_size is not None and capture_sizes is None:
+        capture_sizes = [256, 384, 512]
+    if capture_sizes is not None:
+        _apply_capture_sizes(args, capture_sizes)
     enable_parallel_streams = bool(args.pop("enable_parallel_streams"))
     _parallel_capture_sizes_raw = args.pop("parallel_capture_sizes")
-    parallel_capture_sizes: list[int] | None = (
-        [int(s.strip()) for s in _parallel_capture_sizes_raw.split(",") if s.strip()]
-        if _parallel_capture_sizes_raw
-        else None
-    )
+    parallel_capture_sizes = _parse_int_list(_parallel_capture_sizes_raw)
     force_split = bool(args.pop("force_split"))
+    validate_ptrs = bool(args.pop("validate_ptrs"))
+    inplace_force_pa_for_offset = bool(
+        args.pop("inplace_force_pa_for_offset"))
+    enable_inplace_spec_decode = bool(args.pop("enable_inplace_spec_decode"))
+    enable_inplace_mrope = bool(args.pop("enable_inplace_mrope"))
+    split_debug = bool(args.pop("split_debug"))
+    expect_split_raw = args.pop("expect_split")
+    expected_no_split_reason = args.pop("expect_no_split_reason")
+    force_fixed_prompts = bool(args.pop("force_fixed_prompts"))
+    fixed_prompt = str(args.pop("fixed_prompt"))
+    ignore_eos = bool(args.pop("ignore_eos"))
     run_mode = str(args.pop("run"))
     compare_mode = str(args.pop("compare_mode"))
     output_dir_base = str(args.pop("output_dir"))
@@ -701,6 +1414,65 @@ def main() -> int:
     profile_target = str(args.pop("profile_target"))
     profile_record_shapes = bool(args.pop("profile_record_shapes"))
     profile_with_stack = bool(args.pop("profile_with_stack"))
+
+    if split_mode.startswith("inplace"):
+        split_debug = True if (split_debug or validate_ptrs
+                               or fixed_batch_size is not None
+                               or expected_no_split_reason) else split_debug
+    if force_fixed_prompts:
+        ignore_eos = True
+
+    if fixed_batch_size is not None:
+        try:
+            _ensure_fixed_batch_graph_capacity(
+                args,
+                batch_size=int(fixed_batch_total_tokens),
+                capture_sizes=capture_sizes,
+            )
+        except ValueError:
+            return 2
+
+    expected_split = None
+    if expect_split_raw:
+        expected_values = _parse_int_list(str(expect_split_raw))
+        if expected_values is None or len(expected_values) != 2:
+            print("ERROR: --expect-split must be first,second",
+                  file=sys.stderr)
+            return 2
+        expected_split = {
+            "total_tokens": int(sum(expected_values)),
+            "first_tokens": int(expected_values[0]),
+            "second_tokens": int(expected_values[1]),
+            "first_start_num_tokens": 0,
+            "second_start_num_tokens": int(expected_values[0]),
+        }
+    elif (fixed_batch_size is not None and split_mode.startswith("inplace")
+          and capture_sizes is not None):
+        expected_split = _expected_inplace_split(
+            int(fixed_batch_total_tokens), capture_sizes)
+
+    if expected_no_split_reason is not None:
+        if not split_mode.startswith("inplace"):
+            print("ERROR: --expect-no-split-reason requires inplace split mode",
+                  file=sys.stderr)
+            return 2
+        if expect_split_raw:
+            print(
+                "ERROR: --expect-no-split-reason cannot be combined with "
+                "--expect-split",
+                file=sys.stderr,
+            )
+            return 2
+        if expected_split is not None and not expect_split_raw:
+            expected_split = None
+
+    if expected_split is not None and max_tokens < 3:
+        print(
+            "ERROR: split trace validation needs --max-tokens >= 3 to observe "
+            "one offset capture and later replay",
+            file=sys.stderr,
+        )
+        return 2
 
     # In vLLM V1, setting VLLM_ENABLE_V1_MULTIPROCESSING=0 forces in-proc execution.
     # In this mode, releasing NPU memory fully between two separate engine instantiations
@@ -719,6 +1491,9 @@ def main() -> int:
     seed = args.get("seed")
     if prompts_file:
         prompts = _load_prompts(str(prompts_file))
+    elif force_fixed_prompts:
+        prompts = _generate_fixed_prompts(batch_size=batch_size,
+                                          prompt=fixed_prompt)
     else:
         prompts = _generate_prompts(batch_size=batch_size, seed=seed)
 
@@ -729,27 +1504,40 @@ def main() -> int:
         )
         return 2
 
-    sampling = SamplingParams(
-        max_tokens=max_tokens,
-        temperature=0.0,
-        top_p=1.0,
-    )
+    sampling_kwargs: dict[str, Any] = {
+        "max_tokens": max_tokens,
+        "temperature": 0.0,
+        "top_p": 1.0,
+    }
+    if ignore_eos:
+        sampling_kwargs["ignore_eos"] = True
+    sampling = SamplingParams(**sampling_kwargs)
 
     split_disabled_cfg = _build_split_additional_config(
         enabled=False,
+        split_mode=split_mode,
         num_splits=num_splits,
         enable_parallel_streams=enable_parallel_streams,
         min_batch_size_for_split=min_batch_size_for_split,
         parallel_capture_sizes=parallel_capture_sizes,
         force_split=force_split,
+        validate_ptrs=validate_ptrs,
+        inplace_force_pa_for_offset=inplace_force_pa_for_offset,
+        enable_inplace_spec_decode=enable_inplace_spec_decode,
+        enable_inplace_mrope=enable_inplace_mrope,
     )
     split_enabled_cfg = _build_split_additional_config(
         enabled=True,
+        split_mode=split_mode,
         num_splits=num_splits,
         enable_parallel_streams=enable_parallel_streams,
         min_batch_size_for_split=min_batch_size_for_split,
         parallel_capture_sizes=parallel_capture_sizes,
         force_split=force_split,
+        validate_ptrs=validate_ptrs,
+        inplace_force_pa_for_offset=inplace_force_pa_for_offset,
+        enable_inplace_spec_decode=enable_inplace_spec_decode,
+        enable_inplace_mrope=enable_inplace_mrope,
     )
 
     # Preferred: coordinator mode spawns 2 child processes then compares.
@@ -759,10 +1547,20 @@ def main() -> int:
             prompts=prompts,
             output_dir_base=output_dir_base,
             batch_size=batch_size,
+            fixed_batch_size=fixed_batch_size,
+            fixed_batch_query_len=fixed_batch_query_len,
+            fixed_batch_total_tokens=fixed_batch_total_tokens,
             max_tokens=max_tokens,
+            split_mode=split_mode,
             num_splits=num_splits,
             enable_parallel_streams=enable_parallel_streams,
             min_batch_size_for_split=min_batch_size_for_split,
+            validate_ptrs=validate_ptrs,
+            enable_inplace_spec_decode=enable_inplace_spec_decode,
+            enable_inplace_mrope=enable_inplace_mrope,
+            split_debug=split_debug,
+            expected_split=expected_split,
+            expected_no_split_reason=expected_no_split_reason,
             profile_enabled=profile_enabled,
             profile_dir=profile_dir,
             profile_target=profile_target,
@@ -781,12 +1579,24 @@ def main() -> int:
         "tokenizer": args.get("tokenizer") or args.get("model"),
         "seed": seed,
         "batch_size": batch_size,
+        "fixed_batch_size": fixed_batch_size,
+        "fixed_batch_query_len": fixed_batch_query_len,
+        "fixed_batch_total_tokens": fixed_batch_total_tokens,
         "max_tokens": max_tokens,
+        "ignore_eos": ignore_eos,
+        "force_fixed_prompts": force_fixed_prompts,
         "max_model_len": args.get("max_model_len"),
         "gpu_memory_utilization": args.get("gpu_memory_utilization"),
+        "split_mode": split_mode,
         "num_splits": num_splits,
         "enable_parallel_streams": enable_parallel_streams,
         "min_batch_size_for_split": min_batch_size_for_split,
+        "validate_ptrs": validate_ptrs,
+        "enable_inplace_spec_decode": enable_inplace_spec_decode,
+        "enable_inplace_mrope": enable_inplace_mrope,
+        "split_debug": split_debug,
+        "expected_split": expected_split,
+        "expected_no_split_reason": expected_no_split_reason,
         "compilation_config": args.get("compilation_config"),
         "run": run_mode,
         "compare_mode": compare_mode,
@@ -798,12 +1608,17 @@ def main() -> int:
         "output_file": output_file,
         "output_dir": out_dir,
         "notes": {
+            "split_mode": split_mode,
             "inproc_v1": inproc_v1,
         },
     }
     _save_json(os.path.join(out_dir, "metadata.json"), metadata)
 
     console_path = os.path.join(out_dir, "console.log")
+    debug_path = os.path.join(out_dir, f"split_inplace_debug_{run_mode}.jsonl")
+    if split_debug:
+        os.environ["VLLM_ASCEND_SPLIT_INPLACE_DEBUG"] = "1"
+        os.environ["VLLM_ASCEND_SPLIT_INPLACE_DEBUG_FILE"] = debug_path
     os.makedirs(out_dir, exist_ok=True)
     console_f = open(console_path, "a", encoding="utf-8")
 
@@ -839,8 +1654,15 @@ def main() -> int:
                     "gpu_memory_utilization": args.get("gpu_memory_utilization"),
                     "batch_size": batch_size,
                     "max_tokens": max_tokens,
+                    "ignore_eos": ignore_eos,
                     "split_batch_config": split_enabled_cfg["split_batch_config"],
                     "compilation_config": args.get("compilation_config"),
+                    "expected_split": expected_split,
+                    "expected_no_split_reason": expected_no_split_reason,
+                    "enable_inplace_spec_decode":
+                    enable_inplace_spec_decode,
+                    "enable_inplace_mrope": enable_inplace_mrope,
+                    "split_debug_file": debug_path if split_debug else None,
                     "run": run_mode,
                     "compare_mode": compare_mode,
                 },
@@ -926,6 +1748,42 @@ def main() -> int:
                 _cleanup_llm(llm1)
 
             if out0 is None:
+                split_trace_summary = None
+                trace_summary_path = None
+                if split_debug:
+                    split_trace_summary = _summarize_split_debug_trace(
+                        debug_path,
+                        expected_split=expected_split,
+                        split_mode=split_mode,
+                        expected_no_split_reason=expected_no_split_reason,
+                    )
+                    trace_summary_path = os.path.join(
+                        out_dir, "split_trace_summary.json")
+                    _save_json(trace_summary_path, split_trace_summary)
+                    if split_trace_summary["failures"]:
+                        print(
+                            "\nFAIL: split trace validation failed. See "
+                            f"{trace_summary_path}",
+                            file=sys.stderr)
+                        print(
+                            json.dumps(split_trace_summary["failures"],
+                                       ensure_ascii=False,
+                                       indent=2),
+                            file=sys.stderr)
+                        _save_json(
+                            os.path.join(out_dir, "summary.json"),
+                            {
+                                "status": "FAIL",
+                                "reason": "split trace validation failed",
+                                "trace_summary_path": trace_summary_path,
+                                "trace_failures":
+                                split_trace_summary["failures"],
+                                "outputs_enabled_path": outputs_enabled_path,
+                                "console_log": console_path,
+                            },
+                        )
+                        _cleanup_llm(llm1)
+                        return 1
                 sample_ids, sample_text = _extract_first_output(out1[0])
                 print("\nDONE: ran split enabled only")
                 print("Sample output[0] token_ids_len=", len(sample_ids))
@@ -942,6 +1800,8 @@ def main() -> int:
                         },
                         "outputs_path": outputs_enabled_path,
                         "console_log": console_path,
+                        "split_debug_file": debug_path if split_debug else None,
+                        "split_trace_summary": split_trace_summary,
                     },
                 )
                 _cleanup_llm(llm1)  # ensure clean shutdown in enabled-only mode
@@ -964,6 +1824,7 @@ def main() -> int:
                     },
                     "outputs_path": outputs_disabled_path,
                     "console_log": console_path,
+                    "split_debug_file": debug_path if split_debug else None,
                 },
             )
             _cleanup_llm(llm0)  # ensure clean shutdown in disabled-only mode
@@ -989,6 +1850,19 @@ def main() -> int:
         # Compare and write diff if needed.
         disabled_rows = _serialize_outputs(prompts, out0)
         enabled_rows = _serialize_outputs(prompts, out1)
+        split_trace_summary = None
+        trace_summary_path = None
+        if split_debug:
+            split_trace_summary = _summarize_split_debug_trace(
+                debug_path,
+                expected_split=expected_split,
+                split_mode=split_mode,
+                expected_no_split_reason=expected_no_split_reason,
+            )
+            trace_summary_path = os.path.join(out_dir,
+                                              "split_trace_summary.json")
+            _save_json(trace_summary_path, split_trace_summary)
+
         mismatches = _compare_serialized(disabled_rows, enabled_rows)
 
         if mismatches:
@@ -1005,12 +1879,39 @@ def main() -> int:
                     "status": "FAIL",
                     "mismatch_total": len(mismatches),
                     "diff_path": diff_path,
+                    "trace_summary_path": trace_summary_path,
+                    "split_trace_summary": split_trace_summary,
                     "outputs_disabled_path": outputs_disabled_path,
                     "outputs_enabled_path": outputs_enabled_path,
                     "console_log": console_path,
                 },
             )
             return 1
+
+        if split_trace_summary is not None:
+            if split_trace_summary["failures"]:
+                print(
+                    "\nFAIL: split trace validation failed. See "
+                    f"{trace_summary_path}",
+                    file=sys.stderr)
+                print(
+                    json.dumps(split_trace_summary["failures"],
+                               ensure_ascii=False,
+                               indent=2),
+                    file=sys.stderr)
+                _save_json(
+                    os.path.join(out_dir, "summary.json"),
+                    {
+                        "status": "FAIL",
+                        "reason": "split trace validation failed",
+                        "trace_summary_path": trace_summary_path,
+                        "trace_failures": split_trace_summary["failures"],
+                        "outputs_disabled_path": outputs_disabled_path,
+                        "outputs_enabled_path": outputs_enabled_path,
+                        "console_log": console_path,
+                    },
+                )
+                return 1
 
         print(f"\nPASS: {len(prompts)}/{len(prompts)} outputs match exactly")
         sample_ids, sample_text = _extract_first_output(out1[0])
@@ -1029,6 +1930,7 @@ def main() -> int:
                 "outputs_disabled_path": outputs_disabled_path,
                 "outputs_enabled_path": outputs_enabled_path,
                 "console_log": console_path,
+                "split_trace_summary": split_trace_summary,
             },
         )
         return 0

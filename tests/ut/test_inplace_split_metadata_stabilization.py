@@ -43,6 +43,34 @@ def _common_metadata(num_reqs: int = 416) -> AscendCommonAttentionMetadata:
     )
 
 
+def _spec_common_metadata(num_reqs: int = 104,
+                          query_len: int = 4) -> AscendCommonAttentionMetadata:
+    total_tokens = num_reqs * query_len
+    query_start_loc = torch.arange(0,
+                                   total_tokens + query_len,
+                                   query_len,
+                                   dtype=torch.int32)
+    seq_lens = torch.arange(1000, 1000 + num_reqs, dtype=torch.int32)
+    return AscendCommonAttentionMetadata(
+        query_start_loc=query_start_loc,
+        query_start_loc_cpu=query_start_loc.clone(),
+        seq_lens=seq_lens,
+        seq_lens_cpu=seq_lens.clone(),
+        num_computed_tokens_cpu=torch.arange(num_reqs, dtype=torch.int32),
+        num_reqs=num_reqs,
+        num_actual_tokens=total_tokens,
+        max_query_len=query_len,
+        decode_token_per_req=query_len,
+        block_table_tensor=torch.arange(num_reqs * 2,
+                                        dtype=torch.int32).reshape(
+                                            num_reqs, 2),
+        slot_mapping=torch.arange(total_tokens, dtype=torch.int64),
+        actual_seq_lengths_q=list(range(query_len, total_tokens + 1,
+                                        query_len)),
+        positions=torch.arange(total_tokens, dtype=torch.int64),
+    )
+
+
 def _split_metadata() -> list[AscendCommonAttentionMetadata]:
     common = _common_metadata()
     plan, reason = create_inplace_split_batch_slices(
@@ -57,6 +85,37 @@ def _split_metadata() -> list[AscendCommonAttentionMetadata]:
         common,
         max_num_tokens=416,
     )
+
+
+def test_split_attn_metadata_preserves_spec_decode_request_alignment():
+    common = _spec_common_metadata()
+    plan, reason = create_inplace_split_batch_slices(
+        np.full(104, 4, dtype=np.int32),
+        total_num_tokens=416,
+        uniform_decode_query_len=4,
+        cudagraph_capture_sizes={256, 384, 512},
+    )
+    assert plan is not None, reason
+
+    first, second = split_attn_metadata(
+        [UBatchSlice(s.request_slice, s.token_slice) for s in plan.split_slices],
+        common,
+        max_num_tokens=416,
+    )
+
+    assert first.num_reqs == 96
+    assert first.num_actual_tokens == 384
+    assert first.max_query_len == 4
+    assert first.decode_token_per_req == 4
+    assert first.actual_seq_lengths_q[-1] == 416
+    assert second.num_reqs == 8
+    assert second.num_actual_tokens == 32
+    assert second.max_query_len == 4
+    assert second.decode_token_per_req == 4
+    assert second.query_start_loc_cpu.tolist() == [
+        0, 4, 8, 12, 16, 20, 24, 28, 32
+    ]
+    assert second.actual_seq_lengths_q[-1] == 416
 
 
 def test_stabilize_inplace_common_metadata_copies_second_split_to_buffers():

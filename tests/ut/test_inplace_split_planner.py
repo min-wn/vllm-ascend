@@ -62,6 +62,38 @@ def test_inplace_split_handles_query_len_greater_than_one():
     assert plan.split_slices[1].start_num_tokens == 384
 
 
+def test_inplace_split_handles_query_len_four_spec_decode_shape():
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(104, query_len=4),
+        total_num_tokens=416,
+        uniform_decode_query_len=4,
+        cudagraph_capture_sizes={256, 384, 512},
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.first_tokens == 384
+    assert plan.second_tokens == 32
+    assert plan.first_reqs == 96
+    assert plan.second_reqs == 8
+    assert plan.split_slices[0].request_slice == slice(0, 96)
+    assert plan.split_slices[0].token_slice == slice(0, 384)
+    assert plan.split_slices[1].request_slice == slice(96, 104)
+    assert plan.split_slices[1].token_slice == slice(384, 416)
+
+
+def test_inplace_split_rejects_spec_decode_without_aligned_lower_capture():
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(103, query_len=4),
+        total_num_tokens=412,
+        uniform_decode_query_len=4,
+        cudagraph_capture_sizes={258, 386, 512},
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_NO_LOWER_CAPTURE_SIZE
+
+
 def test_inplace_split_rejects_exact_graph_hit():
     plan, reason = create_inplace_split_batch_slices(
         _tokens(384),

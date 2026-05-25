@@ -119,6 +119,7 @@ def tensor_info(tensor: Any) -> Optional[dict[str, Any]]:
     return {
         "ptr": ptr,
         "shape": list(tensor.shape),
+        "ndim": int(tensor.ndim),
         "dtype": str(tensor.dtype),
         "stride": stride,
         "device": str(tensor.device),

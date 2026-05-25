@@ -14,6 +14,7 @@ import numpy as np
 import torch
 import torch_npu
 import vllm.envs as envs
+from vllm.compilation import monitor as compilation_monitor
 from vllm.compilation.counter import compilation_counter
 from vllm.compilation.cuda_graph import CUDAGraphOptions
 from vllm.compilation.monitor import validate_cudagraph_capturing_enabled
@@ -23,10 +24,86 @@ from vllm.logger import logger
 from vllm.platforms import current_platform
 
 from vllm_ascend.attention.utils import using_paged_attention
+from vllm_ascend import inplace_split_debug as split_debug
 
 from ..utils import weak_ref_tensors
 from vllm.distributed.device_communicators.pynccl_allocator import \
     set_graph_pool_id
+
+GraphParamKey = int | BatchDescriptor
+
+
+def get_graph_param_key(forward_context: Any,
+                        runtime_shape: int,
+                        *,
+                        allow_mtp_offset: bool = False) -> GraphParamKey:
+    if getattr(forward_context, "is_mtp_model", False) and not allow_mtp_offset:
+        return runtime_shape
+
+    desc = getattr(forward_context, "batch_descriptor", None)
+    if not isinstance(desc, BatchDescriptor):
+        return runtime_shape
+    start = int(getattr(desc, "start_num_tokens", 0) or 0)
+    has_descriptor_variant = (
+        start > 0
+        or bool(getattr(desc, "graph_variant", ""))
+        or bool(getattr(desc, "attention_backend", ""))
+        or bool(getattr(desc, "capture_metadata_mode", ""))
+    )
+    if has_descriptor_variant:
+        return desc
+    return runtime_shape
+
+
+def graph_param_key_info(key: GraphParamKey) -> dict[str, Any]:
+    if isinstance(key, BatchDescriptor):
+        return {
+            "kind": "batch_descriptor",
+            "num_tokens": key.num_tokens,
+            "num_reqs": key.num_reqs,
+            "uniform": key.uniform,
+            "has_lora": key.has_lora,
+            "start_num_tokens": key.start_num_tokens,
+            "graph_variant": getattr(key, "graph_variant", ""),
+            "attention_backend": getattr(key, "attention_backend", ""),
+            "capture_metadata_mode": getattr(key, "capture_metadata_mode", ""),
+        }
+    return {
+        "kind": "runtime_shape",
+        "num_tokens": int(key),
+    }
+
+
+def should_template_fia_seq_lens(forward_context: Any) -> bool:
+    batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+    return (getattr(batch_descriptor, "capture_metadata_mode", "")
+            == "template"
+            and getattr(batch_descriptor, "attention_backend", "") == "fia")
+
+
+def _get_fia_key_t(key_tensor: Any, fallback: int) -> int:
+    if isinstance(key_tensor, torch.Tensor) and key_tensor.ndim > 0:
+        return int(key_tensor.shape[0])
+    return int(fallback)
+
+
+def maybe_template_fia_seq_lens(forward_context: Any, seq_lens: Any,
+                                target_t: int) -> Any:
+    if not should_template_fia_seq_lens(forward_context):
+        return seq_lens
+    if seq_lens is None or isinstance(seq_lens, torch.Tensor):
+        return seq_lens
+    try:
+        if len(seq_lens) == 0:
+            return seq_lens
+    except TypeError:
+        return seq_lens
+
+    templated_seq_lens = list(seq_lens)
+    # FIA TND requires actualSeqenceLengthKV[-1] to match key/value T.
+    templated_seq_lens[-1] = int(target_t)
+    return templated_seq_lens
+
 
 @dataclasses.dataclass
 class ACLGraphEntry:
@@ -38,6 +115,8 @@ class ACLGraphEntry:
     # during capture, and check if they are the same during replay
     input_addresses: Optional[list[int]] = None
     input_tensor_infos: Optional[list[dict[str, Any]]] = None
+    attn_metadata_addresses: Optional[list[int]] = None
+    attn_metadata_tensor_infos: Optional[list[dict[str, Any]]] = None
 
 
 _ACL_GRAPH_DIAG_ENABLE = (
@@ -51,6 +130,10 @@ _ACLGRAPH_REPLAY_GLOBAL_SYNC = (
     os.environ.get("VLLM_ASCEND_ACLGRAPH_REPLAY_GLOBAL_SYNC", "0")
     in ("1", "true", "True")
 )
+_ACL_GRAPH_DEBUG_ENABLE = (
+    os.environ.get("VLLM_ASCEND_ACL_GRAPH_DEBUG", "0")
+    in ("1", "true", "True")
+)
 _ACL_GRAPH_DEBUG_FILE = os.environ.get(
     "VLLM_ASCEND_ACL_GRAPH_DEBUG_FILE",
     os.path.abspath(os.path.join(os.path.dirname(__file__), "acl_graph_debug.log")),
@@ -58,6 +141,8 @@ _ACL_GRAPH_DEBUG_FILE = os.environ.get(
 
 
 def _append_acl_graph_debug(tag: str, payload: Any) -> None:
+    if not _ACL_GRAPH_DEBUG_ENABLE:
+        return
     try:
         with open(_ACL_GRAPH_DEBUG_FILE, "a", encoding="utf-8") as f:
             ts = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -180,6 +265,95 @@ def _build_input_address_mismatch(
     }
 
 
+def _collect_attn_metadata_tensor_infos(
+    attn_metadata: Any,
+    *,
+    max_tensors: int = 200,
+    max_depth: int = 8,
+) -> tuple[list[int], list[dict[str, Any]]]:
+    addresses: list[int] = []
+    tensor_infos: list[dict[str, Any]] = []
+    visited: set[int] = set()
+
+    def visit(value: Any, path: str, depth: int) -> None:
+        if len(addresses) >= max_tensors or depth > max_depth:
+            return
+        if isinstance(value, torch.Tensor):
+            ptr = _safe_tensor_ptr(value)
+            if ptr is None:
+                ptr = -1
+            addresses.append(ptr)
+            tensor_infos.append({
+                "tensor_index": len(addresses) - 1,
+                "path": path,
+                "shape": _safe_tensor_shape(value),
+                "dtype": str(value.dtype),
+                "device": str(value.device),
+                "stride": list(value.stride()),
+                "is_contiguous": bool(value.is_contiguous()),
+                "storage_offset": int(value.storage_offset()),
+            })
+            return
+
+        if value is None or isinstance(value, (str, bytes, int, float, bool)):
+            return
+        value_id = id(value)
+        if value_id in visited:
+            return
+        visited.add(value_id)
+
+        if isinstance(value, dict):
+            for key, child in value.items():
+                visit(child, f"{path}.{key}", depth + 1)
+            return
+        if isinstance(value, (list, tuple)):
+            for idx, child in enumerate(value):
+                visit(child, f"{path}[{idx}]", depth + 1)
+            return
+        if dataclasses.is_dataclass(value):
+            for field in dataclasses.fields(value):
+                visit(getattr(value, field.name, None),
+                      f"{path}.{field.name}", depth + 1)
+            return
+
+        attrs = getattr(value, "__dict__", None)
+        if isinstance(attrs, dict):
+            for name, child in attrs.items():
+                if name.startswith("__"):
+                    continue
+                visit(child, f"{path}.{name}", depth + 1)
+
+    visit(attn_metadata, "attn_metadata", 0)
+    return addresses, tensor_infos
+
+
+def _should_validate_inplace_input_ptrs(forward_context: Any,
+                                        debug_mode: bool) -> bool:
+    return debug_mode or bool(
+        getattr(forward_context, "validate_inplace_input_ptrs", False))
+
+
+def _should_validate_inplace_metadata_ptrs(forward_context: Any) -> bool:
+    return bool(getattr(forward_context, "validate_inplace_metadata_ptrs",
+                        False))
+
+
+def _is_allowed_inplace_lazy_capture(forward_context: Any,
+                                     batch_descriptor: BatchDescriptor,
+                                     aclgraph_runtime_mode: CUDAGraphMode
+                                     ) -> bool:
+    return (
+        int(getattr(batch_descriptor, "start_num_tokens", 0) or 0) > 0
+        and aclgraph_runtime_mode == CUDAGraphMode.FULL
+        and bool(getattr(forward_context, "allow_inplace_lazy_capture", False))
+        and getattr(forward_context, "split_inplace_mode", None)
+        in ("inplace_serial", "inplace_parallel")
+        and getattr(batch_descriptor, "graph_variant", "")
+        in ("inplace_serial", "inplace_parallel")
+        and getattr(batch_descriptor, "attention_backend", "") in ("fia", "pa")
+    )
+
+
 def _extract_block_table_from_metadata(metadata: Any):
     metadata_block_table = None
     metadata_block_source = None
@@ -202,14 +376,16 @@ def _extract_block_table_from_metadata(metadata: Any):
     return metadata_block_table, metadata_block_source
 
 
-def _extract_graph_param_block_table(runtime_shape: Any):
+def _extract_graph_param_block_table(forward_context: Any, runtime_shape: Any,
+                                     in_parallel_streams: bool = False):
     if runtime_shape is None:
         return None, None
 
-    graph_params = get_graph_params()
+    graph_params = get_graph_params(in_parallel_streams)
     if graph_params is None:
         return None, None
-    shape_params = graph_params.attn_params.get(runtime_shape)
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    shape_params = graph_params.attn_params.get(param_key)
     if not shape_params:
         return None, None
 
@@ -269,10 +445,15 @@ def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any) -> 
 
     metadata = attn_metadata[first_key]
     metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(metadata)
-    graph_block_table, graph_block_table_source = _extract_graph_param_block_table(runtime_shape)
+    in_parallel_streams = bool(
+        getattr(forward_context, "in_parallel_streams", False))
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    graph_block_table, graph_block_table_source = _extract_graph_param_block_table(
+        forward_context, runtime_shape, in_parallel_streams)
     return {
         "first_key": first_key,
         "runtime_shape": runtime_shape,
+        "graph_param_key": graph_param_key_info(param_key),
         "meta_block_table_source": metadata_block_source,
         "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
         "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
@@ -362,10 +543,23 @@ class ACLGraphWrapper:
         # in case we need to access the original runnable.
         return self.runnable
 
+    def has_graph(self,
+                  batch_descriptor: Optional[BatchDescriptor],
+                  in_parallel_streams: bool = False) -> bool:
+        """Return whether a concrete ACL graph has already been captured."""
+        if batch_descriptor is None:
+            return False
+        entries = (self.concrete_aclgraph_entries2
+                   if in_parallel_streams else self.concrete_aclgraph_entries)
+        entry = entries.get(batch_descriptor)
+        return entry is not None and entry.aclgraph is not None
+
     def __call__(self, *args, **kwargs):
         forward_context = get_forward_context()
         in_parallel_streams = bool(
             getattr(forward_context, "in_parallel_streams", False))
+        split_debug_step_id = getattr(forward_context,
+                                      "split_inplace_debug_step_id", None)
         batch_descriptor = forward_context.batch_descriptor
         aclgraph_runtime_mode = forward_context.cudagraph_runtime_mode
 
@@ -403,6 +597,35 @@ class ACLGraphWrapper:
         selected_pool=(self.graph_pool_parallel_streams
                      if in_parallel_streams else self.graph_pool)
         if entry.aclgraph is None:
+            start_num_tokens = int(
+                getattr(batch_descriptor, "start_num_tokens", 0) or 0)
+            is_inplace_lazy_capture = _is_allowed_inplace_lazy_capture(
+                forward_context, batch_descriptor, aclgraph_runtime_mode)
+            if start_num_tokens > 0 and not is_inplace_lazy_capture:
+                split_debug.log_event(
+                    "inplace_lazy_capture_blocked",
+                    {
+                        "entry_id": id(entry),
+                        "batch_descriptor":
+                        split_debug.batch_descriptor_info(batch_descriptor),
+                        "runtime_mode": (
+                            aclgraph_runtime_mode.name
+                            if isinstance(aclgraph_runtime_mode,
+                                          CUDAGraphMode) else
+                            str(aclgraph_runtime_mode)),
+                        "allow_inplace_lazy_capture":
+                        bool(getattr(forward_context,
+                                     "allow_inplace_lazy_capture", False)),
+                        "split_inplace_mode":
+                        getattr(forward_context, "split_inplace_mode", None),
+                    },
+                    step_id=split_debug_step_id,
+                )
+                raise RuntimeError(
+                    "Refusing to capture an inplace offset ACL graph without "
+                    "allow_inplace_lazy_capture in the forward context: "
+                    f"{batch_descriptor!r}")
+
             if self.aclgraph_options.debug_log_enable:
                 # Since we capture aclgraph for many different shapes and
                 # capturing is fast, we don't need to log it for every
@@ -411,41 +634,110 @@ class ACLGraphWrapper:
                 logger.debug("Capturing a aclgraph on (%s,%s)",
                              self.runtime_mode.name, entry.batch_descriptor)
             # validate that aclgraph capturing is legal at this point.
-            validate_cudagraph_capturing_enabled()
+            previous_capture_enabled = (
+                compilation_monitor.cudagraph_capturing_enabled)
+            if is_inplace_lazy_capture:
+                if _ACL_GRAPH_DEBUG_ENABLE:
+                    split_debug.log_event(
+                        "inplace_lazy_capture_guard",
+                        {
+                            "phase": "enable",
+                            "entry_id": id(entry),
+                            "batch_descriptor":
+                            split_debug.batch_descriptor_info(
+                                batch_descriptor),
+                            "previous_capture_enabled":
+                            bool(previous_capture_enabled),
+                        },
+                        step_id=split_debug_step_id,
+                    )
+                compilation_monitor.set_cudagraph_capturing_enabled(True)
+            try:
+                validate_cudagraph_capturing_enabled()
+            except Exception:
+                if is_inplace_lazy_capture:
+                    compilation_monitor.set_cudagraph_capturing_enabled(
+                        previous_capture_enabled)
+                raise
             input_addresses, input_tensor_infos = _collect_tensor_arg_infos(
                 args,
                 self.runnable_arg_names,
             )
             entry.input_addresses = input_addresses
             entry.input_tensor_infos = input_tensor_infos
-            aclgraph = torch.npu.NPUGraph()
+            if _should_validate_inplace_metadata_ptrs(forward_context):
+                (entry.attn_metadata_addresses,
+                 entry.attn_metadata_tensor_infos) = (
+                     _collect_attn_metadata_tensor_infos(
+                         getattr(forward_context, "attn_metadata", None)))
+            if _ACL_GRAPH_DEBUG_ENABLE:
+                split_debug.log_event(
+                    "acl_graph_capture",
+                    {
+                        "phase": "pre",
+                        "entry_id": id(entry),
+                        "batch_descriptor": split_debug.batch_descriptor_info(
+                            batch_descriptor),
+                        "ubatch_num": getattr(forward_context, "ubatch_num",
+                                               None),
+                        "in_parallel_streams": in_parallel_streams,
+                        "runtime_mode": (
+                            aclgraph_runtime_mode.name
+                            if isinstance(aclgraph_runtime_mode,
+                                          CUDAGraphMode) else
+                            str(aclgraph_runtime_mode)),
+                        "input_tensors": input_tensor_infos,
+                    },
+                    step_id=split_debug_step_id,
+                )
+            aclgraph = None
             
             with ExitStack() as stack:
-                if self.aclgraph_options.gc_disable:
-                    # during every model forward for piecewise aclgraph
-                    # mode, we will capture many pieces of aclgraphs
-                    # (roughly one per layer). running gc again and again
-                    # across layers will make the aclgraph capture very slow.
-                    # therefore, we only run gc for the first graph,
-                    # and disable gc for the rest of the graphs.
-                    stack.enter_context(patch("gc.collect", lambda: None))
-                    stack.enter_context(
-                        patch("torch.npu.empty_cache", lambda: None))
+                try:
+                    aclgraph = torch.npu.NPUGraph()
+                    if self.aclgraph_options.gc_disable:
+                        # during every model forward for piecewise aclgraph
+                        # mode, we will capture many pieces of aclgraphs
+                        # (roughly one per layer). running gc again and again
+                        # across layers will make the aclgraph capture very slow.
+                        # therefore, we only run gc for the first graph,
+                        # and disable gc for the rest of the graphs.
+                        stack.enter_context(patch("gc.collect", lambda: None))
+                        stack.enter_context(
+                            patch("torch.npu.empty_cache", lambda: None))
 
-                # mind-exploding: carefully manage the reference and memory.
-                forward_context.capturing = True
-                set_graph_pool_id(selected_pool)
-                with torch.npu.graph(aclgraph, pool=selected_pool):
-                    # `output` is managed by pytorch's aclgraph pool
-                    output = self.runnable(*args, **kwargs)
-                    if self.aclgraph_options.weak_ref_output:
-                        # by converting it to weak ref,
-                        # the original `output` will immediately be released
-                        # to save memory. It is only safe to do this for
-                        # the last graph in piecewise aclgraph mode, because
-                        # the output of the last graph will not be used by
-                        # any other acl graph.
-                        output = weak_ref_tensors(output)
+                    # mind-exploding: carefully manage the reference and memory.
+                    forward_context.capturing = True
+                    set_graph_pool_id(selected_pool)
+                    with torch.npu.graph(aclgraph, pool=selected_pool):
+                        # `output` is managed by pytorch's aclgraph pool
+                        output = self.runnable(*args, **kwargs)
+                        if self.aclgraph_options.weak_ref_output:
+                            # by converting it to weak ref,
+                            # the original `output` will immediately be released
+                            # to save memory. It is only safe to do this for
+                            # the last graph in piecewise aclgraph mode, because
+                            # the output of the last graph will not be used by
+                            # any other acl graph.
+                            output = weak_ref_tensors(output)
+                finally:
+                    if is_inplace_lazy_capture:
+                        compilation_monitor.set_cudagraph_capturing_enabled(
+                            previous_capture_enabled)
+                        if _ACL_GRAPH_DEBUG_ENABLE:
+                            split_debug.log_event(
+                                "inplace_lazy_capture_guard",
+                                {
+                                    "phase": "restore",
+                                    "entry_id": id(entry),
+                                    "batch_descriptor":
+                                    split_debug.batch_descriptor_info(
+                                        batch_descriptor),
+                                    "capture_enabled":
+                                    bool(previous_capture_enabled),
+                                },
+                                step_id=split_debug_step_id,
+                            )
 
             # here we always use weak ref for the output
             # to save memory
@@ -453,13 +745,33 @@ class ACLGraphWrapper:
             entry.aclgraph = aclgraph
 
             compilation_counter.num_cudagraph_captured += 1
+            if _ACL_GRAPH_DEBUG_ENABLE:
+                split_debug.log_event(
+                    "acl_graph_capture",
+                    {
+                        "phase": "post",
+                        "entry_id": id(entry),
+                        "batch_descriptor":
+                        split_debug.batch_descriptor_info(batch_descriptor),
+                        "ubatch_num": getattr(forward_context, "ubatch_num",
+                                               None),
+                        "in_parallel_streams": in_parallel_streams,
+                        "runtime_mode": (
+                            aclgraph_runtime_mode.name
+                            if isinstance(aclgraph_runtime_mode,
+                                          CUDAGraphMode) else
+                            str(aclgraph_runtime_mode)),
+                    },
+                    step_id=split_debug_step_id,
+                )
 
             # important: we need to return the output, rather than
             # the weak ref of the output, so that pytorch can correctly
             # manage the memory during acl graph capture
             return output
 
-        if self.is_debugging_mode:
+        if _should_validate_inplace_input_ptrs(forward_context,
+                                               self.is_debugging_mode):
             # check if the input addresses are the same
             new_input_addresses, new_input_tensor_infos = _collect_tensor_arg_infos(
                 args,
@@ -489,32 +801,81 @@ class ACLGraphWrapper:
                     f"mismatch_detail={mismatch_detail}"
                 )
 
-        logger.info_once("Replaying aclgraph")
+        if _should_validate_inplace_metadata_ptrs(forward_context):
+            (new_metadata_addresses,
+             new_metadata_tensor_infos) = _collect_attn_metadata_tensor_infos(
+                 getattr(forward_context, "attn_metadata", None))
+            expected_metadata_addresses = entry.attn_metadata_addresses or []
+            if new_metadata_addresses != expected_metadata_addresses:
+                mismatch_detail = _build_input_address_mismatch(
+                    expected_metadata_addresses,
+                    new_metadata_addresses,
+                    entry.attn_metadata_tensor_infos,
+                    new_metadata_tensor_infos,
+                )
+                split_debug.log_event(
+                    "inplace_metadata_ptr_mismatch",
+                    {
+                        "entry_id": id(entry),
+                        "batch_descriptor":
+                        split_debug.batch_descriptor_info(batch_descriptor),
+                        "ubatch_num":
+                        getattr(forward_context, "ubatch_num", None),
+                        **mismatch_detail,
+                    },
+                    step_id=split_debug_step_id,
+                )
+                raise AssertionError(
+                    "Attention metadata addresses for inplace aclgraphs are "
+                    "different during replay. "
+                    f"mismatch_detail={mismatch_detail}")
+
+        # Do not write normal replay JSONL here. This call is inside
+        # self.model(), immediately before the caller updates graph task
+        # attention params; synchronous CPU I/O in this window can perturb NPU
+        # graph replay/update ordering. Use VLLM_ASCEND_ACL_GRAPH_DEBUG=1 only
+        # for low-level diagnosis.
         # In async scheduling or multi-threaded (MT) scenarios, it is possible that
         # the CPU's record event (from update_attn_params) for the iteration i completes
         # before the grph replay of iteration i-1.
         # To ensure proper ordering, we must call synchronize here before replaying,
         # so that update_attn_params only executes after the previous graph replay has fully completed.
         runtime_shape = getattr(batch_descriptor, "num_tokens", None)
-        replay_payload = {
-            "entry_id": id(entry),
-            "batch_descriptor": str(batch_descriptor),
-            "ubatch_num": getattr(forward_context, "ubatch_num", None),
-            "in_parallel_streams": in_parallel_streams,
-            "replay_global_sync": bool(_ACLGRAPH_REPLAY_GLOBAL_SYNC
-                                         and not in_parallel_streams),
-            "phase": "pre",
-            "runtime_shape": runtime_shape,
-        }
-        _append_acl_graph_debug("acl_graph_replay", replay_payload)
+        graph_param_key = get_graph_param_key(forward_context, runtime_shape)
+        if _ACL_GRAPH_DEBUG_ENABLE:
+            _append_acl_graph_debug(
+                "acl_graph_replay",
+                {
+                    "entry_id": id(entry),
+                    "batch_descriptor": str(batch_descriptor),
+                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                    "in_parallel_streams": in_parallel_streams,
+                    "replay_global_sync": bool(_ACLGRAPH_REPLAY_GLOBAL_SYNC
+                                               and not in_parallel_streams),
+                    "phase": "pre",
+                    "runtime_shape": runtime_shape,
+                    "graph_param_key": graph_param_key_info(graph_param_key),
+                })
         # Keep legacy ordering for the main stream path, but avoid global
         # barriers for split parallel replay so two streams can overlap.
         if _ACLGRAPH_REPLAY_GLOBAL_SYNC and not in_parallel_streams:
             torch.npu.synchronize()
         set_graph_pool_id(selected_pool)
         entry.aclgraph.replay()
-        replay_post_diag = _build_replay_block_table_diag(
-            forward_context, runtime_shape)
+        if _ACL_GRAPH_DEBUG_ENABLE:
+            replay_post_diag = _build_replay_block_table_diag(
+                forward_context, runtime_shape)
+            _append_acl_graph_debug(
+                "acl_graph_replay",
+                {
+                    "entry_id": id(entry),
+                    "batch_descriptor": str(batch_descriptor),
+                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                    "in_parallel_streams": in_parallel_streams,
+                    "phase": "post",
+                    "runtime_shape": runtime_shape,
+                    **replay_post_diag,
+                })
         # _maybe_log_acl_graph_diag(
         #     "acl_graph_replay_post",
         #     {
@@ -533,22 +894,16 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                            refresh_block_table: bool = False,
                            in_parallel_streams: bool = False):
     graph_params = get_graph_params(in_parallel_streams)
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    require_graph_param_key(graph_params, param_key, op="_update_attn_pa_params")
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
-    _DBG_FIRST = getattr(_update_attn_pa_params, '_dbg_count', 0) < 4
-    if _DBG_FIRST:
-        _update_attn_pa_params._dbg_count = getattr(_update_attn_pa_params, '_dbg_count', 0) + 1
-        import sys
-        print(f"[DBG _update_attn_pa_params] in_parallel={in_parallel_streams} shape={runtime_shape} "
-              f"attn_meta_type={type(forward_context.attn_metadata).__name__} "
-              f"attn_meta_len={len(forward_context.attn_metadata) if hasattr(forward_context.attn_metadata,'__len__') else 'N/A'} "
-              f"graph_params_attn_len={len(graph_params.attn_params.get(runtime_shape,[]))}", flush=True, file=sys.stderr)
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                graph_params.attn_params[runtime_shape],
-                graph_params.handles[runtime_shape],
-                graph_params.events[runtime_shape],
+                graph_params.attn_params[param_key],
+                graph_params.handles[param_key],
+                graph_params.events[param_key],
         ):
             (
                 query,
@@ -562,14 +917,6 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                 output,
             ) = param
             seq_lens = forward_context.attn_metadata[key].seq_lens
-
-            if _DBG_FIRST:
-                import sys
-                print(f"[DBG _update_attn_pa_params] key={key} in_parallel={in_parallel_streams} "
-                      f"seq_lens={seq_lens.tolist() if seq_lens is not None else None} "
-                      f"graph_block_table_ptr={block_table.data_ptr() if isinstance(block_table, __import__('torch').Tensor) else None} "
-                      f"graph_block_table_shape={list(block_table.shape) if isinstance(block_table, __import__('torch').Tensor) else None}",
-                      flush=True, file=sys.stderr)
 
             metadata = forward_context.attn_metadata[key]
             metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
@@ -635,6 +982,8 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                             refresh_block_table: bool = False,
                             in_parallel_streams: bool = False):
     graph_params = get_graph_params(in_parallel_streams)
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    require_graph_param_key(graph_params, param_key, op="_update_attn_fia_params")
     # For Qwen3-next, since the kv_cache_config has already categorized
     # linear_attn and self_attn, the attn_metadata is first arranged with
     # self_attn followed by linear_attn. Therefore, using zip directly
@@ -642,16 +991,18 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                graph_params.attn_params[runtime_shape],
-                graph_params.handles[runtime_shape],
-                graph_params.events[runtime_shape],
+                graph_params.attn_params[param_key],
+                graph_params.handles[param_key],
+                graph_params.events[param_key],
         ):
             (query, key_cache, value, block_tables, attn_mask, block_size,
              seq_lens, query_start_loc, num_kv_heads, num_heads, scale,
              attn_output, softmax_lse) = param
 
             metadata = forward_context.attn_metadata[key]
-            seq_lens = metadata.seq_lens_list
+            seq_lens = maybe_template_fia_seq_lens(
+                forward_context, metadata.seq_lens_list,
+                _get_fia_key_t(key_cache, block_size))
             actual_seq_lengths_q = metadata.actual_seq_lengths_q
             metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
                 metadata)
@@ -692,7 +1043,7 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                 num_heads=num_heads,
                 scale=scale,
                 sparse_mode=3,
-                workspace=graph_params.workspaces.get(runtime_shape),
+                workspace=graph_params.workspaces.get(param_key),
                 out=[attn_output, softmax_lse],
             )
             torch.npu.graph_task_update_end(update_stream)
@@ -702,7 +1053,7 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
 
 def update_attn_params(update_stream, forward_context, runtime_shape,
                        vllm_config, in_parallel_streams: bool = False):
-    if using_paged_attention(runtime_shape, vllm_config):
+    if using_paged_attention(runtime_shape, vllm_config, forward_context):
         _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                                in_parallel_streams=in_parallel_streams)
     else:
@@ -714,7 +1065,7 @@ def update_attn_params_split(update_stream, forward_context,
                              runtime_shape, vllm_config,
                              in_parallel_streams: bool = False):
     """Split-only attn update with block_table in-place refresh enabled."""
-    if using_paged_attention(runtime_shape, vllm_config):
+    if using_paged_attention(runtime_shape, vllm_config, forward_context):
         _update_attn_pa_params(
             update_stream,
             forward_context,
@@ -737,16 +1088,19 @@ def update_mla_attn_params(update_stream, forward_context, runtime_shape,
                            in_parallel_streams: bool = False):
     if forward_context.is_mtp_model:
         graph_params = get_mtp_graph_params()
+        param_key = runtime_shape
     else:
         graph_params = get_graph_params(in_parallel_streams)
+        param_key = get_graph_param_key(forward_context, runtime_shape)
+    require_graph_param_key(graph_params, param_key, op="update_mla_attn_params")
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                graph_params.attn_params[runtime_shape],
-                graph_params.handles[runtime_shape],
-                graph_params.events[runtime_shape],
+                graph_params.attn_params[param_key],
+                graph_params.handles[param_key],
+                graph_params.events[param_key],
         ):
             (q_nope, k_nope, q_pe, k_pe, num_heads, num_kv_heads, input_layout,
              spec_attn_mask, sparse_mode, scale, block_table, block_size,
@@ -798,7 +1152,7 @@ def update_mla_attn_params(update_stream, forward_context, runtime_shape,
                 block_size=block_size,
                 actual_seq_lengths_kv=seq_lens_list,
                 actual_seq_lengths=actual_seq_lengths,
-                workspace=graph_params.workspaces.get(runtime_shape),
+                workspace=graph_params.workspaces.get(param_key),
                 out=[attn_output, softmax_lse])
             torch.npu.graph_task_update_end(update_stream)
 
@@ -810,12 +1164,15 @@ def update_attn_dcp_pcp_params(update_stream, forward_context, runtime_shape,
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
     graph_params = get_graph_params(in_parallel_streams)
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    require_graph_param_key(graph_params, param_key,
+                            op="update_attn_dcp_pcp_params")
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                graph_params.attn_params[runtime_shape],
-                graph_params.handles[runtime_shape],
-                graph_params.events[runtime_shape],
+                graph_params.attn_params[param_key],
+                graph_params.handles[param_key],
+                graph_params.events[param_key],
         ):
             (q_nope, k_nope, value, num_heads, num_kv_heads, scale,
              block_table, block_size, actual_seq_lengths_kv,
@@ -861,7 +1218,7 @@ def update_attn_dcp_pcp_params(update_stream, forward_context, runtime_shape,
                 block_size=block_size,
                 actual_seq_lengths_kv=actual_seq_lengths_kv,
                 actual_seq_lengths=actual_seq_lengths_q,
-                workspace=graph_params.workspaces.get(runtime_shape),
+                workspace=graph_params.workspaces.get(param_key),
                 out=[attn_output, softmax_lse])
             torch.npu.graph_task_update_end(update_stream)
 
@@ -872,14 +1229,17 @@ def update_mla_attn_dcp_pcp_params(update_stream, forward_context,
                                    runtime_shape,
                                    in_parallel_streams: bool = False):
     graph_params = get_graph_params(in_parallel_streams)
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    require_graph_param_key(graph_params, param_key,
+                            op="update_mla_attn_dcp_pcp_params")
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
     with torch.npu.stream(update_stream):
         for key, param, handle, event in zip(
                 forward_context.attn_metadata,
-                graph_params.attn_params[runtime_shape],
-                graph_params.handles[runtime_shape],
-                graph_params.events[runtime_shape],
+                graph_params.attn_params[param_key],
+                graph_params.handles[param_key],
+                graph_params.events[param_key],
         ):
             (q_nope, q_pe, k_nope, k_pe, block_table, seq_len, num_heads,
              scale, num_kv_heads, attn_output, softmax_lse) = param
@@ -910,7 +1270,7 @@ def update_mla_attn_dcp_pcp_params(update_stream, forward_context,
                 num_kv_heads,
                 return_lse=True,
                 calc_type="calc_type_ring",
-                workspace=graph_params.workspaces.get(runtime_shape),
+                workspace=graph_params.workspaces.get(param_key),
                 output=attn_output,
                 lse=softmax_lse)
             torch.npu.graph_task_update_end(update_stream)
@@ -920,10 +1280,32 @@ def update_mla_attn_dcp_pcp_params(update_stream, forward_context,
 
 @dataclass
 class GraphParams:
-    events: dict[int, list[torch.npu.ExternalEvent]]
-    workspaces: dict[int, torch.Tensor]
-    handles: dict[int, list[torch_npu._C._NPUTaskGroupHandle]]
-    attn_params: dict[int, list[tuple]]
+    events: dict[GraphParamKey, list[torch.npu.ExternalEvent]]
+    workspaces: dict[GraphParamKey, torch.Tensor | None]
+    handles: dict[GraphParamKey, list[torch_npu._C._NPUTaskGroupHandle]]
+    attn_params: dict[GraphParamKey, list[tuple]]
+
+
+def ensure_graph_param_key(graph_params: Optional[GraphParams],
+                           key: GraphParamKey) -> None:
+    if graph_params is None:
+        return
+    graph_params.events.setdefault(key, [])
+    graph_params.handles.setdefault(key, [])
+    graph_params.attn_params.setdefault(key, [])
+    graph_params.workspaces.setdefault(key, None)
+
+
+def require_graph_param_key(graph_params: Optional[GraphParams],
+                            key: GraphParamKey,
+                            *,
+                            op: str) -> None:
+    if graph_params is None:
+        raise KeyError(f"Missing GraphParams for {op}: {key!r}")
+    if key not in graph_params.attn_params:
+        raise KeyError(f"Missing GraphParams key for {op}: {key!r}")
+    if key not in graph_params.handles or key not in graph_params.events:
+        raise KeyError(f"Incomplete GraphParams key for {op}: {key!r}")
 
 
 _graph_params: Optional[GraphParams] = None
@@ -959,12 +1341,14 @@ def set_graph_params_parallel(aclgraph_capture_sizes: list[int]):
     _graph_params_parallel = _make_graph_params(aclgraph_capture_sizes)
 
 
-def update_graph_params_workspaces(num_tokens: int, workspace: torch.Tensor,
+def update_graph_params_workspaces(key_or_num_tokens: GraphParamKey,
+                                   workspace: torch.Tensor,
                                    in_parallel_streams: bool = False):
     global _graph_params, _graph_params_parallel
     target = _graph_params_parallel if in_parallel_streams else _graph_params
     if target is not None:
-        target.workspaces[num_tokens] = weak_ref_tensors(workspace)
+        ensure_graph_param_key(target, key_or_num_tokens)
+        target.workspaces[key_or_num_tokens] = weak_ref_tensors(workspace)
 
 
 def get_graph_params(in_parallel_streams: bool = False) -> Optional[GraphParams]:

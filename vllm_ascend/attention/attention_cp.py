@@ -39,7 +39,9 @@ from vllm_ascend.attention.attention_v1 import (AscendAttentionBackendImpl,
 from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          filter_chunked_req_indices,
                                          split_decodes_and_prefills)
-from vllm_ascend.compilation.acl_graph import (get_graph_params,
+from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
+                                               get_graph_param_key,
+                                               get_graph_params,
                                                update_graph_params_workspaces)
 from vllm_ascend.utils import weak_ref_tensors
 
@@ -508,19 +510,21 @@ class AscendAttentionCPImpl(AscendAttentionBackendImpl):
             getattr(forward_context, "in_parallel_streams", False))
         graph_params = get_graph_params(in_parallel_streams)
         num_tokens = query.shape[0]
+        param_key = get_graph_param_key(forward_context, num_tokens)
+        ensure_graph_param_key(graph_params, param_key)
         if forward_context.capturing:
             stream = torch_npu.npu.current_stream()
 
             event = torch.npu.ExternalEvent()
             event.wait(stream)
             event.reset(stream)
-            graph_params.events[num_tokens].append(event)
+            graph_params.events[param_key].append(event)
 
-            workspace = graph_params.workspaces.get(num_tokens)
+            workspace = graph_params.workspaces.get(param_key)
             if workspace is None:
                 workspace = torch_npu._npu_fused_infer_attention_score_get_max_workspace(
                     query, k_nope, value, **common_kwargs)
-                update_graph_params_workspaces(num_tokens,
+                update_graph_params_workspaces(param_key,
                                                weak_ref_tensors(workspace),
                                                in_parallel_streams=in_parallel_streams)
             attn_out = torch.empty_like(query)
@@ -528,7 +532,7 @@ class AscendAttentionCPImpl(AscendAttentionBackendImpl):
                                    dtype=torch.float,
                                    device=query.device)
 
-            graph_params.attn_params[num_tokens].append((
+            graph_params.attn_params[param_key].append((
                 weak_ref_tensors(query), weak_ref_tensors(k_nope),
                 weak_ref_tensors(value), self.num_heads, self.num_kv_heads,
                 self.scale, attn_metadata.block_tables,
@@ -547,7 +551,7 @@ class AscendAttentionCPImpl(AscendAttentionBackendImpl):
                 workspace=workspace,
                 out=[attn_out, attn_lse])
             handle = torch.npu.graph_task_group_end(stream)
-            graph_params.handles[num_tokens].append(handle)
+            graph_params.handles[param_key].append(handle)
         else:
             attn_out, attn_lse = torch_npu.npu_fused_infer_attention_score(
                 query, k_nope, value, **common_kwargs)

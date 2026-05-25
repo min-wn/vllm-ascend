@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
-from typing import Optional
+from typing import Callable, Iterable, Optional
 from dataclasses import dataclass
 
 import numpy as np
@@ -290,6 +290,9 @@ class SplitBatchSlice:
     # Set by split_batch_split when cudagraph_capture_sizes is provided;
     # equals num_tokens otherwise.
     padded_num_tokens: int = 0
+    # Runtime token offset for descriptor-aware inplace graphs. Existing
+    # split-batch paths keep the default zero offset.
+    start_num_tokens: int = 0
 
     def __post_init__(self):
         if self.padded_num_tokens == 0:
@@ -298,10 +301,15 @@ class SplitBatchSlice:
     @property
     def num_requests(self) -> int:
         return self.request_slice.stop - self.request_slice.start
-    
+
     @property
     def num_tokens(self) -> int:
         return self.token_slice.stop - self.token_slice.start
+
+    @property
+    def graph_num_tokens(self) -> int:
+        return self.padded_num_tokens
+
     def is_empty(self) -> bool:
         return (
             self.request_slice.start == self.request_slice.stop
@@ -310,6 +318,190 @@ class SplitBatchSlice:
 
 
 SplitBatchSlices = list[SplitBatchSlice]
+
+
+INPLACE_SPLIT_DRY_RUN = "inplace_split_dry_run"
+NO_SPLIT_EXACT_GRAPH_HIT = "no_split_exact_graph_hit"
+NO_SPLIT_ABOVE_MAX_CAPTURE_SIZE = "no_split_above_max_capture_size"
+NO_SPLIT_NO_LOWER_CAPTURE_SIZE = "no_split_no_lower_capture_size"
+NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED = "no_split_first_not_request_aligned"
+NO_SPLIT_SECOND_EMPTY = "no_split_second_empty"
+NO_SPLIT_REMAINDER_TOO_LARGE = "no_split_remainder_too_large"
+NO_SPLIT_NON_UNIFORM_DECODE = "no_split_non_uniform_decode"
+NO_SPLIT_INVALID_QUERY_LEN = "no_split_invalid_query_len"
+NO_SPLIT_NO_CAPTURE_SIZES = "no_split_no_capture_sizes"
+NO_SPLIT_ATTENTION_BACKEND_MISMATCH = "no_split_attention_backend_mismatch"
+
+
+@dataclass(frozen=True)
+class InplaceSplitPlan:
+    """Dry-run plan for 2-way inplace split execution."""
+    split_slices: SplitBatchSlices
+    reason: str
+    total_num_tokens: int
+    padded_num_tokens_without_split: int
+    first_tokens: int
+    second_tokens: int
+    first_reqs: int
+    second_reqs: int
+    lower_capture_size: int
+    remainder_tokens: int
+    capture_sizes_considered: list[int]
+
+    def debug_payload(self) -> dict[str, object]:
+        return {
+            "reason": self.reason,
+            "dry_run": True,
+            "first_tokens": self.first_tokens,
+            "second_tokens": self.second_tokens,
+            "first_reqs": self.first_reqs,
+            "second_reqs": self.second_reqs,
+            "total_tokens": self.total_num_tokens,
+            "padded_tokens_without_split":
+            self.padded_num_tokens_without_split,
+            "lower_capture_size": self.lower_capture_size,
+            "remainder_tokens": self.remainder_tokens,
+            "capture_sizes_considered": self.capture_sizes_considered,
+            "fallback_to": "no_split",
+        }
+
+
+def inplace_split_preserves_attention_backend(
+    inplace_split_plan: InplaceSplitPlan,
+    uses_paged_attention: Callable[[int], bool],
+) -> bool:
+    """Return whether split graphs keep the unsplit attention backend.
+
+    Some Ascend decode shapes route to paged attention while others route to
+    fused infer attention. Inplace split must not silently change that routing,
+    because graph capture records backend-specific task params.
+    """
+    unsplit_uses_pa = uses_paged_attention(
+        inplace_split_plan.padded_num_tokens_without_split)
+    return all(
+        uses_paged_attention(split_slice.graph_num_tokens) == unsplit_uses_pa
+        for split_slice in inplace_split_plan.split_slices)
+
+
+def inplace_split_first_graph_matches_attention_backend(
+    inplace_split_plan: InplaceSplitPlan,
+    uses_paged_attention: Callable[[int], bool],
+) -> bool:
+    """Return whether split-0 can safely reuse its ordinary graph backend."""
+    if not inplace_split_plan.split_slices:
+        return False
+    unsplit_uses_pa = uses_paged_attention(
+        inplace_split_plan.padded_num_tokens_without_split)
+    first_split = inplace_split_plan.split_slices[0]
+    return uses_paged_attention(first_split.graph_num_tokens) == unsplit_uses_pa
+
+
+def select_inplace_attention_backend(
+    inplace_split_plan: InplaceSplitPlan,
+    uses_paged_attention: Callable[[int], bool],
+) -> str:
+    return ("pa" if uses_paged_attention(
+        inplace_split_plan.padded_num_tokens_without_split) else "fia")
+
+
+def _ceil_to_capture_size(num_tokens: int,
+                          capture_sizes: list[int]) -> Optional[int]:
+    for size in capture_sizes:
+        if size >= num_tokens:
+            return size
+    return None
+
+
+def create_inplace_split_batch_slices(
+    num_scheduled_tokens_per_request: np.ndarray,
+    total_num_tokens: int,
+    uniform_decode_query_len: int,
+    cudagraph_capture_sizes: Iterable[int],
+    inplace_max_remainder_tokens: Optional[int] = None,
+) -> tuple[Optional[InplaceSplitPlan], str]:
+    """Create a dry-run 2-way inplace split plan.
+
+    The first split uses the largest lower full-graph capture size. The second
+    split uses the real remainder and records start_num_tokens so later phases
+    can dispatch descriptor-aware offset graphs.
+    """
+    q = int(uniform_decode_query_len)
+    if q <= 0:
+        return None, NO_SPLIT_INVALID_QUERY_LEN
+
+    num_reqs = len(num_scheduled_tokens_per_request)
+    if (num_reqs == 0
+            or int(np.sum(num_scheduled_tokens_per_request)) !=
+            int(total_num_tokens)
+            or not np.all(num_scheduled_tokens_per_request == q)):
+        return None, NO_SPLIT_NON_UNIFORM_DECODE
+
+    capture_sizes = sorted({int(size) for size in cudagraph_capture_sizes
+                            if int(size) > 0})
+    if not capture_sizes:
+        return None, NO_SPLIT_NO_CAPTURE_SIZES
+
+    total_tokens = int(total_num_tokens)
+    max_capture_size = capture_sizes[-1]
+    if total_tokens > max_capture_size:
+        return None, NO_SPLIT_ABOVE_MAX_CAPTURE_SIZE
+
+    padded_without_split = _ceil_to_capture_size(total_tokens, capture_sizes)
+    if padded_without_split is None:
+        return None, NO_SPLIT_ABOVE_MAX_CAPTURE_SIZE
+    if padded_without_split == total_tokens:
+        return None, NO_SPLIT_EXACT_GRAPH_HIT
+
+    valid_lower_sizes = [
+        size for size in capture_sizes
+        if size < total_tokens and size % q == 0
+    ]
+    if not valid_lower_sizes:
+        return None, NO_SPLIT_NO_LOWER_CAPTURE_SIZE
+
+    first_tokens = max(valid_lower_sizes)
+    second_tokens = total_tokens - first_tokens
+    first_reqs = first_tokens // q
+    second_reqs = num_reqs - first_reqs
+
+    if first_reqs * q != first_tokens:
+        return None, NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
+    if second_tokens <= 0 or first_reqs <= 0 or second_reqs <= 0:
+        return None, NO_SPLIT_SECOND_EMPTY
+    if second_tokens != second_reqs * q:
+        return None, NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
+    if (inplace_max_remainder_tokens is not None
+            and second_tokens > int(inplace_max_remainder_tokens)):
+        return None, NO_SPLIT_REMAINDER_TOO_LARGE
+
+    split_slices = [
+        SplitBatchSlice(
+            request_slice=slice(0, first_reqs),
+            token_slice=slice(0, first_tokens),
+            padded_num_tokens=first_tokens,
+            start_num_tokens=0,
+        ),
+        SplitBatchSlice(
+            request_slice=slice(first_reqs, num_reqs),
+            token_slice=slice(first_tokens, total_tokens),
+            padded_num_tokens=second_tokens,
+            start_num_tokens=first_tokens,
+        ),
+    ]
+
+    return InplaceSplitPlan(
+        split_slices=split_slices,
+        reason=INPLACE_SPLIT_DRY_RUN,
+        total_num_tokens=total_tokens,
+        padded_num_tokens_without_split=padded_without_split,
+        first_tokens=first_tokens,
+        second_tokens=second_tokens,
+        first_reqs=first_reqs,
+        second_reqs=second_reqs,
+        lower_capture_size=first_tokens,
+        remainder_tokens=second_tokens,
+        capture_sizes_considered=capture_sizes,
+    ), INPLACE_SPLIT_DRY_RUN
 
 
 def create_split_batch_slices(
@@ -467,5 +659,3 @@ def split_batch_split(
         return (split_slices, padded_total)
     
     return (split_slices, num_tokens_padded)
-
-
