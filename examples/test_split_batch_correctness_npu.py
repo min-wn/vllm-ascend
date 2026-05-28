@@ -625,6 +625,16 @@ def create_parser() -> FlexibleArgumentParser:
         ),
     )
     test_group.add_argument(
+        "--pa-shape-list",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated ordinary graph shapes routed through paged "
+            "attention. Used for backend-policy diagnostics, for example "
+            "--pa-shape-list 512."
+        ),
+    )
+    test_group.add_argument(
         "--enable-parallel-streams",
         action="store_true",
         help="Enable split parallel streams (if supported).",
@@ -1077,6 +1087,7 @@ def _build_split_additional_config(
     inplace_force_pa_for_offset: bool = False,
     enable_inplace_spec_decode: bool = False,
     enable_inplace_mrope: bool = False,
+    pa_shape_list: list[int] | None = None,
 ) -> dict[str, Any]:
     cfg: dict[str, Any] = {
         "enabled": enabled,
@@ -1096,7 +1107,10 @@ def _build_split_additional_config(
             inplace_force_pa_for_offset)
         cfg["enable_inplace_spec_decode"] = bool(enable_inplace_spec_decode)
         cfg["enable_inplace_mrope"] = bool(enable_inplace_mrope)
-    return {"split_batch_config": cfg}
+    additional_config: dict[str, Any] = {"split_batch_config": cfg}
+    if pa_shape_list is not None:
+        additional_config["pa_shape_list"] = list(pa_shape_list)
+    return additional_config
 
 
 def _run_single(
@@ -1154,6 +1168,7 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "split_debug": ctx["split_debug"],
         "expected_split": ctx["expected_split"],
         "expected_no_split_reason": ctx["expected_no_split_reason"],
+        "pa_shape_list": ctx["pa_shape_list"],
         "compilation_config": base_args.get("compilation_config"),
         "compare_mode": "subprocess",
     }
@@ -1388,6 +1403,7 @@ def main() -> int:
         capture_sizes = [256, 384, 512]
     if capture_sizes is not None:
         _apply_capture_sizes(args, capture_sizes)
+    pa_shape_list = _parse_int_list(args.pop("pa_shape_list"))
     enable_parallel_streams = bool(args.pop("enable_parallel_streams"))
     _parallel_capture_sizes_raw = args.pop("parallel_capture_sizes")
     parallel_capture_sizes = _parse_int_list(_parallel_capture_sizes_raw)
@@ -1525,6 +1541,7 @@ def main() -> int:
         inplace_force_pa_for_offset=inplace_force_pa_for_offset,
         enable_inplace_spec_decode=enable_inplace_spec_decode,
         enable_inplace_mrope=enable_inplace_mrope,
+        pa_shape_list=pa_shape_list,
     )
     split_enabled_cfg = _build_split_additional_config(
         enabled=True,
@@ -1538,6 +1555,7 @@ def main() -> int:
         inplace_force_pa_for_offset=inplace_force_pa_for_offset,
         enable_inplace_spec_decode=enable_inplace_spec_decode,
         enable_inplace_mrope=enable_inplace_mrope,
+        pa_shape_list=pa_shape_list,
     )
 
     # Preferred: coordinator mode spawns 2 child processes then compares.
@@ -1558,6 +1576,7 @@ def main() -> int:
             validate_ptrs=validate_ptrs,
             enable_inplace_spec_decode=enable_inplace_spec_decode,
             enable_inplace_mrope=enable_inplace_mrope,
+            pa_shape_list=pa_shape_list,
             split_debug=split_debug,
             expected_split=expected_split,
             expected_no_split_reason=expected_no_split_reason,
@@ -1597,6 +1616,7 @@ def main() -> int:
         "split_debug": split_debug,
         "expected_split": expected_split,
         "expected_no_split_reason": expected_no_split_reason,
+        "pa_shape_list": pa_shape_list,
         "compilation_config": args.get("compilation_config"),
         "run": run_mode,
         "compare_mode": compare_mode,
@@ -1656,6 +1676,7 @@ def main() -> int:
                     "max_tokens": max_tokens,
                     "ignore_eos": ignore_eos,
                     "split_batch_config": split_enabled_cfg["split_batch_config"],
+                    "pa_shape_list": pa_shape_list,
                     "compilation_config": args.get("compilation_config"),
                     "expected_split": expected_split,
                     "expected_no_split_reason": expected_no_split_reason,

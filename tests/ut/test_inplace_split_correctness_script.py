@@ -72,10 +72,13 @@ def test_parser_defaults_and_overrides_fixed_batch_query_len():
     parser = create_parser()
 
     assert parser.parse_args([]).fixed_batch_query_len == 1
+    assert parser.parse_args([]).pa_shape_list is None
     assert parser.parse_args([
         "--fixed-batch-query-len",
         "4",
     ]).fixed_batch_query_len == 4
+    assert parser.parse_args(["--pa-shape-list", "384,512"]).pa_shape_list == (
+        "384,512")
 
 
 def test_build_split_config_keeps_inplace_feature_flags_disabled_by_default():
@@ -104,6 +107,7 @@ def test_build_split_config_for_inplace_serial_validation():
         validate_ptrs=True,
         enable_inplace_spec_decode=True,
         enable_inplace_mrope=True,
+        pa_shape_list=[512],
     )
 
     split_cfg = config["split_batch_config"]
@@ -113,6 +117,7 @@ def test_build_split_config_for_inplace_serial_validation():
     assert split_cfg["inplace_validate_metadata_ptrs"] is True
     assert split_cfg["enable_inplace_spec_decode"] is True
     assert split_cfg["enable_inplace_mrope"] is True
+    assert config["pa_shape_list"] == [512]
 
 
 def test_split_debug_trace_summary_validates_expected_split(tmp_path):

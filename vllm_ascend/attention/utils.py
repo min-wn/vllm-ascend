@@ -1,4 +1,4 @@
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, List, Optional
 
@@ -47,59 +47,7 @@ def stabilize_inplace_common_attn_metadata(
     slot_mapping_secondary: Any,
     block_table_secondary: Any = None,
 ) -> "AscendCommonAttentionMetadata":
-    if split_idx == 0:
-        return common
-
-    nreq = int(common.num_reqs)
-    ntok = int(common.num_actual_tokens)
-    if nreq + 1 > max_num_reqs + 1:
-        raise ValueError(
-            f"inplace metadata nreq overflow: {nreq} > {max_num_reqs}")
-    if ntok > max_num_tokens:
-        raise ValueError(
-            f"inplace metadata ntok overflow: {ntok} > {max_num_tokens}")
-    if (block_table_secondary is not None
-            and common.block_table_tensor is not None):
-        block_table_width = int(common.block_table_tensor.shape[1])
-        if block_table_secondary.gpu.shape[0] < nreq:
-            raise ValueError(
-                f"inplace metadata block table nreq overflow: {nreq} > "
-                f"{block_table_secondary.gpu.shape[0]}")
-        if block_table_secondary.gpu.shape[1] < block_table_width:
-            raise ValueError(
-                "inplace metadata block table width overflow: "
-                f"{block_table_width} > "
-                f"{block_table_secondary.gpu.shape[1]}")
-
-    query_start_loc_gpu = query_start_loc_secondary.gpu[:nreq + 1]
-    query_start_loc_cpu = query_start_loc_secondary.cpu[:nreq + 1]
-    seq_lens_gpu = seq_lens_secondary.gpu[:nreq]
-    seq_lens_cpu = seq_lens_secondary.cpu[:nreq]
-    slot_mapping = slot_mapping_secondary.gpu[:ntok]
-    block_table_tensor = common.block_table_tensor
-    if block_table_secondary is not None and block_table_tensor is not None:
-        block_table_width = int(block_table_tensor.shape[1])
-        block_table_tensor = block_table_secondary.gpu[:nreq, :
-                                                       block_table_width]
-
-    query_start_loc_gpu.copy_(common.query_start_loc[:nreq + 1])
-    query_start_loc_cpu.copy_(common.query_start_loc_cpu[:nreq + 1])
-    seq_lens_gpu.copy_(common.seq_lens[:nreq])
-    seq_lens_cpu.copy_(common.seq_lens_cpu[:nreq])
-    slot_mapping.copy_(common.slot_mapping[:ntok])
-    if (block_table_secondary is not None
-            and common.block_table_tensor is not None):
-        block_table_tensor.copy_(common.block_table_tensor[:nreq])
-
-    return replace(
-        common,
-        query_start_loc=query_start_loc_gpu,
-        query_start_loc_cpu=query_start_loc_cpu,
-        seq_lens=seq_lens_gpu,
-        seq_lens_cpu=seq_lens_cpu,
-        slot_mapping=slot_mapping,
-        block_table_tensor=block_table_tensor,
-    )
+    return common
 
 
 def using_paged_attention(runtime_shape: int,

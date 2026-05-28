@@ -99,6 +99,7 @@ from vllm_ascend.attention.attention_v1 import AscendAttentionState
 from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          AscendPrefillContextParallelMetadata,
                                          slice_model_inputs_by_token,
+                                         stabilize_inplace_common_attn_metadata,
                                          using_paged_attention)
 # yapf conflicts with isort for this block
 # yapf: disable
@@ -224,8 +225,6 @@ _PERF_STATS_FILE = os.environ.get(
     "VLLM_ASCEND_PERF_STATS_FILE",
     "",
 )
-_SPLIT_MERGE_DUMP = os.environ.get(
-    "VLLM_ASCEND_SPLIT_MERGE_DUMP", "1") not in ("0", "false", "False")
 
 def _write_perf_stats(stats: dict) -> None:
     """Append one JSON line to the perf stats file (if enabled)."""
@@ -728,6 +727,13 @@ class NPUModelRunner(GPUModelRunner):
             self.max_num_tokens, self.inputs_embeds_size, dtype=self.dtype, numpy=False
         )
         self.positions_parallel_streams=self._make_buffer(self.max_num_tokens, dtype=torch.int64)
+        self.inplace_query_start_loc_secondary = self._make_buffer(
+            self.max_num_reqs + 1, dtype=torch.int32)
+        self.inplace_seq_lens_secondary = self._make_buffer(
+            self.max_num_reqs, dtype=torch.int32)
+        self.inplace_slot_mapping_secondary = self._make_buffer(
+            self.max_num_tokens, dtype=torch.int32)
+        self.inplace_block_table_secondary = None
 
         self.stream_main = torch.npu.current_stream()
         self.stream_parallel = torch.npu.Stream(device=self.device)
@@ -2261,9 +2267,29 @@ class NPUModelRunner(GPUModelRunner):
             common: AscendCommonAttentionMetadata,
             *,
             split_idx: int) -> AscendCommonAttentionMetadata:
-        # Experiment: use split metadata directly, including the rebased
-        # query_start_loc tensor created by split_attn_metadata().
-        return common
+        if split_idx == 0:
+            return common
+
+        block_table_secondary = None
+        if common.block_table_tensor is not None:
+            block_table_width = int(common.block_table_tensor.shape[1])
+            current = self.inplace_block_table_secondary
+            if (current is None or current.gpu.shape[0] < self.max_num_reqs
+                    or current.gpu.shape[1] < block_table_width):
+                self.inplace_block_table_secondary = self._make_buffer(
+                    self.max_num_reqs, block_table_width, dtype=torch.int32)
+            block_table_secondary = self.inplace_block_table_secondary
+
+        return stabilize_inplace_common_attn_metadata(
+            common,
+            split_idx=split_idx,
+            max_num_reqs=self.max_num_reqs,
+            max_num_tokens=self.max_num_tokens,
+            query_start_loc_secondary=self.inplace_query_start_loc_secondary,
+            seq_lens_secondary=self.inplace_seq_lens_secondary,
+            slot_mapping_secondary=self.inplace_slot_mapping_secondary,
+            block_table_secondary=block_table_secondary,
+        )
 
     def _dry_run_inplace_stable_metadata(
             self, common_attn_metadata: AscendCommonAttentionMetadata,
@@ -2292,7 +2318,7 @@ class NPUModelRunner(GPUModelRunner):
                 "split_idx":
                 int(split_idx),
                 "stabilized":
-                False,
+                bool(split_idx > 0),
                 "token_start":
                 int(split_slice.token_slice.start),
                 "token_stop":
@@ -2327,7 +2353,12 @@ class NPUModelRunner(GPUModelRunner):
         if (split_mode not in ("inplace_serial", "inplace_parallel")
                 or inplace_split_plan is None):
             return common_attn_metadata_list
-        return common_attn_metadata_list
+        return [
+            self._stabilize_inplace_common_attn_metadata(
+                common_attn_metadata, split_idx=split_idx)
+            for split_idx, common_attn_metadata in enumerate(
+                common_attn_metadata_list)
+        ]
 
     def _slice_split_batch_inputs(self, tokens_slice: slice, input_ids,
                                   positions, inputs_embeds,
@@ -2706,7 +2737,6 @@ class NPUModelRunner(GPUModelRunner):
                 and getattr(split_cfg, "inplace_validate_metadata_ptrs",
                             False)
                 and split_slice.start_num_tokens > 0)
-            validate_inplace_metadata_ptrs = False
 
             if split_debug.is_enabled():
                 split_debug.log_event(
@@ -2728,8 +2758,6 @@ class NPUModelRunner(GPUModelRunner):
                         "allow_inplace_lazy_capture":
                         allow_inplace_lazy_capture,
                         "validate_inplace_ptrs": validate_inplace_ptrs,
-                        "validate_inplace_metadata_ptrs":
-                        validate_inplace_metadata_ptrs,
                         "forced_attention_backend":
                         split_attention_backend,
                         "force_pa_for_offset":
@@ -2763,7 +2791,7 @@ class NPUModelRunner(GPUModelRunner):
             setattr(split_forward_context, "validate_inplace_input_ptrs",
                     validate_inplace_ptrs)
             setattr(split_forward_context, "validate_inplace_metadata_ptrs",
-                    validate_inplace_metadata_ptrs)
+                    validate_inplace_ptrs)
             forward_contexts.append(split_forward_context)
 
         ubatch_metadata: list[AscendUbatchMetadata] = []
@@ -2878,7 +2906,6 @@ class NPUModelRunner(GPUModelRunner):
                 and getattr(split_cfg, "inplace_validate_metadata_ptrs",
                             False)
                 and split_slice.start_num_tokens > 0)
-            validate_inplace_metadata_ptrs = False
 
             if split_debug.is_enabled():
                 split_debug.log_event(
@@ -2908,8 +2935,6 @@ class NPUModelRunner(GPUModelRunner):
                         "allow_inplace_lazy_capture":
                         allow_inplace_lazy_capture,
                         "validate_inplace_ptrs": validate_inplace_ptrs,
-                        "validate_inplace_metadata_ptrs":
-                        validate_inplace_metadata_ptrs,
                         "forced_attention_backend":
                         split_attention_backend,
                         "force_pa_for_offset":
@@ -2947,7 +2972,7 @@ class NPUModelRunner(GPUModelRunner):
             setattr(split_forward_context, "validate_inplace_input_ptrs",
                     validate_inplace_ptrs)
             setattr(split_forward_context, "validate_inplace_metadata_ptrs",
-                    validate_inplace_metadata_ptrs)
+                    validate_inplace_ptrs)
             forward_contexts.append(split_forward_context)
 
         ubatch_metadata: list[AscendUbatchMetadata] = []
@@ -3085,67 +3110,6 @@ class NPUModelRunner(GPUModelRunner):
             return False
         return not self._has_aclgraph_for_context(context)
 
-    @contextmanager
-    def _bind_inplace_parallel_rope_capture_slot(
-            self, context: Any, *, parallel_streams: bool):
-        """Bind the traced RoPE slot input to split-1 during lazy capture.
-
-        The compiled backbone was initially traced with the slot-0 module
-        global as its RoPE input.  ACL graph replay no longer resolves that
-        Python global after capture, so rebind it only while capturing the
-        offset graph and make that graph retain the split-1 buffer address.
-        """
-        if (not parallel_streams
-                or getattr(context, "split_inplace_mode", "")
-                != "inplace_parallel"):
-            yield
-            return
-
-        slot_id = int(getattr(context, "cos_sin_slot_id", 0) or 0)
-        if slot_id <= 0:
-            yield
-            return
-
-        import vllm_ascend.ops.rotary_embedding as rotary_embedding
-
-        cos, sin = rotary_embedding.get_cos_and_sin_slice(slot_id=slot_id)
-        if cos is None or sin is None:
-            raise RuntimeError(
-                "Missing rotary cos/sin buffers for inplace parallel "
-                f"capture slot {slot_id}")
-
-        previous_cos = rotary_embedding._cos_slice_slots[0]
-        previous_sin = rotary_embedding._sin_slice_slots[0]
-        rotary_embedding._cos_slice_slots[0] = cos
-        rotary_embedding._sin_slice_slots[0] = sin
-        if split_debug.is_enabled():
-            split_debug.log_event(
-                "inplace_parallel_rope_slot_binding",
-                {
-                    "phase": "bind",
-                    "compiled_slot_id": 0,
-                    "capture_slot_id": slot_id,
-                    "cos": split_debug.tensor_info(cos),
-                    "sin": split_debug.tensor_info(sin),
-                },
-                step_id=_split_debug_step_from_runner(self),
-            )
-        try:
-            yield
-        finally:
-            rotary_embedding._cos_slice_slots[0] = previous_cos
-            rotary_embedding._sin_slice_slots[0] = previous_sin
-            if split_debug.is_enabled():
-                split_debug.log_event(
-                    "inplace_parallel_rope_slot_binding",
-                    {
-                        "phase": "restore",
-                        "compiled_slot_id": 0,
-                        "capture_slot_id": slot_id,
-                    },
-                    step_id=_split_debug_step_from_runner(self),
-                )
-
     def _run_inplace_serial_offset_capture(
             self,
             metadata: AscendUbatchMetadata,
@@ -3193,11 +3157,7 @@ class NPUModelRunner(GPUModelRunner):
 
         replay_result = None
         try:
-            with (
-                self._bind_inplace_parallel_rope_capture_slot(
-                    context, parallel_streams=parallel_streams),
-                torch.npu.stream(target_stream),
-            ):
+            with torch.npu.stream(target_stream):
                 for warmup_idx in range(warmups):
                     context.cudagraph_runtime_mode = CUDAGraphMode.NONE
                     context.capturing = False
@@ -3563,8 +3523,7 @@ class NPUModelRunner(GPUModelRunner):
                 with override_forward_context(original_forward_context):
                     result = self._merge_split_outputs(results)
 
-                if (_SPLIT_MERGE_DUMP
-                        and not getattr(self, "_split_batch_dumped", False)):
+                if not getattr(self, "_split_batch_dumped", False):
                     dump_path = os.path.join(
                         os.getcwd(), "split_batch_merged_first_result_gg.json")
                     with open(dump_path, "w", encoding="utf-8") as f:
@@ -4003,8 +3962,7 @@ class NPUModelRunner(GPUModelRunner):
             result = self._merge_split_outputs(merged_results)
         logger.debug("[split_batch] merge done, returning result")
 
-        if (_SPLIT_MERGE_DUMP
-                and not getattr(self, "_split_batch_dumped", False)):
+        if not getattr(self, "_split_batch_dumped", False):
             dump_path = os.path.join(
                 os.getcwd(), "split_batch_merged_first_result_gg.json")
             with open(dump_path, "w", encoding="utf-8") as f:
