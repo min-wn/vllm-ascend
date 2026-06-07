@@ -600,9 +600,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
                                       output: torch.Tensor):
         forward_context: ForwardContext = get_forward_context()
         if getattr(forward_context, "capturing", False):
-            attn_output, num_tokens = self.full_graph_fia(
-                query, key, value, attn_metadata, output)
-            output[:num_tokens] = attn_output[:num_tokens]
+            self.full_graph_fia(query, key, value, attn_metadata, output)
             return output
         if (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
                 and self.sliding_window is not None
@@ -613,8 +611,9 @@ class AscendAttentionBackendImpl(AttentionImpl):
             = self._get_fia_params(key, value, attn_metadata)
         num_tokens = attn_metadata.actual_seq_lengths_q[-1]
         query = query[:num_tokens]
-        # Get workspace from cache or calculate it if not present.
-        attn_output, _ = torch_npu.npu_fused_infer_attention_score(
+        output_view = output[:num_tokens]
+        softmax_lse = torch.empty(1, dtype=query.dtype, device=query.device)
+        torch_npu.npu_fused_infer_attention_score.out(
             query=query,
             key=key,
             value=value,
@@ -628,11 +627,8 @@ class AscendAttentionBackendImpl(AttentionImpl):
             num_heads=self.num_heads,
             scale=self.scale,
             sparse_mode=3,
+            out=[output_view, softmax_lse],
         )
-
-        attn_output = attn_output.view(num_tokens, self.num_heads,
-                                       self.head_size)
-        output[:num_tokens] = attn_output[:num_tokens]
         return output
 
     def forward_paged_attention(

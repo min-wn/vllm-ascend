@@ -349,6 +349,15 @@ class SplitBatchConfig:
             split_batch_config.get("enable_inplace_lazy_capture", True))
         self.inplace_serial_first: bool = bool(
             split_batch_config.get("inplace_serial_first", True))
+        self.inplace_parallel_replay_policy: str = str(
+            split_batch_config.get("inplace_parallel_replay_policy",
+                                   "full_graph_parallel"))
+        self.piecewise_scheduler_sync_policy: str = str(
+            split_batch_config.get("piecewise_scheduler_sync_policy",
+                                   "event_chain"))
+        self.piecewise_attention_enqueue_policy: str = str(
+            split_batch_config.get("piecewise_attention_enqueue_policy",
+                                   "persistent_thread"))
         raw_inplace_max_remainder_tokens = split_batch_config.get(
             "inplace_max_remainder_tokens", None)
         if raw_inplace_max_remainder_tokens is None:
@@ -442,6 +451,28 @@ class SplitBatchConfig:
             raise ValueError(
                 "inplace split currently supports "
                 "split_batch_config.num_splits=2 only")
+        valid_replay_policies = ("full_graph_parallel",
+                                 "piecewise_attention_parallel")
+        if self.inplace_parallel_replay_policy not in valid_replay_policies:
+            raise ValueError(
+                "split_batch_config.inplace_parallel_replay_policy must be "
+                f"one of {valid_replay_policies}, got "
+                f"{self.inplace_parallel_replay_policy!r}")
+        valid_piecewise_sync_policies = ("host_sync", "event_chain")
+        if self.piecewise_scheduler_sync_policy not in (
+                valid_piecewise_sync_policies):
+            raise ValueError(
+                "split_batch_config.piecewise_scheduler_sync_policy must be "
+                f"one of {valid_piecewise_sync_policies}, got "
+                f"{self.piecewise_scheduler_sync_policy!r}")
+        valid_piecewise_attention_policies = ("per_piece_thread",
+                                              "persistent_thread")
+        if self.piecewise_attention_enqueue_policy not in (
+                valid_piecewise_attention_policies):
+            raise ValueError(
+                "split_batch_config.piecewise_attention_enqueue_policy must "
+                f"be one of {valid_piecewise_attention_policies}, got "
+                f"{self.piecewise_attention_enqueue_policy!r}")
         if (self.inplace_max_remainder_tokens is not None
                 and self.inplace_max_remainder_tokens < 1):
             raise ValueError(

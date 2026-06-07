@@ -135,6 +135,11 @@ from vllm_ascend.utils import (AscendDeviceType, ProfileExecuteDuration,
 from vllm_ascend.worker.npu_input_batch import NPUInputBatch
 from vllm_ascend.worker.npu_ubatch_wrapper import (AscendUBatchWrapper,
                                                    AscendUbatchMetadata)
+from vllm_ascend.worker.inplace_piecewise_scheduler import (
+    InplacePiecewiseSplitInput,
+    InplacePiecewiseSplitScheduler,
+    capture_piecewise_model_call,
+)
 from vllm_ascend.worker.ubatch_utils import (INPLACE_SPLIT_DRY_RUN,
                                              InplaceSplitPlan,
                                              NO_SPLIT_ATTENTION_BACKEND_MISMATCH,
@@ -357,6 +362,43 @@ def _split_debug_step_from_runner(runner: Any) -> Optional[int]:
     return getattr(runner, "_split_inplace_debug_step_id", None)
 
 
+def _split_output_tensor_stats(value: Any) -> dict[str, Any]:
+    stats: dict[str, Any] = {
+        "tensor_count": 0,
+        "total_numel": 0,
+        "tensors": [],
+    }
+    tensors: list[dict[str, Any]] = stats["tensors"]
+
+    def _walk(item: Any, path: str) -> None:
+        if isinstance(item, torch.Tensor):
+            stats["tensor_count"] += 1
+            try:
+                stats["total_numel"] += int(item.numel())
+            except Exception:
+                pass
+            if len(tensors) < 8:
+                info = split_debug.tensor_info(item)
+                if info is not None:
+                    info["path"] = path
+                    tensors.append(info)
+            return
+        if isinstance(item, IntermediateTensors):
+            for name, tensor in item.tensors.items():
+                _walk(tensor, f"{path}.tensors[{name!s}]")
+            return
+        if isinstance(item, dict):
+            for key, child in item.items():
+                _walk(child, f"{path}[{key!r}]")
+            return
+        if isinstance(item, (list, tuple)):
+            for idx, child in enumerate(item):
+                _walk(child, f"{path}[{idx}]")
+
+    _walk(value, "root")
+    return stats
+
+
 def _inplace_plan_to_execution_slices(
         split_mode: str,
         inplace_split_plan: Optional[InplaceSplitPlan],
@@ -451,6 +493,16 @@ def _extract_attn_positions(attn_metadata: Any) -> tuple[Optional[int], Any]:
 
     positions = getattr(candidate, "positions", None)
     return _safe_tensor_ptr(positions), _safe_tensor_head(positions)
+
+
+def _unwrap_single_tensor_output(output: Any) -> Any:
+    while isinstance(output, (list, tuple)) and len(output) == 1:
+        inner = output[0]
+        if isinstance(inner, (torch.Tensor, list, tuple)):
+            output = inner
+            continue
+        break
+    return output
 
 
 
@@ -3213,7 +3265,8 @@ class NPUModelRunner(GPUModelRunner):
 
             allow_inplace_lazy_capture = bool(
                 allow_lazy and split_slice.start_num_tokens > 0
-                and ubatch_cudagraph_mode == CUDAGraphMode.FULL
+                and ubatch_cudagraph_mode
+                in (CUDAGraphMode.FULL, CUDAGraphMode.PIECEWISE)
                 and getattr(ubatch_batch_descriptor, "graph_variant", "")
                 == "inplace_serial"
                 and getattr(ubatch_batch_descriptor, "attention_backend", "")
@@ -3286,6 +3339,10 @@ class NPUModelRunner(GPUModelRunner):
                     split_attention_backend)
             setattr(split_forward_context, "allow_inplace_lazy_capture",
                     allow_inplace_lazy_capture)
+            setattr(split_forward_context, "split_actual_num_tokens",
+                    int(split_slice.num_tokens))
+            setattr(split_forward_context, "split_graph_num_tokens",
+                    int(split_slice.graph_num_tokens))
             setattr(split_forward_context, "validate_inplace_input_ptrs",
                     validate_inplace_ptrs)
             setattr(split_forward_context, "validate_inplace_metadata_ptrs",
@@ -3416,7 +3473,8 @@ class NPUModelRunner(GPUModelRunner):
 
             allow_inplace_lazy_capture = bool(
                 allow_lazy and split_slice.start_num_tokens > 0
-                and ubatch_cudagraph_mode == CUDAGraphMode.FULL
+                and ubatch_cudagraph_mode
+                in (CUDAGraphMode.FULL, CUDAGraphMode.PIECEWISE)
                 and getattr(ubatch_batch_descriptor, "graph_variant", "")
                 == "inplace_parallel"
                 and getattr(ubatch_batch_descriptor, "attention_backend", "")
@@ -3501,6 +3559,10 @@ class NPUModelRunner(GPUModelRunner):
                     split_attention_backend)
             setattr(split_forward_context, "allow_inplace_lazy_capture",
                     allow_inplace_lazy_capture)
+            setattr(split_forward_context, "split_actual_num_tokens",
+                    int(split_slice.num_tokens))
+            setattr(split_forward_context, "split_graph_num_tokens",
+                    int(split_slice.graph_num_tokens))
             setattr(split_forward_context, "validate_inplace_input_ptrs",
                     validate_inplace_ptrs)
             setattr(split_forward_context, "validate_inplace_metadata_ptrs",
@@ -3583,10 +3645,15 @@ class NPUModelRunner(GPUModelRunner):
         """
         if isinstance(output, torch.Tensor):
             return output[:num_tokens]
+        if isinstance(output, list):
+            return [
+                self._trim_split_output(item, num_tokens)
+                for item in output
+            ]
         if isinstance(output, tuple):
             return tuple(
-                t[:num_tokens] if isinstance(t, torch.Tensor) else t
-                for t in output
+                self._trim_split_output(item, num_tokens)
+                for item in output
             )
         if isinstance(output, IntermediateTensors):
             return IntermediateTensors(
@@ -3598,10 +3665,11 @@ class NPUModelRunner(GPUModelRunner):
     def _clone_split_output(self, output: Any) -> Any:
         if isinstance(output, torch.Tensor):
             return output.clone()
+        if isinstance(output, list):
+            return [self._clone_split_output(item) for item in output]
         if isinstance(output, tuple):
             return tuple(
-                t.clone() if isinstance(t, torch.Tensor) else t
-                for t in output)
+                self._clone_split_output(item) for item in output)
         if isinstance(output, IntermediateTensors):
             return IntermediateTensors(
                 {k: v.clone() for k, v in output.tensors.items()})
@@ -3611,18 +3679,21 @@ class NPUModelRunner(GPUModelRunner):
         if not outputs:
             return None
         first = outputs[0]
+        if isinstance(first, torch.Tensor):
+            return torch.cat(outputs, dim=0)
         if isinstance(first, IntermediateTensors):
             return self._merge_intermediate_tensors(outputs)
-        if isinstance(first, tuple):
-            merged = []
-            for idx in range(len(first)):
-                parts = [o[idx] for o in outputs]
-                if isinstance(parts[0], torch.Tensor):
-                    merged.append(torch.cat(parts, dim=0))
-                else:
-                    merged.append(parts)
-            return tuple(merged)
-        return torch.cat(outputs, dim=0)
+        if isinstance(first, (list, tuple)):
+            if any(len(output) != len(first) for output in outputs):
+                raise RuntimeError(
+                    "Cannot merge split outputs with different container "
+                    "lengths")
+            merged = [
+                self._merge_split_outputs([output[idx] for output in outputs])
+                for idx in range(len(first))
+            ]
+            return type(first)(merged)
+        return first
 
     def _has_aclgraph_for_context(self, context: Any) -> bool:
         has_graph = getattr(self.model, "has_graph", None)
@@ -4241,6 +4312,185 @@ class NPUModelRunner(GPUModelRunner):
             self._t_replay_end = time.perf_counter()
 
 
+    def _run_split_batch_inplace_parallel_piecewise(
+            self,
+            split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            intermediate_tensors: Optional[IntermediateTensors],
+            inputs_embeds: Optional[torch.Tensor],
+            model_kwargs: dict[str, Any],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode,
+            inplace_attention_backend: str,
+    ) -> Any:
+        if aclgraph_runtime_mode != CUDAGraphMode.PIECEWISE:
+            raise RuntimeError(
+                "piecewise_attention_parallel requires "
+                "CUDAGraphMode.PIECEWISE")
+        if len(split_batch_slices) != 2:
+            raise RuntimeError(
+                "piecewise_attention_parallel currently supports exactly "
+                f"2 splits, got {len(split_batch_slices)}")
+
+        ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            batch_descriptor,
+            aclgraph_runtime_mode,
+            inplace_attention_backend,
+        )
+
+        original_forward_context = get_forward_context()
+        runtime_calls = []
+        self._t_replay_start = time.perf_counter()
+        try:
+            for slice_idx, metadata in enumerate(ubatch_metadata):
+                target_stream = (self.stream_parallel if slice_idx > 0
+                                 else self.stream_main)
+                runtime_calls.append(
+                    capture_piecewise_model_call(
+                        model=self.model,
+                        metadata=metadata,
+                        model_kwargs=model_kwargs,
+                        stream=target_stream,
+                    ))
+
+            handle = runtime_calls[0].handle
+            if runtime_calls[1].handle is not handle:
+                raise RuntimeError(
+                    "Captured piecewise split calls use different runtime "
+                    "handles")
+
+            scheduler = InplacePiecewiseSplitScheduler(
+                handle,
+                stream_main=self.stream_main,
+                stream_parallel=self.stream_parallel,
+                debug_step_id=_split_debug_step_from_runner(self),
+                sync_policy=getattr(
+                    getattr(self.ascend_config, "split_batch_config", None),
+                    "piecewise_scheduler_sync_policy", "event_chain"),
+                attention_enqueue_policy=getattr(
+                    getattr(self.ascend_config, "split_batch_config", None),
+                    "piecewise_attention_enqueue_policy",
+                    "persistent_thread"),
+            )
+            logger.info_once(
+                "piecewise_attention_parallel graphs: total=%d, "
+                "capturable=%d, attention=%d, sync_policy=%s, "
+                "attention_enqueue_policy=%s",
+                scheduler.total_pieces,
+                scheduler.capturable_pieces,
+                scheduler.attention_pieces,
+                scheduler.sync_policy,
+                scheduler.attention_enqueue_policy,
+            )
+            if split_debug.is_enabled():
+                split_debug.log_event(
+                    "piecewise_split_graph_summary",
+                    {
+                        "piecewise_total_graphs": scheduler.total_pieces,
+                        "piecewise_capturable_graphs":
+                        scheduler.capturable_pieces,
+                        "piecewise_attention_graphs":
+                        scheduler.attention_pieces,
+                        "piecewise_scheduler_sync_policy":
+                        scheduler.sync_policy,
+                        "piecewise_attention_enqueue_policy":
+                        scheduler.attention_enqueue_policy,
+                    },
+                    step_id=_split_debug_step_from_runner(self),
+                )
+
+            split_inputs = []
+            for slice_idx, metadata in enumerate(ubatch_metadata):
+                split_slice = split_batch_slices[slice_idx]
+                split_inputs.append(
+                    InplacePiecewiseSplitInput(
+                        index=slice_idx,
+                        context=metadata.context,
+                        input_ids=metadata.input_ids,
+                        positions=metadata.positions,
+                        inputs_embeds=metadata.inputs_embeds,
+                        intermediate_tensors=metadata.intermediate_tensors,
+                        model_kwargs=model_kwargs,
+                        runtime_call=runtime_calls[slice_idx],
+                        num_tokens=split_slice.num_tokens,
+                        graph_num_tokens=split_slice.graph_num_tokens,
+                        start_num_tokens=split_slice.start_num_tokens,
+                    ))
+
+            split_outputs = scheduler.run(split_inputs[0], split_inputs[1])
+            self.stream_main.synchronize()
+            self.stream_parallel.synchronize()
+
+            merged_results = []
+            for idx in range(2):
+                output = split_outputs[idx]
+                if split_debug.is_enabled():
+                    split_debug.log_event(
+                        "piecewise_split_output_copy_diag",
+                        {
+                            "idx": idx,
+                            "phase": "pre_trim",
+                            "num_tokens":
+                            int(split_batch_slices[idx].num_tokens),
+                            **_split_output_tensor_stats(output),
+                        },
+                        step_id=_split_debug_step_from_runner(self),
+                    )
+                trimmed = self._trim_split_output(
+                    output, split_batch_slices[idx].num_tokens)
+                if split_debug.is_enabled():
+                    split_debug.log_event(
+                        "piecewise_split_output_copy_diag",
+                        {
+                            "idx": idx,
+                            "phase": "post_trim_pre_clone",
+                            "num_tokens":
+                            int(split_batch_slices[idx].num_tokens),
+                            **_split_output_tensor_stats(trimmed),
+                        },
+                        step_id=_split_debug_step_from_runner(self),
+                    )
+                cloned = self._clone_split_output(trimmed)
+                if split_debug.is_enabled():
+                    split_debug.log_event(
+                        "piecewise_split_output_copy_diag",
+                        {
+                            "idx": idx,
+                            "phase": "post_clone",
+                            "num_tokens":
+                            int(split_batch_slices[idx].num_tokens),
+                            **_split_output_tensor_stats(cloned),
+                        },
+                        step_id=_split_debug_step_from_runner(self),
+                    )
+                merged_results.append(cloned)
+            with override_forward_context(original_forward_context):
+                merged_output = self._merge_split_outputs(merged_results)
+            if split_debug.is_enabled():
+                split_debug.log_event(
+                    "piecewise_split_output_copy_diag",
+                    {
+                        "idx": None,
+                        "phase": "post_merge",
+                        **_split_output_tensor_stats(merged_output),
+                    },
+                    step_id=_split_debug_step_from_runner(self),
+                )
+            return merged_output
+        finally:
+            self._t_replay_end = time.perf_counter()
+
+
     def _run_split_batch_inplace_parallel(
             self,
             split_ubatch_slices: UBatchSlices,
@@ -4255,6 +4505,24 @@ class NPUModelRunner(GPUModelRunner):
             aclgraph_runtime_mode: CUDAGraphMode,
             inplace_attention_backend: str,
     ) -> Any:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        replay_policy = getattr(split_cfg, "inplace_parallel_replay_policy",
+                                "full_graph_parallel")
+        if replay_policy == "piecewise_attention_parallel":
+            return self._run_split_batch_inplace_parallel_piecewise(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                intermediate_tensors,
+                inputs_embeds,
+                model_kwargs,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+                inplace_attention_backend,
+            )
+
         ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
             split_ubatch_slices,
             split_batch_slices,
@@ -4979,10 +5247,7 @@ class NPUModelRunner(GPUModelRunner):
                     return pool_output
                 # Sometimes, after the model is compiled through the AOT backend,
                 # the model output may become a list containing only one Tensor object.
-                if isinstance(hidden_states, list) and \
-                        len(hidden_states) == 1 and \
-                        isinstance(hidden_states[0], torch.Tensor):
-                    hidden_states = hidden_states[0]
+                hidden_states = _unwrap_single_tensor_output(hidden_states)
                 sample_hidden_states = hidden_states[logits_indices]
                 logits = self.model.compute_logits(sample_hidden_states)
             if broadcast_pp_output:
@@ -5825,10 +6090,8 @@ class NPUModelRunner(GPUModelRunner):
         # TODO: need to rum a dummy sampler for generate task
         # Sometimes, after the model is compiled through the AOT backend,
         # the model output may become a list containing only one Tensor object.
-        if isinstance(hidden_states, list) and \
-            len(hidden_states) == 1 and \
-            isinstance(hidden_states[0], torch.Tensor):
-            hidden_states = hidden_states[0]
+        hidden_states = _unwrap_single_tensor_output(hidden_states)
+        if isinstance(hidden_states, torch.Tensor):
             hidden_states = hidden_states[logit_indices]
             output = self.model.compute_logits(hidden_states)
         return output

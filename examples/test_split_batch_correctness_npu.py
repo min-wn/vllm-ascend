@@ -145,6 +145,20 @@ def _apply_capture_sizes(args: dict[str, Any], capture_sizes: list[int]) -> None
     args["compilation_config"] = compilation_config
 
 
+def _apply_cudagraph_mode(args: dict[str, Any], cudagraph_mode: str) -> None:
+    compilation_config = args.get("compilation_config") or {}
+    if not isinstance(compilation_config, dict):
+        try:
+            compilation_config = json.loads(str(compilation_config))
+        except Exception as exc:
+            raise ValueError(
+                "--cudagraph-mode requires compilation_config to be a dict "
+                "or JSON object string") from exc
+    compilation_config = dict(compilation_config)
+    compilation_config["cudagraph_mode"] = str(cudagraph_mode)
+    args["compilation_config"] = compilation_config
+
+
 def _ensure_fixed_batch_graph_capacity(
     args: dict[str, Any],
     *,
@@ -715,6 +729,50 @@ def create_parser() -> FlexibleArgumentParser:
         ),
     )
     test_group.add_argument(
+        "--inplace-parallel-replay-policy",
+        choices=["full_graph_parallel", "piecewise_attention_parallel"],
+        default="full_graph_parallel",
+        help=(
+            "Replay policy for split_mode=inplace_parallel. "
+            "piecewise_attention_parallel requires --cudagraph-mode "
+            "PIECEWISE."
+        ),
+    )
+    test_group.add_argument(
+        "--piecewise-scheduler-sync-policy",
+        choices=["host_sync", "event_chain"],
+        default="event_chain",
+        help=(
+            "Synchronization policy for piecewise_attention_parallel. "
+            "event_chain uses device events; host_sync preserves the original "
+            "per-piece stream synchronize behavior."
+        ),
+    )
+    test_group.add_argument(
+        "--piecewise-attention-enqueue-policy",
+        choices=["per_piece_thread", "persistent_thread"],
+        default="persistent_thread",
+        help=(
+            "CPU enqueue policy for attention pieces in "
+            "piecewise_attention_parallel."
+        ),
+    )
+    test_group.add_argument(
+        "--cudagraph-mode",
+        choices=[
+            "NONE",
+            "PIECEWISE",
+            "FULL",
+            "FULL_DECODE_ONLY",
+            "FULL_AND_PIECEWISE",
+        ],
+        default=None,
+        help=(
+            "Override compilation_config.cudagraph_mode for this run. "
+            "Use PIECEWISE for piecewise attention parallel profiling."
+        ),
+    )
+    test_group.add_argument(
         "--inplace-offset-capture-sizes",
         type=str,
         default="",
@@ -1190,6 +1248,9 @@ def _build_split_additional_config(
     inplace_offset_min_graph_tokens: int = 1,
     inplace_offset_allowed_graph_tokens_by_start: (
         dict[int, list[int]] | None) = None,
+    inplace_parallel_replay_policy: str = "full_graph_parallel",
+    piecewise_scheduler_sync_policy: str = "event_chain",
+    piecewise_attention_enqueue_policy: str = "persistent_thread",
     pa_shape_list: list[int] | None = None,
 ) -> dict[str, Any]:
     cfg: dict[str, Any] = {
@@ -1213,6 +1274,12 @@ def _build_split_additional_config(
         cfg["inplace_split_planner_policy"] = inplace_split_planner_policy
         cfg["inplace_split_first_tokens_policy"] = (
             inplace_split_planner_policy)
+        cfg["inplace_parallel_replay_policy"] = (
+            inplace_parallel_replay_policy)
+        cfg["piecewise_scheduler_sync_policy"] = (
+            piecewise_scheduler_sync_policy)
+        cfg["piecewise_attention_enqueue_policy"] = (
+            piecewise_attention_enqueue_policy)
         cfg["inplace_offset_match_policy"] = "bucket"
         offset_capture_sizes = (
             inplace_offset_capture_sizes
@@ -1289,6 +1356,12 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "enable_inplace_spec_decode": ctx["enable_inplace_spec_decode"],
         "enable_inplace_mrope": ctx["enable_inplace_mrope"],
         "inplace_split_planner_policy": ctx["inplace_split_planner_policy"],
+        "inplace_parallel_replay_policy": (
+            ctx["inplace_parallel_replay_policy"]),
+        "piecewise_scheduler_sync_policy": (
+            ctx["piecewise_scheduler_sync_policy"]),
+        "piecewise_attention_enqueue_policy": (
+            ctx["piecewise_attention_enqueue_policy"]),
         "inplace_offset_capture_sizes": ctx["inplace_offset_capture_sizes"],
         "inplace_offset_max_graph_tokens_by_start": (
             ctx["inplace_offset_max_graph_tokens_by_start"]),
@@ -1534,12 +1607,21 @@ def main() -> int:
         capture_sizes = [256, 384, 512]
     if capture_sizes is not None:
         _apply_capture_sizes(args, capture_sizes)
+    cudagraph_mode = args.pop("cudagraph_mode")
+    if cudagraph_mode is not None:
+        _apply_cudagraph_mode(args, cudagraph_mode)
     pa_shape_list = _parse_int_list(args.pop("pa_shape_list"))
     enable_parallel_streams = bool(args.pop("enable_parallel_streams"))
     _parallel_capture_sizes_raw = args.pop("parallel_capture_sizes")
     parallel_capture_sizes = _parse_int_list(_parallel_capture_sizes_raw)
     inplace_split_planner_policy = str(args.pop(
         "inplace_split_planner_policy"))
+    inplace_parallel_replay_policy = str(args.pop(
+        "inplace_parallel_replay_policy"))
+    piecewise_scheduler_sync_policy = str(args.pop(
+        "piecewise_scheduler_sync_policy"))
+    piecewise_attention_enqueue_policy = str(args.pop(
+        "piecewise_attention_enqueue_policy"))
     _inplace_offset_capture_sizes_raw = str(
         args.pop("inplace_offset_capture_sizes") or "")
     inplace_offset_capture_sizes = (
@@ -1698,6 +1780,9 @@ def main() -> int:
         inplace_offset_min_graph_tokens=inplace_offset_min_graph_tokens,
         inplace_offset_allowed_graph_tokens_by_start=(
             inplace_offset_allowed_graph_tokens_by_start),
+        inplace_parallel_replay_policy=inplace_parallel_replay_policy,
+        piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
+        piecewise_attention_enqueue_policy=piecewise_attention_enqueue_policy,
         pa_shape_list=pa_shape_list,
     )
     split_enabled_cfg = _build_split_additional_config(
@@ -1719,6 +1804,9 @@ def main() -> int:
         inplace_offset_min_graph_tokens=inplace_offset_min_graph_tokens,
         inplace_offset_allowed_graph_tokens_by_start=(
             inplace_offset_allowed_graph_tokens_by_start),
+        inplace_parallel_replay_policy=inplace_parallel_replay_policy,
+        piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
+        piecewise_attention_enqueue_policy=piecewise_attention_enqueue_policy,
         pa_shape_list=pa_shape_list,
     )
 
@@ -1741,6 +1829,10 @@ def main() -> int:
             enable_inplace_spec_decode=enable_inplace_spec_decode,
             enable_inplace_mrope=enable_inplace_mrope,
             inplace_split_planner_policy=inplace_split_planner_policy,
+            inplace_parallel_replay_policy=inplace_parallel_replay_policy,
+            piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
+            piecewise_attention_enqueue_policy=(
+                piecewise_attention_enqueue_policy),
             inplace_offset_capture_sizes=inplace_offset_capture_sizes,
             inplace_offset_max_graph_tokens_by_start=(
                 inplace_offset_max_graph_tokens_by_start),
@@ -1785,6 +1877,10 @@ def main() -> int:
         "enable_inplace_spec_decode": enable_inplace_spec_decode,
         "enable_inplace_mrope": enable_inplace_mrope,
         "inplace_split_planner_policy": inplace_split_planner_policy,
+        "inplace_parallel_replay_policy": inplace_parallel_replay_policy,
+        "piecewise_scheduler_sync_policy": piecewise_scheduler_sync_policy,
+        "piecewise_attention_enqueue_policy": (
+            piecewise_attention_enqueue_policy),
         "inplace_offset_capture_sizes": inplace_offset_capture_sizes,
         "inplace_offset_max_graph_tokens_by_start": (
             inplace_offset_max_graph_tokens_by_start),

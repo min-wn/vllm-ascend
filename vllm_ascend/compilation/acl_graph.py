@@ -163,6 +163,9 @@ class ACLGraphEntry:
     batch_descriptor: BatchDescriptor
     aclgraph: Optional[torch.npu.NPUGraph] = None
     output: Optional[Any] = None
+    capture_count: int = 0
+    replay_count: int = 0
+    fallback_eager_count: int = 0
 
     # for aclgraph debugging, track the input addresses
     # during capture, and check if they are the same during replay
@@ -397,7 +400,8 @@ def _is_allowed_inplace_lazy_capture(forward_context: Any,
                                      ) -> bool:
     return (
         int(getattr(batch_descriptor, "start_num_tokens", 0) or 0) > 0
-        and aclgraph_runtime_mode == CUDAGraphMode.FULL
+        and aclgraph_runtime_mode
+        in (CUDAGraphMode.FULL, CUDAGraphMode.PIECEWISE)
         and bool(getattr(forward_context, "allow_inplace_lazy_capture", False))
         and getattr(forward_context, "split_inplace_mode", None)
         in ("inplace_serial", "inplace_parallel")
@@ -516,6 +520,68 @@ def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any) -> 
     }
 
 
+def _block_table_copy_diag(graph_block_table: Any,
+                           metadata_block_table: Any) -> dict[str, Any]:
+    payload = {
+        "graph_block_table_shape": _safe_tensor_shape(graph_block_table),
+        "graph_block_table_ptr": _safe_tensor_ptr(graph_block_table),
+        "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
+        "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
+        "copy_numel": 0,
+        "same_storage": False,
+    }
+    if (not isinstance(graph_block_table, torch.Tensor)
+            or not isinstance(metadata_block_table, torch.Tensor)):
+        return payload
+    same_storage = graph_block_table.data_ptr() == metadata_block_table.data_ptr()
+    payload["same_storage"] = bool(same_storage)
+    if same_storage:
+        return payload
+    if graph_block_table.ndim == 2 and metadata_block_table.ndim == 2:
+        rows = min(graph_block_table.shape[0], metadata_block_table.shape[0])
+        cols = min(graph_block_table.shape[1], metadata_block_table.shape[1])
+        payload["copy_rows"] = int(max(rows, 0))
+        payload["copy_cols"] = int(max(cols, 0))
+        payload["copy_numel"] = int(max(rows, 0) * max(cols, 0))
+        return payload
+    payload["copy_numel"] = int(
+        min(graph_block_table.numel(), metadata_block_table.numel()))
+    return payload
+
+
+def _log_block_table_refresh_diag(
+        *,
+        attn_impl: str,
+        key: Any,
+        forward_context: Any,
+        runtime_shape: Any,
+        in_parallel_streams: bool,
+        metadata_block_source: Optional[str],
+        graph_block_table: Any,
+        metadata_block_table: Any,
+        block_table_refreshed: bool) -> None:
+    if not split_debug.is_enabled():
+        return
+    split_debug.log_event(
+        "acl_graph_block_table_refresh",
+        {
+            "attn_impl": attn_impl,
+            "key": str(key),
+            "runtime_shape": runtime_shape,
+            "graph_param_key": graph_param_key_info(
+                get_graph_param_key(forward_context, runtime_shape)),
+            "ubatch_num": getattr(forward_context, "ubatch_num", None),
+            "in_parallel_streams": bool(in_parallel_streams),
+            "batch_descriptor": split_debug.batch_descriptor_info(
+                getattr(forward_context, "batch_descriptor", None)),
+            "meta_block_table_source": metadata_block_source,
+            "block_table_refreshed": bool(block_table_refreshed),
+            **_block_table_copy_diag(graph_block_table, metadata_block_table),
+        },
+        step_id=getattr(forward_context, "split_inplace_debug_step_id", None),
+    )
+
+
 def _maybe_log_acl_graph_diag(tag: str, payload: Any) -> None:
     global _acl_graph_diag_count
     if ((not _ACL_GRAPH_DIAG_ENABLE and envs.VLLM_LOGGING_LEVEL != "DEBUG")
@@ -584,6 +650,7 @@ class ACLGraphWrapper:
                                                                         = {}
         self.concrete_aclgraph_entries2: dict[BatchDescriptor, ACLGraphEntry]\
                                                                         = {}
+        self.fallback_eager_count = 0
 
     def __getattr__(self, key: str):
         # allow accessing the attributes of the runnable.
@@ -624,6 +691,47 @@ class ACLGraphWrapper:
             # matches. This enables properly dispatching to the correct
             # CUDAGraphWrapper when nesting multiple instances with different
             # runtime modes.
+            self.fallback_eager_count += 1
+            current_entries = (self.concrete_aclgraph_entries2
+                               if in_parallel_streams
+                               else self.concrete_aclgraph_entries)
+            entry = current_entries.get(batch_descriptor)
+            if entry is not None:
+                entry.fallback_eager_count += 1
+            if _ACL_GRAPH_DEBUG_ENABLE or split_debug.is_enabled():
+                fallback_payload = {
+                    "batch_descriptor": str(batch_descriptor),
+                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                    "in_parallel_streams": in_parallel_streams,
+                    "entry_id": id(entry) if entry is not None else None,
+                    "entry_has_graph": (
+                        entry is not None and entry.aclgraph is not None),
+                    "runtime_mode": (
+                        aclgraph_runtime_mode.name
+                        if isinstance(aclgraph_runtime_mode, CUDAGraphMode)
+                        else str(aclgraph_runtime_mode)
+                    ),
+                    "wrapper_runtime_mode": self.runtime_mode.name,
+                    "fallback_eager_count": (
+                        int(entry.fallback_eager_count)
+                        if entry is not None
+                        else int(self.fallback_eager_count)),
+                    "wrapper_fallback_eager_count":
+                    int(self.fallback_eager_count),
+                }
+                _append_acl_graph_debug("acl_graph_eager_fallback",
+                                        fallback_payload)
+                if split_debug.is_enabled():
+                    split_debug.log_event(
+                        "acl_graph_eager_fallback",
+                        {
+                            **fallback_payload,
+                            "batch_descriptor":
+                            split_debug.batch_descriptor_info(
+                                batch_descriptor),
+                        },
+                        step_id=split_debug_step_id,
+                    )
             return self.runnable(*args, **kwargs)
         current_concrete_aclgraph_entries = self.concrete_aclgraph_entries2 if in_parallel_streams else self.concrete_aclgraph_entries
         is_new_entry = batch_descriptor not in current_concrete_aclgraph_entries
@@ -640,6 +748,19 @@ class ACLGraphWrapper:
             "entry_created": is_new_entry,
             "entry_has_graph": entry.aclgraph is not None,
             "entry_id": id(entry),
+            "num_tokens": getattr(forward_context, "split_actual_num_tokens",
+                                  None),
+            "graph_num_tokens": getattr(
+                forward_context, "split_graph_num_tokens",
+                getattr(batch_descriptor, "num_tokens", None)),
+            "start_num_tokens": int(
+                getattr(batch_descriptor, "start_num_tokens", 0) or 0),
+            "graph_variant": getattr(batch_descriptor, "graph_variant", ""),
+            "attention_backend": getattr(batch_descriptor,
+                                         "attention_backend", ""),
+            "capture_count": int(entry.capture_count),
+            "replay_count": int(entry.replay_count),
+            "fallback_eager_count": int(entry.fallback_eager_count),
             "runtime_mode": (
                 aclgraph_runtime_mode.name
                 if isinstance(aclgraph_runtime_mode, CUDAGraphMode)
@@ -647,6 +768,16 @@ class ACLGraphWrapper:
             ),
         }
         _append_acl_graph_debug("acl_graph_entry_select", entry_select_payload)
+        if split_debug.is_enabled():
+            split_debug.log_event(
+                "acl_graph_entry_select",
+                {
+                    **entry_select_payload,
+                    "batch_descriptor": split_debug.batch_descriptor_info(
+                        batch_descriptor),
+                },
+                step_id=split_debug_step_id,
+            )
         selected_pool=(self.graph_pool_parallel_streams
                      if in_parallel_streams else self.graph_pool)
         if entry.aclgraph is None:
@@ -744,7 +875,9 @@ class ACLGraphWrapper:
                     step_id=split_debug_step_id,
                 )
             aclgraph = None
-            
+            previous_forward_context_capturing = bool(
+                getattr(forward_context, "capturing", False))
+
             with ExitStack() as stack:
                 try:
                     aclgraph = torch.npu.NPUGraph()
@@ -774,6 +907,8 @@ class ACLGraphWrapper:
                             # any other acl graph.
                             output = weak_ref_tensors(output)
                 finally:
+                    forward_context.capturing = (
+                        previous_forward_context_capturing)
                     if is_inplace_lazy_capture:
                         compilation_monitor.set_cudagraph_capturing_enabled(
                             previous_capture_enabled)
@@ -796,6 +931,7 @@ class ACLGraphWrapper:
             # to save memory
             entry.output = weak_ref_tensors(output)
             entry.aclgraph = aclgraph
+            entry.capture_count += 1
 
             compilation_counter.num_cudagraph_captured += 1
             if _ACL_GRAPH_DEBUG_ENABLE:
@@ -814,6 +950,10 @@ class ACLGraphWrapper:
                             if isinstance(aclgraph_runtime_mode,
                                           CUDAGraphMode) else
                             str(aclgraph_runtime_mode)),
+                        "capture_count": int(entry.capture_count),
+                        "replay_count": int(entry.replay_count),
+                        "fallback_eager_count":
+                        int(entry.fallback_eager_count),
                     },
                     step_id=split_debug_step_id,
                 )
@@ -915,6 +1055,7 @@ class ACLGraphWrapper:
             torch.npu.synchronize()
         set_graph_pool_id(selected_pool)
         entry.aclgraph.replay()
+        entry.replay_count += 1
         if _ACL_GRAPH_DEBUG_ENABLE:
             replay_post_diag = _build_replay_block_table_diag(
                 forward_context, runtime_shape)
@@ -927,6 +1068,9 @@ class ACLGraphWrapper:
                     "in_parallel_streams": in_parallel_streams,
                     "phase": "post",
                     "runtime_shape": runtime_shape,
+                    "capture_count": int(entry.capture_count),
+                    "replay_count": int(entry.replay_count),
+                    "fallback_eager_count": int(entry.fallback_eager_count),
                     **replay_post_diag,
                 })
         # _maybe_log_acl_graph_diag(
@@ -978,6 +1122,17 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
             if refresh_block_table:
                 block_table_refreshed = _refresh_block_table_in_place(
                     block_table, metadata_block_table)
+                _log_block_table_refresh_diag(
+                    attn_impl="pa",
+                    key=key,
+                    forward_context=forward_context,
+                    runtime_shape=runtime_shape,
+                    in_parallel_streams=in_parallel_streams,
+                    metadata_block_source=metadata_block_source,
+                    graph_block_table=block_table,
+                    metadata_block_table=metadata_block_table,
+                    block_table_refreshed=block_table_refreshed,
+                )
             # _maybe_log_acl_graph_diag(
             #     "acl_graph_attn_update_diag",
             #     {
@@ -1064,6 +1219,17 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
             if refresh_block_table:
                 block_table_refreshed = _refresh_block_table_in_place(
                     block_tables, metadata_block_table)
+                _log_block_table_refresh_diag(
+                    attn_impl="fia",
+                    key=key,
+                    forward_context=forward_context,
+                    runtime_shape=runtime_shape,
+                    in_parallel_streams=in_parallel_streams,
+                    metadata_block_source=metadata_block_source,
+                    graph_block_table=block_tables,
+                    metadata_block_table=metadata_block_table,
+                    block_table_refreshed=block_table_refreshed,
+                )
             # _maybe_log_acl_graph_diag(
             #     "acl_graph_attn_update_diag",
             #     {
