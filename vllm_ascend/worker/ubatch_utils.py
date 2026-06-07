@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable, Mapping, Optional
 from dataclasses import dataclass
 
 import numpy as np
@@ -331,6 +331,18 @@ NO_SPLIT_NON_UNIFORM_DECODE = "no_split_non_uniform_decode"
 NO_SPLIT_INVALID_QUERY_LEN = "no_split_invalid_query_len"
 NO_SPLIT_NO_CAPTURE_SIZES = "no_split_no_capture_sizes"
 NO_SPLIT_ATTENTION_BACKEND_MISMATCH = "no_split_attention_backend_mismatch"
+NO_SPLIT_NO_OFFSET_CAPTURE_SIZE = "no_split_no_offset_capture_size"
+NO_SPLIT_OFFSET_BUCKET_TOO_SMALL = "no_split_offset_bucket_too_small"
+NO_SPLIT_OFFSET_PADDING_TOO_LARGE = "no_split_offset_padding_too_large"
+NO_SPLIT_OFFSET_GRAPH_EXCEEDS_PADDED_BATCH = (
+    "no_split_offset_graph_exceeds_padded_batch")
+NO_SPLIT_OFFSET_GRAPH_EXCEEDS_START_CAP = (
+    "no_split_offset_graph_exceeds_start_cap")
+NO_SPLIT_OFFSET_GRAPH_BELOW_MIN_SIZE = (
+    "no_split_offset_graph_below_min_size")
+NO_SPLIT_INVALID_OFFSET_MATCH_POLICY = "no_split_invalid_offset_match_policy"
+NO_SPLIT_INVALID_FIRST_TOKENS_POLICY = (
+    "no_split_invalid_first_tokens_policy")
 
 
 @dataclass(frozen=True)
@@ -347,6 +359,15 @@ class InplaceSplitPlan:
     lower_capture_size: int
     remainder_tokens: int
     capture_sizes_considered: list[int]
+    first_tokens_policy: str
+    offset_match_policy: str
+    second_actual_tokens: int
+    second_graph_tokens: int
+    second_padding_tokens: int
+    offset_capture_sizes_considered: list[int]
+    offset_min_graph_tokens: int
+    offset_max_graph_tokens_by_start: Optional[dict[int, int]]
+    offset_allowed_graph_tokens_by_start: Optional[dict[int, list[int]]]
 
     def debug_payload(self) -> dict[str, object]:
         return {
@@ -362,6 +383,18 @@ class InplaceSplitPlan:
             "lower_capture_size": self.lower_capture_size,
             "remainder_tokens": self.remainder_tokens,
             "capture_sizes_considered": self.capture_sizes_considered,
+            "first_tokens_policy": self.first_tokens_policy,
+            "offset_match_policy": self.offset_match_policy,
+            "second_actual_tokens": self.second_actual_tokens,
+            "second_graph_tokens": self.second_graph_tokens,
+            "second_padding_tokens": self.second_padding_tokens,
+            "offset_capture_sizes_considered":
+            self.offset_capture_sizes_considered,
+            "offset_min_graph_tokens": self.offset_min_graph_tokens,
+            "offset_max_graph_tokens_by_start":
+            self.offset_max_graph_tokens_by_start,
+            "offset_allowed_graph_tokens_by_start":
+            self.offset_allowed_graph_tokens_by_start,
             "fallback_to": "no_split",
         }
 
@@ -412,22 +445,107 @@ def _ceil_to_capture_size(num_tokens: int,
     return None
 
 
+def _normalize_capture_sizes(capture_sizes: Iterable[int],
+                             query_len: int = 1) -> list[int]:
+    q = int(query_len)
+    return sorted({
+        int(size)
+        for size in capture_sizes
+        if int(size) > 0 and (q <= 1 or int(size) % q == 0)
+    })
+
+
+def _normalize_offset_start_caps(
+    caps: Optional[Mapping[int, int]],
+) -> Optional[dict[int, int]]:
+    if caps is None:
+        return None
+    return {int(start): int(max_tokens) for start, max_tokens in caps.items()}
+
+
+def _max_graph_tokens_for_start(
+    start_num_tokens: int,
+    caps: Optional[dict[int, int]],
+) -> Optional[int]:
+    if not caps:
+        return None
+    matching_starts = [
+        start for start in caps
+        if int(start_num_tokens) >= int(start)
+    ]
+    if not matching_starts:
+        return None
+    return caps[max(matching_starts)]
+
+
+def _normalize_offset_start_allowed_sizes(
+    allowed_sizes: Optional[Mapping[int, Iterable[int]]],
+) -> Optional[dict[int, list[int]]]:
+    if allowed_sizes is None:
+        return None
+    return {
+        int(start): sorted({int(size) for size in sizes})
+        for start, sizes in allowed_sizes.items()
+    }
+
+
+def _allowed_graph_tokens_for_start(
+    start_num_tokens: int,
+    allowed_sizes: Optional[dict[int, list[int]]],
+) -> Optional[set[int]]:
+    if allowed_sizes is None:
+        return None
+    sizes = allowed_sizes.get(int(start_num_tokens))
+    return set(sizes or [])
+
+
+def _balanced_inplace_split_score(
+    plan: InplaceSplitPlan,
+) -> tuple[int, int, int, int]:
+    """Rank split plans by graph workload balance for parallel replay."""
+    return (
+        max(plan.first_tokens, plan.second_graph_tokens),
+        abs(plan.first_tokens - plan.second_graph_tokens),
+        plan.second_padding_tokens,
+        -plan.first_tokens,
+    )
+
+
 def create_inplace_split_batch_slices(
     num_scheduled_tokens_per_request: np.ndarray,
     total_num_tokens: int,
     uniform_decode_query_len: int,
     cudagraph_capture_sizes: Iterable[int],
     inplace_max_remainder_tokens: Optional[int] = None,
+    *,
+    offset_match_policy: str = "exact",
+    offset_capture_sizes: Optional[Iterable[int]] = None,
+    offset_min_graph_tokens: int = 1,
+    offset_max_padding_tokens: Optional[int] = None,
+    offset_max_padding_ratio: Optional[float] = None,
+    offset_max_graph_tokens_by_start: Optional[Mapping[int, int]] = None,
+    offset_allowed_graph_tokens_by_start: Optional[
+        Mapping[int, Iterable[int]]] = None,
+    first_tokens_policy: str = "largest_lower",
 ) -> tuple[Optional[InplaceSplitPlan], str]:
     """Create a dry-run 2-way inplace split plan.
 
-    The first split uses the largest lower full-graph capture size. The second
-    split uses the real remainder and records start_num_tokens so later phases
-    can dispatch descriptor-aware offset graphs.
+    The default policy uses the largest lower full-graph capture size for the
+    first split. The balanced policy evaluates all valid lower capture sizes and
+    chooses the one with the most balanced graph workload. The second split
+    records start_num_tokens so later phases can dispatch descriptor-aware
+    offset graphs. By default the second split uses the real remainder; with
+    offset_match_policy="bucket", it uses a padded bucket for graph dispatch
+    while token_slice still covers only real tokens.
     """
     q = int(uniform_decode_query_len)
     if q <= 0:
         return None, NO_SPLIT_INVALID_QUERY_LEN
+    if offset_match_policy not in ("exact", "bucket"):
+        return None, NO_SPLIT_INVALID_OFFSET_MATCH_POLICY
+    if first_tokens_policy not in ("largest_lower", "balanced"):
+        return None, NO_SPLIT_INVALID_FIRST_TOKENS_POLICY
+    offset_min_graph_tokens = max(1, int(offset_min_graph_tokens))
 
     num_reqs = len(num_scheduled_tokens_per_request)
     if (num_reqs == 0
@@ -436,8 +554,7 @@ def create_inplace_split_batch_slices(
             or not np.all(num_scheduled_tokens_per_request == q)):
         return None, NO_SPLIT_NON_UNIFORM_DECODE
 
-    capture_sizes = sorted({int(size) for size in cudagraph_capture_sizes
-                            if int(size) > 0})
+    capture_sizes = _normalize_capture_sizes(cudagraph_capture_sizes)
     if not capture_sizes:
         return None, NO_SPLIT_NO_CAPTURE_SIZES
 
@@ -459,49 +576,146 @@ def create_inplace_split_batch_slices(
     if not valid_lower_sizes:
         return None, NO_SPLIT_NO_LOWER_CAPTURE_SIZE
 
-    first_tokens = max(valid_lower_sizes)
-    second_tokens = total_tokens - first_tokens
-    first_reqs = first_tokens // q
-    second_reqs = num_reqs - first_reqs
+    offset_max_graph_tokens_by_start = _normalize_offset_start_caps(
+        offset_max_graph_tokens_by_start)
+    offset_allowed_graph_tokens_by_start = (
+        _normalize_offset_start_allowed_sizes(
+            offset_allowed_graph_tokens_by_start))
+    if offset_match_policy == "bucket":
+        raw_offset_capture_sizes = (
+            offset_capture_sizes
+            if offset_capture_sizes is not None else capture_sizes)
+        offset_capture_sizes_considered = [
+            size for size in _normalize_capture_sizes(
+                raw_offset_capture_sizes, q)
+            if size >= offset_min_graph_tokens
+        ]
+        if not offset_capture_sizes_considered:
+            return None, NO_SPLIT_NO_OFFSET_CAPTURE_SIZE
+    else:
+        offset_capture_sizes_considered = capture_sizes
 
-    if first_reqs * q != first_tokens:
-        return None, NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
-    if second_tokens <= 0 or first_reqs <= 0 or second_reqs <= 0:
-        return None, NO_SPLIT_SECOND_EMPTY
-    if second_tokens != second_reqs * q:
-        return None, NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
-    if (inplace_max_remainder_tokens is not None
-            and second_tokens > int(inplace_max_remainder_tokens)):
-        return None, NO_SPLIT_REMAINDER_TOO_LARGE
+    last_reject_reason = NO_SPLIT_NO_LOWER_CAPTURE_SIZE
+    candidate_plans: list[InplaceSplitPlan] = []
+    for first_tokens in reversed(valid_lower_sizes):
+        second_tokens = total_tokens - first_tokens
+        first_reqs = first_tokens // q
+        second_reqs = num_reqs - first_reqs
 
-    split_slices = [
-        SplitBatchSlice(
-            request_slice=slice(0, first_reqs),
-            token_slice=slice(0, first_tokens),
-            padded_num_tokens=first_tokens,
-            start_num_tokens=0,
-        ),
-        SplitBatchSlice(
-            request_slice=slice(first_reqs, num_reqs),
-            token_slice=slice(first_tokens, total_tokens),
-            padded_num_tokens=second_tokens,
-            start_num_tokens=first_tokens,
-        ),
-    ]
+        if first_reqs * q != first_tokens:
+            last_reject_reason = NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
+            continue
+        if second_tokens <= 0 or first_reqs <= 0 or second_reqs <= 0:
+            last_reject_reason = NO_SPLIT_SECOND_EMPTY
+            continue
+        if second_tokens != second_reqs * q:
+            last_reject_reason = NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
+            continue
+        if (inplace_max_remainder_tokens is not None
+                and second_tokens > int(inplace_max_remainder_tokens)):
+            last_reject_reason = NO_SPLIT_REMAINDER_TOO_LARGE
+            continue
 
-    return InplaceSplitPlan(
-        split_slices=split_slices,
-        reason=INPLACE_SPLIT_DRY_RUN,
-        total_num_tokens=total_tokens,
-        padded_num_tokens_without_split=padded_without_split,
-        first_tokens=first_tokens,
-        second_tokens=second_tokens,
-        first_reqs=first_reqs,
-        second_reqs=second_reqs,
-        lower_capture_size=first_tokens,
-        remainder_tokens=second_tokens,
-        capture_sizes_considered=capture_sizes,
-    ), INPLACE_SPLIT_DRY_RUN
+        second_graph_tokens = second_tokens
+        if offset_match_policy == "bucket":
+            candidate_offset_sizes = offset_capture_sizes_considered
+            allowed_graph_tokens = _allowed_graph_tokens_for_start(
+                first_tokens, offset_allowed_graph_tokens_by_start)
+            if allowed_graph_tokens is not None:
+                candidate_offset_sizes = [
+                    size for size in candidate_offset_sizes
+                    if size in allowed_graph_tokens
+                ]
+            max_graph_tokens = _max_graph_tokens_for_start(
+                first_tokens, offset_max_graph_tokens_by_start)
+            if max_graph_tokens is not None:
+                candidate_offset_sizes = [
+                    size for size in candidate_offset_sizes
+                    if size <= int(max_graph_tokens)
+                ]
+            if not candidate_offset_sizes:
+                last_reject_reason = NO_SPLIT_NO_OFFSET_CAPTURE_SIZE
+                continue
+            bucketed_second_tokens = _ceil_to_capture_size(
+                second_tokens, candidate_offset_sizes)
+            if bucketed_second_tokens is None:
+                last_reject_reason = NO_SPLIT_OFFSET_BUCKET_TOO_SMALL
+                continue
+            second_graph_tokens = bucketed_second_tokens
+
+        max_graph_tokens = _max_graph_tokens_for_start(
+            first_tokens, offset_max_graph_tokens_by_start)
+        allowed_graph_tokens = _allowed_graph_tokens_for_start(
+            first_tokens, offset_allowed_graph_tokens_by_start)
+        if (allowed_graph_tokens is not None
+                and second_graph_tokens not in allowed_graph_tokens):
+            last_reject_reason = NO_SPLIT_NO_OFFSET_CAPTURE_SIZE
+            continue
+        if second_graph_tokens < offset_min_graph_tokens:
+            last_reject_reason = NO_SPLIT_OFFSET_GRAPH_BELOW_MIN_SIZE
+            continue
+        if (max_graph_tokens is not None
+                and second_graph_tokens > int(max_graph_tokens)):
+            last_reject_reason = NO_SPLIT_OFFSET_GRAPH_EXCEEDS_START_CAP
+            continue
+
+        second_padding_tokens = second_graph_tokens - second_tokens
+        if (offset_max_padding_tokens is not None
+                and second_padding_tokens > int(offset_max_padding_tokens)):
+            last_reject_reason = NO_SPLIT_OFFSET_PADDING_TOO_LARGE
+            continue
+        if first_tokens + second_graph_tokens > padded_without_split:
+            last_reject_reason = NO_SPLIT_OFFSET_GRAPH_EXCEEDS_PADDED_BATCH
+            continue
+
+        split_slices = [
+            SplitBatchSlice(
+                request_slice=slice(0, first_reqs),
+                token_slice=slice(0, first_tokens),
+                padded_num_tokens=first_tokens,
+                start_num_tokens=0,
+            ),
+            SplitBatchSlice(
+                request_slice=slice(first_reqs, num_reqs),
+                token_slice=slice(first_tokens, total_tokens),
+                padded_num_tokens=second_graph_tokens,
+                start_num_tokens=first_tokens,
+            ),
+        ]
+
+        plan = InplaceSplitPlan(
+            split_slices=split_slices,
+            reason=INPLACE_SPLIT_DRY_RUN,
+            total_num_tokens=total_tokens,
+            padded_num_tokens_without_split=padded_without_split,
+            first_tokens=first_tokens,
+            second_tokens=second_tokens,
+            first_reqs=first_reqs,
+            second_reqs=second_reqs,
+            lower_capture_size=first_tokens,
+            remainder_tokens=second_tokens,
+            capture_sizes_considered=capture_sizes,
+            first_tokens_policy=first_tokens_policy,
+            offset_match_policy=offset_match_policy,
+            second_actual_tokens=second_tokens,
+            second_graph_tokens=second_graph_tokens,
+            second_padding_tokens=second_padding_tokens,
+            offset_capture_sizes_considered=offset_capture_sizes_considered,
+            offset_min_graph_tokens=offset_min_graph_tokens,
+            offset_max_graph_tokens_by_start=
+            offset_max_graph_tokens_by_start,
+            offset_allowed_graph_tokens_by_start=
+            offset_allowed_graph_tokens_by_start,
+        )
+        if first_tokens_policy == "largest_lower":
+            return plan, INPLACE_SPLIT_DRY_RUN
+        candidate_plans.append(plan)
+
+    if candidate_plans:
+        return min(candidate_plans,
+                   key=_balanced_inplace_split_score), INPLACE_SPLIT_DRY_RUN
+
+    return None, last_reject_reason
 
 
 def create_split_batch_slices(

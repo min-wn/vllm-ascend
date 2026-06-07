@@ -109,6 +109,21 @@ class TestAscendConfig(TestBase):
         self.assertFalse(split_config.inplace_force_pa_for_offset)
         self.assertFalse(split_config.enable_inplace_spec_decode)
         self.assertFalse(split_config.enable_inplace_mrope)
+        self.assertEqual(split_config.inplace_split_planner_policy,
+                         "largest_lower")
+        self.assertEqual(split_config.inplace_split_first_tokens_policy,
+                         "largest_lower")
+        self.assertEqual(split_config.inplace_offset_match_policy, "exact")
+        self.assertIsNone(split_config.inplace_offset_capture_sizes)
+        self.assertEqual(split_config.inplace_offset_min_graph_tokens, 1)
+        self.assertIsNone(split_config.inplace_offset_max_padding_tokens)
+        self.assertIsNone(split_config.inplace_offset_max_padding_ratio)
+        self.assertIsNone(
+            split_config.inplace_offset_max_graph_tokens_by_start)
+        self.assertIsNone(
+            split_config.inplace_offset_allowed_graph_tokens_by_start)
+        self.assertFalse(split_config.inplace_offset_prefer_cached_graph)
+        self.assertFalse(split_config.inplace_offset_fallback_on_miss)
 
     def test_split_batch_config_legacy_parallel_streams_compat(self):
         split_config = SplitBatchConfig({
@@ -140,6 +155,22 @@ class TestAscendConfig(TestBase):
             "inplace_force_pa_for_offset": False,
             "enable_inplace_spec_decode": True,
             "enable_inplace_mrope": True,
+            "inplace_split_planner_policy": "balanced",
+            "inplace_offset_match_policy": "bucket",
+            "inplace_offset_capture_sizes": [128, 32, 64],
+            "inplace_offset_min_graph_tokens": 32,
+            "inplace_offset_max_padding_tokens": 127,
+            "inplace_offset_max_padding_ratio": 8.0,
+            "inplace_offset_max_graph_tokens_by_start": {
+                "128": 64,
+                256: 128,
+            },
+            "inplace_offset_allowed_graph_tokens_by_start": {
+                "32": [32, 16],
+                64: [64, 16, 32],
+            },
+            "inplace_offset_prefer_cached_graph": True,
+            "inplace_offset_fallback_on_miss": True,
         })
 
         self.assertEqual(split_config.mode, "inplace_serial")
@@ -150,6 +181,28 @@ class TestAscendConfig(TestBase):
         self.assertFalse(split_config.inplace_force_pa_for_offset)
         self.assertTrue(split_config.enable_inplace_spec_decode)
         self.assertTrue(split_config.enable_inplace_mrope)
+        self.assertEqual(split_config.inplace_split_planner_policy,
+                         "balanced")
+        self.assertEqual(split_config.inplace_split_first_tokens_policy,
+                         "balanced")
+        self.assertEqual(split_config.inplace_offset_match_policy, "bucket")
+        self.assertEqual(split_config.inplace_offset_capture_sizes,
+                         [32, 64, 128])
+        self.assertEqual(split_config.inplace_offset_min_graph_tokens, 32)
+        self.assertEqual(split_config.inplace_offset_max_padding_tokens, 127)
+        self.assertEqual(split_config.inplace_offset_max_padding_ratio, 8.0)
+        self.assertEqual(
+            split_config.inplace_offset_max_graph_tokens_by_start, {
+                128: 64,
+                256: 128,
+            })
+        self.assertEqual(
+            split_config.inplace_offset_allowed_graph_tokens_by_start, {
+                32: [16, 32],
+                64: [16, 32, 64],
+            })
+        self.assertTrue(split_config.inplace_offset_prefer_cached_graph)
+        self.assertTrue(split_config.inplace_offset_fallback_on_miss)
 
     def test_split_batch_config_accepts_inplace_force_pa_for_offset(self):
         split_config = SplitBatchConfig({
@@ -192,3 +245,46 @@ class TestAscendConfig(TestBase):
         with self.assertRaisesRegex(ValueError,
                                     "inplace_max_remainder_tokens"):
             SplitBatchConfig({"inplace_max_remainder_tokens": 0})
+
+    def test_split_batch_config_rejects_invalid_offset_policy(self):
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_offset_match_policy"):
+            SplitBatchConfig({"inplace_offset_match_policy": "relaxed"})
+        with self.assertRaisesRegex(
+                ValueError, "inplace_split_planner_policy"):
+            SplitBatchConfig({"inplace_split_planner_policy": "round_robin"})
+
+    def test_split_batch_config_rejects_invalid_offset_padding_limits(self):
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_offset_capture_sizes"):
+            SplitBatchConfig({"inplace_offset_capture_sizes": [32, 0]})
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_offset_min_graph_tokens"):
+            SplitBatchConfig({"inplace_offset_min_graph_tokens": 0})
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_offset_max_padding_tokens"):
+            SplitBatchConfig({"inplace_offset_max_padding_tokens": -1})
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_offset_max_padding_ratio"):
+            SplitBatchConfig({"inplace_offset_max_padding_ratio": 0.5})
+        with self.assertRaisesRegex(
+                ValueError, "inplace_offset_max_graph_tokens_by_start"):
+            SplitBatchConfig({
+                "inplace_offset_max_graph_tokens_by_start": {
+                    -1: 64,
+                }
+            })
+        with self.assertRaisesRegex(
+                ValueError, "inplace_offset_max_graph_tokens_by_start"):
+            SplitBatchConfig({
+                "inplace_offset_max_graph_tokens_by_start": {
+                    128: 0,
+                }
+            })
+        with self.assertRaisesRegex(
+                ValueError, "inplace_offset_allowed_graph_tokens_by_start"):
+            SplitBatchConfig({
+                "inplace_offset_allowed_graph_tokens_by_start": {
+                    32: []
+                }
+            })

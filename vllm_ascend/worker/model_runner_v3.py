@@ -138,6 +138,7 @@ from vllm_ascend.worker.npu_ubatch_wrapper import (AscendUBatchWrapper,
 from vllm_ascend.worker.ubatch_utils import (INPLACE_SPLIT_DRY_RUN,
                                              InplaceSplitPlan,
                                              NO_SPLIT_ATTENTION_BACKEND_MISMATCH,
+                                             SplitBatchSlice,
                                              SplitBatchSlices,
                                              create_inplace_split_batch_slices,
                                              inplace_split_first_graph_matches_attention_backend,
@@ -217,6 +218,8 @@ _SPLIT_METADATA_DEBUG_FILE = os.environ.get(
         os.path.join(os.path.dirname(__file__), "..", "split_metadata_debug.log")
     ),
 )
+_SPLIT_METADATA_DEBUG_ENABLED = os.environ.get(
+    "VLLM_ASCEND_SPLIT_METADATA_DEBUG", "0") in ("1", "true", "True")
 
 # Perf stats log file: each decode step appends one JSON line with timing info.
 # Set VLLM_ASCEND_PERF_STATS_FILE to a path to enable; empty string disables.
@@ -246,6 +249,8 @@ _SPLIT_LOCAL_CONTEXT_REBUILD = os.environ.get(
 
 
 def _append_split_metadata_debug(tag: str, payload: Any) -> None:
+    if not _SPLIT_METADATA_DEBUG_ENABLED:
+        return
     try:
         with open(_SPLIT_METADATA_DEBUG_FILE, "a", encoding="utf-8") as f:
             ts = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -512,13 +517,14 @@ def _validate_split_attn_metadata_count(
     expected_splits: int,
 ) -> None:
     actual_len = len(common_attn_metadata_list) if isinstance(common_attn_metadata_list, list) else None
-    payload = {
-        "tag": tag,
-        "expected_splits": expected_splits,
-        "actual_type": type(common_attn_metadata_list).__name__,
-        "actual_len": actual_len,
-    }
-    _append_split_metadata_debug("split_attn_metadata_count", payload)
+    if _SPLIT_METADATA_DEBUG_ENABLED:
+        payload = {
+            "tag": tag,
+            "expected_splits": expected_splits,
+            "actual_type": type(common_attn_metadata_list).__name__,
+            "actual_len": actual_len,
+        }
+        _append_split_metadata_debug("split_attn_metadata_count", payload)
 
     if (
         not isinstance(common_attn_metadata_list, list)
@@ -1052,8 +1058,16 @@ class NPUModelRunner(GPUModelRunner):
         split_enable_parallel_streams = bool(
             split_cfg is not None
             and getattr(split_cfg, "enable_parallel_streams", False))
+        inplace_offset_capture_sizes = None
+        if split_cfg is not None:
+            inplace_offset_capture_sizes = getattr(
+                split_cfg, "inplace_offset_capture_sizes", None)
+            if inplace_offset_capture_sizes is None:
+                inplace_offset_capture_sizes = getattr(
+                    split_cfg, "parallel_capture_sizes", None)
 
-        if split_debug.is_enabled():
+        split_debug_enabled = split_debug.is_enabled()
+        if split_debug_enabled:
             self._split_inplace_debug_step_id = split_debug.next_step_id()
             split_debug.set_current_step_id(
                 self._split_inplace_debug_step_id)
@@ -1120,6 +1134,9 @@ class NPUModelRunner(GPUModelRunner):
                         bool(getattr(split_cfg, "inplace_serial_first",
                                      False))
                         if split_cfg is not None else None),
+                    "inplace_split_planner_policy": (
+                        getattr(split_cfg, "inplace_split_planner_policy",
+                                None) if split_cfg is not None else None),
                     "inplace_max_remainder_tokens": (
                         getattr(split_cfg, "inplace_max_remainder_tokens",
                                 None) if split_cfg is not None else None),
@@ -1127,6 +1144,37 @@ class NPUModelRunner(GPUModelRunner):
                         bool(getattr(split_cfg,
                                      "inplace_validate_metadata_ptrs", False))
                         if split_cfg is not None else None),
+                    "inplace_offset_match_policy": (
+                        getattr(split_cfg, "inplace_offset_match_policy",
+                                None) if split_cfg is not None else None),
+                    "inplace_offset_capture_sizes": (
+                        list(getattr(split_cfg,
+                                     "inplace_offset_capture_sizes", []) or [])
+                        if split_cfg is not None else None),
+                    "inplace_offset_effective_capture_sizes": (
+                        list(inplace_offset_capture_sizes or [])
+                        if split_cfg is not None else None),
+                    "inplace_offset_min_graph_tokens": (
+                        getattr(split_cfg, "inplace_offset_min_graph_tokens",
+                                None) if split_cfg is not None else None),
+                    "inplace_offset_max_padding_tokens": (
+                        getattr(split_cfg,
+                                "inplace_offset_max_padding_tokens", None)
+                        if split_cfg is not None else None),
+                    "inplace_offset_max_padding_ratio": (
+                        getattr(split_cfg,
+                                "inplace_offset_max_padding_ratio", None)
+                        if split_cfg is not None else None),
+                    "inplace_offset_max_graph_tokens_by_start": (
+                        getattr(
+                            split_cfg,
+                            "inplace_offset_max_graph_tokens_by_start", None)
+                        if split_cfg is not None else None),
+                    "inplace_offset_allowed_graph_tokens_by_start": (
+                        getattr(
+                            split_cfg,
+                            "inplace_offset_allowed_graph_tokens_by_start",
+                            None) if split_cfg is not None else None),
                 },
                 step_id=self._split_inplace_debug_step_id,
             )
@@ -1178,23 +1226,54 @@ class NPUModelRunner(GPUModelRunner):
                 "no_split_dbo_active"
                 if reason == "no_split_dbo_active" else "no_split")
             if reason is None:
-                inplace_split_plan, reason = (
-                    create_inplace_split_batch_slices(
-                        num_scheduled_tokens,
-                        total_num_scheduled_tokens,
-                        self.uniform_decode_query_len,
-                        self.compilation_config.cudagraph_capture_sizes or [],
-                        getattr(split_cfg, "inplace_max_remainder_tokens",
+                if int(total_num_scheduled_tokens) < 64:
+                    reason = "no_split_inplace_below_64"
+
+                if reason is None:
+                    inplace_split_plan, reason = (
+                        create_inplace_split_batch_slices(
+                            num_scheduled_tokens,
+                            total_num_scheduled_tokens,
+                            self.uniform_decode_query_len,
+                            self.compilation_config.cudagraph_capture_sizes
+                            or [],
+                            getattr(split_cfg, "inplace_max_remainder_tokens",
+                                    None),
+                            offset_match_policy=getattr(
+                                split_cfg, "inplace_offset_match_policy",
+                                "exact"),
+                            offset_capture_sizes=inplace_offset_capture_sizes,
+                            offset_min_graph_tokens=getattr(
+                                split_cfg,
+                                "inplace_offset_min_graph_tokens", 1),
+                            offset_max_padding_tokens=getattr(
+                                split_cfg,
+                                "inplace_offset_max_padding_tokens", None),
+                            offset_max_padding_ratio=getattr(
+                                split_cfg,
+                                "inplace_offset_max_padding_ratio", None),
+                            offset_max_graph_tokens_by_start=getattr(
+                                split_cfg,
+                                "inplace_offset_max_graph_tokens_by_start",
                                 None),
-                    ))
-                if (inplace_split_plan is not None
-                        and not inplace_split_first_graph_matches_attention_backend(
-                            inplace_split_plan,
-                            lambda shape: using_paged_attention(
-                                shape, self.vllm_config),
-                        )):
-                    reason = NO_SPLIT_ATTENTION_BACKEND_MISMATCH
-                    inplace_split_plan = None
+                            offset_allowed_graph_tokens_by_start=getattr(
+                                split_cfg,
+                                "inplace_offset_allowed_graph_tokens_by_start",
+                                None),
+                            first_tokens_policy=getattr(
+                                split_cfg, "inplace_split_planner_policy",
+                                getattr(split_cfg,
+                                        "inplace_split_first_tokens_policy",
+                                        "largest_lower")),
+                        ))
+                    if (inplace_split_plan is not None and
+                            not inplace_split_first_graph_matches_attention_backend(
+                                inplace_split_plan,
+                                lambda shape: using_paged_attention(
+                                    shape, self.vllm_config),
+                            )):
+                        reason = NO_SPLIT_ATTENTION_BACKEND_MISMATCH
+                        inplace_split_plan = None
 
             split_planner_payload.update({
                 "mode": split_mode,
@@ -1215,7 +1294,10 @@ class NPUModelRunner(GPUModelRunner):
                     "inplace_attention_backend"] = inplace_attention_backend
                 split_planner_payload["target_batch_descriptors"] = [{
                     "idx": idx,
-                    "num_tokens": split_slice.num_tokens,
+                    "actual_num_tokens": split_slice.num_tokens,
+                    "graph_num_tokens": split_slice.graph_num_tokens,
+                    "padding_tokens": (split_slice.graph_num_tokens -
+                                       split_slice.num_tokens),
                     "num_reqs": split_slice.num_requests,
                     "uniform": True,
                     "has_lora": False,
@@ -1395,7 +1477,7 @@ class NPUModelRunner(GPUModelRunner):
                 "fallback_to": "no_split",
             })
 
-        if split_debug.is_enabled():
+        if split_debug_enabled:
             if "main_reqs" in locals() and "parallel_reqs" in locals():
                 split_planner_payload.update({
                     "main_reqs": int(main_reqs),
@@ -1617,7 +1699,7 @@ class NPUModelRunner(GPUModelRunner):
                     else:
                         self.positions.gpu[first_num_tokens:first_padded_tokens].fill_(0)
 
-                if split_debug.is_enabled():
+                if split_debug_enabled:
                     first_token_start = first_split.token_slice.start
                     first_token_end = first_split.token_slice.stop
                     split_debug.log_event(
@@ -1771,41 +1853,6 @@ class NPUModelRunner(GPUModelRunner):
         positions = self.positions.gpu[:num_input_tokens]
         if self.uses_mrope:
             positions = self.mrope_positions.gpu[:, :num_input_tokens]
-
-        if split_debug.is_enabled() and inplace_split_plan is not None:
-            input_view_payload = []
-            for split_idx, split_slice in enumerate(
-                    inplace_split_plan.split_slices):
-                (sliced_input_ids, sliced_positions,
-                 sliced_inputs_embeds) = slice_model_inputs_by_token(
-                     input_ids,
-                     positions,
-                     inputs_embeds,
-                     split_slice.token_slice,
-                 )
-                input_view_payload.append({
-                    "split_idx": int(split_idx),
-                    "token_start": int(split_slice.token_slice.start),
-                    "token_stop": int(split_slice.token_slice.stop),
-                    "start_num_tokens": int(split_slice.start_num_tokens),
-                    "num_tokens": int(split_slice.num_tokens),
-                    "padded_num_tokens": int(split_slice.padded_num_tokens),
-                    "input_ids":
-                    split_debug.tensor_view_info(sliced_input_ids),
-                    "positions":
-                    split_debug.tensor_view_info(sliced_positions),
-                    "inputs_embeds":
-                    split_debug.tensor_view_info(sliced_inputs_embeds),
-                })
-            split_debug.log_event(
-                "inplace_input_views",
-                {
-                    "dry_run": True,
-                    "num_splits": len(inplace_split_plan.split_slices),
-                    "views": input_view_payload,
-                },
-                step_id=self._split_inplace_debug_step_id,
-            )
 
         # type: ignore
         if get_pp_group().is_first_rank:
@@ -2050,10 +2097,6 @@ class NPUModelRunner(GPUModelRunner):
                         self.spec_decode_common_attn_metadata.unpadded(
                             total_num_scheduled_tokens, base_num_reqs)
 
-            if split_debug.is_enabled() and inplace_split_plan is not None:
-                self._dry_run_inplace_stable_metadata(common_attn_metadata,
-                                                       inplace_split_plan)
-
             for attn_group in self.attn_groups[kv_cache_group_id]:
                 common_prefix_len = 0
                 extra_attn_metadata_args = {}
@@ -2169,7 +2212,7 @@ class NPUModelRunner(GPUModelRunner):
                                              inputs_embeds):
         assert self.model is not None
         forward_context = get_forward_context()
-        torch.npu.set_stream_limit(self.stream_main, cube_num=20, vector_num=20)
+        # torch.npu.set_stream_limit(self.stream_main, cube_num=20, vector_num=20)
         self._t_replay_start = time.perf_counter()
         with torch.npu.stream(self.stream_main):
             hidden_states = self.model(
@@ -2256,68 +2299,285 @@ class NPUModelRunner(GPUModelRunner):
                                          self.vllm_config,
                                          in_parallel_streams=parallel_streams)
 
+    def _pad_tensor_first_dim(self, tensor: Any, pad: int) -> Any:
+        if not isinstance(tensor, torch.Tensor) or pad <= 0:
+            return tensor
+        pad_shape = list(tensor.shape)
+        if not pad_shape:
+            return tensor
+        pad_shape[0] = pad
+        return torch.cat([tensor, tensor.new_zeros(tuple(pad_shape))], dim=0)
+
+    def _pad_query_start_loc_for_graph(self, tensor: Any, pad_reqs: int,
+                                       query_len: int) -> Any:
+        if not isinstance(tensor, torch.Tensor) or pad_reqs <= 0:
+            return tensor
+        increments = torch.arange(
+            1,
+            pad_reqs + 1,
+            dtype=tensor.dtype,
+            device=tensor.device,
+        ) * int(query_len)
+        return torch.cat([tensor, tensor[-1] + increments], dim=0)
+
+    def _expand_tensor_view_for_graph(
+            self,
+            tensor: Any,
+            graph_size: int,
+            *,
+            name: str,
+            dim: int = 0,
+            backing_tensor: Optional[torch.Tensor] = None,
+            backing_start: int = 0) -> Any:
+        if not isinstance(tensor, torch.Tensor):
+            return tensor
+
+        graph_size = int(graph_size)
+        dim = int(dim)
+        if graph_size <= int(tensor.shape[dim]):
+            if dim == 0:
+                return tensor[:graph_size]
+            if dim == 1:
+                return tensor[:, :graph_size]
+            raise ValueError(f"Unsupported dim={dim} for {name}")
+
+        shape = list(tensor.shape)
+        shape[dim] = graph_size
+        try:
+            return tensor.as_strided(
+                tuple(shape),
+                tensor.stride(),
+                storage_offset=tensor.storage_offset(),
+            )
+        except RuntimeError as exc:
+            if (isinstance(backing_tensor, torch.Tensor)
+                    and int(backing_tensor.shape[dim])
+                    >= int(backing_start) + graph_size):
+                stop = int(backing_start) + graph_size
+                if dim == 0:
+                    return backing_tensor[int(backing_start):stop]
+                if dim == 1:
+                    return backing_tensor[:, int(backing_start):stop]
+                raise ValueError(f"Unsupported dim={dim} for {name}")
+            backing_shape = (None if backing_tensor is None else
+                             tuple(backing_tensor.shape))
+            raise RuntimeError(
+                "Inplace offset graph requires zero-copy backing view for "
+                f"{name}: graph_size={graph_size}, dim={dim}, "
+                f"tensor_shape={tuple(tensor.shape)}, "
+                f"tensor_storage_offset={int(tensor.storage_offset())}, "
+                f"backing_start={int(backing_start)}, "
+                f"backing_shape={backing_shape}") from exc
+
+    def _fill_tensor_local_tail(self,
+                                tensor: Any,
+                                start: int,
+                                stop: int,
+                                *,
+                                name: str,
+                                dim: int = 0) -> bool:
+        if not isinstance(tensor, torch.Tensor) or stop <= start:
+            return False
+        start = int(start)
+        stop = int(stop)
+        dim = int(dim)
+        if stop > int(tensor.shape[dim]):
+            raise RuntimeError(
+                f"Inplace offset padded local tail for {name} exceeds tensor "
+                f"shape: tail_stop={stop}, shape={tuple(tensor.shape)}, "
+                f"dim={dim}")
+        if dim == 0:
+            tensor[start:stop].fill_(0)
+        elif dim == 1:
+            tensor[:, start:stop].fill_(0)
+        else:
+            raise ValueError(f"Unsupported dim={dim} for {name}")
+        return True
+
+    def _metadata_positions_for_graph_slice(
+            self, positions: Any,
+            split_slice: SplitBatchSlice) -> Any:
+        if not isinstance(positions, torch.Tensor):
+            return positions
+
+        graph_tokens = int(split_slice.graph_num_tokens)
+        token_dim = 1 if positions.ndim == 2 else 0
+        token_start = int(split_slice.token_slice.start)
+        graph_stop = token_start + graph_tokens
+        backing = None
+        if token_dim == 1:
+            backing = getattr(getattr(self, "mrope_positions", None), "gpu",
+                              None)
+        if backing is None:
+            backing = getattr(getattr(self, "positions", None), "gpu", None)
+
+        return self._expand_tensor_view_for_graph(
+            positions,
+            graph_tokens,
+            name="positions",
+            dim=token_dim,
+            backing_tensor=backing,
+            backing_start=token_start,
+        )
+
+    def _pad_inplace_common_attn_metadata_for_graph(
+            self,
+            common: AscendCommonAttentionMetadata,
+            split_slice: SplitBatchSlice,
+            *,
+            split_idx: int,
+            fill_padding: bool = True) -> AscendCommonAttentionMetadata:
+        actual_tokens = int(split_slice.num_tokens)
+        graph_tokens = int(split_slice.graph_num_tokens)
+        if graph_tokens < actual_tokens:
+            raise RuntimeError(
+                "Inplace offset graph metadata has fewer graph tokens than "
+                f"actual tokens: graph_tokens={graph_tokens}, "
+                f"actual_tokens={actual_tokens}")
+
+        query_len = int(getattr(common, "decode_token_per_req", 0) or
+                        getattr(self, "uniform_decode_query_len", 1) or 1)
+        if query_len <= 0:
+            raise RuntimeError(
+                "Invalid inplace offset metadata query length: "
+                f"query_len={query_len}")
+        if graph_tokens % query_len != 0 or actual_tokens % query_len != 0:
+            raise RuntimeError(
+                "Inplace offset graph metadata padding requires request-aligned "
+                "token counts: "
+                f"actual_tokens={actual_tokens}, graph_tokens={graph_tokens}, "
+                f"query_len={query_len}")
+
+        graph_reqs = graph_tokens // query_len
+        actual_reqs = int(common.num_reqs)
+        pad_reqs = graph_reqs - actual_reqs
+        if pad_reqs < 0:
+            raise RuntimeError(
+                "Inplace offset graph metadata has fewer graph requests than "
+                f"actual requests: graph_reqs={graph_reqs}, "
+                f"actual_reqs={actual_reqs}")
+        pad_tokens = graph_tokens - actual_tokens
+
+        request_start = int(split_slice.request_slice.start)
+        actual_request_stop = request_start + actual_reqs
+        graph_request_stop = request_start + graph_reqs
+        token_start = int(split_slice.token_slice.start)
+        actual_token_stop = int(split_slice.token_slice.stop)
+        graph_token_stop = token_start + graph_tokens
+
+        padded_common = copy(common)
+        padded_common.query_start_loc = self._pad_query_start_loc_for_graph(
+            common.query_start_loc, pad_reqs, query_len)
+        padded_common.query_start_loc_cpu = (
+            self._pad_query_start_loc_for_graph(
+                common.query_start_loc_cpu, pad_reqs, query_len))
+
+        padded_common.seq_lens = self._expand_tensor_view_for_graph(
+            common.seq_lens, graph_reqs, name="seq_lens")
+        padded_common.seq_lens_cpu = self._expand_tensor_view_for_graph(
+            common.seq_lens_cpu, graph_reqs, name="seq_lens_cpu")
+        padded_common.num_computed_tokens_cpu = (
+            self._expand_tensor_view_for_graph(
+                common.num_computed_tokens_cpu,
+                graph_reqs,
+                name="num_computed_tokens_cpu"))
+        padded_common.block_table_tensor = self._expand_tensor_view_for_graph(
+            common.block_table_tensor,
+            graph_reqs,
+            name="block_table_tensor")
+        padded_common.slot_mapping = self._expand_tensor_view_for_graph(
+            common.slot_mapping, graph_tokens, name="slot_mapping")
+        padded_common.positions = self._metadata_positions_for_graph_slice(
+            common.positions, split_slice)
+
+        if fill_padding:
+            self._fill_tensor_local_tail(
+                padded_common.seq_lens,
+                actual_reqs,
+                graph_reqs,
+                name="seq_lens")
+            self._fill_tensor_local_tail(
+                padded_common.seq_lens_cpu,
+                actual_reqs,
+                graph_reqs,
+                name="seq_lens_cpu")
+            self._fill_tensor_local_tail(
+                padded_common.num_computed_tokens_cpu,
+                actual_reqs,
+                graph_reqs,
+                name="num_computed_tokens_cpu")
+            self._fill_tensor_local_tail(
+                padded_common.block_table_tensor,
+                actual_reqs,
+                graph_reqs,
+                name="block_table_tensor")
+            self._fill_tensor_local_tail(
+                padded_common.slot_mapping,
+                actual_tokens,
+                graph_tokens,
+                name="slot_mapping")
+            positions_dim = 1 if (
+                isinstance(padded_common.positions, torch.Tensor)
+                and padded_common.positions.ndim == 2) else 0
+            self._fill_tensor_local_tail(
+                padded_common.positions,
+                actual_tokens,
+                graph_tokens,
+                name="positions",
+                dim=positions_dim)
+
+        padded_common.num_reqs = graph_reqs
+        padded_common.num_actual_tokens = graph_tokens
+        padded_common.num_input_tokens = graph_tokens
+        padded_common.max_query_len = max(int(common.max_query_len),
+                                          query_len)
+        padded_common.actual_seq_lengths_q = list(
+            range(query_len, graph_tokens + 1, query_len))
+        padded_common.graph_pad_size = graph_reqs
+
+        if split_debug.is_enabled():
+            split_debug.log_event(
+                "inplace_offset_metadata_normalized",
+                {
+                    "split_idx": int(split_idx),
+                    "request_start": request_start,
+                    "actual_request_stop": actual_request_stop,
+                    "graph_request_stop": graph_request_stop,
+                    "token_start": token_start,
+                    "actual_token_stop": actual_token_stop,
+                    "graph_token_stop": graph_token_stop,
+                    "actual_tokens": actual_tokens,
+                    "graph_tokens": graph_tokens,
+                    "actual_reqs": actual_reqs,
+                    "graph_reqs": graph_reqs,
+                    "pad_tokens": pad_tokens,
+                    "pad_reqs": pad_reqs,
+                    "fill_padding": bool(fill_padding),
+                    "query_start_loc_allows_new_buffer": True,
+                    "metadata_uses_backing_views": True,
+                    **split_debug.metadata_tensor_info(padded_common),
+                },
+                step_id=_split_debug_step_from_runner(self),
+            )
+        return padded_common
+
     def _stabilize_inplace_common_attn_metadata(
             self,
             common: AscendCommonAttentionMetadata,
             *,
-            split_idx: int) -> AscendCommonAttentionMetadata:
+            split_idx: int,
+            split_slice: Optional[SplitBatchSlice] = None,
+            fill_padding: bool = True,
+    ) -> AscendCommonAttentionMetadata:
         # Experiment: use split metadata directly, including the rebased
         # query_start_loc tensor created by split_attn_metadata().
+        if split_slice is not None and split_slice.start_num_tokens > 0:
+            common = self._pad_inplace_common_attn_metadata_for_graph(
+                common,
+                split_slice,
+                split_idx=split_idx,
+                fill_padding=fill_padding)
         return common
-
-    def _dry_run_inplace_stable_metadata(
-            self, common_attn_metadata: AscendCommonAttentionMetadata,
-            inplace_split_plan: Optional[InplaceSplitPlan]) -> None:
-        if inplace_split_plan is None:
-            return
-
-        split_ubatch_slices = [
-            UBatchSlice(s.request_slice, s.token_slice)
-            for s in inplace_split_plan.split_slices
-        ]
-        common_attn_metadata_list = split_attn_metadata(
-            split_ubatch_slices, common_attn_metadata, self.max_num_tokens)
-        _validate_split_attn_metadata_count(
-            "inplace_stable_metadata_dry_run",
-            common_attn_metadata_list,
-            len(split_ubatch_slices),
-        )
-
-        metadata_payload = []
-        for split_idx, split_common in enumerate(common_attn_metadata_list):
-            stable_common = self._stabilize_inplace_common_attn_metadata(
-                split_common, split_idx=split_idx)
-            split_slice = inplace_split_plan.split_slices[split_idx]
-            metadata_payload.append({
-                "split_idx":
-                int(split_idx),
-                "stabilized":
-                False,
-                "token_start":
-                int(split_slice.token_slice.start),
-                "token_stop":
-                int(split_slice.token_slice.stop),
-                "start_num_tokens":
-                int(split_slice.start_num_tokens),
-                "num_reqs":
-                int(split_common.num_reqs),
-                "num_tokens":
-                int(split_common.num_actual_tokens),
-                "original":
-                split_debug.common_metadata_tensor_info(split_common),
-                "stable":
-                split_debug.common_metadata_tensor_info(stable_common),
-            })
-
-        split_debug.log_event(
-            "inplace_metadata_views",
-            {
-                "dry_run": True,
-                "num_splits": len(common_attn_metadata_list),
-                "metadata": metadata_payload,
-            },
-            step_id=self._split_inplace_debug_step_id,
-        )
 
     def _stabilize_inplace_common_attn_metadata_list(
             self, common_attn_metadata_list: list[AscendCommonAttentionMetadata],
@@ -2327,7 +2587,29 @@ class NPUModelRunner(GPUModelRunner):
         if (split_mode not in ("inplace_serial", "inplace_parallel")
                 or inplace_split_plan is None):
             return common_attn_metadata_list
-        return common_attn_metadata_list
+        stabilized: list[AscendCommonAttentionMetadata] = []
+        for split_idx, common_attn_metadata in enumerate(
+                common_attn_metadata_list):
+            split_slice = inplace_split_plan.split_slices[split_idx]
+            stabilized.append(
+                self._stabilize_inplace_common_attn_metadata(
+                    common_attn_metadata,
+                    split_idx=split_idx,
+                    split_slice=split_slice))
+        return stabilized
+
+    def _intermediate_tensor_slice_for_tokens(self,
+                                              tokens_slice: slice) -> slice:
+        if enable_sp():
+            tp_size = get_tensor_model_parallel_world_size()
+            start = (tokens_slice.start + tp_size - 1) // tp_size
+            if start != 0:
+                stop = start + (tokens_slice.stop - tokens_slice.start +
+                                tp_size - 1) // tp_size
+            else:
+                stop = (tokens_slice.stop + tp_size - 1) // tp_size
+            return slice(start, stop)
+        return tokens_slice
 
     def _slice_split_batch_inputs(self, tokens_slice: slice, input_ids,
                                   positions, inputs_embeds,
@@ -2337,16 +2619,8 @@ class NPUModelRunner(GPUModelRunner):
              input_ids, positions, inputs_embeds, tokens_slice)
 
         if intermediate_tensors is not None:
-            if enable_sp():
-                tp_size = get_tensor_model_parallel_world_size()
-                start = (tokens_slice.start + tp_size - 1) // tp_size
-                if start != 0:
-                    stop = start + (tokens_slice.stop - tokens_slice.start +
-                                    tp_size - 1) // tp_size
-                else:
-                    stop = (tokens_slice.stop + tp_size - 1) // tp_size
-                tokens_slice = slice(start, stop)
-
+            tokens_slice = self._intermediate_tensor_slice_for_tokens(
+                tokens_slice)
             sliced_intermediate_tensors = intermediate_tensors[
                 tokens_slice] if intermediate_tensors else None
         else:
@@ -2354,6 +2628,242 @@ class NPUModelRunner(GPUModelRunner):
 
         return (sliced_input_ids, sliced_positions, sliced_inputs_embeds,
                 sliced_intermediate_tensors)
+
+    def _graph_token_slice_for_split(self,
+                                     split_slice: SplitBatchSlice) -> slice:
+        start = int(split_slice.token_slice.start)
+        return slice(start, start + int(split_slice.graph_num_tokens))
+
+    def _padding_tail_slice_for_split(
+            self, split_slice: SplitBatchSlice) -> Optional[slice]:
+        actual_stop = int(split_slice.token_slice.stop)
+        graph_stop = int(split_slice.token_slice.start) + int(
+            split_slice.graph_num_tokens)
+        if graph_stop <= actual_stop:
+            return None
+        return slice(actual_stop, graph_stop)
+
+    def _fill_tensor_token_tail(self, tensor: Optional[torch.Tensor],
+                                tail_slice: slice, *, name: str,
+                                token_dim: int = 0) -> bool:
+        if tensor is None:
+            return False
+        if tail_slice.stop > int(tensor.shape[token_dim]):
+            raise RuntimeError(
+                f"Inplace offset padded tail for {name} exceeds tensor "
+                f"shape: tail_stop={tail_slice.stop}, "
+                f"shape={tuple(tensor.shape)}, token_dim={token_dim}")
+        if token_dim == 0:
+            tensor[tail_slice].fill_(0)
+        elif token_dim == 1:
+            tensor[:, tail_slice].fill_(0)
+        else:
+            raise ValueError(f"Unsupported token_dim={token_dim} for {name}")
+        return True
+
+    def _maybe_expand_tensor_for_graph_slice(
+            self,
+            tensor: Optional[torch.Tensor],
+            backing_tensor: Optional[torch.Tensor],
+            graph_stop: int,
+            *,
+            name: str,
+            token_dim: int = 0) -> Optional[torch.Tensor]:
+        if tensor is None:
+            return None
+        if graph_stop <= int(tensor.shape[token_dim]):
+            return tensor
+        if backing_tensor is None:
+            raise RuntimeError(
+                "Inplace offset graph requires input backing buffer: "
+                f"name={name}, graph_stop={int(graph_stop)}, "
+                f"tensor_shape={tuple(tensor.shape)}, token_dim={token_dim}, "
+                "backing_shape=None")
+        if graph_stop > int(backing_tensor.shape[token_dim]):
+            raise RuntimeError(
+                "Inplace offset graph input backing buffer is too small: "
+                f"name={name}, graph_stop={int(graph_stop)}, "
+                f"tensor_shape={tuple(tensor.shape)}, token_dim={token_dim}, "
+                f"backing_shape={tuple(backing_tensor.shape)}")
+        if token_dim == 0:
+            return backing_tensor[:graph_stop]
+        if token_dim == 1:
+            return backing_tensor[:, :graph_stop]
+        raise ValueError(f"Unsupported token_dim={token_dim} for {name}")
+
+    def _expand_inplace_inputs_for_graph_slice(
+            self,
+            graph_stop: int,
+            input_ids: Optional[torch.Tensor],
+            positions: Optional[torch.Tensor],
+            inputs_embeds: Optional[torch.Tensor],
+    ) -> tuple[Optional[torch.Tensor], Optional[torch.Tensor],
+               Optional[torch.Tensor]]:
+        input_ids_backing = getattr(getattr(self, "input_ids", None), "gpu",
+                                    None)
+        positions_backing = getattr(getattr(self, "positions", None), "gpu",
+                                    None)
+        inputs_embeds_backing = getattr(
+            getattr(self, "inputs_embeds", None), "gpu", None)
+
+        input_ids = self._maybe_expand_tensor_for_graph_slice(
+            input_ids,
+            input_ids_backing,
+            graph_stop,
+            name="input_ids")
+
+        if positions is not None:
+            positions_token_dim = 1 if positions.ndim == 2 else 0
+            if positions_token_dim == 1:
+                mrope_backing = getattr(getattr(self, "mrope_positions", None),
+                                        "gpu", None)
+                if mrope_backing is not None:
+                    positions_backing = mrope_backing
+            positions = self._maybe_expand_tensor_for_graph_slice(
+                positions,
+                positions_backing,
+                graph_stop,
+                name="positions",
+                token_dim=positions_token_dim)
+
+        inputs_embeds = self._maybe_expand_tensor_for_graph_slice(
+            inputs_embeds,
+            inputs_embeds_backing,
+            graph_stop,
+            name="inputs_embeds")
+        return input_ids, positions, inputs_embeds
+
+    def _fill_inplace_padding_tail(
+            self,
+            split_slice: SplitBatchSlice,
+            input_ids: Optional[torch.Tensor],
+            positions: Optional[torch.Tensor],
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            *,
+            stream: Optional[Any] = None,
+            collect_debug_payload: bool = False,
+    ) -> dict[str, Any]:
+        tail_slice = self._padding_tail_slice_for_split(split_slice)
+        if tail_slice is None:
+            if collect_debug_payload:
+                return {
+                    "tail_filled": False,
+                    "padding_tokens": 0,
+                    "actual_token_stop": int(split_slice.token_slice.stop),
+                    "graph_token_stop": int(split_slice.token_slice.stop),
+                }
+            return {"tail_filled": False}
+
+        def _fill() -> dict[str, Any]:
+            filled_input_ids = self._fill_tensor_token_tail(
+                input_ids, tail_slice, name="input_ids")
+            filled_positions = False
+            if positions is not None:
+                positions_token_dim = 1 if positions.ndim == 2 else 0
+                filled_positions = self._fill_tensor_token_tail(
+                    positions,
+                    tail_slice,
+                    name="positions",
+                    token_dim=positions_token_dim)
+            filled_inputs_embeds = self._fill_tensor_token_tail(
+                inputs_embeds, tail_slice, name="inputs_embeds")
+
+            filled_intermediate_tensors: list[str] = []
+            if intermediate_tensors is not None:
+                intermediate_tail = self._intermediate_tensor_slice_for_tokens(
+                    tail_slice)
+                for name, tensor in intermediate_tensors.tensors.items():
+                    filled = self._fill_tensor_token_tail(
+                        tensor, intermediate_tail, name=name)
+                    if collect_debug_payload and filled:
+                        filled_intermediate_tensors.append(str(name))
+
+            if not collect_debug_payload:
+                return {"tail_filled": True}
+            return {
+                "tail_filled": True,
+                "padding_tokens":
+                int(tail_slice.stop - tail_slice.start),
+                "actual_token_stop": int(tail_slice.start),
+                "graph_token_stop": int(tail_slice.stop),
+                "input_ids": filled_input_ids,
+                "positions": filled_positions,
+                "inputs_embeds": filled_inputs_embeds,
+                "intermediate_tensors": filled_intermediate_tensors,
+            }
+
+        if stream is not None:
+            with torch.npu.stream(stream):
+                payload = _fill()
+        else:
+            payload = _fill()
+
+        if collect_debug_payload:
+            split_debug.log_event(
+                "inplace_offset_padding_tail_filled",
+                {
+                    "token_start": int(split_slice.token_slice.start),
+                    "num_tokens": int(split_slice.num_tokens),
+                    "graph_num_tokens": int(split_slice.graph_num_tokens),
+                    **payload,
+                },
+                step_id=_split_debug_step_from_runner(self),
+            )
+        return payload
+
+    def _tokens_slice_for_inplace_execution(
+            self, split_slice: SplitBatchSlice) -> slice:
+        if split_slice.start_num_tokens > 0:
+            return self._graph_token_slice_for_split(split_slice)
+        return split_slice.token_slice
+
+    def _context_ubatch_slices_for_inplace(
+            self, split_batch_slices: SplitBatchSlices) -> UBatchSlices:
+        return [
+            UBatchSlice(s.request_slice,
+                        self._tokens_slice_for_inplace_execution(s))
+            for s in split_batch_slices
+        ]
+
+    def _prepare_inplace_split_inputs_for_execution(
+            self,
+            split_batch_slices: SplitBatchSlices,
+            input_ids: Optional[torch.Tensor],
+            positions: Optional[torch.Tensor],
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            *,
+            stream_for_split: Optional[Any] = None,
+            collect_debug_payload: bool = False,
+    ) -> list[dict[str, Any]]:
+        prepared: list[dict[str, Any]] = []
+        for idx, split_slice in enumerate(split_batch_slices):
+            tokens_slice = self._tokens_slice_for_inplace_execution(
+                split_slice)
+            (split_input_ids, split_positions, split_inputs_embeds) = (
+                self._expand_inplace_inputs_for_graph_slice(
+                    int(tokens_slice.stop),
+                    input_ids,
+                    positions,
+                    inputs_embeds))
+            stream = stream_for_split(idx) if stream_for_split else None
+            padding_tail_payload = self._fill_inplace_padding_tail(
+                split_slice,
+                split_input_ids,
+                split_positions,
+                split_inputs_embeds,
+                intermediate_tensors,
+                stream=stream,
+                collect_debug_payload=collect_debug_payload)
+            prepared.append({
+                "tokens_slice": tokens_slice,
+                "input_ids": split_input_ids,
+                "positions": split_positions,
+                "inputs_embeds": split_inputs_embeds,
+                "padding_tail_payload": padding_tail_payload,
+            })
+        return prepared
 
     def _make_split_batch_metadata_parallel_streams(
             self, split_ubatch_slices: UBatchSlices,
@@ -2578,8 +3088,9 @@ class NPUModelRunner(GPUModelRunner):
                 ubatch_num=i,
                 positions=positions,
             )
-            _set_split_debug_step(split_forward_context,
-                                  _split_debug_step_from_runner(self))
+            if split_debug_enabled:
+                _set_split_debug_step(split_forward_context,
+                                      _split_debug_step_from_runner(self))
             forward_contexts.append(split_forward_context)
 
         ubatch_metadata: list[AscendUbatchMetadata] = []
@@ -2648,6 +3159,16 @@ class NPUModelRunner(GPUModelRunner):
         forward_contexts = []
         cur_forward_context = get_forward_context()
         dp_metadata = cur_forward_context.dp_metadata
+        context_ubatch_slices = self._context_ubatch_slices_for_inplace(
+            split_batch_slices)
+        split_debug_enabled = split_debug.is_enabled()
+        prepared_split_inputs = self._prepare_inplace_split_inputs_for_execution(
+            split_batch_slices,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            collect_debug_payload=split_debug_enabled)
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         allow_lazy = bool(split_cfg is not None and getattr(
             split_cfg, "enable_inplace_lazy_capture", True))
@@ -2659,6 +3180,10 @@ class NPUModelRunner(GPUModelRunner):
             split_attention_backend = inplace_attention_backend
             if force_pa_for_offset and split_slice.start_num_tokens > 0:
                 split_attention_backend = "pa"
+            capture_metadata_mode = (
+                "template"
+                if split_slice.start_num_tokens > 0
+                and split_attention_backend == "fia" else "")
             ubatch_attn_metadata = None
             if attn_metadata is not None:
                 if isinstance(attn_metadata, list) and i < len(attn_metadata):
@@ -2683,7 +3208,7 @@ class NPUModelRunner(GPUModelRunner):
                     attention_backend=(split_attention_backend
                                        if split_slice.start_num_tokens > 0
                                        else ""),
-                    capture_metadata_mode="",
+                    capture_metadata_mode=capture_metadata_mode,
                 ))
 
             allow_inplace_lazy_capture = bool(
@@ -2700,15 +3225,15 @@ class NPUModelRunner(GPUModelRunner):
                     and getattr(ubatch_batch_descriptor,
                                 "capture_metadata_mode", "") == "template"):
                 templated_fia_seq_lens = _template_fia_seq_lens_list(
-                    ubatch_attn_metadata, split_slice.graph_num_tokens)
+                    ubatch_attn_metadata, self.block_size)
             validate_inplace_ptrs = bool(
                 split_cfg is not None
                 and getattr(split_cfg, "inplace_validate_metadata_ptrs",
                             False)
                 and split_slice.start_num_tokens > 0)
-            validate_inplace_metadata_ptrs = False
+            validate_inplace_metadata_ptrs = validate_inplace_ptrs
 
-            if split_debug.is_enabled():
+            if split_debug_enabled:
                 split_debug.log_event(
                     "split_descriptor",
                     {
@@ -2745,15 +3270,16 @@ class NPUModelRunner(GPUModelRunner):
                 attn_metadata=ubatch_attn_metadata,
                 vllm_config=self.vllm_config,
                 dp_metadata=dp_metadata,
-                ubatch_slices=split_ubatch_slices,
+                ubatch_slices=context_ubatch_slices,
                 batch_descriptor=ubatch_batch_descriptor,
                 cudagraph_runtime_mode=ubatch_cudagraph_mode,
                 ubatch_num=i,
-                positions=positions,
+                positions=prepared_split_inputs[i]["positions"],
                 in_parallel_streams=False,
             )
-            _set_split_debug_step(split_forward_context,
-                                  _split_debug_step_from_runner(self))
+            if split_debug_enabled:
+                _set_split_debug_step(split_forward_context,
+                                      _split_debug_step_from_runner(self))
             setattr(split_forward_context, "split_inplace_mode",
                     "inplace_serial")
             setattr(split_forward_context, "forced_attention_backend",
@@ -2768,9 +3294,14 @@ class NPUModelRunner(GPUModelRunner):
 
         ubatch_metadata: list[AscendUbatchMetadata] = []
         for i, split_slice in enumerate(split_batch_slices):
+            prepared_inputs = prepared_split_inputs[i]
+            tokens_slice = prepared_inputs["tokens_slice"]
+            padding_tail_payload = prepared_inputs["padding_tail_payload"]
             sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
             sliced_intermediate_tensors = self._slice_split_batch_inputs(
-                split_slice.token_slice, input_ids, positions, inputs_embeds,
+                tokens_slice, prepared_inputs["input_ids"],
+                prepared_inputs["positions"],
+                prepared_inputs["inputs_embeds"],
                 intermediate_tensors)
 
             if split_debug.is_enabled():
@@ -2780,10 +3311,16 @@ class NPUModelRunner(GPUModelRunner):
                         "idx": i,
                         "token_start": int(split_slice.token_slice.start),
                         "token_stop": int(split_slice.token_slice.stop),
+                        "graph_token_stop": int(tokens_slice.stop),
                         "start_num_tokens":
                         int(split_slice.start_num_tokens),
                         "num_tokens": int(split_slice.num_tokens),
                         "graph_num_tokens": int(split_slice.graph_num_tokens),
+                        "padding_tokens": int(
+                            split_slice.graph_num_tokens -
+                            split_slice.num_tokens),
+                        "tail_filled": bool(
+                            padding_tail_payload.get("tail_filled", False)),
                         "input_ids": split_debug.tensor_view_info(
                             sliced_input_ids),
                         "positions": split_debug.tensor_view_info(
@@ -2820,21 +3357,40 @@ class NPUModelRunner(GPUModelRunner):
             aclgraph_runtime_mode: CUDAGraphMode,
             inplace_attention_backend: str) -> list[AscendUbatchMetadata]:
 
-        forward_contexts = []
         cur_forward_context = get_forward_context()
         dp_metadata = cur_forward_context.dp_metadata
+        context_ubatch_slices = self._context_ubatch_slices_for_inplace(
+            split_batch_slices)
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        split_debug_enabled = split_debug.is_enabled()
         allow_lazy = bool(split_cfg is not None and getattr(
             split_cfg, "enable_inplace_lazy_capture", True))
         force_pa_for_offset = bool(
             split_cfg is not None
             and getattr(split_cfg, "inplace_force_pa_for_offset", False))
 
+        def _stream_for_split(split_idx: int):
+            return self.stream_parallel if split_idx > 0 else self.stream_main
+
+        prepared_split_inputs = self._prepare_inplace_split_inputs_for_execution(
+            split_batch_slices,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            stream_for_split=_stream_for_split,
+            collect_debug_payload=split_debug_enabled)
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
         for i, split_slice in enumerate(split_batch_slices):
             in_parallel_streams = i > 0
             split_attention_backend = inplace_attention_backend
             if force_pa_for_offset and split_slice.start_num_tokens > 0:
                 split_attention_backend = "pa"
+            capture_metadata_mode = (
+                "template"
+                if split_slice.start_num_tokens > 0
+                and split_attention_backend == "fia" else "")
             ubatch_attn_metadata = None
             if attn_metadata is not None:
                 if isinstance(attn_metadata, list) and i < len(attn_metadata):
@@ -2855,7 +3411,7 @@ class NPUModelRunner(GPUModelRunner):
                     attention_backend=(split_attention_backend
                                        if split_slice.start_num_tokens > 0
                                        else ""),
-                    capture_metadata_mode="",
+                    capture_metadata_mode=capture_metadata_mode,
                 ))
 
             allow_inplace_lazy_capture = bool(
@@ -2872,15 +3428,15 @@ class NPUModelRunner(GPUModelRunner):
                     and getattr(ubatch_batch_descriptor,
                                 "capture_metadata_mode", "") == "template"):
                 templated_fia_seq_lens = _template_fia_seq_lens_list(
-                    ubatch_attn_metadata, split_slice.graph_num_tokens)
+                    ubatch_attn_metadata, self.block_size)
             validate_inplace_ptrs = bool(
                 split_cfg is not None
                 and getattr(split_cfg, "inplace_validate_metadata_ptrs",
                             False)
                 and split_slice.start_num_tokens > 0)
-            validate_inplace_metadata_ptrs = False
+            validate_inplace_metadata_ptrs = validate_inplace_ptrs
 
-            if split_debug.is_enabled():
+            if split_debug_enabled:
                 split_debug.log_event(
                     "split_descriptor",
                     {
@@ -2928,16 +3484,17 @@ class NPUModelRunner(GPUModelRunner):
                     attn_metadata=ubatch_attn_metadata,
                     vllm_config=self.vllm_config,
                     dp_metadata=dp_metadata,
-                    ubatch_slices=split_ubatch_slices,
+                    ubatch_slices=context_ubatch_slices,
                     batch_descriptor=ubatch_batch_descriptor,
                     cudagraph_runtime_mode=ubatch_cudagraph_mode,
                     ubatch_num=i,
-                    positions=positions,
+                    positions=prepared_split_inputs[i]["positions"],
                     in_parallel_streams=in_parallel_streams,
                     cos_sin_slot_id=i,
                 )
-            _set_split_debug_step(split_forward_context,
-                                  _split_debug_step_from_runner(self))
+            if split_debug_enabled:
+                _set_split_debug_step(split_forward_context,
+                                      _split_debug_step_from_runner(self))
             setattr(split_forward_context, "split_inplace_mode",
                     "inplace_parallel")
             setattr(split_forward_context, "forced_attention_backend",
@@ -2948,17 +3505,17 @@ class NPUModelRunner(GPUModelRunner):
                     validate_inplace_ptrs)
             setattr(split_forward_context, "validate_inplace_metadata_ptrs",
                     validate_inplace_metadata_ptrs)
-            forward_contexts.append(split_forward_context)
-
-        ubatch_metadata: list[AscendUbatchMetadata] = []
-        for i, split_slice in enumerate(split_batch_slices):
-            in_parallel_streams = i > 0
+            prepared_inputs = prepared_split_inputs[i]
+            tokens_slice = prepared_inputs["tokens_slice"]
+            padding_tail_payload = prepared_inputs["padding_tail_payload"]
             sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
             sliced_intermediate_tensors = self._slice_split_batch_inputs(
-                split_slice.token_slice, input_ids, positions, inputs_embeds,
+                tokens_slice, prepared_inputs["input_ids"],
+                prepared_inputs["positions"],
+                prepared_inputs["inputs_embeds"],
                 intermediate_tensors)
 
-            if split_debug.is_enabled():
+            if split_debug_enabled:
                 split_debug.log_event(
                     "inplace_parallel_execution",
                     {
@@ -2974,27 +3531,34 @@ class NPUModelRunner(GPUModelRunner):
                                              else "main"),
                         "token_start": int(split_slice.token_slice.start),
                         "token_stop": int(split_slice.token_slice.stop),
+                        "graph_token_stop": int(tokens_slice.stop),
                         "start_num_tokens":
                         int(split_slice.start_num_tokens),
                         "num_tokens": int(split_slice.num_tokens),
                         "graph_num_tokens": int(split_slice.graph_num_tokens),
+                        "padding_tokens": int(
+                            split_slice.graph_num_tokens -
+                            split_slice.num_tokens),
+                        "tail_filled": bool(
+                            padding_tail_payload.get("tail_filled", False)),
                         "input_ids": split_debug.tensor_view_info(
                             sliced_input_ids),
                         "positions": split_debug.tensor_view_info(
                             sliced_positions),
                         "inputs_embeds": split_debug.tensor_view_info(
                             sliced_inputs_embeds),
-                        "metadata": split_debug.metadata_tensor_info(
-                            forward_contexts[i].attn_metadata),
+                        "metadata":
+                        split_debug.metadata_tensor_info(
+                            split_forward_context.attn_metadata),
                         "batch_descriptor": split_debug.batch_descriptor_info(
-                            forward_contexts[i].batch_descriptor),
+                            split_forward_context.batch_descriptor),
                     },
                     step_id=_split_debug_step_from_runner(self),
                 )
 
             ubatch_metadata.append(
                 AscendUbatchMetadata(
-                    context=forward_contexts[i],
+                    context=split_forward_context,
                     input_ids=sliced_input_ids,
                     positions=sliced_positions,
                     inputs_embeds=sliced_inputs_embeds,
@@ -3728,6 +4292,8 @@ class NPUModelRunner(GPUModelRunner):
                             parallel_streams=parallel_streams,
                         )
                     else:
+                        # if parallel_streams :
+                        #     time.sleep(10 / 1000.0)
                         if (int(getattr(
                                 metadata.context.batch_descriptor,
                                 "start_num_tokens", 0) or 0) > 0
@@ -3761,6 +4327,7 @@ class NPUModelRunner(GPUModelRunner):
                                             metadata.context,
                                             split_slice.graph_num_tokens)
 
+
                     with torch.npu.stream(target_stream):
                         results[slice_idx] = self._clone_split_output(
                             self._trim_split_output(split_result,
@@ -3771,12 +4338,12 @@ class NPUModelRunner(GPUModelRunner):
 
         split_workers: list[threading.Thread] = []
         try:
-            torch.npu.set_stream_limit(self.stream_main,
-                                       cube_num=15,
-                                       vector_num=20)
-            torch.npu.set_stream_limit(self.stream_parallel,
-                                       cube_num=15,
-                                       vector_num=20)
+            # torch.npu.set_stream_limit(self.update_stream_main,
+            #                            cube_num=10,
+            #                            vector_num=20)
+            # torch.npu.set_stream_limit(self.update_stream_parallel,
+            #                            cube_num=10,
+            #                            vector_num=20)
             for slice_idx in range(num_splits):
                 worker = threading.Thread(
                     target=_run_inplace_parallel_worker,
@@ -3875,8 +4442,8 @@ class NPUModelRunner(GPUModelRunner):
         
         results: list[Any] = []
         original_forward_context = get_forward_context()
-        torch.npu.set_stream_limit(self.stream_main, cube_num=15, vector_num=20)
-        torch.npu.set_stream_limit(self.stream_parallel, cube_num=15, vector_num=20)
+        # torch.npu.set_stream_limit(self.stream_main, cube_num=15, vector_num=20)
+        # torch.npu.set_stream_limit(self.stream_parallel, cube_num=15, vector_num=20)
         num_splits = len(split_batch_slices)
         results: list[Optional[Any]] = [None] * num_splits
         split_errors: list[tuple[int, Exception]] = []
@@ -4360,6 +4927,7 @@ class NPUModelRunner(GPUModelRunner):
                     "replay_ms": _replay_ms,
                     "batch_size": _n_tokens,
                     "is_split": split_ubatch_slices is not None,
+                    "debug_step_id": self._split_inplace_debug_step_id,
                 }
                 self._perf_accum["total_header_ms"] += _header_ms
                 self._perf_accum["total_replay_ms"] += _replay_ms

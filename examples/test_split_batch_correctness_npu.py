@@ -78,6 +78,58 @@ def _parse_int_list(raw: str | None) -> list[int] | None:
     return values
 
 
+def _parse_start_graph_caps(raw: str | None) -> dict[int, int] | None:
+    if raw is None or not raw.strip():
+        return None
+    result: dict[int, int] = {}
+    for item in raw.strip().strip("'\"").split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if ":" not in item:
+            raise ValueError(
+                "expected start:max_graph_tokens entries, got "
+                f"{item!r}")
+        start_raw, cap_raw = item.split(":", 1)
+        start = int(start_raw.strip())
+        cap = int(cap_raw.strip())
+        if start < 0 or cap <= 0:
+            raise ValueError(
+                "start:max_graph_tokens entries must use non-negative starts "
+                "and positive graph token caps")
+        result[start] = cap
+    return result or None
+
+
+def _parse_start_graph_allowed_sizes(raw: str | None
+                                     ) -> dict[int, list[int]] | None:
+    if raw is None or not raw.strip():
+        return None
+    result: dict[int, list[int]] = {}
+    for item in raw.strip().strip("'\"").split(";"):
+        item = item.strip().strip("'\"")
+        if not item:
+            continue
+        if ":" not in item:
+            raise ValueError(
+                "expected start:size|size entries, got "
+                f"{item!r}")
+        start_raw, sizes_raw = item.split(":", 1)
+        start = int(start_raw.strip().strip("'\""))
+        sizes = [
+            int(size.strip())
+            for size in sizes_raw.strip().strip("'\"").replace(
+                ",", "|").split("|")
+            if size.strip()
+        ]
+        if start < 0 or not sizes or any(size <= 0 for size in sizes):
+            raise ValueError(
+                "start:size|size entries must use non-negative starts and "
+                "positive graph token sizes")
+        result[start] = sorted(set(sizes))
+    return result or None
+
+
 def _apply_capture_sizes(args: dict[str, Any], capture_sizes: list[int]) -> None:
     compilation_config = args.get("compilation_config") or {}
     if not isinstance(compilation_config, dict):
@@ -651,6 +703,51 @@ def create_parser() -> FlexibleArgumentParser:
         ),
     )
     test_group.add_argument(
+        "--inplace-split-planner-policy",
+        "--inplace-split-first-tokens-policy",
+        dest="inplace_split_planner_policy",
+        choices=["largest_lower", "balanced"],
+        default="largest_lower",
+        help=(
+            "Inplace split planner policy. largest_lower preserves the "
+            "current largest-lower main graph split; balanced chooses a more "
+            "even split among valid lower main graphs."
+        ),
+    )
+    test_group.add_argument(
+        "--inplace-offset-capture-sizes",
+        type=str,
+        default="",
+        help=(
+            "Optional comma-separated graph sizes for inplace offset buckets. "
+            "Example: 32,64,128,256."
+        ),
+    )
+    test_group.add_argument(
+        "--inplace-offset-max-graph-tokens-by-start",
+        type=str,
+        default="",
+        help=(
+            "Optional comma-separated start:max_graph_tokens caps for inplace "
+            "offset graphs. Example: 128:64,384:64."
+        ),
+    )
+    test_group.add_argument(
+        "--inplace-offset-min-graph-tokens",
+        type=int,
+        default=1,
+        help="Minimum graph size allowed for inplace offset graphs.",
+    )
+    test_group.add_argument(
+        "--inplace-offset-allowed-graph-tokens-by-start",
+        type=str,
+        default="",
+        help=(
+            "Optional semicolon-separated exact start:size-list mapping for "
+            "inplace offset graphs. Example: 32:16|32;64:16|32|64."
+        ),
+    )
+    test_group.add_argument(
         "--force-split",
         action="store_true",
         help=(
@@ -1087,6 +1184,12 @@ def _build_split_additional_config(
     inplace_force_pa_for_offset: bool = False,
     enable_inplace_spec_decode: bool = False,
     enable_inplace_mrope: bool = False,
+    inplace_split_planner_policy: str = "largest_lower",
+    inplace_offset_capture_sizes: list[int] | None = None,
+    inplace_offset_max_graph_tokens_by_start: dict[int, int] | None = None,
+    inplace_offset_min_graph_tokens: int = 1,
+    inplace_offset_allowed_graph_tokens_by_start: (
+        dict[int, list[int]] | None) = None,
     pa_shape_list: list[int] | None = None,
 ) -> dict[str, Any]:
     cfg: dict[str, Any] = {
@@ -1107,6 +1210,26 @@ def _build_split_additional_config(
             inplace_force_pa_for_offset)
         cfg["enable_inplace_spec_decode"] = bool(enable_inplace_spec_decode)
         cfg["enable_inplace_mrope"] = bool(enable_inplace_mrope)
+        cfg["inplace_split_planner_policy"] = inplace_split_planner_policy
+        cfg["inplace_split_first_tokens_policy"] = (
+            inplace_split_planner_policy)
+        cfg["inplace_offset_match_policy"] = "bucket"
+        offset_capture_sizes = (
+            inplace_offset_capture_sizes
+            if inplace_offset_capture_sizes is not None else
+            parallel_capture_sizes)
+        if offset_capture_sizes is not None:
+            cfg["inplace_offset_capture_sizes"] = list(offset_capture_sizes)
+        cfg["inplace_offset_min_graph_tokens"] = int(
+            inplace_offset_min_graph_tokens)
+        cfg["inplace_offset_max_padding_tokens"] = 127
+        cfg["inplace_offset_max_padding_ratio"] = 8.0
+        if inplace_offset_max_graph_tokens_by_start:
+            cfg["inplace_offset_max_graph_tokens_by_start"] = (
+                inplace_offset_max_graph_tokens_by_start)
+        if inplace_offset_allowed_graph_tokens_by_start:
+            cfg["inplace_offset_allowed_graph_tokens_by_start"] = (
+                inplace_offset_allowed_graph_tokens_by_start)
     additional_config: dict[str, Any] = {"split_batch_config": cfg}
     if pa_shape_list is not None:
         additional_config["pa_shape_list"] = list(pa_shape_list)
@@ -1165,6 +1288,14 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "validate_ptrs": ctx["validate_ptrs"],
         "enable_inplace_spec_decode": ctx["enable_inplace_spec_decode"],
         "enable_inplace_mrope": ctx["enable_inplace_mrope"],
+        "inplace_split_planner_policy": ctx["inplace_split_planner_policy"],
+        "inplace_offset_capture_sizes": ctx["inplace_offset_capture_sizes"],
+        "inplace_offset_max_graph_tokens_by_start": (
+            ctx["inplace_offset_max_graph_tokens_by_start"]),
+        "inplace_offset_min_graph_tokens": (
+            ctx["inplace_offset_min_graph_tokens"]),
+        "inplace_offset_allowed_graph_tokens_by_start": (
+            ctx["inplace_offset_allowed_graph_tokens_by_start"]),
         "split_debug": ctx["split_debug"],
         "expected_split": ctx["expected_split"],
         "expected_no_split_reason": ctx["expected_no_split_reason"],
@@ -1407,6 +1538,25 @@ def main() -> int:
     enable_parallel_streams = bool(args.pop("enable_parallel_streams"))
     _parallel_capture_sizes_raw = args.pop("parallel_capture_sizes")
     parallel_capture_sizes = _parse_int_list(_parallel_capture_sizes_raw)
+    inplace_split_planner_policy = str(args.pop(
+        "inplace_split_planner_policy"))
+    _inplace_offset_capture_sizes_raw = str(
+        args.pop("inplace_offset_capture_sizes") or "")
+    inplace_offset_capture_sizes = (
+        _parse_int_list(_inplace_offset_capture_sizes_raw)
+        if _inplace_offset_capture_sizes_raw.strip() else None)
+    inplace_offset_max_graph_tokens_by_start = _parse_start_graph_caps(
+        str(args.pop("inplace_offset_max_graph_tokens_by_start") or ""))
+    inplace_offset_min_graph_tokens = int(
+        args.pop("inplace_offset_min_graph_tokens"))
+    inplace_offset_allowed_graph_tokens_by_start = (
+        _parse_start_graph_allowed_sizes(
+            str(args.pop("inplace_offset_allowed_graph_tokens_by_start")
+                or "")))
+    if (split_mode.startswith("inplace") and inplace_offset_capture_sizes
+            and parallel_capture_sizes is not None):
+        parallel_capture_sizes = sorted(
+            set(parallel_capture_sizes) | set(inplace_offset_capture_sizes))
     force_split = bool(args.pop("force_split"))
     validate_ptrs = bool(args.pop("validate_ptrs"))
     inplace_force_pa_for_offset = bool(
@@ -1541,6 +1691,13 @@ def main() -> int:
         inplace_force_pa_for_offset=inplace_force_pa_for_offset,
         enable_inplace_spec_decode=enable_inplace_spec_decode,
         enable_inplace_mrope=enable_inplace_mrope,
+        inplace_split_planner_policy=inplace_split_planner_policy,
+        inplace_offset_capture_sizes=inplace_offset_capture_sizes,
+        inplace_offset_max_graph_tokens_by_start=(
+            inplace_offset_max_graph_tokens_by_start),
+        inplace_offset_min_graph_tokens=inplace_offset_min_graph_tokens,
+        inplace_offset_allowed_graph_tokens_by_start=(
+            inplace_offset_allowed_graph_tokens_by_start),
         pa_shape_list=pa_shape_list,
     )
     split_enabled_cfg = _build_split_additional_config(
@@ -1555,6 +1712,13 @@ def main() -> int:
         inplace_force_pa_for_offset=inplace_force_pa_for_offset,
         enable_inplace_spec_decode=enable_inplace_spec_decode,
         enable_inplace_mrope=enable_inplace_mrope,
+        inplace_split_planner_policy=inplace_split_planner_policy,
+        inplace_offset_capture_sizes=inplace_offset_capture_sizes,
+        inplace_offset_max_graph_tokens_by_start=(
+            inplace_offset_max_graph_tokens_by_start),
+        inplace_offset_min_graph_tokens=inplace_offset_min_graph_tokens,
+        inplace_offset_allowed_graph_tokens_by_start=(
+            inplace_offset_allowed_graph_tokens_by_start),
         pa_shape_list=pa_shape_list,
     )
 
@@ -1576,6 +1740,13 @@ def main() -> int:
             validate_ptrs=validate_ptrs,
             enable_inplace_spec_decode=enable_inplace_spec_decode,
             enable_inplace_mrope=enable_inplace_mrope,
+            inplace_split_planner_policy=inplace_split_planner_policy,
+            inplace_offset_capture_sizes=inplace_offset_capture_sizes,
+            inplace_offset_max_graph_tokens_by_start=(
+                inplace_offset_max_graph_tokens_by_start),
+            inplace_offset_min_graph_tokens=inplace_offset_min_graph_tokens,
+            inplace_offset_allowed_graph_tokens_by_start=(
+                inplace_offset_allowed_graph_tokens_by_start),
             pa_shape_list=pa_shape_list,
             split_debug=split_debug,
             expected_split=expected_split,
@@ -1613,6 +1784,13 @@ def main() -> int:
         "validate_ptrs": validate_ptrs,
         "enable_inplace_spec_decode": enable_inplace_spec_decode,
         "enable_inplace_mrope": enable_inplace_mrope,
+        "inplace_split_planner_policy": inplace_split_planner_policy,
+        "inplace_offset_capture_sizes": inplace_offset_capture_sizes,
+        "inplace_offset_max_graph_tokens_by_start": (
+            inplace_offset_max_graph_tokens_by_start),
+        "inplace_offset_min_graph_tokens": inplace_offset_min_graph_tokens,
+        "inplace_offset_allowed_graph_tokens_by_start": (
+            inplace_offset_allowed_graph_tokens_by_start),
         "split_debug": split_debug,
         "expected_split": expected_split,
         "expected_no_split_reason": expected_no_split_reason,

@@ -241,7 +241,7 @@ class TestGraphParamKey(TestBase):
         event = SimpleNamespace(record=Mock())
         param = (
             "query",
-            torch.empty(32),
+            torch.empty(4, 256, 2),
             "value",
             "block_tables",
             "attn_mask",
@@ -275,7 +275,7 @@ class TestGraphParamKey(TestBase):
             _update_attn_fia_params("stream", forward_context, 32)
 
         self.assertEqual(
-            mock_fia.call_args.kwargs["actual_seq_lengths_kv"], [9, 32])
+            mock_fia.call_args.kwargs["actual_seq_lengths_kv"], [9, 256])
         self.assertEqual(
             forward_context.attn_metadata["layer.0"].seq_lens_list, [9, 9])
         event.record.assert_called_once_with("stream")

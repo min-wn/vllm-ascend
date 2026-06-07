@@ -37,6 +37,7 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          enable_cp, split_decodes_and_prefills,
                                          using_paged_attention)
 from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
+                                               _get_fia_key_t,
                                                get_graph_param_key,
                                                get_graph_params,
                                                maybe_template_fia_seq_lens,
@@ -383,7 +384,8 @@ class AscendAttentionBackendImpl(AttentionImpl):
         ensure_graph_param_key(graph_params, param_key)
         actual_seq_lengths_q = attn_metadata.actual_seq_lengths_q
         actual_seq_lengths_kv = maybe_template_fia_seq_lens(
-            forward_context, actual_seq_lengths_kv, int(key.shape[0]))
+            forward_context, actual_seq_lengths_kv,
+            _get_fia_key_t(key, block_size), source="attention_full_graph")
         # Prepare tensors for attention output
         # TODO: Refactor this to step-level instead of layer-level
 
@@ -557,7 +559,9 @@ class AscendAttentionBackendImpl(AttentionImpl):
                 == "template"
                 and getattr(batch_descriptor, "attention_backend", "") == "fia"):
             actual_seq_lengths_kv = maybe_template_fia_seq_lens(
-                forward_context, actual_seq_lengths_kv, int(key.shape[0]))
+                forward_context, actual_seq_lengths_kv,
+                _get_fia_key_t(key, block_size),
+                source="attention_get_fia_params")
         return key, value, block_size, block_table, actual_seq_lengths_kv
 
     def _forward_fia_slidingwindow(self, query: torch.Tensor,

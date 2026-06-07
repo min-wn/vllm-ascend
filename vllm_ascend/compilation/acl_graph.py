@@ -76,22 +76,54 @@ def graph_param_key_info(key: GraphParamKey) -> dict[str, Any]:
 
 def should_template_fia_seq_lens(forward_context: Any) -> bool:
     batch_descriptor = getattr(forward_context, "batch_descriptor", None)
-    return (getattr(batch_descriptor, "capture_metadata_mode", "")
-            == "template"
+    return (getattr(batch_descriptor, "capture_metadata_mode", "") == "template"
             and getattr(batch_descriptor, "attention_backend", "") == "fia")
 
 
 def _get_fia_key_t(key_tensor: Any, fallback: int) -> int:
-    if isinstance(key_tensor, torch.Tensor) and key_tensor.ndim > 0:
-        return int(key_tensor.shape[0])
+    if isinstance(key_tensor, torch.Tensor):
+        if key_tensor.ndim > 1:
+            return int(key_tensor.shape[1])
+        if key_tensor.ndim > 0 and int(fallback) <= 0:
+            return int(key_tensor.shape[0])
     return int(fallback)
 
 
+def _seq_lens_tail(seq_lens: Any) -> Any:
+    if seq_lens is None or isinstance(seq_lens, torch.Tensor):
+        return None
+    try:
+        if len(seq_lens) == 0:
+            return None
+        return int(seq_lens[-1])
+    except (TypeError, ValueError):
+        return None
+
+
 def maybe_template_fia_seq_lens(forward_context: Any, seq_lens: Any,
-                                target_t: int) -> Any:
+                                target_t: int, *, source: str = "") -> Any:
     if not should_template_fia_seq_lens(forward_context):
         return seq_lens
     if seq_lens is None or isinstance(seq_lens, torch.Tensor):
+        if split_debug.is_enabled():
+            split_debug.log_event(
+                "fia_seq_lens_template",
+                {
+                    "source": source,
+                    "applied": False,
+                    "reason": "none_or_tensor",
+                    "batch_descriptor": split_debug.batch_descriptor_info(
+                        getattr(forward_context, "batch_descriptor", None)),
+                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                    "in_parallel_streams": bool(
+                        getattr(forward_context, "in_parallel_streams",
+                                False)),
+                    "target_t": int(target_t),
+                    "seq_lens_type": type(seq_lens).__name__,
+                },
+                step_id=getattr(forward_context,
+                                "split_inplace_debug_step_id", None),
+            )
         return seq_lens
     try:
         if len(seq_lens) == 0:
@@ -99,9 +131,30 @@ def maybe_template_fia_seq_lens(forward_context: Any, seq_lens: Any,
     except TypeError:
         return seq_lens
 
-    templated_seq_lens = list(seq_lens)
+    original_seq_lens = list(seq_lens)
+    tail_before = _seq_lens_tail(original_seq_lens)
+    templated_seq_lens = list(original_seq_lens)
     # FIA TND requires actualSeqenceLengthKV[-1] to match key/value T.
     templated_seq_lens[-1] = int(target_t)
+    if split_debug.is_enabled():
+        split_debug.log_event(
+            "fia_seq_lens_template",
+            {
+                "source": source,
+                "applied": True,
+                "batch_descriptor": split_debug.batch_descriptor_info(
+                    getattr(forward_context, "batch_descriptor", None)),
+                "ubatch_num": getattr(forward_context, "ubatch_num", None),
+                "in_parallel_streams": bool(
+                    getattr(forward_context, "in_parallel_streams", False)),
+                "target_t": int(target_t),
+                "tail_before": tail_before,
+                "tail_after": _seq_lens_tail(templated_seq_lens),
+                "seq_lens_len": len(templated_seq_lens),
+            },
+            step_id=getattr(forward_context, "split_inplace_debug_step_id",
+                            None),
+        )
     return templated_seq_lens
 
 
@@ -1002,7 +1055,8 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
             metadata = forward_context.attn_metadata[key]
             seq_lens = maybe_template_fia_seq_lens(
                 forward_context, metadata.seq_lens_list,
-                _get_fia_key_t(key_cache, block_size))
+                _get_fia_key_t(key_cache, block_size),
+                source=f"acl_graph_update:{key}")
             actual_seq_lengths_q = metadata.actual_seq_lengths_q
             metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
                 metadata)

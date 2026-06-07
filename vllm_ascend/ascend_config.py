@@ -364,6 +364,68 @@ class SplitBatchConfig:
             split_batch_config.get("enable_inplace_spec_decode", False))
         self.enable_inplace_mrope: bool = bool(
             split_batch_config.get("enable_inplace_mrope", False))
+        raw_inplace_split_planner_policy = split_batch_config.get(
+            "inplace_split_planner_policy",
+            split_batch_config.get("inplace_split_first_tokens_policy",
+                                   "largest_lower"))
+        self.inplace_split_planner_policy: str = str(
+            raw_inplace_split_planner_policy)
+        self.inplace_split_first_tokens_policy = (
+            self.inplace_split_planner_policy)
+        self.inplace_offset_match_policy: str = str(
+            split_batch_config.get("inplace_offset_match_policy", "exact"))
+        raw_inplace_offset_capture_sizes = split_batch_config.get(
+            "inplace_offset_capture_sizes", None)
+        if raw_inplace_offset_capture_sizes is not None:
+            self.inplace_offset_capture_sizes: Optional[list[int]] = sorted(
+                {int(s) for s in raw_inplace_offset_capture_sizes})
+        else:
+            self.inplace_offset_capture_sizes = None
+        self.inplace_offset_min_graph_tokens: int = int(
+            split_batch_config.get("inplace_offset_min_graph_tokens", 1))
+        raw_inplace_offset_max_padding_tokens = split_batch_config.get(
+            "inplace_offset_max_padding_tokens", None)
+        if raw_inplace_offset_max_padding_tokens is None:
+            self.inplace_offset_max_padding_tokens: Optional[int] = None
+        else:
+            self.inplace_offset_max_padding_tokens = int(
+                raw_inplace_offset_max_padding_tokens)
+        raw_inplace_offset_max_padding_ratio = split_batch_config.get(
+            "inplace_offset_max_padding_ratio", None)
+        if raw_inplace_offset_max_padding_ratio is None:
+            self.inplace_offset_max_padding_ratio: Optional[float] = None
+        else:
+            self.inplace_offset_max_padding_ratio = float(
+                raw_inplace_offset_max_padding_ratio)
+        raw_inplace_offset_max_graph_tokens_by_start = (
+            split_batch_config.get(
+                "inplace_offset_max_graph_tokens_by_start", None))
+        if raw_inplace_offset_max_graph_tokens_by_start is None:
+            self.inplace_offset_max_graph_tokens_by_start: Optional[
+                dict[int, int]] = None
+        else:
+            self.inplace_offset_max_graph_tokens_by_start = {
+                int(start): int(max_graph_tokens)
+                for start, max_graph_tokens in
+                raw_inplace_offset_max_graph_tokens_by_start.items()
+            }
+        raw_inplace_offset_allowed_graph_tokens_by_start = (
+            split_batch_config.get(
+                "inplace_offset_allowed_graph_tokens_by_start", None))
+        if raw_inplace_offset_allowed_graph_tokens_by_start is None:
+            self.inplace_offset_allowed_graph_tokens_by_start: Optional[
+                dict[int, list[int]]] = None
+        else:
+            self.inplace_offset_allowed_graph_tokens_by_start = {
+                int(start): sorted({int(size) for size in sizes})
+                for start, sizes in
+                raw_inplace_offset_allowed_graph_tokens_by_start.items()
+            }
+        self.inplace_offset_prefer_cached_graph: bool = bool(
+            split_batch_config.get("inplace_offset_prefer_cached_graph",
+                                   False))
+        self.inplace_offset_fallback_on_miss: bool = bool(
+            split_batch_config.get("inplace_offset_fallback_on_miss", False))
 
         valid_modes = ("parallel_buffer", "inplace_serial",
                        "inplace_parallel")
@@ -385,6 +447,55 @@ class SplitBatchConfig:
             raise ValueError(
                 "split_batch_config.inplace_max_remainder_tokens must be >= 1"
             )
+        valid_offset_match_policies = ("exact", "bucket")
+        if self.inplace_offset_match_policy not in valid_offset_match_policies:
+            raise ValueError(
+                "split_batch_config.inplace_offset_match_policy must be one "
+                f"of {valid_offset_match_policies}, got "
+                f"{self.inplace_offset_match_policy!r}")
+        valid_first_tokens_policies = ("largest_lower", "balanced")
+        if self.inplace_split_planner_policy not in valid_first_tokens_policies:
+            raise ValueError(
+                "split_batch_config.inplace_split_planner_policy must be "
+                f"one of {valid_first_tokens_policies}, got "
+                f"{self.inplace_split_planner_policy!r}")
+        if (self.inplace_offset_capture_sizes is not None
+                and any(size < 1
+                        for size in self.inplace_offset_capture_sizes)):
+            raise ValueError(
+                "split_batch_config.inplace_offset_capture_sizes must contain "
+                "positive integers")
+        if self.inplace_offset_min_graph_tokens < 1:
+            raise ValueError(
+                "split_batch_config.inplace_offset_min_graph_tokens must be "
+                ">= 1")
+        if (self.inplace_offset_max_padding_tokens is not None
+                and self.inplace_offset_max_padding_tokens < 0):
+            raise ValueError(
+                "split_batch_config.inplace_offset_max_padding_tokens must be "
+                ">= 0")
+        if (self.inplace_offset_max_padding_ratio is not None
+                and self.inplace_offset_max_padding_ratio < 1.0):
+            raise ValueError(
+                "split_batch_config.inplace_offset_max_padding_ratio must be "
+                ">= 1.0")
+        if self.inplace_offset_max_graph_tokens_by_start is not None:
+            if any(start < 0 or max_graph_tokens < 1 for start,
+                   max_graph_tokens in
+                   self.inplace_offset_max_graph_tokens_by_start.items()):
+                raise ValueError(
+                    "split_batch_config."
+                    "inplace_offset_max_graph_tokens_by_start must map "
+                    "non-negative starts to positive graph token limits")
+        if self.inplace_offset_allowed_graph_tokens_by_start is not None:
+            if any(start < 0 or not sizes or any(size < 1 for size in sizes)
+                   for start, sizes in
+                   self.inplace_offset_allowed_graph_tokens_by_start.items()):
+                raise ValueError(
+                    "split_batch_config."
+                    "inplace_offset_allowed_graph_tokens_by_start must map "
+                    "non-negative starts to non-empty positive graph token "
+                    "lists")
 
 
 _ASCEND_CONFIG: Optional[AscendConfig] = None
