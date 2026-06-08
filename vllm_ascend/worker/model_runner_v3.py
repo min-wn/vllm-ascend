@@ -21,6 +21,7 @@ import json
 import math
 import time
 import threading
+import traceback
 from collections import defaultdict
 from contextlib import contextmanager, nullcontext
 from copy import copy, deepcopy
@@ -33,6 +34,7 @@ import regex as re
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from torch.fx.node import map_arg
 from tqdm import tqdm  # type: ignore
 from typing_extensions import TypeAlias
 from vllm.attention.backends.abstract import AttentionBackend, AttentionType, AttentionMetadata
@@ -62,7 +64,7 @@ from vllm.sequence import IntermediateTensors
 from vllm.utils.import_utils import LazyLoader
 from vllm.utils.math_utils import cdiv
 from vllm.utils.mem_utils import DeviceMemoryProfiler
-from vllm.utils.torch_utils import get_dtype_size
+from vllm.utils.torch_utils import direct_register_custom_op, get_dtype_size
 from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadataBuilder
 from vllm.v1.attention.backends.utils import (AttentionCGSupport,
                                               CommonAttentionMetadata)
@@ -146,6 +148,7 @@ from vllm_ascend.worker.ubatch_utils import (INPLACE_SPLIT_DRY_RUN,
                                              SplitBatchSlice,
                                              SplitBatchSlices,
                                              create_inplace_split_batch_slices,
+                                             create_macro_inplace_split_batch_slices,
                                              inplace_split_first_graph_matches_attention_backend,
                                              select_inplace_attention_backend,
                                              split_batch_split, ubatch_split)
@@ -177,6 +180,119 @@ AttnMetadataDict: TypeAlias = dict[str, AttentionMetadata]
 # list when ubatching is enabled
 PerLayerAttnMetadata: TypeAlias = Union[list[AttnMetadataDict],
                                         AttnMetadataDict]
+
+
+_MACRO_ATTENTION_CONTEXTS: dict[str, list[Any]] = {}
+
+
+def _macro_attention_context(
+        macro_context_key: str,
+        split_idx: int,
+        layer_name: str) -> tuple[Any, Attention | MLAAttention, torch.Tensor]:
+    contexts = _MACRO_ATTENTION_CONTEXTS.get(str(macro_context_key))
+    if contexts is None:
+        raise RuntimeError(
+            "Missing torchair macro attention context for key "
+            f"{macro_context_key!r}")
+    split_idx = int(split_idx)
+    if split_idx < 0 or split_idx >= len(contexts):
+        raise RuntimeError(
+            "Invalid torchair macro attention split index "
+            f"{split_idx}; num_contexts={len(contexts)}")
+    forward_context = contexts[split_idx]
+    attn_metadata = forward_context.attn_metadata
+    if isinstance(attn_metadata, list):
+        if split_idx >= len(attn_metadata):
+            raise RuntimeError(
+                "Torchair macro attention metadata list too short: "
+                f"split_idx={split_idx}, len={len(attn_metadata)}")
+        attn_metadata = attn_metadata[split_idx]
+    if isinstance(attn_metadata, dict):
+        attn_metadata = attn_metadata[layer_name]
+    attn_layer: Attention | MLAAttention = (
+        forward_context.no_compile_layers[layer_name])
+    kv_cache = attn_layer.kv_cache[forward_context.virtual_engine]
+    return attn_metadata, attn_layer, kv_cache
+
+
+def _macro_unified_attention(
+    query: torch.Tensor,
+    key: torch.Tensor,
+    value: torch.Tensor,
+    macro_context_key: str,
+    split_idx: int,
+    layer_name: str,
+) -> torch.Tensor:
+    attn_metadata, attn_layer, kv_cache = _macro_attention_context(
+        macro_context_key, split_idx, layer_name)
+    return attn_layer.impl.forward(attn_layer, query, key, value, kv_cache,
+                                   attn_metadata)
+
+
+def _macro_unified_attention_fake(
+    query: torch.Tensor,
+    key: torch.Tensor,
+    value: torch.Tensor,
+    macro_context_key: str,
+    split_idx: int,
+    layer_name: str,
+) -> torch.Tensor:
+    del key, value, macro_context_key, split_idx, layer_name
+    return torch.empty_like(query).contiguous()
+
+
+def _macro_unified_attention_with_output(
+    query: torch.Tensor,
+    key: torch.Tensor,
+    value: torch.Tensor,
+    output: torch.Tensor,
+    macro_context_key: str,
+    split_idx: int,
+    layer_name: str,
+    output_scale: Optional[torch.Tensor] = None,
+    output_block_scale: Optional[torch.Tensor] = None,
+) -> None:
+    attn_metadata, attn_layer, kv_cache = _macro_attention_context(
+        macro_context_key, split_idx, layer_name)
+    attn_layer.impl.forward(
+        attn_layer,
+        query,
+        key,
+        value,
+        kv_cache,
+        attn_metadata,
+        output=output,
+        output_scale=output_scale,
+        output_block_scale=output_block_scale,
+    )
+
+
+def _macro_unified_attention_with_output_fake(
+    query: torch.Tensor,
+    key: torch.Tensor,
+    value: torch.Tensor,
+    output: torch.Tensor,
+    macro_context_key: str,
+    split_idx: int,
+    layer_name: str,
+    output_scale: Optional[torch.Tensor] = None,
+    output_block_scale: Optional[torch.Tensor] = None,
+) -> None:
+    del (query, key, value, output, macro_context_key, split_idx, layer_name,
+         output_scale, output_block_scale)
+
+
+direct_register_custom_op(
+    op_name="macro_unified_attention",
+    op_func=_macro_unified_attention,
+    fake_impl=_macro_unified_attention_fake,
+)
+direct_register_custom_op(
+    op_name="macro_unified_attention_with_output",
+    op_func=_macro_unified_attention_with_output,
+    mutates_args=["output", "output_block_scale"],
+    fake_impl=_macro_unified_attention_with_output_fake,
+)
 
 
 
@@ -251,6 +367,8 @@ def _write_perf_stats(stats: dict) -> None:
 # - set VLLM_ASCEND_SPLIT_LOCAL_CONTEXT_REBUILD=0 to restore legacy behavior
 _SPLIT_LOCAL_CONTEXT_REBUILD = os.environ.get(
     "VLLM_ASCEND_SPLIT_LOCAL_CONTEXT_REBUILD", "1") not in ("0", "false", "False")
+_MACRO_GRAPH_EAGER_PREFLIGHT = os.environ.get(
+    "VLLM_ASCEND_MACRO_GRAPH_EAGER_PREFLIGHT", "0") in ("1", "true", "True")
 
 
 def _append_split_metadata_debug(tag: str, payload: Any) -> None:
@@ -266,6 +384,814 @@ def _append_split_metadata_debug(tag: str, payload: Any) -> None:
             _SPLIT_METADATA_DEBUG_FILE,
             e,
         )
+
+
+class MissingMacroGraphError(RuntimeError):
+    """Raised when macro_graph_config requires a graph that was not captured."""
+
+
+class _PlannedMacroGraphEntry:
+    """A planned macro graph keyed by a split plan.
+
+    The backend executable is materialized from the first runtime hit so the
+    compiled callable can bind the real vLLM metadata tensor addresses.
+    Subsequent hits copy current metadata values into those static addresses.
+    """
+
+    def __init__(
+        self,
+        *,
+        key: tuple[Any, ...],
+        plan: InplaceSplitPlan,
+        inplace_attention_backend: str,
+    ) -> None:
+        self.key = key
+        self.plan = plan
+        self.inplace_attention_backend = inplace_attention_backend
+        self.compiled_callable: Any = None
+        self.module: Optional[nn.Module] = None
+        self.captured_metadata: Optional[list[AscendUbatchMetadata]] = None
+        self.compile_ms: float = 0.0
+        self.replay_count: int = 0
+        self.backend: str = ""
+
+    @property
+    def materialized(self) -> bool:
+        return self.compiled_callable is not None
+
+
+class _MacroNodeRef:
+
+    __slots__ = ("index", )
+
+    def __init__(self, index: int) -> None:
+        self.index = int(index)
+
+
+class _TorchairTaggedPiecewiseMacroModule(nn.Module):
+    """Static two-split piecewise schedule with torchair tagged events."""
+
+    def __init__(
+        self,
+        *,
+        runtime_calls: list[Any],
+        contexts: list[Any],
+        event_tag_prefix: str,
+        secondary_stream_tag: str,
+        validate_no_inner_aclgraph: bool,
+        tng: Any,
+    ) -> None:
+        super().__init__()
+        if len(runtime_calls) != 2 or len(contexts) != 2:
+            raise RuntimeError(
+                "torchair tagged macro graph currently requires exactly "
+                f"2 splits, got runtime_calls={len(runtime_calls)}, "
+                f"contexts={len(contexts)}")
+        handle = runtime_calls[0].handle
+        if runtime_calls[1].handle is not handle:
+            raise RuntimeError(
+                "Cannot build a macro graph from different piecewise handles")
+        self.runtime_calls = runtime_calls
+        self.contexts = contexts
+        self._attention_context_key = str(event_tag_prefix)
+        _MACRO_ATTENTION_CONTEXTS[self._attention_context_key] = self.contexts
+        self.handle = handle
+        self.split_gm = handle.split_gm
+        self._nodes = tuple(handle.split_gm.graph.nodes)
+        self._node_to_idx = {
+            node: idx
+            for idx, node in enumerate(self._nodes)
+        }
+        self._pieces = {
+            item.submod_name: item
+            for item in handle.piecewise_graphs
+        }
+        self._initial_envs = (
+            self._bind_placeholders(runtime_calls[0]),
+            self._bind_placeholders(runtime_calls[1]),
+        )
+        self._node_specs = tuple(self._build_node_specs())
+        self._piece_callables = self._build_piece_callables()
+        self.secondary_stream_tag = str(secondary_stream_tag)
+        self._main_done_tag = f"{event_tag_prefix}_main_done"
+        self._secondary_done_tag = f"{event_tag_prefix}_secondary_done"
+        __import__("torchair.scope._scope")
+        # Keep event objects alive; forward uses torch.ops.air by tag so FX
+        # tracing does not need to reason about torch.npu.Event objects.
+        self._main_done_event = tng.ops.npu_create_tagged_event(
+            tag=self._main_done_tag)
+        self._secondary_done_event = tng.ops.npu_create_tagged_event(
+            tag=self._secondary_done_tag)
+        if validate_no_inner_aclgraph:
+            self._validate_no_inner_aclgraph()
+
+    def _validate_no_inner_aclgraph(self) -> None:
+        offenders: list[str] = []
+        for item in self.handle.piecewise_graphs:
+            name = str(getattr(item, "submod_name", ""))
+            if not name:
+                continue
+            try:
+                module = self._fetch_attr(name)
+            except Exception:
+                continue
+            if isinstance(module, ACLGraphWrapper):
+                unwrap = getattr(module, "unwrap", None)
+                if not callable(unwrap):
+                    offenders.append(name)
+        if offenders:
+            raise RuntimeError(
+                "macro_graph_config.validate_no_inner_aclgraph=True "
+                "found ACLGraphWrapper pieces that cannot be unwrapped: "
+                f"{offenders[:8]}")
+
+    def _bind_placeholders(self, runtime_call: Any) -> list[Any]:
+        env: list[Any] = [None] * len(self._nodes)
+        args_iter = iter(runtime_call.args)
+        kwargs = runtime_call.kwargs
+        for idx, node in enumerate(self._nodes):
+            if node.op != "placeholder":
+                continue
+            target = str(node.target)
+            if target.startswith("**"):
+                env[idx] = kwargs
+                continue
+            if target.startswith("*"):
+                env[idx] = tuple(args_iter)
+                continue
+            try:
+                env[idx] = next(args_iter)
+                continue
+            except StopIteration:
+                pass
+            if target in kwargs:
+                env[idx] = kwargs[target]
+                continue
+            if node.args:
+                env[idx] = node.args[0]
+                continue
+            raise RuntimeError(
+                "Cannot bind macro graph placeholder "
+                f"{target!r}; captured args={len(runtime_call.args)}, "
+                f"kwargs={sorted(kwargs)}")
+        return env
+
+    def _resolve_arg(self, arg: Any, env: list[Any]) -> Any:
+        return map_arg(arg, lambda node: env[self._node_to_idx[node]])
+
+    def _make_arg_spec(self, arg: Any) -> Any:
+        return map_arg(arg,
+                       lambda node: _MacroNodeRef(self._node_to_idx[node]))
+
+    def _resolve_spec(self, spec: Any, env: list[Any]) -> Any:
+        if isinstance(spec, _MacroNodeRef):
+            return env[spec.index]
+        if isinstance(spec, tuple):
+            return tuple(self._resolve_spec(item, env) for item in spec)
+        if isinstance(spec, list):
+            return [self._resolve_spec(item, env) for item in spec]
+        if isinstance(spec, dict):
+            return {
+                key: self._resolve_spec(value, env)
+                for key, value in spec.items()
+            }
+        return spec
+
+    def _build_node_specs(self) -> list[tuple[str, int, Any, Any, Any]]:
+        specs: list[tuple[str, int, Any, Any, Any]] = []
+        for idx, node in enumerate(self._nodes):
+            if node.op == "placeholder":
+                specs.append(("placeholder", idx, None, None, None))
+                continue
+            if node.op == "output":
+                specs.append(
+                    ("output", idx, None, self._make_arg_spec(node.args[0]),
+                     None))
+                continue
+            args_spec = self._make_arg_spec(node.args)
+            kwargs_spec = self._make_arg_spec(node.kwargs)
+            if node.op == "call_module" and str(node.target) in self._pieces:
+                piece = self._pieces[str(node.target)]
+                kind = ("parallel_piece" if bool(
+                    getattr(piece, "is_splitting_graph", False)) else
+                        "serial_piece")
+                specs.append(
+                    (kind, idx, str(node.target), args_spec, kwargs_spec))
+                continue
+            if node.op == "get_attr":
+                specs.append(("get_attr", idx, str(node.target), None, None))
+                continue
+            if node.op == "call_function":
+                specs.append(
+                    ("call_function", idx, node.target, args_spec,
+                     kwargs_spec))
+                continue
+            if node.op == "call_method":
+                specs.append(
+                    ("call_method", idx, str(node.target), args_spec,
+                     kwargs_spec))
+                continue
+            if node.op == "call_module":
+                specs.append(
+                    ("call_module", idx, str(node.target), args_spec,
+                     kwargs_spec))
+                continue
+            raise RuntimeError(
+                "Unsupported macro graph FX node while building specs: "
+                f"op={node.op!r}, target={node.target!r}, node={node!r}")
+        return specs
+
+    def _fetch_attr(self, target: str) -> Any:
+        target_atoms = target.split(".")
+        attr_itr = self.split_gm
+        for atom in target_atoms:
+            attr_itr = getattr(attr_itr, atom)
+        return attr_itr
+
+    def _eval_node(self, node: Any, env: list[Any]) -> Any:
+        args = self._resolve_arg(node.args, env)
+        kwargs = self._resolve_arg(node.kwargs, env)
+        if node.op == "get_attr":
+            return self._fetch_attr(str(node.target))
+        if node.op == "call_function":
+            return node.target(*args, **kwargs)
+        if node.op == "call_method":
+            self_obj, *args_tail = args
+            return getattr(self_obj, str(node.target))(*args_tail, **kwargs)
+        if node.op == "call_module":
+            module = self._fetch_attr(str(node.target))
+            return module(*args, **kwargs)
+        raise RuntimeError(
+            "Unsupported macro graph FX node: "
+            f"op={node.op!r}, target={node.target!r}, node={node!r}")
+
+    def _call_piece_by_target(self, target: str, args_spec: Any,
+                              kwargs_spec: Any, env: list[Any],
+                              split_idx: int) -> Any:
+        args = self._resolve_spec(args_spec, env)
+        kwargs = self._resolve_spec(kwargs_spec, env)
+        module = self._piece_callables.get((str(target), int(split_idx)))
+        if module is None:
+            module = self._fetch_attr(str(target))
+            unwrap = getattr(module, "unwrap", None)
+            if callable(unwrap):
+                module = unwrap()
+        return module(*args, **kwargs)
+
+    def _op_target_name(self, target: Any) -> str:
+        return str(target)
+
+    def _is_vllm_op_target(self, target: Any, op_name: str) -> bool:
+        try:
+            op = getattr(torch.ops.vllm, op_name)
+            if target is op or target is op.default:
+                return True
+        except Exception:
+            pass
+        schema = getattr(target, "_schema", None)
+        schema_name = getattr(schema, "name", None)
+        if schema_name == f"vllm::{op_name}":
+            return True
+        target_name = self._op_target_name(target)
+        return target_name in (f"vllm.{op_name}",
+                               f"vllm.{op_name}.default")
+
+    def _inject_macro_attention_args(
+        self,
+        node: Any,
+        *,
+        split_idx: int,
+        layer_arg_index: int,
+    ) -> None:
+        args = list(node.args)
+        kwargs = dict(node.kwargs)
+        if len(args) > layer_arg_index:
+            layer_name = args[layer_arg_index]
+            args[layer_arg_index:layer_arg_index + 1] = [
+                self._attention_context_key,
+                int(split_idx),
+                layer_name,
+            ]
+            node.args = tuple(args)
+            node.kwargs = kwargs
+            return
+
+        if "layer_name" not in kwargs:
+            raise RuntimeError(
+                "Cannot rewrite macro attention node without layer_name: "
+                f"node={node!r}")
+        kwargs["macro_context_key"] = self._attention_context_key
+        kwargs["split_idx"] = int(split_idx)
+        node.args = tuple(args)
+        node.kwargs = kwargs
+
+    def _rewrite_piece_graph_attention_ops(self, graph_module: Any,
+                                           split_idx: int) -> None:
+        graph = getattr(graph_module, "graph", None)
+        if graph is None:
+            return
+        rewritten = 0
+        for node in list(graph.nodes):
+            if node.op != "call_function":
+                continue
+            if self._is_vllm_op_target(node.target, "unified_attention"):
+                node.target = torch.ops.vllm.macro_unified_attention.default
+                self._inject_macro_attention_args(
+                    node,
+                    split_idx=split_idx,
+                    layer_arg_index=3,
+                )
+                rewritten += 1
+                continue
+            if self._is_vllm_op_target(node.target,
+                                       "unified_attention_with_output"):
+                node.target = (
+                    torch.ops.vllm.macro_unified_attention_with_output.default)
+                self._inject_macro_attention_args(
+                    node,
+                    split_idx=split_idx,
+                    layer_arg_index=4,
+                )
+                rewritten += 1
+        if rewritten:
+            graph.lint()
+            graph_module.recompile()
+
+    def _resolve_piece_callable(self, target: str, args: Any,
+                                split_idx: int) -> Any:
+        module = self._fetch_attr(str(target))
+        unwrap = getattr(module, "unwrap", None)
+        if callable(unwrap):
+            module = unwrap()
+        raw_graph = getattr(module, "graph", None)
+        sym_shape_indices = getattr(module, "sym_shape_indices", None)
+        find_range = getattr(module, "_find_range_for_shape", None)
+        if callable(raw_graph):
+            if sym_shape_indices:
+                runtime_shape = args[int(sym_shape_indices[0])]
+                if callable(find_range) and find_range(runtime_shape) is None:
+                    raise RuntimeError(
+                        "Cannot resolve piecewise backend range for macro "
+                        "graph "
+                        f"target={target!r}, runtime_shape={runtime_shape!r}")
+            piece_graph = deepcopy(raw_graph)
+            self._rewrite_piece_graph_attention_ops(piece_graph, split_idx)
+            self._fold_piece_graph_python_constants(piece_graph)
+            return piece_graph
+        if hasattr(module, "graph") and callable(module):
+            piece_graph = deepcopy(module)
+            self._rewrite_piece_graph_attention_ops(piece_graph, split_idx)
+            self._fold_piece_graph_python_constants(piece_graph)
+            return piece_graph
+        return module
+
+    def _fold_piece_graph_python_constants(self, graph_module: Any) -> None:
+        if getattr(graph_module, "_vllm_ascend_macro_constants_folded", False):
+            return
+        graph = getattr(graph_module, "graph", None)
+        if graph is None:
+            return
+
+        def _contains_fx_node(value: Any) -> bool:
+            if isinstance(value, torch.fx.Node):
+                return True
+            if isinstance(value, (list, tuple)):
+                return any(_contains_fx_node(item) for item in value)
+            if isinstance(value, dict):
+                return any(_contains_fx_node(item) for item in value.values())
+            return False
+
+        def _replace_arg(value: Any, old_node: Any, replacement: Any) -> Any:
+            return map_arg(value,
+                           lambda node: replacement
+                           if node is old_node else node)
+
+        folded = 0
+        for node in list(graph.nodes):
+
+            def _replace_device_constants(value: Any) -> Any:
+                nonlocal folded
+                if isinstance(value, torch.device):
+                    folded += 1
+                    return str(value)
+                if isinstance(value, tuple):
+                    return tuple(_replace_device_constants(item)
+                                 for item in value)
+                if isinstance(value, list):
+                    return [_replace_device_constants(item) for item in value]
+                if isinstance(value, dict):
+                    return {
+                        key: _replace_device_constants(item)
+                        for key, item in value.items()
+                    }
+                return value
+
+            node.args = _replace_device_constants(node.args)
+            node.kwargs = _replace_device_constants(node.kwargs)
+
+        for node in list(graph.nodes):
+            if (node.op != "call_function"
+                    or not (node.target is torch.device
+                            or node.target == torch.device)):
+                continue
+            if _contains_fx_node(node.args) or _contains_fx_node(node.kwargs):
+                replacement = f"npu:{torch.npu.current_device()}"
+            else:
+                replacement = str(node.target(*node.args, **node.kwargs))
+            for user in list(node.users):
+                user.args = _replace_arg(user.args, node, replacement)
+                user.kwargs = _replace_arg(user.kwargs, node, replacement)
+            graph.erase_node(node)
+            folded += 1
+        if folded:
+            graph.lint()
+            graph_module.recompile()
+        setattr(graph_module, "_vllm_ascend_macro_constants_folded", True)
+
+    def _build_piece_callables(self) -> dict[tuple[str, int], Any]:
+        callables: dict[tuple[str, int], Any] = {}
+        for kind, _node_idx, target, args_spec, _kwargs_spec in self._node_specs:
+            if kind not in ("serial_piece", "parallel_piece"):
+                continue
+            target = str(target)
+            for split_idx, env in enumerate(self._initial_envs):
+                key = (target, split_idx)
+                if key in callables:
+                    continue
+                args = self._resolve_spec(args_spec, env)
+                callables[key] = self._resolve_piece_callable(
+                    target, args, split_idx)
+        return callables
+
+    def _eval_spec(self, kind: str, target: Any, args_spec: Any,
+                   kwargs_spec: Any, env: list[Any]) -> Any:
+        if kind == "get_attr":
+            return self._fetch_attr(str(target))
+        args = self._resolve_spec(args_spec, env)
+        kwargs = self._resolve_spec(kwargs_spec, env)
+        if kind == "call_function":
+            return target(*args, **kwargs)
+        if kind == "call_method":
+            self_obj, *args_tail = args
+            return getattr(self_obj, str(target))(*args_tail, **kwargs)
+        if kind == "call_module":
+            module = self._fetch_attr(str(target))
+            return module(*args, **kwargs)
+        raise RuntimeError(f"Unsupported macro graph spec kind={kind!r}")
+
+    def _record_main_done(self) -> None:
+        torch.ops.air.tagged_event_record(self._main_done_tag)
+
+    def _wait_main_done_on_secondary(self) -> None:
+        torch.ops.air.tagged_event_wait(self._main_done_tag)
+
+    def _record_secondary_done(self) -> None:
+        torch.ops.air.tagged_event_record(self._secondary_done_tag)
+
+    def _wait_secondary_done_on_main(self) -> None:
+        torch.ops.air.tagged_event_wait(self._secondary_done_tag)
+
+    def _enter_secondary_stream(self) -> None:
+        torch.ops.air.scope_enter(
+            ["_user_stream_label", "_user_stream_priority"],
+            [self.secondary_stream_tag, "0"],
+        )
+
+    def _exit_secondary_stream(self) -> None:
+        torch.ops.air.scope_exit()
+
+    def _record_secondary_stream_tree(self, value: Any) -> Any:
+        if isinstance(value, torch.Tensor):
+            torch.ops.air.record_tagged_stream_(value,
+                                                self.secondary_stream_tag)
+        elif isinstance(value, IntermediateTensors):
+            for tensor in value.tensors.values():
+                self._record_secondary_stream_tree(tensor)
+        elif isinstance(value, dict):
+            for child in value.values():
+                self._record_secondary_stream_tree(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value:
+                self._record_secondary_stream_tree(child)
+        return value
+
+    def _run_serial_piece(
+        self,
+        target: str,
+        args_spec: Any,
+        kwargs_spec: Any,
+        env0: list[Any],
+        env1: list[Any],
+    ) -> tuple[Any, Any]:
+        with override_forward_context(self.contexts[0]):
+            out0 = self._call_piece_by_target(target, args_spec, kwargs_spec,
+                                              env0, 0)
+        self._record_main_done()
+
+        self._enter_secondary_stream()
+        try:
+            self._wait_main_done_on_secondary()
+            with override_forward_context(self.contexts[1]):
+                out1 = self._call_piece_by_target(target, args_spec,
+                                                  kwargs_spec, env1, 1)
+            self._record_secondary_stream_tree(out1)
+            self._record_secondary_done()
+        finally:
+            self._exit_secondary_stream()
+        self._wait_secondary_done_on_main()
+        return out0, out1
+
+    def _run_parallel_piece(
+        self,
+        target: str,
+        args_spec: Any,
+        kwargs_spec: Any,
+        env0: list[Any],
+        env1: list[Any],
+    ) -> tuple[Any, Any]:
+        with override_forward_context(self.contexts[0]):
+            out0 = self._call_piece_by_target(target, args_spec, kwargs_spec,
+                                              env0, 0)
+        self._record_main_done()
+
+        self._enter_secondary_stream()
+        try:
+            with override_forward_context(self.contexts[1]):
+                out1 = self._call_piece_by_target(target, args_spec,
+                                                  kwargs_spec, env1, 1)
+            self._record_secondary_stream_tree(out1)
+            self._record_secondary_done()
+            self._wait_main_done_on_secondary()
+        finally:
+            self._exit_secondary_stream()
+        self._wait_secondary_done_on_main()
+        return out0, out1
+
+    def forward(self) -> Any:
+        env0 = list(self._initial_envs[0])
+        env1 = list(self._initial_envs[1])
+        for kind, node_idx, target, args_spec, kwargs_spec in self._node_specs:
+            if kind == "placeholder":
+                continue
+            if kind == "output":
+                return (
+                    self._resolve_spec(args_spec, env0),
+                    self._resolve_spec(args_spec, env1),
+                )
+            if kind == "parallel_piece":
+                out0, out1 = self._run_parallel_piece(
+                    target, args_spec, kwargs_spec, env0, env1)
+                env0[node_idx] = out0
+                env1[node_idx] = out1
+                continue
+            if kind == "serial_piece":
+                out0, out1 = self._run_serial_piece(
+                    target, args_spec, kwargs_spec, env0, env1)
+                env0[node_idx] = out0
+                env1[node_idx] = out1
+                continue
+
+            env0[node_idx] = self._eval_spec(kind, target, args_spec,
+                                             kwargs_spec, env0)
+            self._enter_secondary_stream()
+            try:
+                env1[node_idx] = self._eval_spec(kind, target, args_spec,
+                                                 kwargs_spec, env1)
+                self._record_secondary_stream_tree(env1[node_idx])
+                self._record_secondary_done()
+            finally:
+                self._exit_secondary_stream()
+            self._wait_secondary_done_on_main()
+
+        raise RuntimeError("Macro graph piecewise FX graph did not return")
+
+
+def _record_stream_tree_for_npugraph_ex(value: Any, stream: Any) -> None:
+    if isinstance(value, torch.Tensor):
+        try:
+            if value.device.type == "npu":
+                value.record_stream(stream)
+        except Exception:
+            return
+        return
+    if isinstance(value, IntermediateTensors):
+        for tensor in value.tensors.values():
+            _record_stream_tree_for_npugraph_ex(tensor, stream)
+        return
+    if isinstance(value, dict):
+        for child in value.values():
+            _record_stream_tree_for_npugraph_ex(child, stream)
+        return
+    if isinstance(value, (list, tuple)):
+        for child in value:
+            _record_stream_tree_for_npugraph_ex(child, stream)
+
+
+class _NpuGraphExPiecewiseMacroModule(_TorchairTaggedPiecewiseMacroModule):
+    """Static two-split piecewise schedule for backend='npugraph_ex'."""
+
+    def __init__(
+        self,
+        *,
+        runtime_calls: list[Any],
+        contexts: list[Any],
+        context_key: str,
+        validate_no_inner_aclgraph: bool,
+    ) -> None:
+        nn.Module.__init__(self)
+        if len(runtime_calls) != 2 or len(contexts) != 2:
+            raise RuntimeError(
+                "npugraph_ex macro graph currently requires exactly "
+                f"2 splits, got runtime_calls={len(runtime_calls)}, "
+                f"contexts={len(contexts)}")
+        handle = runtime_calls[0].handle
+        if runtime_calls[1].handle is not handle:
+            raise RuntimeError(
+                "Cannot build a macro graph from different piecewise handles")
+        self.runtime_calls = runtime_calls
+        self.contexts = contexts
+        self._attention_context_key = str(context_key)
+        _MACRO_ATTENTION_CONTEXTS[self._attention_context_key] = self.contexts
+        self.handle = handle
+        self.split_gm = handle.split_gm
+        self._nodes = tuple(handle.split_gm.graph.nodes)
+        self._node_to_idx = {
+            node: idx
+            for idx, node in enumerate(self._nodes)
+        }
+        self._pieces = {
+            item.submod_name: item
+            for item in handle.piecewise_graphs
+        }
+        self._initial_envs = (
+            self._bind_placeholders(runtime_calls[0]),
+            self._bind_placeholders(runtime_calls[1]),
+        )
+        self._node_specs = tuple(self._build_node_specs())
+        self._piece_callables = self._build_piece_callables()
+        if validate_no_inner_aclgraph:
+            self._validate_no_inner_aclgraph()
+
+    def _run_serial_piece(
+        self,
+        target: str,
+        args_spec: Any,
+        kwargs_spec: Any,
+        env0: list[Any],
+        env1: list[Any],
+    ) -> tuple[Any, Any]:
+        with override_forward_context(self.contexts[0]):
+            out0 = self._call_piece_by_target(target, args_spec, kwargs_spec,
+                                              env0, 0)
+        with override_forward_context(self.contexts[1]):
+            out1 = self._call_piece_by_target(target, args_spec, kwargs_spec,
+                                              env1, 1)
+        return out0, out1
+
+    def _run_parallel_piece(
+        self,
+        target: str,
+        args_spec: Any,
+        kwargs_spec: Any,
+        env0: list[Any],
+        env1: list[Any],
+    ) -> tuple[Any, Any]:
+        secondary = torch.npu.Stream()
+        fork = torch.npu.Event()
+        join = torch.npu.Event()
+        fork.record()
+
+        with torch.npu.stream(secondary):
+            fork.wait(secondary)
+            args1 = self._resolve_spec(args_spec, env1)
+            kwargs1 = self._resolve_spec(kwargs_spec, env1)
+            _record_stream_tree_for_npugraph_ex((args1, kwargs1), secondary)
+            with override_forward_context(self.contexts[1]):
+                out1 = self._call_piece_by_target(target, args_spec,
+                                                  kwargs_spec, env1, 1)
+            _record_stream_tree_for_npugraph_ex(out1, secondary)
+            join.record()
+
+        with override_forward_context(self.contexts[0]):
+            out0 = self._call_piece_by_target(target, args_spec, kwargs_spec,
+                                              env0, 0)
+        join.wait(torch.npu.current_stream())
+        return out0, out1
+
+    def forward(self) -> Any:
+        env0 = list(self._initial_envs[0])
+        env1 = list(self._initial_envs[1])
+        for kind, node_idx, target, args_spec, kwargs_spec in self._node_specs:
+            if kind == "placeholder":
+                continue
+            if kind == "output":
+                return (
+                    self._resolve_spec(args_spec, env0),
+                    self._resolve_spec(args_spec, env1),
+                )
+            if kind == "parallel_piece":
+                out0, out1 = self._run_parallel_piece(
+                    target, args_spec, kwargs_spec, env0, env1)
+                env0[node_idx] = out0
+                env1[node_idx] = out1
+                continue
+            if kind == "serial_piece":
+                out0, out1 = self._run_serial_piece(
+                    target, args_spec, kwargs_spec, env0, env1)
+                env0[node_idx] = out0
+                env1[node_idx] = out1
+                continue
+
+            env0[node_idx] = self._eval_spec(kind, target, args_spec,
+                                             kwargs_spec, env0)
+            env1[node_idx] = self._eval_spec(kind, target, args_spec,
+                                             kwargs_spec, env1)
+
+        raise RuntimeError("Macro graph piecewise FX graph did not return")
+
+
+def _copy_tensor_values_for_macro_graph(dst: Any,
+                                        src: Any,
+                                        *,
+                                        max_depth: int = 12) -> int:
+    """Copy tensors from src into dst, preserving dst object identities."""
+
+    copied = 0
+    visited: set[tuple[int, int]] = set()
+
+    def _copy(dst_item: Any, src_item: Any, depth: int) -> None:
+        nonlocal copied
+        if depth > max_depth or dst_item is None or src_item is None:
+            return
+        pair = (id(dst_item), id(src_item))
+        if pair in visited:
+            return
+        visited.add(pair)
+
+        if isinstance(dst_item, torch.Tensor) and isinstance(
+                src_item, torch.Tensor):
+            if tuple(dst_item.shape) != tuple(src_item.shape):
+                return
+            if dst_item.data_ptr() != src_item.data_ptr():
+                dst_item.copy_(src_item, non_blocking=True)
+                copied += 1
+            return
+
+        if isinstance(dst_item, IntermediateTensors) and isinstance(
+                src_item, IntermediateTensors):
+            for name, dst_tensor in dst_item.tensors.items():
+                if name in src_item.tensors:
+                    _copy(dst_tensor, src_item.tensors[name], depth + 1)
+            return
+
+        if isinstance(dst_item, dict) and isinstance(src_item, dict):
+            for key, dst_child in dst_item.items():
+                if key in src_item:
+                    _copy(dst_child, src_item[key], depth + 1)
+            return
+
+        if isinstance(dst_item, (list, tuple)) and isinstance(
+                src_item, (list, tuple)):
+            for dst_child, src_child in zip(dst_item, src_item):
+                _copy(dst_child, src_child, depth + 1)
+            return
+
+        dst_attrs = getattr(dst_item, "__dict__", None)
+        src_attrs = getattr(src_item, "__dict__", None)
+        if isinstance(dst_attrs, dict) and isinstance(src_attrs, dict):
+            for name, dst_child in dst_attrs.items():
+                if name.startswith("__") or name not in src_attrs:
+                    continue
+                _copy(dst_child, src_attrs[name], depth + 1)
+
+    _copy(dst, src, 0)
+    return copied
+
+
+def _require_torchair_tagged_backend() -> tuple[Any, Any]:
+    try:
+        import torchair as tng
+        from torchair.configs.compiler_config import CompilerConfig
+    except Exception as exc:
+        raise RuntimeError(
+            "macro_graph_config.enabled=True requires torchair tagged-event "
+            "support. Import torch_npu before torchair and ensure torchair is "
+            "installed in the runtime environment.") from exc
+    return tng, CompilerConfig
+
+
+def _require_npugraph_ex_backend() -> None:
+    try:
+        backends = set(torch._dynamo.list_backends())
+    except Exception as exc:
+        raise RuntimeError(
+            "macro_graph_config.backend='npugraph_ex' requires "
+            "torch._dynamo.list_backends() to be available.") from exc
+    if "npugraph_ex" not in backends:
+        raise RuntimeError(
+            "macro_graph_config.backend='npugraph_ex' requires torch-npu "
+            "with a registered 'npugraph_ex' torch.compile backend. "
+            f"Available torch.compile backends: {sorted(backends)}")
 
 
 def _clone_attn_metadata_block_tables(attn_metadata: Any) -> Any:
@@ -789,6 +1715,7 @@ class NPUModelRunner(GPUModelRunner):
 
         self.stream_main = torch.npu.current_stream()
         self.stream_parallel = torch.npu.Stream(device=self.device)
+        self._macro_graph_registry: dict[tuple[Any, ...], Any] = {}
 
         # Performance measurement accumulators.
         # _perf_accum holds running totals across all decode steps so that
@@ -1110,6 +2037,11 @@ class NPUModelRunner(GPUModelRunner):
         split_enable_parallel_streams = bool(
             split_cfg is not None
             and getattr(split_cfg, "enable_parallel_streams", False))
+        macro_graph_cfg = (getattr(split_cfg, "macro_graph_config", None)
+                           if split_cfg is not None else None)
+        macro_graph_enabled = bool(
+            macro_graph_cfg is not None
+            and getattr(macro_graph_cfg, "enabled", False))
         inplace_offset_capture_sizes = None
         if split_cfg is not None:
             inplace_offset_capture_sizes = getattr(
@@ -1227,6 +2159,13 @@ class NPUModelRunner(GPUModelRunner):
                             split_cfg,
                             "inplace_offset_allowed_graph_tokens_by_start",
                             None) if split_cfg is not None else None),
+                    "macro_graph_enabled": macro_graph_enabled,
+                    "macro_graph_plan_source": (
+                        getattr(macro_graph_cfg, "plan_source", None)
+                        if macro_graph_cfg is not None else None),
+                    "macro_graph_miss_policy": (
+                        getattr(macro_graph_cfg, "miss_policy", None)
+                        if macro_graph_cfg is not None else None),
                 },
                 step_id=self._split_inplace_debug_step_id,
             )
@@ -1282,42 +2221,52 @@ class NPUModelRunner(GPUModelRunner):
                     reason = "no_split_inplace_below_64"
 
                 if reason is None:
-                    inplace_split_plan, reason = (
-                        create_inplace_split_batch_slices(
-                            num_scheduled_tokens,
-                            total_num_scheduled_tokens,
-                            self.uniform_decode_query_len,
-                            self.compilation_config.cudagraph_capture_sizes
-                            or [],
-                            getattr(split_cfg, "inplace_max_remainder_tokens",
-                                    None),
-                            offset_match_policy=getattr(
-                                split_cfg, "inplace_offset_match_policy",
-                                "exact"),
-                            offset_capture_sizes=inplace_offset_capture_sizes,
-                            offset_min_graph_tokens=getattr(
-                                split_cfg,
-                                "inplace_offset_min_graph_tokens", 1),
-                            offset_max_padding_tokens=getattr(
-                                split_cfg,
-                                "inplace_offset_max_padding_tokens", None),
-                            offset_max_padding_ratio=getattr(
-                                split_cfg,
-                                "inplace_offset_max_padding_ratio", None),
-                            offset_max_graph_tokens_by_start=getattr(
-                                split_cfg,
-                                "inplace_offset_max_graph_tokens_by_start",
-                                None),
-                            offset_allowed_graph_tokens_by_start=getattr(
-                                split_cfg,
-                                "inplace_offset_allowed_graph_tokens_by_start",
-                                None),
-                            first_tokens_policy=getattr(
-                                split_cfg, "inplace_split_planner_policy",
+                    if macro_graph_enabled:
+                        inplace_split_plan, reason = (
+                            create_macro_inplace_split_batch_slices(
+                                num_scheduled_tokens,
+                                total_num_scheduled_tokens,
+                                self.uniform_decode_query_len,
+                                macro_graph_cfg,
+                            ))
+                    else:
+                        inplace_split_plan, reason = (
+                            create_inplace_split_batch_slices(
+                                num_scheduled_tokens,
+                                total_num_scheduled_tokens,
+                                self.uniform_decode_query_len,
+                                self.compilation_config.
+                                cudagraph_capture_sizes or [],
                                 getattr(split_cfg,
+                                        "inplace_max_remainder_tokens", None),
+                                offset_match_policy=getattr(
+                                    split_cfg, "inplace_offset_match_policy",
+                                    "exact"),
+                                offset_capture_sizes=inplace_offset_capture_sizes,
+                                offset_min_graph_tokens=getattr(
+                                    split_cfg,
+                                    "inplace_offset_min_graph_tokens", 1),
+                                offset_max_padding_tokens=getattr(
+                                    split_cfg,
+                                    "inplace_offset_max_padding_tokens", None),
+                                offset_max_padding_ratio=getattr(
+                                    split_cfg,
+                                    "inplace_offset_max_padding_ratio", None),
+                                offset_max_graph_tokens_by_start=getattr(
+                                    split_cfg,
+                                    "inplace_offset_max_graph_tokens_by_start",
+                                    None),
+                                offset_allowed_graph_tokens_by_start=getattr(
+                                    split_cfg,
+                                    "inplace_offset_allowed_graph_tokens_by_start",
+                                    None),
+                                first_tokens_policy=getattr(
+                                    split_cfg, "inplace_split_planner_policy",
+                                    getattr(
+                                        split_cfg,
                                         "inplace_split_first_tokens_policy",
                                         "largest_lower")),
-                        ))
+                            ))
                     if (inplace_split_plan is not None and
                             not inplace_split_first_graph_matches_attention_backend(
                                 inplace_split_plan,
@@ -1344,6 +2293,16 @@ class NPUModelRunner(GPUModelRunner):
                     inplace_split_plan.debug_payload())
                 split_planner_payload[
                     "inplace_attention_backend"] = inplace_attention_backend
+                if macro_graph_enabled:
+                    split_planner_payload["macro_graph"] = {
+                        "enabled": True,
+                        "schedule": getattr(macro_graph_cfg, "schedule",
+                                            None),
+                        "plan_source": getattr(macro_graph_cfg,
+                                               "plan_source", None),
+                        "miss_policy": getattr(macro_graph_cfg,
+                                               "miss_policy", None),
+                    }
                 split_planner_payload["target_batch_descriptors"] = [{
                     "idx": idx,
                     "actual_num_tokens": split_slice.num_tokens,
@@ -4355,13 +5314,15 @@ class NPUModelRunner(GPUModelRunner):
             for slice_idx, metadata in enumerate(ubatch_metadata):
                 target_stream = (self.stream_parallel if slice_idx > 0
                                  else self.stream_main)
-                runtime_calls.append(
-                    capture_piecewise_model_call(
-                        model=self.model,
-                        metadata=metadata,
-                        model_kwargs=model_kwargs,
-                        stream=target_stream,
-                    ))
+                with self._bind_inplace_parallel_rope_capture_slot(
+                        metadata.context, parallel_streams=(slice_idx > 0)):
+                    runtime_calls.append(
+                        capture_piecewise_model_call(
+                            model=self.model,
+                            metadata=metadata,
+                            model_kwargs=model_kwargs,
+                            stream=target_stream,
+                        ))
 
             handle = runtime_calls[0].handle
             if runtime_calls[1].handle is not handle:
@@ -4491,6 +5452,362 @@ class NPUModelRunner(GPUModelRunner):
             self._t_replay_end = time.perf_counter()
 
 
+    def _macro_graph_config(self) -> Any:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        if split_cfg is None:
+            return None
+        return getattr(split_cfg, "macro_graph_config", None)
+
+    def _macro_graph_enabled(self) -> bool:
+        macro_graph_cfg = self._macro_graph_config()
+        return bool(macro_graph_cfg is not None
+                    and getattr(macro_graph_cfg, "enabled", False))
+
+    def _macro_graph_key_from_split_slices(
+            self,
+            split_batch_slices: SplitBatchSlices,
+            inplace_attention_backend: str,
+    ) -> tuple[Any, ...]:
+        split_actual_tokens = tuple(
+            int(split_slice.num_tokens) for split_slice in split_batch_slices)
+        split_graph_tokens = tuple(
+            int(split_slice.graph_num_tokens)
+            for split_slice in split_batch_slices)
+        split_start_tokens = tuple(
+            int(split_slice.start_num_tokens)
+            for split_slice in split_batch_slices)
+        macro_graph_cfg = self._macro_graph_config()
+        return (
+            sum(split_actual_tokens),
+            True,
+            split_actual_tokens,
+            split_graph_tokens,
+            split_start_tokens,
+            getattr(macro_graph_cfg, "schedule", ""),
+            str(inplace_attention_backend),
+            str(self.dtype),
+            int(self.parallel_config.tensor_parallel_size),
+            str(getattr(self.model_config, "model", "")),
+        )
+
+    def _macro_graph_capture_inplace_plans(
+            self, macro_graph_cfg: Any) -> list[InplaceSplitPlan]:
+        if getattr(macro_graph_cfg, "plan_source", "explicit") == "planner":
+            total_tokens_list = list(
+                getattr(macro_graph_cfg, "capture_total_tokens", []))
+        else:
+            total_tokens_list = [
+                int(plan.total_tokens)
+                for plan in getattr(macro_graph_cfg, "capture_plans", [])
+            ]
+
+        q = int(self.uniform_decode_query_len)
+        if q <= 0:
+            raise RuntimeError(
+                "macro graph capture requires a positive "
+                f"uniform_decode_query_len, got {q}")
+
+        inplace_plans: list[InplaceSplitPlan] = []
+        for total_tokens in total_tokens_list:
+            total_tokens = int(total_tokens)
+            if total_tokens % q != 0:
+                raise RuntimeError(
+                    "macro graph capture plan must be request-aligned: "
+                    f"total_tokens={total_tokens}, query_len={q}")
+            dummy_tokens = np.full(total_tokens // q, q, dtype=np.int32)
+            plan, reason = create_macro_inplace_split_batch_slices(
+                dummy_tokens,
+                total_tokens,
+                q,
+                macro_graph_cfg,
+            )
+            if plan is None:
+                raise RuntimeError(
+                    "Failed to build macro graph capture plan "
+                    f"for total_tokens={total_tokens}: {reason}")
+            inplace_plans.append(plan)
+        return inplace_plans
+
+    def _bind_macro_graph_entry(
+            self,
+            entry: _PlannedMacroGraphEntry,
+            ubatch_metadata: list[AscendUbatchMetadata]) -> int:
+        if entry.captured_metadata is None:
+            return 0
+        copied = 0
+        for captured, current in zip(entry.captured_metadata,
+                                     ubatch_metadata):
+            copied += _copy_tensor_values_for_macro_graph(
+                captured.input_ids, current.input_ids)
+            copied += _copy_tensor_values_for_macro_graph(
+                captured.positions, current.positions)
+            copied += _copy_tensor_values_for_macro_graph(
+                captured.inputs_embeds, current.inputs_embeds)
+            copied += _copy_tensor_values_for_macro_graph(
+                captured.intermediate_tensors, current.intermediate_tensors)
+            copied += _copy_tensor_values_for_macro_graph(
+                getattr(captured.context, "attn_metadata", None),
+                getattr(current.context, "attn_metadata", None),
+            )
+            copied += _copy_tensor_values_for_macro_graph(
+                getattr(captured.context, "positions", None),
+                getattr(current.context, "positions", None),
+            )
+        return copied
+
+    def _materialize_torchair_macro_graph_entry(
+            self,
+            entry: _PlannedMacroGraphEntry,
+            ubatch_metadata: list[AscendUbatchMetadata],
+            model_kwargs: dict[str, Any],
+    ) -> None:
+        macro_graph_cfg = self._macro_graph_config()
+        tng, CompilerConfig = _require_torchair_tagged_backend()
+
+        runtime_calls = []
+        for slice_idx, metadata in enumerate(ubatch_metadata):
+            target_stream = (self.stream_parallel if slice_idx > 0
+                             else self.stream_main)
+            with self._bind_inplace_parallel_rope_capture_slot(
+                    metadata.context, parallel_streams=(slice_idx > 0)):
+                runtime_calls.append(
+                    capture_piecewise_model_call(
+                        model=self.model,
+                        metadata=metadata,
+                        model_kwargs=model_kwargs,
+                        stream=target_stream,
+                    ))
+
+        event_tag_prefix = (
+            f"vllm_macro_{os.getpid()}_{len(self._macro_graph_registry)}_"
+            f"{abs(hash(entry.key)) & 0xffffffff:x}")
+        module = _TorchairTaggedPiecewiseMacroModule(
+            runtime_calls=runtime_calls,
+            contexts=[metadata.context for metadata in ubatch_metadata],
+            event_tag_prefix=event_tag_prefix,
+            secondary_stream_tag="1",
+            validate_no_inner_aclgraph=bool(
+                getattr(macro_graph_cfg, "validate_no_inner_aclgraph", True)),
+            tng=tng,
+        )
+        if _MACRO_GRAPH_EAGER_PREFLIGHT:
+            try:
+                module()
+                self.stream_main.synchronize()
+                self.stream_parallel.synchronize()
+            except Exception:
+                logger.error(
+                    "Torchair tagged-event macro graph eager preflight "
+                    "failed before torch.compile:\n%s",
+                    traceback.format_exc(),
+                )
+                raise
+        config = CompilerConfig()
+        config.mode = "reduce-overhead"
+        config.debug.aclgraph.enable_output_clone.value = True
+        backend = tng.get_npu_backend(compiler_config=config)
+
+        compile_start = time.perf_counter()
+        entry.module = module
+        entry.backend = "torchair_tagged_event"
+        entry.compiled_callable = torch.compile(
+            module,
+            backend=backend,
+            dynamic=False,
+            fullgraph=True,
+        )
+        entry.captured_metadata = ubatch_metadata
+        entry.compile_ms = (time.perf_counter() - compile_start) * 1000.0
+        logger.info(
+            "Materialized torchair tagged-event macro graph: key=%s, "
+            "compile_wrapper_ms=%.3f",
+            entry.key,
+            entry.compile_ms,
+        )
+
+    def _materialize_npugraph_ex_macro_graph_entry(
+            self,
+            entry: _PlannedMacroGraphEntry,
+            ubatch_metadata: list[AscendUbatchMetadata],
+            model_kwargs: dict[str, Any],
+    ) -> None:
+        macro_graph_cfg = self._macro_graph_config()
+        _require_npugraph_ex_backend()
+
+        runtime_calls = []
+        for slice_idx, metadata in enumerate(ubatch_metadata):
+            target_stream = (self.stream_parallel if slice_idx > 0
+                             else self.stream_main)
+            with self._bind_inplace_parallel_rope_capture_slot(
+                    metadata.context, parallel_streams=(slice_idx > 0)):
+                runtime_calls.append(
+                    capture_piecewise_model_call(
+                        model=self.model,
+                        metadata=metadata,
+                        model_kwargs=model_kwargs,
+                        stream=target_stream,
+                    ))
+
+        context_key = (
+            f"vllm_macro_npugraph_ex_{os.getpid()}_"
+            f"{len(self._macro_graph_registry)}_"
+            f"{abs(hash(entry.key)) & 0xffffffff:x}")
+        module = _NpuGraphExPiecewiseMacroModule(
+            runtime_calls=runtime_calls,
+            contexts=[metadata.context for metadata in ubatch_metadata],
+            context_key=context_key,
+            validate_no_inner_aclgraph=bool(
+                getattr(macro_graph_cfg, "validate_no_inner_aclgraph", True)),
+        )
+        if _MACRO_GRAPH_EAGER_PREFLIGHT:
+            try:
+                module()
+                torch.npu.synchronize()
+            except Exception:
+                logger.error(
+                    "npugraph_ex macro graph eager preflight failed before "
+                    "torch.compile:\n%s",
+                    traceback.format_exc(),
+                )
+                raise
+
+        backend_options = dict(
+            getattr(macro_graph_cfg, "backend_options", {}) or {})
+        backend_options.setdefault("clone_output", True)
+        compile_start = time.perf_counter()
+        entry.module = module
+        entry.backend = "npugraph_ex"
+        entry.compiled_callable = torch.compile(
+            module,
+            backend="npugraph_ex",
+            dynamic=False,
+            fullgraph=True,
+            options=backend_options,
+        )
+        entry.captured_metadata = ubatch_metadata
+        entry.compile_ms = (time.perf_counter() - compile_start) * 1000.0
+        logger.info(
+            "Materialized npugraph_ex macro graph: key=%s, "
+            "compile_wrapper_ms=%.3f, backend_options=%s",
+            entry.key,
+            entry.compile_ms,
+            backend_options,
+        )
+
+    def _run_split_batch_inplace_parallel_macro_graph(
+            self,
+            split_ubatch_slices: UBatchSlices,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            intermediate_tensors: Optional[IntermediateTensors],
+            inputs_embeds: Optional[torch.Tensor],
+            model_kwargs: dict[str, Any],
+            batch_descriptor: BatchDescriptor,
+            aclgraph_runtime_mode: CUDAGraphMode,
+            inplace_attention_backend: str,
+    ) -> Any:
+        key = self._macro_graph_key_from_split_slices(
+            split_batch_slices, inplace_attention_backend)
+        entry = self._macro_graph_registry.get(key)
+        if entry is None:
+            macro_graph_cfg = self._macro_graph_config()
+            miss_policy = getattr(macro_graph_cfg, "miss_policy", "error")
+            raise MissingMacroGraphError(
+                "Missing multistream macro graph for split-batch plan "
+                f"key={key!r}; miss_policy={miss_policy!r}. "
+                "Runtime lazy capture is disabled for macro graphs.")
+
+        ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
+            split_ubatch_slices,
+            split_batch_slices,
+            attn_metadata,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            batch_descriptor,
+            aclgraph_runtime_mode,
+            inplace_attention_backend,
+        )
+
+        if len(ubatch_metadata) != 2:
+            raise RuntimeError(
+                "multistream macro graph currently supports exactly "
+                f"2 splits, got {len(ubatch_metadata)}")
+
+        original_forward_context = get_forward_context()
+        self._t_replay_start = time.perf_counter()
+        try:
+            macro_graph_cfg = self._macro_graph_config()
+            backend = getattr(macro_graph_cfg, "backend", "npugraph_ex")
+            backend_options = dict(
+                getattr(macro_graph_cfg, "backend_options", {}) or {})
+            if backend == "npugraph_ex":
+                backend_options.setdefault("clone_output", True)
+            materialized_now = not entry.materialized
+            copied = 0
+            if not entry.materialized:
+                if backend == "npugraph_ex":
+                    self._materialize_npugraph_ex_macro_graph_entry(
+                        entry, ubatch_metadata, model_kwargs)
+                elif backend == "torchair_tagged_event":
+                    self._materialize_torchair_macro_graph_entry(
+                        entry, ubatch_metadata, model_kwargs)
+                else:
+                    raise RuntimeError(
+                        "Unsupported macro_graph_config.backend at replay "
+                        f"time: {backend!r}")
+            else:
+                copied = self._bind_macro_graph_entry(entry, ubatch_metadata)
+                if split_debug.is_enabled():
+                    split_debug.log_event(
+                        "macro_graph_bind",
+                        {
+                            "key": repr(key),
+                            "macro_graph_backend": str(entry.backend
+                                                       or backend),
+                            "macro_graph_backend_options": backend_options,
+                            "copied_tensor_count": int(copied),
+                            "replay_count": int(entry.replay_count),
+                        },
+                        step_id=_split_debug_step_from_runner(self),
+                    )
+
+            compiled_call_start = time.perf_counter()
+            outputs = entry.compiled_callable()
+            entry.replay_count += 1
+            self.stream_main.synchronize()
+            compiled_call_ms = (
+                time.perf_counter() - compiled_call_start) * 1000.0
+            if split_debug.is_enabled():
+                split_debug.log_event(
+                    "macro_graph_replay",
+                    {
+                        "key": repr(key),
+                        "macro_graph_backend": str(entry.backend or backend),
+                        "macro_graph_backend_options": backend_options,
+                        "replay_count": int(entry.replay_count),
+                        "materialized_now": bool(materialized_now),
+                        "copied_tensor_count": int(copied),
+                        "compiled_call_ms": float(compiled_call_ms),
+                        "compile_ms": float(entry.compile_ms),
+                    },
+                    step_id=_split_debug_step_from_runner(self),
+                )
+
+            merged_results = []
+            for idx, output in enumerate(outputs):
+                trimmed = self._trim_split_output(
+                    output, split_batch_slices[idx].num_tokens)
+                merged_results.append(self._clone_split_output(trimmed))
+            with override_forward_context(original_forward_context):
+                return self._merge_split_outputs(merged_results)
+        finally:
+            self._t_replay_end = time.perf_counter()
+
+
     def _run_split_batch_inplace_parallel(
             self,
             split_ubatch_slices: UBatchSlices,
@@ -4505,6 +5822,21 @@ class NPUModelRunner(GPUModelRunner):
             aclgraph_runtime_mode: CUDAGraphMode,
             inplace_attention_backend: str,
     ) -> Any:
+        if self._macro_graph_enabled():
+            return self._run_split_batch_inplace_parallel_macro_graph(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                intermediate_tensors,
+                inputs_embeds,
+                model_kwargs,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+                inplace_attention_backend,
+            )
+
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         replay_policy = getattr(split_cfg, "inplace_parallel_replay_policy",
                                 "full_graph_parallel")
@@ -6939,7 +8271,71 @@ class NPUModelRunner(GPUModelRunner):
                             in_parallel_streams=in_parallel_streams,
                             )
 
+    def _capture_multistream_macro_graphs(self) -> None:
+        macro_graph_cfg = self._macro_graph_config()
+        if macro_graph_cfg is None or not getattr(macro_graph_cfg, "enabled",
+                                                  False):
+            return
+
+        inplace_plans = self._macro_graph_capture_inplace_plans(
+            macro_graph_cfg)
+        if len(inplace_plans) > int(
+                getattr(macro_graph_cfg, "max_capture_graphs", 16)):
+            raise RuntimeError(
+                "macro graph planned capture count exceeds "
+                "max_capture_graphs: "
+                f"{len(inplace_plans)} > "
+                f"{getattr(macro_graph_cfg, 'max_capture_graphs', 16)}")
+
+        logger.info(
+            "Starting multistream macro graph precapture: schedule=%s, "
+            "backend=%s, plan_source=%s, num_plans=%d",
+            getattr(macro_graph_cfg, "schedule", None),
+            getattr(macro_graph_cfg, "backend", None),
+            getattr(macro_graph_cfg, "plan_source", None),
+            len(inplace_plans),
+        )
+        self._macro_graph_registry.clear()
+        for plan in inplace_plans:
+            split_batch_slices = plan.split_slices
+            inplace_attention_backend = select_inplace_attention_backend(
+                plan,
+                lambda shape: using_paged_attention(shape,
+                                                    self.vllm_config),
+            )
+            key = self._macro_graph_key_from_split_slices(
+                split_batch_slices, inplace_attention_backend)
+            if key in self._macro_graph_registry:
+                raise RuntimeError(
+                    "Duplicate multistream macro graph key while planning "
+                    f"capture: {key!r}")
+            self._macro_graph_registry[key] = _PlannedMacroGraphEntry(
+                key=key,
+                plan=plan,
+                inplace_attention_backend=inplace_attention_backend,
+            )
+            logger.info(
+                "Planned multistream macro graph: backend=%s, key=%s, "
+                "actual_tokens=%s, graph_tokens=%s, start_tokens=%s",
+                getattr(macro_graph_cfg, "backend", None),
+                key,
+                tuple(int(s.num_tokens) for s in split_batch_slices),
+                tuple(int(s.graph_num_tokens) for s in split_batch_slices),
+                tuple(int(s.start_num_tokens) for s in split_batch_slices),
+            )
+        logger.warning(
+            "Multistream macro graphs are planned at load time and "
+            "materialized with backend=%s on first runtime hit to bind stable "
+            "vLLM metadata addresses. Use benchmark warmup steps before "
+            "measuring steady-state performance.",
+            getattr(macro_graph_cfg, "backend", None),
+        )
+
     def _capture_model(self):
+        if self._macro_graph_enabled():
+            self._capture_multistream_macro_graphs()
+            return
+
         if not self.use_aclgraph:
             logger.warning(
                 "Skipping ACL graph capture. To turn on ACL graph capture, "

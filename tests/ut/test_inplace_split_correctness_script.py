@@ -120,6 +120,32 @@ def test_build_split_config_for_inplace_serial_validation():
     assert config["pa_shape_list"] == [512]
 
 
+def test_build_split_config_for_macro_graph_disables_lazy_capture():
+    macro_graph_config = {
+        "enabled": True,
+        "capture_plans": [{
+            "total_tokens": 427,
+            "split_actual_tokens": [224, 203],
+            "split_graph_tokens": [224, 224],
+        }],
+    }
+
+    config = _build_split_additional_config(
+        enabled=True,
+        split_mode="inplace_parallel",
+        num_splits=2,
+        enable_parallel_streams=True,
+        min_batch_size_for_split=1,
+        inplace_split_planner_policy="macro_cube_balanced",
+        macro_graph_config=macro_graph_config,
+    )
+
+    split_cfg = config["split_batch_config"]
+    assert split_cfg["enable_inplace_lazy_capture"] is False
+    assert split_cfg["inplace_split_planner_policy"] == "macro_cube_balanced"
+    assert split_cfg["macro_graph_config"] == macro_graph_config
+
+
 def test_split_debug_trace_summary_validates_expected_split(tmp_path):
     trace_path = tmp_path / "split.jsonl"
     events = []

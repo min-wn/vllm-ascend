@@ -124,6 +124,17 @@ class TestAscendConfig(TestBase):
             split_config.inplace_offset_allowed_graph_tokens_by_start)
         self.assertFalse(split_config.inplace_offset_prefer_cached_graph)
         self.assertFalse(split_config.inplace_offset_fallback_on_miss)
+        self.assertFalse(split_config.macro_graph_config.enabled)
+        self.assertEqual(split_config.macro_graph_config.capture_timing,
+                         "load_time")
+        self.assertEqual(split_config.macro_graph_config.schedule,
+                         "matmul_serial_attention_parallel")
+        self.assertEqual(split_config.macro_graph_config.backend,
+                         "npugraph_ex")
+        self.assertEqual(split_config.macro_graph_config.backend_options, {})
+        self.assertEqual(split_config.macro_graph_config.miss_policy, "error")
+        self.assertEqual(split_config.macro_graph_config.plan_source,
+                         "explicit")
 
     def test_split_batch_config_legacy_parallel_streams_compat(self):
         split_config = SplitBatchConfig({
@@ -223,6 +234,115 @@ class TestAscendConfig(TestBase):
 
         self.assertEqual(split_config.mode, "inplace_parallel")
         self.assertEqual(split_config.num_splits, 2)
+
+    def test_split_batch_config_accepts_macro_graph_config(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_parallel",
+            "num_splits": 2,
+            "enable_parallel_streams": True,
+            "enable_inplace_lazy_capture": False,
+            "inplace_split_planner_policy": "macro_cube_balanced",
+            "macro_graph_config": {
+                "enabled": True,
+                "capture_timing": "load_time",
+                "schedule": "matmul_serial_attention_parallel",
+                "backend_options": {
+                    "clone_output": True,
+                    "deadlock_check": False,
+                },
+                "miss_policy": "error",
+                "plan_source": "explicit",
+                "capture_plans": [{
+                    "total_tokens": 427,
+                    "split_actual_tokens": [224, 203],
+                    "split_graph_tokens": [224, 224],
+                }],
+                "max_capture_graphs": 16,
+                "validate_no_inner_aclgraph": True,
+            },
+        })
+
+        macro_config = split_config.macro_graph_config
+        self.assertTrue(macro_config.enabled)
+        self.assertEqual(macro_config.capture_timing, "load_time")
+        self.assertEqual(macro_config.schedule,
+                         "matmul_serial_attention_parallel")
+        self.assertEqual(macro_config.backend, "npugraph_ex")
+        self.assertEqual(macro_config.backend_options, {
+            "clone_output": True,
+            "deadlock_check": False,
+        })
+        self.assertEqual(macro_config.miss_policy, "error")
+        self.assertEqual(macro_config.plan_source, "explicit")
+        self.assertEqual(len(macro_config.capture_plans), 1)
+        capture_plan = macro_config.capture_plans[0]
+        self.assertEqual(capture_plan.total_tokens, 427)
+        self.assertEqual(capture_plan.split_actual_tokens, (224, 203))
+        self.assertEqual(capture_plan.split_graph_tokens, (224, 224))
+        self.assertEqual(capture_plan.split_start_tokens, (0, 224))
+
+    def test_split_batch_config_accepts_torchair_macro_graph_backend(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_parallel",
+            "num_splits": 2,
+            "enable_parallel_streams": True,
+            "enable_inplace_lazy_capture": False,
+            "inplace_split_planner_policy": "macro_cube_balanced",
+            "macro_graph_config": {
+                "enabled": True,
+                "backend": "torchair_tagged_event",
+                "capture_plans": [{
+                    "total_tokens": 427,
+                    "split_actual_tokens": [224, 203],
+                    "split_graph_tokens": [224, 224],
+                }],
+            },
+        })
+
+        self.assertEqual(split_config.macro_graph_config.backend,
+                         "torchair_tagged_event")
+
+    def test_split_batch_config_rejects_macro_graph_lazy_capture(self):
+        with self.assertRaisesRegex(ValueError,
+                                    "enable_inplace_lazy_capture=False"):
+            SplitBatchConfig({
+                "enabled": True,
+                "mode": "inplace_parallel",
+                "num_splits": 2,
+                "enable_parallel_streams": True,
+                "enable_inplace_lazy_capture": True,
+                "inplace_split_planner_policy": "macro_cube_balanced",
+                "macro_graph_config": {
+                    "enabled": True,
+                    "capture_plans": [{
+                        "total_tokens": 427,
+                        "split_actual_tokens": [224, 203],
+                        "split_graph_tokens": [224, 224],
+                    }],
+                },
+            })
+
+    def test_split_batch_config_rejects_invalid_macro_graph_backend(self):
+        with self.assertRaisesRegex(ValueError, "macro_graph_config.backend"):
+            SplitBatchConfig({
+                "enabled": True,
+                "mode": "inplace_parallel",
+                "num_splits": 2,
+                "enable_parallel_streams": True,
+                "enable_inplace_lazy_capture": False,
+                "inplace_split_planner_policy": "macro_cube_balanced",
+                "macro_graph_config": {
+                    "enabled": True,
+                    "backend": "unknown",
+                    "capture_plans": [{
+                        "total_tokens": 427,
+                        "split_actual_tokens": [224, 203],
+                        "split_graph_tokens": [224, 224],
+                    }],
+                },
+            })
 
     def test_split_batch_config_rejects_invalid_mode(self):
         with self.assertRaisesRegex(ValueError, "split_batch_config.mode"):

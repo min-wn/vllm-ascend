@@ -343,6 +343,9 @@ NO_SPLIT_OFFSET_GRAPH_BELOW_MIN_SIZE = (
 NO_SPLIT_INVALID_OFFSET_MATCH_POLICY = "no_split_invalid_offset_match_policy"
 NO_SPLIT_INVALID_FIRST_TOKENS_POLICY = (
     "no_split_invalid_first_tokens_policy")
+NO_SPLIT_MACRO_GRAPH_DISABLED = "no_split_macro_graph_disabled"
+NO_SPLIT_MACRO_GRAPH_MISS = "no_split_macro_graph_miss"
+NO_SPLIT_MACRO_GRAPH_INVALID_PLAN = "no_split_macro_graph_invalid_plan"
 
 
 @dataclass(frozen=True)
@@ -716,6 +719,186 @@ def create_inplace_split_batch_slices(
                    key=_balanced_inplace_split_score), INPLACE_SPLIT_DRY_RUN
 
     return None, last_reject_reason
+
+
+def _round_up_to_multiple(value: int, alignment: int) -> int:
+    alignment = max(1, int(alignment))
+    return ((int(value) + alignment - 1) // alignment) * alignment
+
+
+def _macro_capture_plan_to_inplace_plan(
+    capture_plan,
+    *,
+    uniform_decode_query_len: int,
+    capture_plans_considered: list[int],
+    macro_graph_config,
+) -> tuple[Optional[InplaceSplitPlan], str]:
+    q = int(uniform_decode_query_len)
+    if q <= 0:
+        return None, NO_SPLIT_INVALID_QUERY_LEN
+
+    actual_tokens = tuple(int(v) for v in capture_plan.split_actual_tokens)
+    graph_tokens = tuple(int(v) for v in capture_plan.split_graph_tokens)
+    start_tokens = tuple(int(v) for v in capture_plan.split_start_tokens)
+    total_tokens = int(capture_plan.total_tokens)
+    if len(actual_tokens) != 2 or len(graph_tokens) != 2 \
+            or len(start_tokens) != 2:
+        return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
+    if sum(actual_tokens) != total_tokens:
+        return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
+    if any(tokens % q != 0 for tokens in actual_tokens):
+        return None, NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
+    if start_tokens != (0, actual_tokens[0]):
+        return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
+
+    first_actual, second_actual = actual_tokens
+    first_graph, second_graph = graph_tokens
+    first_reqs = first_actual // q
+    second_reqs = second_actual // q
+    if first_reqs <= 0 or second_reqs <= 0:
+        return None, NO_SPLIT_SECOND_EMPTY
+
+    split_slices = [
+        SplitBatchSlice(
+            request_slice=slice(0, first_reqs),
+            token_slice=slice(0, first_actual),
+            padded_num_tokens=first_graph,
+            start_num_tokens=start_tokens[0],
+        ),
+        SplitBatchSlice(
+            request_slice=slice(first_reqs, first_reqs + second_reqs),
+            token_slice=slice(first_actual, total_tokens),
+            padded_num_tokens=second_graph,
+            start_num_tokens=start_tokens[1],
+        ),
+    ]
+    graph_total_tokens = first_graph + second_graph
+    if graph_total_tokens > total_tokens:
+        padded_without_split = graph_total_tokens + int(
+            getattr(macro_graph_config, "min_padding_saved_tokens", 0))
+    else:
+        padded_without_split = total_tokens
+    alignment = int(getattr(macro_graph_config, "graph_token_alignment", 1))
+    padded_without_split = _round_up_to_multiple(
+        padded_without_split, alignment)
+
+    return InplaceSplitPlan(
+        split_slices=split_slices,
+        reason=INPLACE_SPLIT_DRY_RUN,
+        total_num_tokens=total_tokens,
+        padded_num_tokens_without_split=padded_without_split,
+        first_tokens=first_actual,
+        second_tokens=second_actual,
+        first_reqs=first_reqs,
+        second_reqs=second_reqs,
+        lower_capture_size=first_graph,
+        remainder_tokens=second_actual,
+        capture_sizes_considered=capture_plans_considered,
+        first_tokens_policy="macro_cube_balanced",
+        offset_match_policy="bucket",
+        second_actual_tokens=second_actual,
+        second_graph_tokens=second_graph,
+        second_padding_tokens=second_graph - second_actual,
+        offset_capture_sizes_considered=sorted({
+            int(plan.split_graph_tokens[1])
+            for plan in getattr(macro_graph_config, "capture_plans", [])
+        }),
+        offset_min_graph_tokens=int(
+            getattr(macro_graph_config, "min_split_graph_tokens", 1)),
+        offset_max_graph_tokens_by_start=None,
+        offset_allowed_graph_tokens_by_start=None,
+    ), INPLACE_SPLIT_DRY_RUN
+
+
+def _build_macro_planner_capture_plan(total_num_tokens: int,
+                                      macro_graph_config):
+    from vllm_ascend.ascend_config import MacroGraphCapturePlan
+
+    alignment = int(getattr(macro_graph_config, "graph_token_alignment", 64))
+    min_split_graph_tokens = int(
+        getattr(macro_graph_config, "min_split_graph_tokens", 192))
+    graph_total_tokens = _round_up_to_multiple(total_num_tokens, alignment)
+    half = _round_up_to_multiple((total_num_tokens + 1) // 2, alignment)
+    first_graph_tokens = min(max(half, min_split_graph_tokens),
+                             graph_total_tokens - min_split_graph_tokens)
+    second_graph_tokens = graph_total_tokens - first_graph_tokens
+    if first_graph_tokens < min_split_graph_tokens \
+            or second_graph_tokens < min_split_graph_tokens:
+        return None
+    first_actual_tokens = min(first_graph_tokens, total_num_tokens - 1)
+    second_actual_tokens = total_num_tokens - first_actual_tokens
+    if second_actual_tokens <= 0:
+        return None
+    if second_actual_tokens > second_graph_tokens:
+        return None
+    return MacroGraphCapturePlan(
+        total_tokens=total_num_tokens,
+        split_actual_tokens=(first_actual_tokens, second_actual_tokens),
+        split_graph_tokens=(first_graph_tokens, second_graph_tokens),
+        split_start_tokens=(0, first_actual_tokens),
+    )
+
+
+def create_macro_inplace_split_batch_slices(
+    num_scheduled_tokens_per_request: np.ndarray,
+    total_num_tokens: int,
+    uniform_decode_query_len: int,
+    macro_graph_config,
+) -> tuple[Optional[InplaceSplitPlan], str]:
+    """Create a split plan from load-time macro graph capture plans.
+
+    The macro path is intentionally exact-match by default: runtime must hit a
+    predeclared macro graph plan and must not trigger lazy capture.
+    """
+    if macro_graph_config is None or not getattr(
+            macro_graph_config, "enabled", False):
+        return None, NO_SPLIT_MACRO_GRAPH_DISABLED
+
+    q = int(uniform_decode_query_len)
+    if q <= 0:
+        return None, NO_SPLIT_INVALID_QUERY_LEN
+    num_reqs = len(num_scheduled_tokens_per_request)
+    if (num_reqs == 0
+            or int(np.sum(num_scheduled_tokens_per_request)) !=
+            int(total_num_tokens)
+            or not np.all(num_scheduled_tokens_per_request == q)):
+        return None, NO_SPLIT_NON_UNIFORM_DECODE
+
+    total_num_tokens = int(total_num_tokens)
+    plan_source = getattr(macro_graph_config, "plan_source", "explicit")
+    capture_plans = list(getattr(macro_graph_config, "capture_plans", []))
+    capture_plans_considered = [
+        int(plan.total_tokens) for plan in capture_plans
+    ]
+
+    if plan_source == "planner":
+        if total_num_tokens not in set(
+                getattr(macro_graph_config, "capture_total_tokens", [])):
+            return None, NO_SPLIT_MACRO_GRAPH_MISS
+        capture_plan = _build_macro_planner_capture_plan(
+            total_num_tokens, macro_graph_config)
+        if capture_plan is None:
+            return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
+        capture_plans_considered = list(
+            getattr(macro_graph_config, "capture_total_tokens", []))
+        return _macro_capture_plan_to_inplace_plan(
+            capture_plan,
+            uniform_decode_query_len=q,
+            capture_plans_considered=capture_plans_considered,
+            macro_graph_config=macro_graph_config,
+        )
+
+    for capture_plan in capture_plans:
+        if int(capture_plan.total_tokens) != total_num_tokens:
+            continue
+        return _macro_capture_plan_to_inplace_plan(
+            capture_plan,
+            uniform_decode_query_len=q,
+            capture_plans_considered=capture_plans_considered,
+            macro_graph_config=macro_graph_config,
+        )
+
+    return None, NO_SPLIT_MACRO_GRAPH_MISS
 
 
 def create_split_batch_slices(

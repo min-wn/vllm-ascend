@@ -130,6 +130,18 @@ def _parse_start_graph_allowed_sizes(raw: str | None
     return result or None
 
 
+def _parse_json_object(raw: str | None, *, arg_name: str) -> dict[str, Any] | None:
+    if raw is None or not str(raw).strip():
+        return None
+    try:
+        parsed = json.loads(str(raw))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{arg_name} must be a JSON object") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError(f"{arg_name} must be a JSON object")
+    return parsed
+
+
 def _apply_capture_sizes(args: dict[str, Any], capture_sizes: list[int]) -> None:
     compilation_config = args.get("compilation_config") or {}
     if not isinstance(compilation_config, dict):
@@ -720,12 +732,22 @@ def create_parser() -> FlexibleArgumentParser:
         "--inplace-split-planner-policy",
         "--inplace-split-first-tokens-policy",
         dest="inplace_split_planner_policy",
-        choices=["largest_lower", "balanced"],
+        choices=["largest_lower", "balanced", "macro_cube_balanced"],
         default="largest_lower",
         help=(
             "Inplace split planner policy. largest_lower preserves the "
             "current largest-lower main graph split; balanced chooses a more "
-            "even split among valid lower main graphs."
+            "even split among valid lower main graphs; macro_cube_balanced "
+            "uses split_batch_config.macro_graph_config."
+        ),
+    )
+    test_group.add_argument(
+        "--macro-graph-config-json",
+        type=str,
+        default="",
+        help=(
+            "JSON object assigned to split_batch_config.macro_graph_config. "
+            "When enabled, inplace lazy capture is disabled automatically."
         ),
     )
     test_group.add_argument(
@@ -1251,6 +1273,7 @@ def _build_split_additional_config(
     inplace_parallel_replay_policy: str = "full_graph_parallel",
     piecewise_scheduler_sync_policy: str = "event_chain",
     piecewise_attention_enqueue_policy: str = "persistent_thread",
+    macro_graph_config: dict[str, Any] | None = None,
     pa_shape_list: list[int] | None = None,
 ) -> dict[str, Any]:
     cfg: dict[str, Any] = {
@@ -1260,12 +1283,15 @@ def _build_split_additional_config(
         "enable_parallel_streams": enable_parallel_streams,
         "min_batch_size_for_split": min_batch_size_for_split,
     }
+    macro_graph_enabled = bool(
+        macro_graph_config is not None
+        and macro_graph_config.get("enabled", False))
     if parallel_capture_sizes is not None:
         cfg["parallel_capture_sizes"] = parallel_capture_sizes
     if force_split:
         cfg["force_split"] = True
     if split_mode.startswith("inplace"):
-        cfg["enable_inplace_lazy_capture"] = True
+        cfg["enable_inplace_lazy_capture"] = not macro_graph_enabled
         cfg["inplace_validate_metadata_ptrs"] = bool(validate_ptrs)
         cfg["inplace_force_pa_for_offset"] = bool(
             inplace_force_pa_for_offset)
@@ -1297,6 +1323,8 @@ def _build_split_additional_config(
         if inplace_offset_allowed_graph_tokens_by_start:
             cfg["inplace_offset_allowed_graph_tokens_by_start"] = (
                 inplace_offset_allowed_graph_tokens_by_start)
+        if macro_graph_config is not None:
+            cfg["macro_graph_config"] = macro_graph_config
     additional_config: dict[str, Any] = {"split_batch_config": cfg}
     if pa_shape_list is not None:
         additional_config["pa_shape_list"] = list(pa_shape_list)
@@ -1616,6 +1644,14 @@ def main() -> int:
     parallel_capture_sizes = _parse_int_list(_parallel_capture_sizes_raw)
     inplace_split_planner_policy = str(args.pop(
         "inplace_split_planner_policy"))
+    try:
+        macro_graph_config = _parse_json_object(
+            str(args.pop("macro_graph_config_json") or ""),
+            arg_name="--macro-graph-config-json",
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
     inplace_parallel_replay_policy = str(args.pop(
         "inplace_parallel_replay_policy"))
     piecewise_scheduler_sync_policy = str(args.pop(
@@ -1783,6 +1819,7 @@ def main() -> int:
         inplace_parallel_replay_policy=inplace_parallel_replay_policy,
         piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
         piecewise_attention_enqueue_policy=piecewise_attention_enqueue_policy,
+        macro_graph_config=None,
         pa_shape_list=pa_shape_list,
     )
     split_enabled_cfg = _build_split_additional_config(
@@ -1807,6 +1844,7 @@ def main() -> int:
         inplace_parallel_replay_policy=inplace_parallel_replay_policy,
         piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
         piecewise_attention_enqueue_policy=piecewise_attention_enqueue_policy,
+        macro_graph_config=macro_graph_config,
         pa_shape_list=pa_shape_list,
     )
 

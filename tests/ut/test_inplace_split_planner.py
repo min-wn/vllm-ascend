@@ -6,6 +6,7 @@ from vllm_ascend.worker.ubatch_utils import (
     NO_SPLIT_ABOVE_MAX_CAPTURE_SIZE,
     NO_SPLIT_EXACT_GRAPH_HIT,
     NO_SPLIT_INVALID_FIRST_TOKENS_POLICY,
+    NO_SPLIT_MACRO_GRAPH_MISS,
     NO_SPLIT_NO_LOWER_CAPTURE_SIZE,
     NO_SPLIT_NO_OFFSET_CAPTURE_SIZE,
     NO_SPLIT_OFFSET_BUCKET_TOO_SMALL,
@@ -15,11 +16,93 @@ from vllm_ascend.worker.ubatch_utils import (
     NO_SPLIT_OFFSET_PADDING_TOO_LARGE,
     NO_SPLIT_REMAINDER_TOO_LARGE,
     create_inplace_split_batch_slices,
+    create_macro_inplace_split_batch_slices,
 )
+from vllm_ascend.ascend_config import SplitBatchConfig
 
 
 def _tokens(num_reqs: int, query_len: int = 1) -> np.ndarray:
     return np.full(num_reqs, query_len, dtype=np.int32)
+
+
+def _macro_graph_config(**overrides):
+    config = {
+        "enabled": True,
+        "mode": "inplace_parallel",
+        "num_splits": 2,
+        "enable_parallel_streams": True,
+        "enable_inplace_lazy_capture": False,
+        "inplace_split_planner_policy": "macro_cube_balanced",
+        "macro_graph_config": {
+            "enabled": True,
+            "plan_source": "explicit",
+            "capture_plans": [{
+                "total_tokens": 427,
+                "split_actual_tokens": [224, 203],
+                "split_graph_tokens": [224, 224],
+            }],
+        },
+    }
+    macro_graph_config = config["macro_graph_config"]
+    macro_graph_config.update(overrides)
+    return SplitBatchConfig(config).macro_graph_config
+
+
+def test_macro_inplace_split_uses_explicit_capture_plan():
+    plan, reason = create_macro_inplace_split_batch_slices(
+        _tokens(427),
+        total_num_tokens=427,
+        uniform_decode_query_len=1,
+        macro_graph_config=_macro_graph_config(),
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.first_tokens_policy == "macro_cube_balanced"
+    assert plan.first_tokens == 224
+    assert plan.second_actual_tokens == 203
+    assert plan.second_graph_tokens == 224
+    assert plan.second_padding_tokens == 21
+    assert plan.split_slices[0].token_slice == slice(0, 224)
+    assert plan.split_slices[0].graph_num_tokens == 224
+    assert plan.split_slices[1].token_slice == slice(224, 427)
+    assert plan.split_slices[1].graph_num_tokens == 224
+    assert plan.split_slices[1].start_num_tokens == 224
+
+
+def test_macro_inplace_split_misses_unlisted_explicit_plan():
+    plan, reason = create_macro_inplace_split_batch_slices(
+        _tokens(428),
+        total_num_tokens=428,
+        uniform_decode_query_len=1,
+        macro_graph_config=_macro_graph_config(),
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_MACRO_GRAPH_MISS
+
+
+def test_macro_inplace_split_planner_generates_cube_balanced_plan():
+    plan, reason = create_macro_inplace_split_batch_slices(
+        _tokens(427),
+        total_num_tokens=427,
+        uniform_decode_query_len=1,
+        macro_graph_config=_macro_graph_config(
+            plan_source="planner",
+            capture_plans=[],
+            capture_total_tokens=[427],
+            graph_token_alignment=64,
+            min_split_graph_tokens=192,
+        ),
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.first_tokens == 256
+    assert plan.second_actual_tokens == 171
+    assert plan.split_slices[0].graph_num_tokens == 256
+    assert plan.split_slices[1].graph_num_tokens == 192
+    assert plan.split_slices[1].start_num_tokens == 256
 
 
 def test_inplace_split_uses_largest_lower_capture_size():
