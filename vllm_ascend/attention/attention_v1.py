@@ -36,6 +36,7 @@ from vllm.v1.kv_cache_interface import AttentionSpec
 from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          enable_cp, split_decodes_and_prefills,
                                          using_paged_attention)
+from vllm_ascend import inplace_split_debug as split_debug
 from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
                                                _get_fia_key_t,
                                                get_graph_param_key,
@@ -334,6 +335,7 @@ class AscendAttentionMetadataBuilder:
 
 
 class AscendAttentionBackendImpl(AttentionImpl):
+    _dual_stream_attention_streams: ClassVar[dict[str, object]] = {}
 
     def __init__(
         self,
@@ -368,6 +370,51 @@ class AscendAttentionBackendImpl(AttentionImpl):
         self.num_queries_per_kv = self.num_heads // self.num_kv_heads
         self.key_cache = None
         self.value_cache = None
+
+    def _get_dual_stream_attention_stream(self, device: torch.device,
+                                          stream_idx: int = 1):
+        device_key = f"{str(device)}:{int(stream_idx)}"
+        stream = type(self)._dual_stream_attention_streams.get(device_key)
+        if stream is None:
+            stream = torch.npu.Stream(device=device)
+            type(self)._dual_stream_attention_streams[device_key] = stream
+        return stream
+
+    def _get_dual_stream_attention_metadata(self, layer: AttentionLayer,
+                                            forward_context: ForwardContext):
+        dual_metadata = getattr(forward_context,
+                                "dual_stream_attention_metadata", None)
+        if not isinstance(dual_metadata, list) or len(dual_metadata) != 2:
+            return None
+        layer_name = getattr(layer, "layer_name", None)
+        if layer_name is None:
+            return None
+        try:
+            return (dual_metadata[0][layer_name],
+                    dual_metadata[1][layer_name])
+        except (KeyError, TypeError):
+            return None
+
+    def _get_dual_stream_attention_slices(self,
+                                          forward_context: ForwardContext):
+        slices = getattr(forward_context, "dual_stream_attention_slices", None)
+        if not isinstance(slices, list) or len(slices) != 2:
+            return None
+        return slices
+
+    def _should_use_dual_stream_attention(
+            self, layer: AttentionLayer, attn_metadata: AscendMetadata,
+            forward_context: ForwardContext) -> bool:
+        if self.sliding_window is not None:
+            return False
+        if attn_metadata.attn_state != AscendAttentionState.DecodeOnly:
+            return False
+        if self._get_dual_stream_attention_metadata(layer,
+                                                    forward_context) is None:
+            return False
+        if self._get_dual_stream_attention_slices(forward_context) is None:
+            return False
+        return True
 
     def full_graph_fia(self, query: torch.Tensor, key: torch.Tensor,
                        value: torch.Tensor, attn_metadata: AscendMetadata,
@@ -451,6 +498,250 @@ class AscendAttentionBackendImpl(AttentionImpl):
         handle = torch.npu.graph_task_group_end(stream)
         graph_params.handles[param_key].append(handle)
         return output, num_tokens
+
+    def _dual_stream_fia_workspace_key(self, param_key, split_idx: int):
+        return (param_key, "dual_stream_fia", int(split_idx))
+
+    def _run_dual_stream_fia_split(
+            self,
+            *,
+            query: torch.Tensor,
+            key: torch.Tensor,
+            value: torch.Tensor,
+            output: torch.Tensor,
+            attn_metadata: AscendMetadata,
+            stream: torch.npu.Stream,
+            param_key,
+            split_idx: int,
+            graph_params,
+            capturing: bool,
+            record_update_event: bool = True):
+        key_cache, value_cache, block_size, block_table, actual_seq_lengths_kv \
+            = self._get_fia_params(key, value, attn_metadata)
+        forward_context = get_forward_context()
+        actual_seq_lengths_q = attn_metadata.actual_seq_lengths_q
+        actual_seq_lengths_kv = maybe_template_fia_seq_lens(
+            forward_context,
+            actual_seq_lengths_kv,
+            _get_fia_key_t(key_cache, block_size),
+            source=f"attention_dual_stream_full_graph:{split_idx}")
+        softmax_lse = torch.empty(1, dtype=query.dtype, device=query.device)
+
+        workspace = None
+        workspace_key = self._dual_stream_fia_workspace_key(
+            param_key, split_idx)
+        if graph_params is not None:
+            workspace = graph_params.workspaces.get(workspace_key)
+        if workspace is None:
+            with torch.npu.stream(stream):
+                workspace = torch_npu._npu_fused_infer_attention_score_get_max_workspace(
+                    query=query,
+                    key=key_cache,
+                    value=value_cache,
+                    atten_mask=attn_metadata.attn_mask,
+                    block_table=block_table,
+                    input_layout="TND",
+                    block_size=block_size,
+                    actual_seq_lengths=actual_seq_lengths_q,
+                    actual_seq_lengths_kv=actual_seq_lengths_kv,
+                    num_key_value_heads=self.num_kv_heads,
+                    num_heads=self.num_heads,
+                    sparse_mode=3,
+                    scale=self.scale,
+                )
+            if graph_params is not None:
+                in_parallel_streams = bool(
+                    getattr(forward_context, "in_parallel_streams", False))
+                update_graph_params_workspaces(
+                    workspace_key,
+                    workspace,
+                    in_parallel_streams=in_parallel_streams)
+
+        event = None
+        if capturing and record_update_event:
+            event = torch.npu.ExternalEvent()
+            event.wait(stream)
+            event.reset(stream)
+
+        with torch.npu.stream(stream):
+            if capturing:
+                torch.npu.graph_task_group_begin(stream)
+            torch_npu.npu_fused_infer_attention_score.out(
+                query=query,
+                key=key_cache,
+                value=value_cache,
+                atten_mask=attn_metadata.attn_mask,
+                block_table=block_table,
+                input_layout="TND",
+                block_size=block_size,
+                actual_seq_lengths=actual_seq_lengths_q,
+                actual_seq_lengths_kv=actual_seq_lengths_kv,
+                num_key_value_heads=self.num_kv_heads,
+                num_heads=self.num_heads,
+                scale=self.scale,
+                sparse_mode=3,
+                workspace=workspace,
+                out=[output, softmax_lse],
+            )
+            handle = (torch.npu.graph_task_group_end(stream)
+                      if capturing else None)
+
+        if not capturing:
+            return None, None, None
+        param = (
+            weak_ref_tensors(query),
+            weak_ref_tensors(key_cache),
+            weak_ref_tensors(value_cache),
+            weak_ref_tensors(block_table),
+            weak_ref_tensors(attn_metadata.attn_mask),
+            block_size,
+            actual_seq_lengths_kv,
+            actual_seq_lengths_q,
+            self.num_kv_heads,
+            self.num_heads,
+            self.scale,
+            weak_ref_tensors(output),
+            weak_ref_tensors(softmax_lse),
+            workspace_key,
+        )
+        return param, handle, event
+
+    def forward_dual_stream_fused_infer_attention(
+            self,
+            layer: AttentionLayer,
+            query: torch.Tensor,
+            key: torch.Tensor,
+            value: torch.Tensor,
+            output: torch.Tensor) -> torch.Tensor:
+        forward_context: ForwardContext = get_forward_context()
+        dual_metadata = self._get_dual_stream_attention_metadata(
+            layer, forward_context)
+        dual_slices = self._get_dual_stream_attention_slices(forward_context)
+        if dual_metadata is None or dual_slices is None:
+            raise RuntimeError(
+                "dual_stream_attention_metadata is missing from forward "
+                "context")
+
+        main_stream = torch_npu.npu.current_stream()
+        stream_mode = str(
+            getattr(forward_context,
+                    "dual_stream_attention_secondary_stream_mode",
+                    "dedicated_pair"))
+        if stream_mode == "dedicated_pair":
+            primary_stream = self._get_dual_stream_attention_stream(
+                query.device, 0)
+            secondary_stream = self._get_dual_stream_attention_stream(
+                query.device, 1)
+        else:
+            primary_stream = main_stream
+            secondary_stream = self._get_dual_stream_attention_stream(
+                query.device, 1)
+        capturing = bool(getattr(forward_context, "capturing", False))
+        in_parallel_streams = bool(
+            getattr(forward_context, "in_parallel_streams", False))
+        if split_debug.is_enabled():
+            split_debug.log_event(
+                "dual_stream_attention_streams",
+                {
+                    "layer_name": getattr(layer, "layer_name", None),
+                    "primary_stream": {
+                        "repr": repr(primary_stream),
+                        "stream_id": getattr(primary_stream, "stream_id", None),
+                    },
+                    "secondary_stream": {
+                        "repr": repr(secondary_stream),
+                        "stream_id": getattr(secondary_stream, "stream_id", None),
+                    },
+                    "current_stream": {
+                        "repr": repr(main_stream),
+                        "stream_id": getattr(
+                            main_stream, "stream_id", None),
+                    },
+                    "stream_mode": stream_mode,
+                    "capturing": capturing,
+                    "in_parallel_streams": in_parallel_streams,
+                },
+                step_id=getattr(forward_context, "split_debug_step_id", None),
+            )
+        graph_params = get_graph_params(in_parallel_streams) if capturing else None
+        param_key = get_graph_param_key(forward_context, int(query.shape[0]))
+        if capturing:
+            ensure_graph_param_key(graph_params, param_key)
+
+        has_pta_dual_fia_update = (
+            hasattr(torch.npu, "make_dual_task_group_handle")
+            and hasattr(torch.npu, "dual_fused_infer_attention_score_update"))
+        use_shared_update_event = bool(capturing and has_pta_dual_fia_update)
+        shared_update_event = None
+        if use_shared_update_event:
+            shared_update_event = torch.npu.ExternalEvent()
+            shared_update_event.wait(main_stream)
+            shared_update_event.reset(main_stream)
+
+        fork_event = torch.npu.Event()
+        fork_event.record(main_stream)
+        if primary_stream is not main_stream:
+            primary_stream.wait_event(fork_event)
+        secondary_stream.wait_event(fork_event)
+
+        split_params = []
+        split_handles = []
+        split_events = []
+        split_ranges = []
+        for split_idx, stream in enumerate((primary_stream, secondary_stream)):
+            split_slice = dual_slices[split_idx]
+            token_start = int(split_slice.token_slice.start)
+            graph_tokens = int(split_slice.graph_num_tokens)
+            token_stop = token_start + graph_tokens
+            query_view = query[token_start:token_stop]
+            output_view = output[token_start:token_stop]
+            param, handle, event = self._run_dual_stream_fia_split(
+                query=query_view,
+                key=key,
+                value=value,
+                output=output_view,
+                attn_metadata=dual_metadata[split_idx],
+                stream=stream,
+                param_key=param_key,
+                split_idx=split_idx,
+                graph_params=graph_params,
+                capturing=capturing,
+                record_update_event=not use_shared_update_event)
+            if capturing:
+                split_params.append(param)
+                split_handles.append(handle)
+                if event is not None:
+                    split_events.append(event)
+                split_ranges.append((token_start, graph_tokens))
+
+        if stream_mode == "dedicated_pair":
+            primary_join_event = torch.npu.Event()
+            secondary_join_event = torch.npu.Event()
+            primary_join_event.record(primary_stream)
+            secondary_join_event.record(secondary_stream)
+            main_stream.wait_event(primary_join_event)
+            main_stream.wait_event(secondary_join_event)
+        else:
+            join_event = torch.npu.Event()
+            join_event.record(secondary_stream)
+            main_stream.wait_event(join_event)
+
+        if capturing:
+            if has_pta_dual_fia_update:
+                graph_params.attn_params[param_key].append(
+                    ("dual_stream_fia_pta", weak_ref_tensors(query),
+                     weak_ref_tensors(output), tuple(split_params),
+                     tuple(split_ranges)))
+                graph_params.handles[param_key].append(
+                    torch.npu.make_dual_task_group_handle(
+                        split_handles[0], split_handles[1]))
+                graph_params.events[param_key].append(shared_update_event)
+            else:
+                graph_params.attn_params[param_key].append(
+                    ("dual_stream_fia", tuple(split_params)))
+                graph_params.handles[param_key].append(tuple(split_handles))
+                graph_params.events[param_key].append(tuple(split_events))
+        return output
 
     def full_graph_pa(
         self,
@@ -717,6 +1008,7 @@ class AscendAttentionBackendImpl(AttentionImpl):
 
     def forward_impl(
         self,
+        layer: AttentionLayer,
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
@@ -726,7 +1018,11 @@ class AscendAttentionBackendImpl(AttentionImpl):
     ):
         num_tokens = query.shape[0]
         forward_context: ForwardContext = get_forward_context()
-        if (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
+        if self._should_use_dual_stream_attention(layer, attn_metadata,
+                                                  forward_context):
+            output = self.forward_dual_stream_fused_infer_attention(
+                layer, query, key, value, output)
+        elif (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
                 and using_paged_attention(num_tokens, self.vllm_config,
                                           forward_context)
                 and self.sliding_window is None):
@@ -786,6 +1082,6 @@ class AscendAttentionBackendImpl(AttentionImpl):
                 query, key, value, attn_metadata, output)
             output[:num_tokens] = attn_output[:num_tokens]
             return output
-        output = self.forward_impl(query, key, value, kv_cache, attn_metadata,
-                                   output)
+        output = self.forward_impl(layer, query, key, value, kv_cache,
+                                   attn_metadata, output)
         return output

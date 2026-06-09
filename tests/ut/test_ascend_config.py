@@ -135,6 +135,16 @@ class TestAscendConfig(TestBase):
         self.assertEqual(split_config.macro_graph_config.miss_policy, "error")
         self.assertEqual(split_config.macro_graph_config.plan_source,
                          "explicit")
+        self.assertFalse(split_config.dual_stream_attention_config.enabled)
+        self.assertEqual(split_config.dual_stream_attention_config.backend,
+                         "fia")
+        self.assertEqual(
+            split_config.dual_stream_attention_config.plan_source, "explicit")
+        self.assertEqual(
+            split_config.dual_stream_attention_config.actual_q_policy,
+            "graph")
+        self.assertEqual(
+            split_config.dual_stream_attention_config.miss_policy, "error")
 
     def test_split_batch_config_legacy_parallel_streams_compat(self):
         split_config = SplitBatchConfig({
@@ -281,6 +291,71 @@ class TestAscendConfig(TestBase):
         self.assertEqual(capture_plan.split_actual_tokens, (224, 203))
         self.assertEqual(capture_plan.split_graph_tokens, (224, 224))
         self.assertEqual(capture_plan.split_start_tokens, (0, 224))
+
+    def test_split_batch_config_accepts_dual_stream_attention_config(self):
+        split_config = SplitBatchConfig({
+            "dual_stream_attention_config": {
+                "enabled": True,
+                "backend": "fia",
+                "plan_source": "explicit",
+                "secondary_stream_mode": "fork_join",
+                "actual_q_policy": "actual",
+                "miss_policy": "error",
+                "capture_plans": [{
+                    "total_tokens": 427,
+                    "split_actual_tokens": [224, 203],
+                    "split_graph_tokens": [224, 224],
+                }],
+            },
+        })
+
+        dual_config = split_config.dual_stream_attention_config
+        self.assertTrue(dual_config.enabled)
+        self.assertEqual(dual_config.backend, "fia")
+        self.assertEqual(dual_config.secondary_stream_mode, "fork_join")
+        self.assertEqual(dual_config.actual_q_policy, "actual")
+        self.assertEqual(len(dual_config.capture_plans), 1)
+        capture_plan = dual_config.capture_plans[0]
+        self.assertEqual(capture_plan.total_tokens, 427)
+        self.assertEqual(capture_plan.graph_tokens, 448)
+        self.assertEqual(capture_plan.split_actual_tokens, (224, 203))
+        self.assertEqual(capture_plan.split_graph_tokens, (224, 224))
+        self.assertEqual(capture_plan.split_start_tokens, (0, 224))
+        self.assertEqual(dual_config.find_plan(427), capture_plan)
+        self.assertEqual(dual_config.find_plan(448), capture_plan)
+
+    def test_split_batch_config_rejects_invalid_dual_stream_attention_plan(
+            self):
+        with self.assertRaisesRegex(ValueError,
+                                    "dual_stream_attention_config"):
+            SplitBatchConfig({
+                "dual_stream_attention_config": {
+                    "enabled": True,
+                    "capture_plans": [{
+                        "total_tokens": 427,
+                        "split_actual_tokens": [224, 202],
+                        "split_graph_tokens": [224, 224],
+                    }],
+                },
+            })
+
+    def test_split_batch_config_accepts_dedicated_pair_dual_stream_attention(
+            self):
+        split_config = SplitBatchConfig({
+            "dual_stream_attention_config": {
+                "enabled": True,
+                "secondary_stream_mode": "dedicated_pair",
+                "capture_plans": [{
+                    "total_tokens": 427,
+                    "split_actual_tokens": [224, 203],
+                    "split_graph_tokens": [224, 224],
+                }],
+            },
+        })
+
+        self.assertEqual(
+            split_config.dual_stream_attention_config.secondary_stream_mode,
+            "dedicated_pair")
 
     def test_split_batch_config_accepts_torchair_macro_graph_backend(self):
         split_config = SplitBatchConfig({

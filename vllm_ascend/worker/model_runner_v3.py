@@ -1345,6 +1345,71 @@ def _inplace_plan_to_execution_slices(
     return split_batch_slices, split_ubatch_slices
 
 
+def _dual_stream_attention_config(split_cfg: Any) -> Any:
+    if split_cfg is None:
+        return None
+    return getattr(split_cfg, "dual_stream_attention_config", None)
+
+
+def _dual_stream_attention_enabled(split_cfg: Any) -> bool:
+    cfg = _dual_stream_attention_config(split_cfg)
+    return bool(cfg is not None and getattr(cfg, "enabled", False))
+
+
+def _dual_stream_attention_actual_q_policy(split_cfg: Any) -> str:
+    cfg = _dual_stream_attention_config(split_cfg)
+    return str(getattr(cfg, "actual_q_policy", "graph"))
+
+
+def _find_dual_stream_attention_plan(cfg: Any, num_tokens: int,
+                                     *, key: str) -> Any:
+    num_tokens = int(num_tokens)
+    for plan in getattr(cfg, "capture_plans", []):
+        if key == "total" and int(plan.total_tokens) == num_tokens:
+            return plan
+        if key == "graph" and int(plan.graph_tokens) == num_tokens:
+            return plan
+    return None
+
+
+def _dual_stream_attention_plan_to_slices(
+        plan: Any,
+        query_len: int) -> tuple[SplitBatchSlices, UBatchSlices]:
+    query_len = int(query_len)
+    if query_len <= 0:
+        raise RuntimeError(
+            "dual_stream_attention_config requires positive query_len")
+
+    split_batch_slices: SplitBatchSlices = []
+    for split_idx in range(2):
+        token_start = int(plan.split_start_tokens[split_idx])
+        actual_tokens = int(plan.split_actual_tokens[split_idx])
+        graph_tokens = int(plan.split_graph_tokens[split_idx])
+        if token_start % query_len != 0:
+            raise RuntimeError(
+                "dual_stream_attention_config split_start_tokens must be "
+                "request-aligned")
+        if actual_tokens % query_len != 0 or graph_tokens % query_len != 0:
+            raise RuntimeError(
+                "dual_stream_attention_config split tokens must be "
+                "request-aligned")
+        request_start = token_start // query_len
+        request_stop = request_start + actual_tokens // query_len
+        split_batch_slices.append(
+            SplitBatchSlice(
+                request_slice=slice(request_start, request_stop),
+                token_slice=slice(token_start, token_start + actual_tokens),
+                padded_num_tokens=graph_tokens,
+                start_num_tokens=token_start,
+            ))
+
+    ubatch_slices = [
+        UBatchSlice(s.request_slice, s.token_slice)
+        for s in split_batch_slices
+    ]
+    return split_batch_slices, ubatch_slices
+
+
 _INPLACE_SPLIT_MODES = ("inplace_serial", "inplace_parallel")
 
 
@@ -1921,6 +1986,9 @@ class NPUModelRunner(GPUModelRunner):
                Optional[str]]:
         total_num_scheduled_tokens = scheduler_output.total_num_scheduled_tokens
         assert total_num_scheduled_tokens > 0
+        self._dual_stream_attention_metadata = None
+        self._dual_stream_attention_slices = None
+        self._dual_stream_attention_plan = None
         num_reqs = self.input_batch.num_reqs
         assert num_reqs > 0
 
@@ -2032,6 +2100,8 @@ class NPUModelRunner(GPUModelRunner):
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         split_mode = (getattr(split_cfg, "mode", "parallel_buffer")
                       if split_cfg is not None else "parallel_buffer")
+        dual_stream_attention_enabled = _dual_stream_attention_enabled(
+            split_cfg)
         split_enabled = bool(split_cfg is not None
                              and getattr(split_cfg, "enabled", False))
         split_enable_parallel_streams = bool(
@@ -2094,6 +2164,8 @@ class NPUModelRunner(GPUModelRunner):
                             split_cfg, "enable_parallel_streams", False)),
                     "split_mode": (getattr(split_cfg, "mode", None)
                                    if split_cfg is not None else None),
+                    "dual_stream_attention_enabled":
+                    bool(dual_stream_attention_enabled),
                     "num_splits": (int(getattr(split_cfg, "num_splits", 0))
                                    if split_cfg is not None else None),
                     "min_batch_size_for_split": (
@@ -2184,7 +2256,8 @@ class NPUModelRunner(GPUModelRunner):
         # Split batch and DBO never conflict:
         # - DBO is for overlapping compute/communication
         # - Split batch is for splitting large uniform decode batches
-        if split_mode in _INPLACE_SPLIT_MODES:
+        if (split_mode in _INPLACE_SPLIT_MODES
+                and not dual_stream_attention_enabled):
             #检查不可split的原因
             reason = _inplace_split_precheck_reason(
                 split_enabled=split_enabled,
@@ -2324,7 +2397,8 @@ class NPUModelRunner(GPUModelRunner):
                     split_planner_decision = "inplace_split_execute"
                     split_planner_payload["dry_run"] = False
                     split_planner_payload["fallback_to"] = None
-        elif (uniform_decode and ubatch_slices is None
+        elif (not dual_stream_attention_enabled and uniform_decode
+              and ubatch_slices is None
               and split_mode == "parallel_buffer"):  # Only split if DBO is not active
             split_planner_decision = "no_split_not_attempted"
             cudagraph_capture_sizes = set(
@@ -2464,6 +2538,14 @@ class NPUModelRunner(GPUModelRunner):
                     split_planner_decision = "split"
                 elif split_planner_decision == "no_split_not_attempted":
                     split_planner_decision = "no_split_invalid_custom_split"
+        elif dual_stream_attention_enabled:
+            split_planner_decision = "no_split_dual_stream_attention"
+            split_planner_payload.update({
+                "mode": split_mode,
+                "reason": "dual_stream_attention_enabled",
+                "dry_run": True,
+                "fallback_to": None,
+            })
         elif uniform_decode and ubatch_slices is None:
             split_planner_decision = "no_split_not_inplace_mode"
             split_planner_payload.update({
@@ -2545,6 +2627,48 @@ class NPUModelRunner(GPUModelRunner):
             num_input_tokens = total_num_scheduled_tokens
         else:
             num_input_tokens = maybe_padded_num_tokens
+
+        dual_stream_attention_plan = self._select_dual_stream_attention_plan(
+            total_num_scheduled_tokens=int(total_num_scheduled_tokens),
+            graph_num_tokens=int(num_input_tokens),
+            uniform_decode=bool(uniform_decode),
+            with_prefill=bool(with_prefill),
+            ubatch_slices=ubatch_slices,
+            has_spec_decode_tokens=bool(
+                scheduler_output.scheduled_spec_decode_tokens),
+            has_lora=bool(self.lora_config and len(
+                self.input_batch.lora_id_to_lora_request) > 0),
+            attn_state=attn_state,
+        )
+        dual_stream_attention_slices = None
+        dual_stream_attention_ubatch_slices = None
+        if dual_stream_attention_plan is not None:
+            (dual_stream_attention_slices,
+             dual_stream_attention_ubatch_slices) = (
+                 _dual_stream_attention_plan_to_slices(
+                     dual_stream_attention_plan,
+                     self.uniform_decode_query_len))
+            self._dual_stream_attention_plan = dual_stream_attention_plan
+            self._dual_stream_attention_slices = dual_stream_attention_slices
+            if split_debug_enabled:
+                split_debug.log_event(
+                    "dual_stream_attention_plan",
+                    {
+                        "total_tokens":
+                        int(dual_stream_attention_plan.total_tokens),
+                        "graph_tokens":
+                        int(dual_stream_attention_plan.graph_tokens),
+                        "split_actual_tokens":
+                        list(dual_stream_attention_plan.split_actual_tokens),
+                        "split_graph_tokens":
+                        list(dual_stream_attention_plan.split_graph_tokens),
+                        "split_start_tokens":
+                        list(dual_stream_attention_plan.split_start_tokens),
+                        "actual_q_policy":
+                        _dual_stream_attention_actual_q_policy(split_cfg),
+                    },
+                    step_id=self._split_inplace_debug_step_id,
+                )
 
         # Hot-Swap lora model
         if self.lora_config:
@@ -2766,6 +2890,9 @@ class NPUModelRunner(GPUModelRunner):
         self.num_tokens_across_dp = num_tokens_across_dp
 
         attn_metadata: PerLayerAttnMetadata = {}
+        dual_stream_attention_metadata: Optional[list[PerLayerAttnMetadata]] = (
+            [dict() for _ in range(2)]
+            if dual_stream_attention_ubatch_slices is not None else None)
         split_ubatch_slices_for_metadata: Optional[UBatchSlices] = None
         if ubatch_slices is not None:
             attn_metadata = [dict() for _ in range(len(ubatch_slices))]
@@ -3113,6 +3240,10 @@ class NPUModelRunner(GPUModelRunner):
                 extra_attn_metadata_args = {}
                 builder = attn_group.get_metadata_builder()
                 if isinstance(builder, GDNAttentionMetadataBuilder):
+                    if dual_stream_attention_metadata is not None:
+                        raise RuntimeError(
+                            "dual_stream_attention_config does not support "
+                            "GDN/linear attention layers")
                     if use_spec_decode:
                         patch_torch_npu_argsort()
                         extra_attn_metadata_args = dict(
@@ -3160,6 +3291,10 @@ class NPUModelRunner(GPUModelRunner):
                         for layer_name in attn_group.layer_names:
                             attn_metadata[layer_name] = attn_metadata_i
                 elif self.model_config.runner_type == "pooling":
+                    if dual_stream_attention_metadata is not None:
+                        raise RuntimeError(
+                            "dual_stream_attention_config does not support "
+                            "pooling model runner")
                     # TODO: support ubatch here
                     attn_metadata_i = builder.build(
                         common_prefix_len=common_prefix_len,
@@ -3199,9 +3334,47 @@ class NPUModelRunner(GPUModelRunner):
                             **extra_attn_metadata_args)
                         for layer_name in attn_group.layer_names:
                             attn_metadata[layer_name] = attn_metadata_i
+                    if dual_stream_attention_metadata is not None:
+                        assert dual_stream_attention_ubatch_slices is not None
+                        assert dual_stream_attention_slices is not None
+                        dual_common_attn_metadata_list = split_attn_metadata(
+                            dual_stream_attention_ubatch_slices,
+                            common_attn_metadata,
+                            self.max_num_tokens)
+                        dual_common_attn_metadata_list = (
+                            self.
+                            _stabilize_dual_stream_common_attn_metadata_list(
+                                dual_common_attn_metadata_list,
+                                dual_stream_attention_slices))
+                        _validate_split_attn_metadata_count(
+                            "dual_stream_attention",
+                            dual_common_attn_metadata_list,
+                            len(dual_stream_attention_ubatch_slices),
+                        )
+                        for ubid, split_common_attn_metadata in enumerate(
+                                dual_common_attn_metadata_list):
+                            dual_attn_metadata_i = builder.build(
+                                common_prefix_len=common_prefix_len,
+                                common_attn_metadata=
+                                split_common_attn_metadata,
+                                model=self.get_model())
+                            self._apply_dual_stream_fia_actual_seq_lengths_q(
+                                dual_attn_metadata_i,
+                                split_common_attn_metadata)
+                            for layer_name in attn_group.layer_names:
+                                dual_stream_attention_metadata[ubid][
+                                    layer_name] = dual_attn_metadata_i
 
         # update global cos, sin
         update_cos_sin(positions)
+
+        if dual_stream_attention_plan is not None:
+            if dual_stream_attention_metadata is None:
+                raise RuntimeError(
+                    "dual_stream_attention_config selected a plan but did "
+                    "not build split attention metadata")
+            self._dual_stream_attention_metadata = (
+                dual_stream_attention_metadata)
 
         if lmhead_tp_enable():
             max_num_reqs_across_dp = self.max_num_reqs * self.uniform_decode_query_len
@@ -3310,6 +3483,109 @@ class NPUModelRunner(GPUModelRunner):
                                          self.vllm_config,
                                          in_parallel_streams=parallel_streams)
 
+    def _select_dual_stream_attention_plan(
+            self,
+            *,
+            total_num_scheduled_tokens: int,
+            graph_num_tokens: int,
+            uniform_decode: bool,
+            with_prefill: bool,
+            ubatch_slices: Optional[UBatchSlices],
+            has_spec_decode_tokens: bool,
+            has_lora: bool,
+            attn_state: Any,
+            allow_missing_plan: bool = False) -> Any:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        cfg = _dual_stream_attention_config(split_cfg)
+        if cfg is None or not getattr(cfg, "enabled", False):
+            return None
+        if with_prefill or attn_state != AscendAttentionState.DecodeOnly:
+            return None
+
+        unsupported_reason = None
+        if not uniform_decode:
+            unsupported_reason = "non_uniform_decode"
+        elif ubatch_slices is not None:
+            unsupported_reason = "dbo_active"
+        elif has_spec_decode_tokens:
+            unsupported_reason = "spec_decode"
+        elif has_lora:
+            unsupported_reason = "lora"
+        elif self.uses_mrope:
+            unsupported_reason = "mrope"
+        elif self.model_config.use_mla:
+            unsupported_reason = "mla"
+        elif self.pcp_size * self.dcp_size > 1:
+            unsupported_reason = "pcp_dcp"
+        elif self.vllm_config.parallel_config.tensor_parallel_size != 1:
+            unsupported_reason = "tp_not_1"
+
+        if unsupported_reason is not None:
+            if getattr(cfg, "miss_policy", "error") == "error":
+                raise RuntimeError(
+                    "dual_stream_attention_config enabled but unsupported "
+                    f"decode case: {unsupported_reason}")
+            return None
+
+        plan = _find_dual_stream_attention_plan(
+            cfg, total_num_scheduled_tokens, key="total")
+        if plan is None and allow_missing_plan:
+            plan = _find_dual_stream_attention_plan(
+                cfg, graph_num_tokens, key="graph")
+        if plan is None:
+            if allow_missing_plan:
+                return None
+            if getattr(cfg, "miss_policy", "error") == "error":
+                raise RuntimeError(
+                    "dual_stream_attention_config has no capture plan for "
+                    "runtime tokens "
+                    f"{int(total_num_scheduled_tokens)} or graph tokens "
+                    f"{int(graph_num_tokens)}")
+            return None
+        if int(plan.graph_tokens) > int(graph_num_tokens):
+            raise RuntimeError(
+                "dual_stream_attention_config plan graph tokens exceed full "
+                "graph tokens: "
+                f"plan={int(plan.graph_tokens)}, graph={int(graph_num_tokens)}")
+        return plan
+
+    def _stabilize_dual_stream_common_attn_metadata_list(
+            self,
+            common_attn_metadata_list: list[AscendCommonAttentionMetadata],
+            split_batch_slices: SplitBatchSlices
+    ) -> list[AscendCommonAttentionMetadata]:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        actual_q_policy = _dual_stream_attention_actual_q_policy(split_cfg)
+        stabilized: list[AscendCommonAttentionMetadata] = []
+        for split_idx, common_attn_metadata in enumerate(
+                common_attn_metadata_list):
+            split_slice = split_batch_slices[split_idx]
+            if int(split_slice.graph_num_tokens) > int(split_slice.num_tokens):
+                actual_seq_lengths_q_tokens = None
+                if actual_q_policy == "actual":
+                    actual_seq_lengths_q_tokens = int(split_slice.num_tokens)
+                common_attn_metadata = (
+                    self._pad_inplace_common_attn_metadata_for_graph(
+                        common_attn_metadata,
+                        split_slice,
+                        split_idx=split_idx,
+                        fill_padding=True,
+                        actual_seq_lengths_q_tokens=
+                        actual_seq_lengths_q_tokens,
+                        allow_metadata_copy=True))
+            stabilized.append(common_attn_metadata)
+        return stabilized
+
+    def _apply_dual_stream_fia_actual_seq_lengths_q(
+            self, attn_metadata: Any,
+            common_attn_metadata: AscendCommonAttentionMetadata) -> None:
+        actual_seq_lengths_q = getattr(
+            common_attn_metadata, "_dual_stream_fia_actual_seq_lengths_q",
+            None)
+        if isinstance(actual_seq_lengths_q, list) and actual_seq_lengths_q:
+            setattr(attn_metadata, "actual_seq_lengths_q",
+                    list(actual_seq_lengths_q))
+
     def _pad_tensor_first_dim(self, tensor: Any, pad: int) -> Any:
         if not isinstance(tensor, torch.Tensor) or pad <= 0:
             return tensor
@@ -3339,7 +3615,8 @@ class NPUModelRunner(GPUModelRunner):
             name: str,
             dim: int = 0,
             backing_tensor: Optional[torch.Tensor] = None,
-            backing_start: int = 0) -> Any:
+            backing_start: int = 0,
+            allow_copy: bool = False) -> Any:
         if not isinstance(tensor, torch.Tensor):
             return tensor
 
@@ -3370,6 +3647,12 @@ class NPUModelRunner(GPUModelRunner):
                 if dim == 1:
                     return backing_tensor[:, int(backing_start):stop]
                 raise ValueError(f"Unsupported dim={dim} for {name}")
+            if allow_copy:
+                expanded = tensor.new_zeros(tuple(shape))
+                copy_slice = [slice(None)] * tensor.ndim
+                copy_slice[dim] = slice(0, int(tensor.shape[dim]))
+                expanded[tuple(copy_slice)].copy_(tensor)
+                return expanded
             backing_shape = (None if backing_tensor is None else
                              tuple(backing_tensor.shape))
             raise RuntimeError(
@@ -3437,7 +3720,10 @@ class NPUModelRunner(GPUModelRunner):
             split_slice: SplitBatchSlice,
             *,
             split_idx: int,
-            fill_padding: bool = True) -> AscendCommonAttentionMetadata:
+            fill_padding: bool = True,
+            actual_seq_lengths_q_tokens: Optional[int] = None,
+            allow_metadata_copy: bool = False,
+    ) -> AscendCommonAttentionMetadata:
         actual_tokens = int(split_slice.num_tokens)
         graph_tokens = int(split_slice.graph_num_tokens)
         if graph_tokens < actual_tokens:
@@ -3484,20 +3770,31 @@ class NPUModelRunner(GPUModelRunner):
                 common.query_start_loc_cpu, pad_reqs, query_len))
 
         padded_common.seq_lens = self._expand_tensor_view_for_graph(
-            common.seq_lens, graph_reqs, name="seq_lens")
+            common.seq_lens,
+            graph_reqs,
+            name="seq_lens",
+            allow_copy=allow_metadata_copy)
         padded_common.seq_lens_cpu = self._expand_tensor_view_for_graph(
-            common.seq_lens_cpu, graph_reqs, name="seq_lens_cpu")
+            common.seq_lens_cpu,
+            graph_reqs,
+            name="seq_lens_cpu",
+            allow_copy=allow_metadata_copy)
         padded_common.num_computed_tokens_cpu = (
             self._expand_tensor_view_for_graph(
                 common.num_computed_tokens_cpu,
                 graph_reqs,
-                name="num_computed_tokens_cpu"))
+                name="num_computed_tokens_cpu",
+                allow_copy=allow_metadata_copy))
         padded_common.block_table_tensor = self._expand_tensor_view_for_graph(
             common.block_table_tensor,
             graph_reqs,
-            name="block_table_tensor")
+            name="block_table_tensor",
+            allow_copy=allow_metadata_copy)
         padded_common.slot_mapping = self._expand_tensor_view_for_graph(
-            common.slot_mapping, graph_tokens, name="slot_mapping")
+            common.slot_mapping,
+            graph_tokens,
+            name="slot_mapping",
+            allow_copy=allow_metadata_copy)
         padded_common.positions = self._metadata_positions_for_graph_slice(
             common.positions, split_slice)
 
@@ -3542,8 +3839,23 @@ class NPUModelRunner(GPUModelRunner):
         padded_common.num_input_tokens = graph_tokens
         padded_common.max_query_len = max(int(common.max_query_len),
                                           query_len)
+        effective_q_tokens = graph_tokens
+        if actual_seq_lengths_q_tokens is not None:
+            effective_q_tokens = int(actual_seq_lengths_q_tokens)
+            if effective_q_tokens < 1 or effective_q_tokens > graph_tokens:
+                raise RuntimeError(
+                    "Invalid dual-stream FIA actual q tokens: "
+                    f"actual_seq_lengths_q_tokens={effective_q_tokens}, "
+                    f"graph_tokens={graph_tokens}")
+            if effective_q_tokens % query_len != 0:
+                raise RuntimeError(
+                    "Dual-stream FIA actual q tokens must be request-aligned: "
+                    f"actual_seq_lengths_q_tokens={effective_q_tokens}, "
+                    f"query_len={query_len}")
         padded_common.actual_seq_lengths_q = list(
-            range(query_len, graph_tokens + 1, query_len))
+            range(query_len, effective_q_tokens + 1, query_len))
+        setattr(padded_common, "_dual_stream_fia_actual_seq_lengths_q",
+                padded_common.actual_seq_lengths_q)
         padded_common.graph_pad_size = graph_reqs
 
         if split_debug.is_enabled():
@@ -3563,9 +3875,13 @@ class NPUModelRunner(GPUModelRunner):
                     "graph_reqs": graph_reqs,
                     "pad_tokens": pad_tokens,
                     "pad_reqs": pad_reqs,
+                    "effective_q_tokens": effective_q_tokens,
+                    "actual_seq_lengths_q_len":
+                    len(padded_common.actual_seq_lengths_q),
                     "fill_padding": bool(fill_padding),
                     "query_start_loc_allows_new_buffer": True,
-                    "metadata_uses_backing_views": True,
+                    "metadata_uses_backing_views": not bool(
+                        allow_metadata_copy),
                     **split_debug.metadata_tensor_info(padded_common),
                 },
                 step_id=_split_debug_step_from_runner(self),
@@ -6442,6 +6758,28 @@ class NPUModelRunner(GPUModelRunner):
             ):
                 _set_split_debug_step(get_forward_context(),
                                       self._split_inplace_debug_step_id)
+                dual_stream_attention_metadata = getattr(
+                    self, "_dual_stream_attention_metadata", None)
+                if dual_stream_attention_metadata is not None:
+                    forward_context = get_forward_context()
+                    setattr(forward_context,
+                            "dual_stream_attention_metadata",
+                            dual_stream_attention_metadata)
+                    setattr(forward_context,
+                            "dual_stream_attention_slices",
+                            getattr(self,
+                                    "_dual_stream_attention_slices", None))
+                    setattr(forward_context,
+                            "dual_stream_attention_plan",
+                            getattr(self, "_dual_stream_attention_plan", None))
+                    cfg = _dual_stream_attention_config(
+                        getattr(self.ascend_config, "split_batch_config",
+                                None))
+                    setattr(
+                        forward_context,
+                        "dual_stream_attention_secondary_stream_mode",
+                        getattr(cfg, "secondary_stream_mode",
+                                "dedicated_pair"))
                 self.maybe_setup_kv_connector(scheduler_output)
 
                 if split_ubatch_slices is not None:
@@ -6914,6 +7252,32 @@ class NPUModelRunner(GPUModelRunner):
                 "Full decode graph only supports uniform batch now."
 
             attn_metadata = {}
+            dual_stream_attention_plan = self._select_dual_stream_attention_plan(
+                total_num_scheduled_tokens=int(num_tokens),
+                graph_num_tokens=int(num_tokens),
+                uniform_decode=bool(max_query_len
+                                    == self.uniform_decode_query_len),
+                with_prefill=bool(with_prefill),
+                ubatch_slices=ubatch_slices,
+                has_spec_decode_tokens=bool(self.speculative_config),
+                has_lora=bool(self.lora_config),
+                attn_state=AscendAttentionState.DecodeOnly,
+                allow_missing_plan=True,
+            )
+            dual_stream_attention_slices = None
+            dual_stream_attention_ubatch_slices = None
+            dual_stream_attention_metadata: Optional[
+                list[PerLayerAttnMetadata]] = None
+            if dual_stream_attention_plan is not None:
+                (dual_stream_attention_slices,
+                 dual_stream_attention_ubatch_slices) = (
+                     _dual_stream_attention_plan_to_slices(
+                         dual_stream_attention_plan,
+                         self.uniform_decode_query_len))
+                dual_stream_attention_metadata = [dict() for _ in range(2)]
+                self._dual_stream_attention_plan = dual_stream_attention_plan
+                self._dual_stream_attention_slices = (
+                    dual_stream_attention_slices)
             if ubatch_slices is not None:
                 attn_metadata = [dict() for _ in range(len(ubatch_slices))]
 
@@ -7024,6 +7388,10 @@ class NPUModelRunner(GPUModelRunner):
                                     layer_name] = attn_metadata_i
                     else:
                         if isinstance(builder, GDNAttentionMetadataBuilder):
+                            if dual_stream_attention_metadata is not None:
+                                raise RuntimeError(
+                                    "dual_stream_attention_config does not "
+                                    "support GDN/linear attention layers")
                             attn_metadata_gdn_attention = builder.build_for_cudagraph_capture(
                                 common_metadata)
                         else:
@@ -7037,6 +7405,48 @@ class NPUModelRunner(GPUModelRunner):
                             else:
                                 attn_metadata[
                                     layer_name] = attn_metadata_full_attention
+                        if (dual_stream_attention_metadata is not None
+                                and not isinstance(
+                                    builder, GDNAttentionMetadataBuilder)):
+                            assert dual_stream_attention_ubatch_slices is not None
+                            assert dual_stream_attention_slices is not None
+                            dual_common_attn_metadata_list = split_attn_metadata(
+                                dual_stream_attention_ubatch_slices,
+                                common_attn_metadata,
+                                self.max_num_tokens)
+                            dual_common_attn_metadata_list = (
+                                self.
+                                _stabilize_dual_stream_common_attn_metadata_list(
+                                    dual_common_attn_metadata_list,
+                                    dual_stream_attention_slices))
+                            _validate_split_attn_metadata_count(
+                                "dummy_dual_stream_attention",
+                                dual_common_attn_metadata_list,
+                                len(dual_stream_attention_ubatch_slices),
+                            )
+                            for ubid, split_common_attn_metadata in enumerate(
+                                    dual_common_attn_metadata_list):
+                                dual_attn_metadata_i = (
+                                    builder.build_for_graph_capture(
+                                        split_common_attn_metadata,
+                                        attn_state,
+                                        self.get_model()))
+                                self._apply_dual_stream_fia_actual_seq_lengths_q(
+                                    dual_attn_metadata_i,
+                                    split_common_attn_metadata)
+                                for layer_name in kv_cache_group_spec.layer_names:
+                                    if "linear_attn" in layer_name:
+                                        continue
+                                    dual_stream_attention_metadata[ubid][
+                                        layer_name] = dual_attn_metadata_i
+
+            if dual_stream_attention_plan is not None:
+                if dual_stream_attention_metadata is None:
+                    raise RuntimeError(
+                        "dual_stream_attention_config selected a dummy plan "
+                        "but did not build split attention metadata")
+                self._dual_stream_attention_metadata = (
+                    dual_stream_attention_metadata)
 
         return attn_metadata
 
@@ -7123,6 +7533,9 @@ class NPUModelRunner(GPUModelRunner):
         in_parallel_streams: bool=False,
     ) -> torch.Tensor:
         # only support eager mode and piecewise graph now
+        self._dual_stream_attention_metadata = None
+        self._dual_stream_attention_slices = None
+        self._dual_stream_attention_plan = None
         assert aclgraph_runtime_mode is None or aclgraph_runtime_mode in {
             CUDAGraphMode.NONE, CUDAGraphMode.PIECEWISE, CUDAGraphMode.FULL
         }
@@ -7198,6 +7611,9 @@ class NPUModelRunner(GPUModelRunner):
         # dbo
         total_num_scheduled_tokens = int(num_scheduled_tokens.sum())
         ubatch_slices = None
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        dual_stream_attention_enabled = _dual_stream_attention_enabled(
+            split_cfg)
 
         moe_comm_type = select_moe_comm_method(num_tokens, self.vllm_config)
         # We currently only microbatch if the number of tokens is
@@ -7213,7 +7629,8 @@ class NPUModelRunner(GPUModelRunner):
             )
          # Split batch - compute split slices for large decode batches (similar to _prepare_inputs)
         # Split batch and DBO never conflict by design
-        if uniform_decode and ubatch_slices is None :  # Only split if DBO is not active
+        if (not dual_stream_attention_enabled and uniform_decode
+                and ubatch_slices is None):  # Only split if DBO is not active
             cudagraph_capture_sizes = set(
                 self.compilation_config.cudagraph_capture_sizes or []
             ) if self.use_aclgraph else None
@@ -7253,6 +7670,10 @@ class NPUModelRunner(GPUModelRunner):
         num_tokens_padded = batch_descriptor.num_tokens
         num_reqs_padded = (batch_descriptor.num_reqs if
                            batch_descriptor.num_reqs is not None else num_reqs)
+        if uniform_decode:
+            expected_num_reqs_padded = cdiv(num_tokens_padded, max_query_len)
+            if num_reqs_padded != expected_num_reqs_padded:
+                num_reqs_padded = expected_num_reqs_padded
         if num_tokens_across_dp is not None and num_tokens_padded != num_tokens:
             # pad is needed if the pad of `num_tokens` is triggered inside CudagraphDispatcher
             num_tokens_across_dp[:] = num_tokens_padded
@@ -7379,6 +7800,28 @@ class NPUModelRunner(GPUModelRunner):
                     weight_prefetch_method=self.weight_prefetch_method,
                     in_parallel_streams=in_parallel_streams,
                     ubatch_slices=ubatch_slices,):
+                dual_stream_attention_metadata = getattr(
+                    self, "_dual_stream_attention_metadata", None)
+                if dual_stream_attention_metadata is not None:
+                    forward_context = get_forward_context()
+                    setattr(forward_context,
+                            "dual_stream_attention_metadata",
+                            dual_stream_attention_metadata)
+                    setattr(forward_context,
+                            "dual_stream_attention_slices",
+                            getattr(self,
+                                    "_dual_stream_attention_slices", None))
+                    setattr(forward_context,
+                            "dual_stream_attention_plan",
+                            getattr(self, "_dual_stream_attention_plan", None))
+                    cfg = _dual_stream_attention_config(
+                        getattr(self.ascend_config, "split_batch_config",
+                                None))
+                    setattr(
+                        forward_context,
+                        "dual_stream_attention_secondary_stream_mode",
+                        getattr(cfg, "secondary_stream_mode",
+                                "dedicated_pair"))
                 with torch.npu.stream(self.stream_parallel if in_parallel_streams else self.stream_main):
                     hidden_states = self._generate_dummy_run_hidden_states(
                         input_ids, positions, num_tokens_padded,

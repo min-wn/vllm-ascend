@@ -33,6 +33,49 @@ from vllm.distributed.device_communicators.pynccl_allocator import \
 GraphParamKey = int | BatchDescriptor
 
 
+def _format_dual_stream_attention_key_part(value: Any) -> str:
+    try:
+        return ",".join(str(int(item)) for item in value)
+    except (TypeError, ValueError):
+        return ""
+
+
+def _dual_stream_attention_graph_param_key(
+        forward_context: Any, runtime_shape: int,
+        desc: BatchDescriptor) -> Optional[BatchDescriptor]:
+    dual_metadata = getattr(forward_context,
+                            "dual_stream_attention_metadata", None)
+    if not isinstance(dual_metadata, list) or len(dual_metadata) != 2:
+        return None
+    plan = getattr(forward_context, "dual_stream_attention_plan", None)
+    if plan is None:
+        return None
+
+    graph_tokens = int(getattr(plan, "graph_tokens", runtime_shape)
+                       or runtime_shape)
+    total_tokens = int(getattr(plan, "total_tokens", graph_tokens)
+                       or graph_tokens)
+    split_actual = _format_dual_stream_attention_key_part(
+        getattr(plan, "split_actual_tokens", ()))
+    split_graph = _format_dual_stream_attention_key_part(
+        getattr(plan, "split_graph_tokens", ()))
+    split_start = _format_dual_stream_attention_key_part(
+        getattr(plan, "split_start_tokens", ()))
+    metadata_mode = (
+        f"total={total_tokens};actual={split_actual};"
+        f"graph={split_graph};start={split_start};full={graph_tokens}")
+    return BatchDescriptor(
+        num_tokens=graph_tokens,
+        num_reqs=desc.num_reqs,
+        uniform=desc.uniform,
+        has_lora=desc.has_lora,
+        start_num_tokens=0,
+        graph_variant="dual_stream_attention",
+        attention_backend="fia",
+        capture_metadata_mode=metadata_mode,
+    )
+
+
 def get_graph_param_key(forward_context: Any,
                         runtime_shape: int,
                         *,
@@ -43,6 +86,10 @@ def get_graph_param_key(forward_context: Any,
     desc = getattr(forward_context, "batch_descriptor", None)
     if not isinstance(desc, BatchDescriptor):
         return runtime_shape
+    dual_stream_key = _dual_stream_attention_graph_param_key(
+        forward_context, runtime_shape, desc)
+    if dual_stream_key is not None:
+        return dual_stream_key
     start = int(getattr(desc, "start_num_tokens", 0) or 0)
     has_descriptor_variant = (
         start > 0
@@ -1271,9 +1318,254 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
             event.record(update_stream)
 
 
+def _has_dual_stream_attention_metadata(forward_context) -> bool:
+    dual_metadata = getattr(forward_context,
+                            "dual_stream_attention_metadata", None)
+    return isinstance(dual_metadata, list) and len(dual_metadata) == 2
+
+
+def _same_tensor_ref(left: Any, right: Any) -> bool:
+    left_ptr = _safe_tensor_ptr(left)
+    right_ptr = _safe_tensor_ptr(right)
+    if left_ptr is not None or right_ptr is not None:
+        return left_ptr == right_ptr
+    return left is right
+
+
+def _require_same_dual_fia_tensor(name: str, left: Any, right: Any,
+                                  layer_key: Any):
+    if not _same_tensor_ref(left, right):
+        raise RuntimeError(
+            "PTA dual-FIA update requires both splits to share "
+            f"{name}; got different tensors for layer {layer_key!s}")
+
+
+def _update_attn_dual_fia_params(update_stream, forward_context,
+                                 runtime_shape,
+                                 refresh_block_table: bool = True,
+                                 in_parallel_streams: bool = False):
+    graph_params = get_graph_params(in_parallel_streams)
+    param_key = get_graph_param_key(forward_context, runtime_shape)
+    require_graph_param_key(graph_params,
+                            param_key,
+                            op="_update_attn_dual_fia_params")
+    dual_metadata = getattr(forward_context,
+                            "dual_stream_attention_metadata", None)
+    if not isinstance(dual_metadata, list) or len(dual_metadata) != 2:
+        raise RuntimeError(
+            "dual_stream_attention_metadata must contain exactly two splits")
+
+    with torch.npu.stream(update_stream):
+        for key, param, handles, events in zip(
+                forward_context.attn_metadata,
+                graph_params.attn_params[param_key],
+                graph_params.handles[param_key],
+                graph_params.events[param_key],
+        ):
+            if not isinstance(param, tuple) or len(param) < 2:
+                raise RuntimeError(
+                    "GraphParams entry is not a dual-stream FIA attention "
+                    f"entry for layer {key!s}")
+
+            if param[0] == "dual_stream_fia_pta":
+                if len(param) != 5:
+                    raise RuntimeError(
+                        "PTA dual-stream FIA GraphParams entry must contain "
+                        f"full query/output and split ranges for layer {key!s}")
+                if not hasattr(torch.npu,
+                               "dual_fused_infer_attention_score_update"):
+                    raise RuntimeError(
+                        "PTA dual-FIA update record was captured but "
+                        "torch.npu.dual_fused_infer_attention_score_update "
+                        "is unavailable")
+
+                _, query, attn_output, split_params, split_ranges = param
+                if len(split_params) != 2 or len(split_ranges) != 2:
+                    raise RuntimeError(
+                        "PTA dual-stream FIA GraphParams entry must contain "
+                        f"exactly two splits for layer {key!s}")
+                if isinstance(events, (list, tuple)):
+                    update_events = tuple(events)
+                elif events is None:
+                    update_events = ()
+                else:
+                    update_events = (events,)
+                if len(update_events) not in (1, 2):
+                    raise RuntimeError(
+                        "PTA dual-stream FIA GraphParams entry must contain "
+                        f"one shared event or two split events for layer {key!s}")
+
+                split_update_params = []
+                for split_idx, split_param in enumerate(split_params):
+                    (query_view, key_cache, value, block_tables, attn_mask,
+                     block_size, seq_lens, query_start_loc, num_kv_heads,
+                     num_heads, scale, attn_output_view, softmax_lse,
+                     workspace_key) = split_param
+
+                    metadata = dual_metadata[split_idx][key]
+                    seq_lens = maybe_template_fia_seq_lens(
+                        forward_context,
+                        metadata.seq_lens_list,
+                        _get_fia_key_t(key_cache, block_size),
+                        source=f"acl_graph_update_dual:{key}:{split_idx}")
+                    actual_seq_lengths_q = metadata.actual_seq_lengths_q
+                    metadata_block_table, metadata_block_source = (
+                        _extract_block_table_from_metadata(metadata))
+                    block_table_refreshed = False
+                    if refresh_block_table:
+                        block_table_refreshed = _refresh_block_table_in_place(
+                            block_tables, metadata_block_table)
+                        _log_block_table_refresh_diag(
+                            attn_impl=f"dual_fia_pta:{split_idx}",
+                            key=key,
+                            forward_context=forward_context,
+                            runtime_shape=runtime_shape,
+                            in_parallel_streams=in_parallel_streams,
+                            metadata_block_source=metadata_block_source,
+                            graph_block_table=block_tables,
+                            metadata_block_table=metadata_block_table,
+                            block_table_refreshed=block_table_refreshed,
+                        )
+
+                    split_update_params.append({
+                        "key_cache": key_cache,
+                        "value": value,
+                        "block_tables": block_tables,
+                        "attn_mask": attn_mask,
+                        "block_size": block_size,
+                        "seq_lens": seq_lens,
+                        "actual_seq_lengths_q": actual_seq_lengths_q,
+                        "num_kv_heads": num_kv_heads,
+                        "num_heads": num_heads,
+                        "scale": scale,
+                        "softmax_lse": softmax_lse,
+                        "workspace":
+                        graph_params.workspaces.get(workspace_key),
+                    })
+
+                split0, split1 = split_update_params
+                _require_same_dual_fia_tensor("key_cache",
+                                              split0["key_cache"],
+                                              split1["key_cache"], key)
+                _require_same_dual_fia_tensor("value", split0["value"],
+                                              split1["value"], key)
+                _require_same_dual_fia_tensor("atten_mask",
+                                              split0["attn_mask"],
+                                              split1["attn_mask"], key)
+                if (split0["block_size"] != split1["block_size"]
+                        or split0["num_kv_heads"] != split1["num_kv_heads"]
+                        or split0["num_heads"] != split1["num_heads"]
+                        or split0["scale"] != split1["scale"]):
+                    raise RuntimeError(
+                        "PTA dual-FIA update requires both splits to share "
+                        f"FIA scalar attrs for layer {key!s}")
+
+                split_start_0, split_graph_tokens_0 = split_ranges[0]
+                split_start_1, split_graph_tokens_1 = split_ranges[1]
+                torch.npu.dual_fused_infer_attention_score_update(
+                    update_stream,
+                    handles,
+                    query,
+                    split0["key_cache"],
+                    split0["value"],
+                    attn_output,
+                    block_table_0=split0["block_tables"],
+                    block_table_1=split1["block_tables"],
+                    actual_seq_lengths_0=split0["actual_seq_lengths_q"],
+                    actual_seq_lengths_1=split1["actual_seq_lengths_q"],
+                    actual_seq_lengths_kv_0=split0["seq_lens"],
+                    actual_seq_lengths_kv_1=split1["seq_lens"],
+                    split_start_0=int(split_start_0),
+                    split_graph_tokens_0=int(split_graph_tokens_0),
+                    split_start_1=int(split_start_1),
+                    split_graph_tokens_1=int(split_graph_tokens_1),
+                    atten_mask=split0["attn_mask"],
+                    workspace_0=split0["workspace"],
+                    workspace_1=split1["workspace"],
+                    softmax_lse_0=split0["softmax_lse"],
+                    softmax_lse_1=split1["softmax_lse"],
+                    num_heads=split0["num_heads"],
+                    scale=split0["scale"],
+                    block_size=split0["block_size"],
+                    num_key_value_heads=split0["num_kv_heads"],
+                    sparse_mode=3,
+                    input_layout="TND",
+                    softmax_lse_flag=False,
+                )
+                for event in update_events:
+                    event.record(update_stream)
+                continue
+
+            if param[0] != "dual_stream_fia":
+                raise RuntimeError(
+                    "GraphParams entry is not a dual-stream FIA attention "
+                    f"entry for layer {key!s}")
+            split_params = param[1]
+            if len(split_params) != 2 or len(handles) != 2 or len(events) != 2:
+                raise RuntimeError(
+                    "dual-stream FIA GraphParams entry must contain exactly "
+                    f"two splits for layer {key!s}")
+
+            for split_idx, split_param in enumerate(split_params):
+                (query, key_cache, value, block_tables, attn_mask, block_size,
+                 seq_lens, query_start_loc, num_kv_heads, num_heads, scale,
+                 attn_output, softmax_lse, workspace_key) = split_param
+
+                metadata = dual_metadata[split_idx][key]
+                seq_lens = maybe_template_fia_seq_lens(
+                    forward_context,
+                    metadata.seq_lens_list,
+                    _get_fia_key_t(key_cache, block_size),
+                    source=f"acl_graph_update_dual:{key}:{split_idx}")
+                actual_seq_lengths_q = metadata.actual_seq_lengths_q
+                metadata_block_table, metadata_block_source = (
+                    _extract_block_table_from_metadata(metadata))
+                block_table_refreshed = False
+                if refresh_block_table:
+                    block_table_refreshed = _refresh_block_table_in_place(
+                        block_tables, metadata_block_table)
+                    _log_block_table_refresh_diag(
+                        attn_impl=f"dual_fia:{split_idx}",
+                        key=key,
+                        forward_context=forward_context,
+                        runtime_shape=runtime_shape,
+                        in_parallel_streams=in_parallel_streams,
+                        metadata_block_source=metadata_block_source,
+                        graph_block_table=block_tables,
+                        metadata_block_table=metadata_block_table,
+                        block_table_refreshed=block_table_refreshed,
+                    )
+
+                torch.npu.graph_task_update_begin(update_stream,
+                                                  handles[split_idx])
+                torch_npu.npu_fused_infer_attention_score.out(
+                    query=query,
+                    key=key_cache,
+                    value=value,
+                    block_table=block_tables,
+                    atten_mask=attn_mask,
+                    input_layout="TND",
+                    block_size=block_size,
+                    actual_seq_lengths=actual_seq_lengths_q,
+                    actual_seq_lengths_kv=seq_lens,
+                    num_key_value_heads=num_kv_heads,
+                    num_heads=num_heads,
+                    scale=scale,
+                    sparse_mode=3,
+                    workspace=graph_params.workspaces.get(workspace_key),
+                    out=[attn_output, softmax_lse],
+                )
+                torch.npu.graph_task_update_end(update_stream)
+                events[split_idx].record(update_stream)
+
+
 def update_attn_params(update_stream, forward_context, runtime_shape,
                        vllm_config, in_parallel_streams: bool = False):
-    if using_paged_attention(runtime_shape, vllm_config, forward_context):
+    if _has_dual_stream_attention_metadata(forward_context):
+        _update_attn_dual_fia_params(update_stream, forward_context,
+                                     runtime_shape,
+                                     in_parallel_streams=in_parallel_streams)
+    elif using_paged_attention(runtime_shape, vllm_config, forward_context):
         _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                                in_parallel_streams=in_parallel_streams)
     else:
@@ -1285,7 +1577,15 @@ def update_attn_params_split(update_stream, forward_context,
                              runtime_shape, vllm_config,
                              in_parallel_streams: bool = False):
     """Split-only attn update with block_table in-place refresh enabled."""
-    if using_paged_attention(runtime_shape, vllm_config, forward_context):
+    if _has_dual_stream_attention_metadata(forward_context):
+        _update_attn_dual_fia_params(
+            update_stream,
+            forward_context,
+            runtime_shape,
+            refresh_block_table=True,
+            in_parallel_streams=in_parallel_streams,
+        )
+    elif using_paged_attention(runtime_shape, vllm_config, forward_context):
         _update_attn_pa_params(
             update_stream,
             forward_context,
@@ -1500,9 +1800,9 @@ def update_mla_attn_dcp_pcp_params(update_stream, forward_context,
 
 @dataclass
 class GraphParams:
-    events: dict[GraphParamKey, list[torch.npu.ExternalEvent]]
+    events: dict[GraphParamKey, list[Any]]
     workspaces: dict[GraphParamKey, torch.Tensor | None]
-    handles: dict[GraphParamKey, list[torch_npu._C._NPUTaskGroupHandle]]
+    handles: dict[GraphParamKey, list[Any]]
     attn_params: dict[GraphParamKey, list[tuple]]
 
 

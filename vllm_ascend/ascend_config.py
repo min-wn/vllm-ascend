@@ -380,6 +380,165 @@ def _parse_two_ints(raw: dict[str, Any], key: str) -> tuple[int, int]:
     return parsed
 
 
+def _parse_dual_stream_two_ints(raw: dict[str, Any],
+                                key: str) -> tuple[int, int]:
+    value = raw.get(key, None)
+    if value is None:
+        raise ValueError(
+            f"dual_stream_attention_config.capture_plans[].{key} "
+            "is required")
+    parsed = tuple(int(v) for v in value)
+    if len(parsed) != 2:
+        raise ValueError(
+            f"dual_stream_attention_config.capture_plans[].{key} "
+            "must contain exactly 2 integers")
+    return parsed
+
+
+@dataclass(frozen=True)
+class DualStreamAttentionCapturePlan:
+    total_tokens: int
+    split_actual_tokens: tuple[int, int]
+    split_graph_tokens: tuple[int, int]
+    split_start_tokens: tuple[int, int]
+
+    @classmethod
+    def from_config(
+            cls,
+            raw_plan: dict[str, Any]) -> "DualStreamAttentionCapturePlan":
+        total_tokens = int(raw_plan.get("total_tokens", 0))
+        split_actual_tokens = _parse_dual_stream_two_ints(
+            raw_plan, "split_actual_tokens")
+        split_graph_tokens = _parse_dual_stream_two_ints(
+            raw_plan, "split_graph_tokens")
+        raw_start_tokens = raw_plan.get("split_start_tokens", None)
+        if raw_start_tokens is None:
+            split_start_tokens = (0, split_actual_tokens[0])
+        else:
+            split_start_tokens = tuple(int(v) for v in raw_start_tokens)
+            if len(split_start_tokens) != 2:
+                raise ValueError(
+                    "dual_stream_attention_config.capture_plans[]."
+                    "split_start_tokens must contain exactly 2 integers")
+
+        if total_tokens < 1:
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "total_tokens must be >= 1")
+        if sum(split_actual_tokens) != total_tokens:
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "split_actual_tokens must sum to total_tokens")
+        if any(v < 1 for v in split_actual_tokens):
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "split_actual_tokens must contain positive integers")
+        if any(v < 1 for v in split_graph_tokens):
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "split_graph_tokens must contain positive integers")
+        if any(graph < actual for graph, actual in zip(
+                split_graph_tokens, split_actual_tokens)):
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "split_graph_tokens must be >= split_actual_tokens")
+        if split_start_tokens[0] != 0 or any(v < 0 for v in split_start_tokens):
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "split_start_tokens must start at 0 and be non-negative")
+        if split_start_tokens[1] != split_actual_tokens[0]:
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans[]."
+                "split_start_tokens[1] must equal split_actual_tokens[0]")
+        return cls(
+            total_tokens=total_tokens,
+            split_actual_tokens=split_actual_tokens,
+            split_graph_tokens=split_graph_tokens,
+            split_start_tokens=split_start_tokens,
+        )
+
+    @property
+    def graph_tokens(self) -> int:
+        return sum(self.split_graph_tokens)
+
+
+class DualStreamAttentionConfig:
+    """Configuration for full graph + dual-stream FIA attention prototype."""
+
+    def __init__(self, dual_stream_attention_config: dict):
+        self.enabled: bool = bool(
+            dual_stream_attention_config.get("enabled", False))
+        self.backend: str = str(
+            dual_stream_attention_config.get("backend", "fia"))
+        self.plan_source: str = str(
+            dual_stream_attention_config.get("plan_source", "explicit"))
+        self.secondary_stream_mode: str = str(
+            dual_stream_attention_config.get("secondary_stream_mode",
+                                             "dedicated_pair"))
+        self.actual_q_policy: str = str(
+            dual_stream_attention_config.get("actual_q_policy", "graph"))
+        self.miss_policy: str = str(
+            dual_stream_attention_config.get("miss_policy", "error"))
+        self.validate_decode_only: bool = bool(
+            dual_stream_attention_config.get("validate_decode_only", True))
+        self.max_capture_graphs: int = int(
+            dual_stream_attention_config.get("max_capture_graphs", 16))
+        raw_capture_plans = dual_stream_attention_config.get(
+            "capture_plans", [])
+        self.capture_plans: list[DualStreamAttentionCapturePlan] = [
+            DualStreamAttentionCapturePlan.from_config(raw_plan)
+            for raw_plan in raw_capture_plans
+        ]
+
+        valid_backends = ("fia", )
+        if self.backend not in valid_backends:
+            raise ValueError(
+                "dual_stream_attention_config.backend must be one of "
+                f"{valid_backends}, got {self.backend!r}")
+        valid_plan_sources = ("explicit", )
+        if self.plan_source not in valid_plan_sources:
+            raise ValueError(
+                "dual_stream_attention_config.plan_source must be one of "
+                f"{valid_plan_sources}, got {self.plan_source!r}")
+        valid_secondary_stream_modes = ("fork_join", "dedicated_pair")
+        if self.secondary_stream_mode not in valid_secondary_stream_modes:
+            raise ValueError(
+                "dual_stream_attention_config.secondary_stream_mode must be "
+                f"one of {valid_secondary_stream_modes}, got "
+                f"{self.secondary_stream_mode!r}")
+        valid_actual_q_policies = ("graph", "actual")
+        if self.actual_q_policy not in valid_actual_q_policies:
+            raise ValueError(
+                "dual_stream_attention_config.actual_q_policy must be one of "
+                f"{valid_actual_q_policies}, got {self.actual_q_policy!r}")
+        valid_miss_policies = ("error", "disable")
+        if self.miss_policy not in valid_miss_policies:
+            raise ValueError(
+                "dual_stream_attention_config.miss_policy must be one of "
+                f"{valid_miss_policies}, got {self.miss_policy!r}")
+        if self.max_capture_graphs < 1:
+            raise ValueError(
+                "dual_stream_attention_config.max_capture_graphs must be >= 1"
+            )
+        if len(self.capture_plans) > self.max_capture_graphs:
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans exceeds "
+                "max_capture_graphs")
+        if self.enabled and not self.capture_plans:
+            raise ValueError(
+                "dual_stream_attention_config.capture_plans must be "
+                "non-empty when enabled=True")
+
+    def find_plan(
+            self,
+            num_tokens: int) -> Optional[DualStreamAttentionCapturePlan]:
+        num_tokens = int(num_tokens)
+        for plan in self.capture_plans:
+            if plan.total_tokens == num_tokens or plan.graph_tokens == num_tokens:
+                return plan
+        return None
+
+
 class MacroGraphConfig:
     """Configuration object for split-batch macro graph precapture."""
 
@@ -613,6 +772,8 @@ class SplitBatchConfig:
             split_batch_config.get("inplace_offset_fallback_on_miss", False))
         self.macro_graph_config = MacroGraphConfig(
             split_batch_config.get("macro_graph_config", {}))
+        self.dual_stream_attention_config = DualStreamAttentionConfig(
+            split_batch_config.get("dual_stream_attention_config", {}))
 
         valid_modes = ("parallel_buffer", "inplace_serial",
                        "inplace_parallel")
