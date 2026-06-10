@@ -445,16 +445,32 @@ def _is_allowed_inplace_lazy_capture(forward_context: Any,
                                      batch_descriptor: BatchDescriptor,
                                      aclgraph_runtime_mode: CUDAGraphMode
                                      ) -> bool:
+    if aclgraph_runtime_mode not in (CUDAGraphMode.FULL,
+                                     CUDAGraphMode.PIECEWISE):
+        return False
+    if not bool(getattr(forward_context, "allow_inplace_lazy_capture",
+                        False)):
+        return False
+
+    split_mode = getattr(forward_context, "split_inplace_mode", None)
+    graph_variant = getattr(batch_descriptor, "graph_variant", "")
+    attention_backend = getattr(batch_descriptor, "attention_backend", "")
+    capture_metadata_mode = getattr(batch_descriptor,
+                                    "capture_metadata_mode", "")
+    if (split_mode == "mixed_request_serial"
+            and graph_variant == "mixed_request_serial"
+            and capture_metadata_mode == "mixed_request_compact"):
+        return True
+    if (split_mode == "mixed_request_piecewise_attention_parallel"
+            and graph_variant == "mixed_request_piecewise_attention_parallel"
+            and capture_metadata_mode == "mixed_request_compact"):
+        return True
+
     return (
         int(getattr(batch_descriptor, "start_num_tokens", 0) or 0) > 0
-        and aclgraph_runtime_mode
-        in (CUDAGraphMode.FULL, CUDAGraphMode.PIECEWISE)
-        and bool(getattr(forward_context, "allow_inplace_lazy_capture", False))
-        and getattr(forward_context, "split_inplace_mode", None)
-        in ("inplace_serial", "inplace_parallel")
-        and getattr(batch_descriptor, "graph_variant", "")
-        in ("inplace_serial", "inplace_parallel")
-        and getattr(batch_descriptor, "attention_backend", "") in ("fia", "pa")
+        and split_mode in ("inplace_serial", "inplace_parallel")
+        and graph_variant in ("inplace_serial", "inplace_parallel")
+        and attention_backend in ("fia", "pa")
     )
 
 

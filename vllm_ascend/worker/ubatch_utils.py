@@ -346,6 +346,20 @@ NO_SPLIT_INVALID_FIRST_TOKENS_POLICY = (
 NO_SPLIT_MACRO_GRAPH_DISABLED = "no_split_macro_graph_disabled"
 NO_SPLIT_MACRO_GRAPH_MISS = "no_split_macro_graph_miss"
 NO_SPLIT_MACRO_GRAPH_INVALID_PLAN = "no_split_macro_graph_invalid_plan"
+MIXED_REQUEST_SPLIT_DRY_RUN = "mixed_request_split_dry_run"
+NO_SPLIT_MIXED_DISABLED = "no_split_mixed_disabled"
+NO_SPLIT_MIXED_DECODE_ONLY = "no_split_mixed_decode_only"
+NO_SPLIT_MIXED_BELOW_MIN_TOTAL_TOKENS = (
+    "no_split_mixed_below_min_total_tokens")
+NO_SPLIT_INVALID_TOKEN_ACCOUNTING = "no_split_invalid_token_accounting"
+NO_SPLIT_SINGLE_REQUEST_DOMINATES = "no_split_single_request_dominates"
+NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES = "no_split_too_few_request_boundaries"
+NO_SPLIT_TOO_FEW_PREFILL_REQUESTS = "no_split_too_few_prefill_requests"
+NO_SPLIT_MIN_TOKENS_PER_SPLIT = "no_split_min_tokens_per_split"
+NO_SPLIT_GRAPH_BUCKET_MISSING = "no_split_graph_bucket_missing"
+NO_SPLIT_PADDING_TOO_LARGE = "no_split_padding_too_large"
+NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY = (
+    "no_split_invalid_mixed_request_split_policy")
 
 
 @dataclass(frozen=True)
@@ -371,9 +385,10 @@ class InplaceSplitPlan:
     offset_min_graph_tokens: int
     offset_max_graph_tokens_by_start: Optional[dict[int, int]]
     offset_allowed_graph_tokens_by_start: Optional[dict[int, list[int]]]
+    extra_debug_payload: Optional[dict[str, object]] = None
 
     def debug_payload(self) -> dict[str, object]:
-        return {
+        payload = {
             "reason": self.reason,
             "dry_run": True,
             "first_tokens": self.first_tokens,
@@ -400,6 +415,9 @@ class InplaceSplitPlan:
             self.offset_allowed_graph_tokens_by_start,
             "fallback_to": "no_split",
         }
+        if self.extra_debug_payload:
+            payload.update(self.extra_debug_payload)
+        return payload
 
 
 def inplace_split_preserves_attention_backend(
@@ -721,6 +739,205 @@ def create_inplace_split_batch_slices(
     return None, last_reject_reason
 
 
+def _mixed_attention_cost(req_tokens: np.ndarray, decode_threshold: int,
+                          decode_weight: int,
+                          prefill_weight: int) -> int:
+    decode_tokens = int(req_tokens[req_tokens <= decode_threshold].sum())
+    prefill_tokens = int(req_tokens[req_tokens > decode_threshold].sum())
+    return decode_tokens * int(decode_weight) + prefill_tokens * int(
+        prefill_weight)
+
+
+def _mixed_request_split_score(
+    candidate: tuple[InplaceSplitPlan, int, int, int, int],
+) -> tuple[int, int, int, int, int]:
+    plan, left_cost, right_cost, left_padding, right_padding = candidate
+    return (
+        max(left_cost, right_cost),
+        abs(left_cost - right_cost),
+        left_padding + right_padding,
+        max(plan.split_slices[0].graph_num_tokens,
+            plan.split_slices[1].graph_num_tokens),
+        abs(plan.first_tokens - plan.second_tokens),
+    )
+
+
+def create_mixed_request_split_batch_slices(
+    num_scheduled_tokens_per_request: np.ndarray,
+    total_num_tokens: int,
+    cudagraph_capture_sizes: Iterable[int],
+    *,
+    decode_threshold: int,
+    min_total_tokens: int = 128,
+    min_tokens_per_split: int = 64,
+    max_single_request_ratio: float = 0.70,
+    max_padding_tokens_per_split: Optional[int] = None,
+    max_padding_ratio_per_split: Optional[float] = 0.0,
+    min_prefill_reqs_for_prefill_split: int = 2,
+    decode_weight: int = 1,
+    prefill_weight: int = 4,
+    split_policy: str = "balanced_attention",
+) -> tuple[Optional[InplaceSplitPlan], str]:
+    """Create a dry-run 2-way request-boundary split plan for mixed batches.
+
+    Unlike uniform decode inplace split, mixed request split uses compact
+    per-split buffers. Therefore both split descriptors keep
+    start_num_tokens=0 and do not rely on descriptor-aware offset graph keys.
+    """
+    if split_policy != "balanced_attention":
+        return None, NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY
+
+    tokens = np.asarray(num_scheduled_tokens_per_request, dtype=np.int32)
+    total_tokens = int(total_num_tokens)
+    if (tokens.ndim != 1 or len(tokens) == 0 or total_tokens <= 0
+            or int(tokens.sum()) != total_tokens
+            or np.any(tokens <= 0)):
+        return None, NO_SPLIT_INVALID_TOKEN_ACCOUNTING
+
+    capture_sizes = _normalize_capture_sizes(cudagraph_capture_sizes)
+    if not capture_sizes:
+        return None, NO_SPLIT_NO_CAPTURE_SIZES
+
+    if total_tokens < int(min_total_tokens):
+        return None, NO_SPLIT_MIXED_BELOW_MIN_TOTAL_TOKENS
+
+    decode_threshold = int(decode_threshold)
+    if decode_threshold < 1:
+        return None, NO_SPLIT_INVALID_QUERY_LEN
+
+    decode_mask = tokens <= decode_threshold
+    prefill_mask = ~decode_mask
+    if not bool(prefill_mask.any()):
+        return None, NO_SPLIT_MIXED_DECODE_ONLY
+
+    max_single_request_ratio = float(max_single_request_ratio)
+    if max_single_request_ratio <= 0:
+        return None, NO_SPLIT_SINGLE_REQUEST_DOMINATES
+    if float(int(tokens.max())) / float(total_tokens) > max_single_request_ratio:
+        return None, NO_SPLIT_SINGLE_REQUEST_DOMINATES
+
+    num_decode_tokens = int(tokens[decode_mask].sum())
+    num_prefill_tokens = int(tokens[prefill_mask].sum())
+    num_decode_reqs = int(decode_mask.sum())
+    num_prefill_reqs = int(prefill_mask.sum())
+    if (num_prefill_reqs < int(min_prefill_reqs_for_prefill_split)
+            and num_decode_tokens < int(min_tokens_per_split)):
+        return None, NO_SPLIT_TOO_FEW_PREFILL_REQUESTS
+
+    if len(tokens) < 2:
+        return None, NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES
+
+    padded_without_split = _ceil_to_capture_size(total_tokens, capture_sizes)
+    if padded_without_split is None:
+        padded_without_split = total_tokens
+
+    cu_tokens = np.concatenate(
+        [np.array([0], dtype=np.int64),
+         np.cumsum(tokens, dtype=np.int64)])
+    last_reject_reason = NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES
+    candidates: list[tuple[InplaceSplitPlan, int, int, int, int]] = []
+    for split_req in range(1, len(tokens)):
+        left_tokens = int(cu_tokens[split_req])
+        right_tokens = total_tokens - left_tokens
+        if left_tokens <= 0 or right_tokens <= 0:
+            last_reject_reason = NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES
+            continue
+        if (left_tokens < int(min_tokens_per_split)
+                or right_tokens < int(min_tokens_per_split)):
+            last_reject_reason = NO_SPLIT_MIN_TOKENS_PER_SPLIT
+            continue
+
+        left_graph_tokens = _ceil_to_capture_size(left_tokens, capture_sizes)
+        right_graph_tokens = _ceil_to_capture_size(right_tokens, capture_sizes)
+        if left_graph_tokens is None or right_graph_tokens is None:
+            last_reject_reason = NO_SPLIT_GRAPH_BUCKET_MISSING
+            continue
+
+        left_padding = int(left_graph_tokens) - left_tokens
+        right_padding = int(right_graph_tokens) - right_tokens
+        if (max_padding_tokens_per_split is not None
+                and (left_padding > int(max_padding_tokens_per_split)
+                     or right_padding > int(max_padding_tokens_per_split))):
+            last_reject_reason = NO_SPLIT_PADDING_TOO_LARGE
+            continue
+        if max_padding_ratio_per_split is not None:
+            max_padding_ratio = float(max_padding_ratio_per_split)
+            if (left_padding / float(left_tokens) > max_padding_ratio
+                    or right_padding / float(right_tokens) >
+                    max_padding_ratio):
+                last_reject_reason = NO_SPLIT_PADDING_TOO_LARGE
+                continue
+
+        left_req_tokens = tokens[:split_req]
+        right_req_tokens = tokens[split_req:]
+        left_cost = _mixed_attention_cost(left_req_tokens, decode_threshold,
+                                          decode_weight, prefill_weight)
+        right_cost = _mixed_attention_cost(right_req_tokens, decode_threshold,
+                                           decode_weight, prefill_weight)
+        split_slices = [
+            SplitBatchSlice(
+                request_slice=slice(0, split_req),
+                token_slice=slice(0, left_tokens),
+                padded_num_tokens=int(left_graph_tokens),
+                start_num_tokens=0,
+            ),
+            SplitBatchSlice(
+                request_slice=slice(split_req, len(tokens)),
+                token_slice=slice(left_tokens, total_tokens),
+                padded_num_tokens=int(right_graph_tokens),
+                start_num_tokens=0,
+            ),
+        ]
+        plan = InplaceSplitPlan(
+            split_slices=split_slices,
+            reason=MIXED_REQUEST_SPLIT_DRY_RUN,
+            total_num_tokens=total_tokens,
+            padded_num_tokens_without_split=padded_without_split,
+            first_tokens=left_tokens,
+            second_tokens=right_tokens,
+            first_reqs=split_req,
+            second_reqs=len(tokens) - split_req,
+            lower_capture_size=int(left_graph_tokens),
+            remainder_tokens=right_tokens,
+            capture_sizes_considered=capture_sizes,
+            first_tokens_policy=split_policy,
+            offset_match_policy="compact",
+            second_actual_tokens=right_tokens,
+            second_graph_tokens=int(right_graph_tokens),
+            second_padding_tokens=right_padding,
+            offset_capture_sizes_considered=[],
+            offset_min_graph_tokens=0,
+            offset_max_graph_tokens_by_start=None,
+            offset_allowed_graph_tokens_by_start=None,
+            extra_debug_payload={
+                "mixed_request_split": True,
+                "split_policy": split_policy,
+                "split_req_index": split_req,
+                "num_decode_reqs": num_decode_reqs,
+                "num_prefill_reqs": num_prefill_reqs,
+                "num_decode_tokens": num_decode_tokens,
+                "num_prefill_tokens": num_prefill_tokens,
+                "first_graph_tokens": int(left_graph_tokens),
+                "first_padding_tokens": left_padding,
+                "first_attention_cost": left_cost,
+                "second_attention_cost": right_cost,
+                "max_single_request_ratio":
+                float(max_single_request_ratio),
+                "max_padding_ratio_per_split":
+                (None if max_padding_ratio_per_split is None else
+                 float(max_padding_ratio_per_split)),
+            },
+        )
+        candidates.append(
+            (plan, left_cost, right_cost, left_padding, right_padding))
+
+    if candidates:
+        return (min(candidates,
+                    key=_mixed_request_split_score)[0],
+                MIXED_REQUEST_SPLIT_DRY_RUN)
+    return None, last_reject_reason
+
+
 def _round_up_to_multiple(value: int, alignment: int) -> int:
     alignment = max(1, int(alignment))
     return ((int(value) + alignment - 1) // alignment) * alignment
@@ -740,21 +957,32 @@ def _macro_capture_plan_to_inplace_plan(
     actual_tokens = tuple(int(v) for v in capture_plan.split_actual_tokens)
     graph_tokens = tuple(int(v) for v in capture_plan.split_graph_tokens)
     start_tokens = tuple(int(v) for v in capture_plan.split_start_tokens)
+    split_num_reqs = getattr(capture_plan, "split_num_reqs", None)
+    if split_num_reqs is not None:
+        split_num_reqs = tuple(int(v) for v in split_num_reqs)
     total_tokens = int(capture_plan.total_tokens)
     if len(actual_tokens) != 2 or len(graph_tokens) != 2 \
             or len(start_tokens) != 2:
         return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
+    if split_num_reqs is not None and len(split_num_reqs) != 2:
+        return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
     if sum(actual_tokens) != total_tokens:
         return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
-    if any(tokens % q != 0 for tokens in actual_tokens):
+    if split_num_reqs is None and any(tokens % q != 0
+                                      for tokens in actual_tokens):
         return None, NO_SPLIT_FIRST_NOT_REQUEST_ALIGNED
-    if start_tokens != (0, actual_tokens[0]):
+    compact_start = start_tokens == (0, 0)
+    offset_start = start_tokens == (0, actual_tokens[0])
+    if not compact_start and not offset_start:
         return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
 
     first_actual, second_actual = actual_tokens
     first_graph, second_graph = graph_tokens
-    first_reqs = first_actual // q
-    second_reqs = second_actual // q
+    if split_num_reqs is None:
+        first_reqs = first_actual // q
+        second_reqs = second_actual // q
+    else:
+        first_reqs, second_reqs = split_num_reqs
     if first_reqs <= 0 or second_reqs <= 0:
         return None, NO_SPLIT_SECOND_EMPTY
 
@@ -795,18 +1023,22 @@ def _macro_capture_plan_to_inplace_plan(
         remainder_tokens=second_actual,
         capture_sizes_considered=capture_plans_considered,
         first_tokens_policy="macro_cube_balanced",
-        offset_match_policy="bucket",
+        offset_match_policy="compact" if compact_start else "bucket",
         second_actual_tokens=second_actual,
         second_graph_tokens=second_graph,
         second_padding_tokens=second_graph - second_actual,
-        offset_capture_sizes_considered=sorted({
+        offset_capture_sizes_considered=[] if compact_start else sorted({
             int(plan.split_graph_tokens[1])
             for plan in getattr(macro_graph_config, "capture_plans", [])
         }),
-        offset_min_graph_tokens=int(
+        offset_min_graph_tokens=0 if compact_start else int(
             getattr(macro_graph_config, "min_split_graph_tokens", 1)),
         offset_max_graph_tokens_by_start=None,
         offset_allowed_graph_tokens_by_start=None,
+        extra_debug_payload=({
+            "mixed_request_split": True,
+            "macro_compact_plan": True,
+        } if compact_start else None),
     ), INPLACE_SPLIT_DRY_RUN
 
 

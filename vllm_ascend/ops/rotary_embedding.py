@@ -16,6 +16,7 @@
 #
 
 import math
+from contextlib import contextmanager
 from typing import Optional, Tuple
 
 import torch
@@ -51,6 +52,7 @@ _cos_slots: list[Optional[torch.Tensor]] = [None] * _NUM_COS_SIN_SLOTS
 _sin_slots: list[Optional[torch.Tensor]] = [None] * _NUM_COS_SIN_SLOTS
 _cos_slice_slots: list[Optional[torch.Tensor]] = [None] * _NUM_COS_SIN_SLOTS
 _sin_slice_slots: list[Optional[torch.Tensor]] = [None] * _NUM_COS_SIN_SLOTS
+_disable_external_cos_sin_fast_path = False
 
 
 def set_cos_and_sin(vllm_config, max_num_reqs, decode_token_per_req, dtype,
@@ -146,6 +148,22 @@ def _custom_rotary_embedding_enabled(query, neox_style, head_size):
     )
 
 
+@contextmanager
+def disable_external_cos_sin_fast_path():
+    global _disable_external_cos_sin_fast_path
+    previous = _disable_external_cos_sin_fast_path
+    _disable_external_cos_sin_fast_path = True
+    try:
+        yield
+    finally:
+        _disable_external_cos_sin_fast_path = previous
+
+
+def set_external_cos_sin_fast_path_enabled(enabled: bool):
+    global _disable_external_cos_sin_fast_path
+    _disable_external_cos_sin_fast_path = not bool(enabled)
+
+
 def _rope_forward_oot(
     self,
     positions: torch.Tensor,
@@ -180,7 +198,8 @@ def _rope_forward_oot(
         slot_id = forward_context.cos_sin_slot_id
         cos, sin = get_cos_and_sin_slice(slot_id=slot_id)
         if is_neox_style and self.head_size == 128 and self.cos_sin_cache.shape[
-                -1] == 128 and cos is not None and sin is not None:
+                -1] == 128 and cos is not None and sin is not None and (
+                    not _disable_external_cos_sin_fast_path):
             # If cos and sin are generated outside, use npu_apply_rotary_pos_emb to avoid redundant calculation.
             # This method requires head_size and rotary_dim equal 128 and neox_style is True
             query = query.contiguous().view(1, query.shape[0], -1,

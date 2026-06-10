@@ -318,6 +318,7 @@ class MacroGraphCapturePlan:
     split_actual_tokens: tuple[int, int]
     split_graph_tokens: tuple[int, int]
     split_start_tokens: tuple[int, int]
+    split_num_reqs: Optional[tuple[int, int]] = None
 
     @classmethod
     def from_config(cls, raw_plan: dict[str, Any]) -> "MacroGraphCapturePlan":
@@ -325,6 +326,14 @@ class MacroGraphCapturePlan:
         split_actual_tokens = _parse_two_ints(raw_plan,
                                               "split_actual_tokens")
         split_graph_tokens = _parse_two_ints(raw_plan, "split_graph_tokens")
+        raw_num_reqs = raw_plan.get("split_num_reqs", None)
+        split_num_reqs = None
+        if raw_num_reqs is not None:
+            split_num_reqs = tuple(int(v) for v in raw_num_reqs)
+            if len(split_num_reqs) != 2:
+                raise ValueError(
+                    "macro_graph_config.capture_plans[].split_num_reqs "
+                    "must contain exactly 2 integers")
         raw_start_tokens = raw_plan.get("split_start_tokens", None)
         if raw_start_tokens is None:
             split_start_tokens = (0, split_actual_tokens[0])
@@ -359,11 +368,16 @@ class MacroGraphCapturePlan:
             raise ValueError(
                 "macro_graph_config.capture_plans[].split_start_tokens "
                 "must start at 0 and be non-negative")
+        if split_num_reqs is not None and any(v < 1 for v in split_num_reqs):
+            raise ValueError(
+                "macro_graph_config.capture_plans[].split_num_reqs "
+                "must contain positive integers")
         return cls(
             total_tokens=total_tokens,
             split_actual_tokens=split_actual_tokens,
             split_graph_tokens=split_graph_tokens,
             split_start_tokens=split_start_tokens,
+            split_num_reqs=split_num_reqs,
         )
 
 
@@ -693,6 +707,44 @@ class SplitBatchConfig:
         self.piecewise_attention_enqueue_policy: str = str(
             split_batch_config.get("piecewise_attention_enqueue_policy",
                                    "persistent_thread"))
+        self.enable_mixed_request_split: bool = bool(
+            split_batch_config.get("enable_mixed_request_split", False))
+        self.mixed_request_split_policy: str = str(
+            split_batch_config.get("mixed_request_split_policy",
+                                   "balanced_attention"))
+        self.mixed_request_split_execution_mode: str = str(
+            split_batch_config.get("mixed_request_split_execution_mode",
+                                   "dry_run"))
+        self.mixed_request_min_total_tokens: int = int(
+            split_batch_config.get("mixed_request_min_total_tokens", 128))
+        self.mixed_request_min_tokens_per_split: int = int(
+            split_batch_config.get("mixed_request_min_tokens_per_split", 64))
+        self.mixed_request_max_single_request_ratio: float = float(
+            split_batch_config.get("mixed_request_max_single_request_ratio",
+                                   0.70))
+        raw_mixed_max_padding_tokens = split_batch_config.get(
+            "mixed_request_max_padding_tokens_per_split", None)
+        if raw_mixed_max_padding_tokens is None:
+            self.mixed_request_max_padding_tokens_per_split: Optional[
+                int] = None
+        else:
+            self.mixed_request_max_padding_tokens_per_split = int(
+                raw_mixed_max_padding_tokens)
+        raw_mixed_max_padding_ratio = split_batch_config.get(
+            "mixed_request_max_padding_ratio_per_split", 0.0)
+        if raw_mixed_max_padding_ratio is None:
+            self.mixed_request_max_padding_ratio_per_split: Optional[
+                float] = None
+        else:
+            self.mixed_request_max_padding_ratio_per_split = float(
+                raw_mixed_max_padding_ratio)
+        self.mixed_request_min_prefill_reqs_for_prefill_split: int = int(
+            split_batch_config.get(
+                "mixed_request_min_prefill_reqs_for_prefill_split", 2))
+        self.mixed_request_decode_weight: int = int(
+            split_batch_config.get("mixed_request_decode_weight", 1))
+        self.mixed_request_prefill_weight: int = int(
+            split_batch_config.get("mixed_request_prefill_weight", 4))
         raw_inplace_max_remainder_tokens = split_batch_config.get(
             "inplace_max_remainder_tokens", None)
         if raw_inplace_max_remainder_tokens is None:
@@ -812,6 +864,84 @@ class SplitBatchConfig:
                 "split_batch_config.piecewise_attention_enqueue_policy must "
                 f"be one of {valid_piecewise_attention_policies}, got "
                 f"{self.piecewise_attention_enqueue_policy!r}")
+        valid_mixed_request_policies = ("balanced_attention", )
+        if self.mixed_request_split_policy not in valid_mixed_request_policies:
+            raise ValueError(
+                "split_batch_config.mixed_request_split_policy must be one "
+                f"of {valid_mixed_request_policies}, got "
+                f"{self.mixed_request_split_policy!r}")
+        valid_mixed_request_execution_modes = (
+            "dry_run", "serial", "piecewise_attention_parallel")
+        if self.mixed_request_split_execution_mode not in (
+                valid_mixed_request_execution_modes):
+            raise ValueError(
+                "split_batch_config.mixed_request_split_execution_mode must "
+                f"be one of {valid_mixed_request_execution_modes}, got "
+                f"{self.mixed_request_split_execution_mode!r}")
+        if self.enable_mixed_request_split:
+            if self.mode not in ("inplace_serial", "inplace_parallel"):
+                raise ValueError(
+                    "split_batch_config.enable_mixed_request_split requires "
+                    "mode to be 'inplace_serial' or 'inplace_parallel'")
+            if (self.mixed_request_split_execution_mode == "serial"
+                    and self.mode != "inplace_serial"):
+                raise ValueError(
+                    "split_batch_config.mixed_request_split_execution_mode="
+                    "'serial' requires mode='inplace_serial'")
+            if (self.mixed_request_split_execution_mode
+                    == "piecewise_attention_parallel"
+                    and self.mode != "inplace_parallel"):
+                raise ValueError(
+                    "split_batch_config.mixed_request_split_execution_mode="
+                    "'piecewise_attention_parallel' requires "
+                    "mode='inplace_parallel'")
+            if self.mode == "inplace_parallel" and not self.enable_parallel_streams:
+                raise ValueError(
+                    "split_batch_config.enable_mixed_request_split with "
+                    "mode='inplace_parallel' requires "
+                    "enable_parallel_streams=True")
+            if (self.mode == "inplace_parallel"
+                    and self.inplace_parallel_replay_policy !=
+                    "piecewise_attention_parallel"):
+                raise ValueError(
+                    "split_batch_config.enable_mixed_request_split with "
+                    "mode='inplace_parallel' requires "
+                    "inplace_parallel_replay_policy="
+                    "'piecewise_attention_parallel'")
+        if self.mixed_request_min_total_tokens < 1:
+            raise ValueError(
+                "split_batch_config.mixed_request_min_total_tokens must be "
+                ">= 1")
+        if self.mixed_request_min_tokens_per_split < 1:
+            raise ValueError(
+                "split_batch_config.mixed_request_min_tokens_per_split must "
+                "be >= 1")
+        if not (0 < self.mixed_request_max_single_request_ratio <= 1):
+            raise ValueError(
+                "split_batch_config.mixed_request_max_single_request_ratio "
+                "must be in (0, 1]")
+        if (self.mixed_request_max_padding_tokens_per_split is not None
+                and self.mixed_request_max_padding_tokens_per_split < 0):
+            raise ValueError(
+                "split_batch_config."
+                "mixed_request_max_padding_tokens_per_split must be >= 0")
+        if (self.mixed_request_max_padding_ratio_per_split is not None
+                and self.mixed_request_max_padding_ratio_per_split < 0):
+            raise ValueError(
+                "split_batch_config."
+                "mixed_request_max_padding_ratio_per_split must be >= 0")
+        if self.mixed_request_min_prefill_reqs_for_prefill_split < 1:
+            raise ValueError(
+                "split_batch_config."
+                "mixed_request_min_prefill_reqs_for_prefill_split must be "
+                ">= 1")
+        if self.mixed_request_decode_weight < 1:
+            raise ValueError(
+                "split_batch_config.mixed_request_decode_weight must be >= 1")
+        if self.mixed_request_prefill_weight < 1:
+            raise ValueError(
+                "split_batch_config.mixed_request_prefill_weight must be >= 1"
+            )
         if (self.inplace_max_remainder_tokens is not None
                 and self.inplace_max_remainder_tokens < 1):
             raise ValueError(

@@ -499,6 +499,49 @@ class AscendAttentionBackendImpl(AttentionImpl):
         graph_params.handles[param_key].append(handle)
         return output, num_tokens
 
+    def warmup_full_graph_fia_workspace(
+            self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
+            attn_metadata: AscendMetadata) -> None:
+        key, value, block_size, block_table, actual_seq_lengths_kv \
+            = self._get_fia_params(key, value, attn_metadata)
+
+        forward_context = get_forward_context()
+        num_tokens = attn_metadata.actual_seq_lengths_q[-1]
+        in_parallel_streams = bool(
+            getattr(forward_context, "in_parallel_streams", False))
+        graph_params = get_graph_params(in_parallel_streams)
+        param_key = get_graph_param_key(forward_context, num_tokens)
+        ensure_graph_param_key(graph_params, param_key)
+        actual_seq_lengths_kv = maybe_template_fia_seq_lens(
+            forward_context,
+            actual_seq_lengths_kv,
+            _get_fia_key_t(key, block_size),
+            source="attention_full_graph_workspace_warmup")
+
+        workspace = graph_params.workspaces.get(param_key)
+        if workspace is not None:
+            return
+
+        workspace = torch_npu._npu_fused_infer_attention_score_get_max_workspace(
+            query=query,
+            key=key,
+            value=value,
+            atten_mask=attn_metadata.attn_mask,
+            block_table=block_table,
+            input_layout="TND",
+            block_size=block_size,
+            actual_seq_lengths=attn_metadata.actual_seq_lengths_q,
+            actual_seq_lengths_kv=actual_seq_lengths_kv,
+            num_key_value_heads=self.num_kv_heads,
+            num_heads=self.num_heads,
+            sparse_mode=3,
+            scale=self.scale,
+        )
+        update_graph_params_workspaces(
+            param_key,
+            workspace,
+            in_parallel_streams=in_parallel_streams)
+
     def _dual_stream_fia_workspace_key(self, param_key, split_idx: int):
         return (param_key, "dual_stream_fia", int(split_idx))
 
@@ -890,9 +933,22 @@ class AscendAttentionBackendImpl(AttentionImpl):
                                       attn_metadata: AscendMetadata,
                                       output: torch.Tensor):
         forward_context: ForwardContext = get_forward_context()
+        batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+        workspace_warmup = bool(
+            getattr(forward_context, "macro_fia_workspace_warmup", False))
+        if (getattr(batch_descriptor, "capture_metadata_mode", "")
+                == "mixed_request_compact"
+                and not getattr(forward_context, "capturing", False)
+                and not workspace_warmup):
+            raise RuntimeError(
+                "mixed macro attention must run with "
+                "forward_context.capturing=True")
         if getattr(forward_context, "capturing", False):
             self.full_graph_fia(query, key, value, attn_metadata, output)
             return output
+        if workspace_warmup:
+            self.warmup_full_graph_fia_workspace(query, key, value,
+                                                 attn_metadata)
         if (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
                 and self.sliding_window is not None
                 and attn_metadata.seq_lens.shape[0] == query.size(0)):

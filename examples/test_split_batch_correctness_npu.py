@@ -780,6 +780,57 @@ def create_parser() -> FlexibleArgumentParser:
         ),
     )
     test_group.add_argument(
+        "--enable-mixed-request-split",
+        action="store_true",
+        help=(
+            "Enable request-boundary mixed/prefill split planner in "
+            "split_batch_config."
+        ),
+    )
+    test_group.add_argument(
+        "--mixed-request-split-execution-mode",
+        choices=["dry_run", "serial", "piecewise_attention_parallel"],
+        default="dry_run",
+        help=(
+            "Execution mode for mixed request split. serial is the minimal "
+            "correctness path; piecewise_attention_parallel exercises the "
+            "dual-stream attention overlap path."
+        ),
+    )
+    test_group.add_argument(
+        "--mixed-request-min-total-tokens",
+        type=int,
+        default=128,
+        help="split_batch_config.mixed_request_min_total_tokens.",
+    )
+    test_group.add_argument(
+        "--mixed-request-min-tokens-per-split",
+        type=int,
+        default=64,
+        help="split_batch_config.mixed_request_min_tokens_per_split.",
+    )
+    test_group.add_argument(
+        "--mixed-request-max-single-request-ratio",
+        type=float,
+        default=0.70,
+        help="split_batch_config.mixed_request_max_single_request_ratio.",
+    )
+    test_group.add_argument(
+        "--mixed-request-max-padding-ratio-per-split",
+        type=float,
+        default=0.0,
+        help="split_batch_config.mixed_request_max_padding_ratio_per_split.",
+    )
+    test_group.add_argument(
+        "--mixed-request-min-prefill-reqs-for-prefill-split",
+        type=int,
+        default=2,
+        help=(
+            "split_batch_config."
+            "mixed_request_min_prefill_reqs_for_prefill_split."
+        ),
+    )
+    test_group.add_argument(
         "--cudagraph-mode",
         choices=[
             "NONE",
@@ -1273,6 +1324,13 @@ def _build_split_additional_config(
     inplace_parallel_replay_policy: str = "full_graph_parallel",
     piecewise_scheduler_sync_policy: str = "event_chain",
     piecewise_attention_enqueue_policy: str = "persistent_thread",
+    enable_mixed_request_split: bool = False,
+    mixed_request_split_execution_mode: str = "dry_run",
+    mixed_request_min_total_tokens: int = 128,
+    mixed_request_min_tokens_per_split: int = 64,
+    mixed_request_max_single_request_ratio: float = 0.70,
+    mixed_request_max_padding_ratio_per_split: float = 0.0,
+    mixed_request_min_prefill_reqs_for_prefill_split: int = 2,
     macro_graph_config: dict[str, Any] | None = None,
     pa_shape_list: list[int] | None = None,
 ) -> dict[str, Any]:
@@ -1306,6 +1364,20 @@ def _build_split_additional_config(
             piecewise_scheduler_sync_policy)
         cfg["piecewise_attention_enqueue_policy"] = (
             piecewise_attention_enqueue_policy)
+        if enabled and enable_mixed_request_split:
+            cfg["enable_mixed_request_split"] = True
+            cfg["mixed_request_split_execution_mode"] = (
+                mixed_request_split_execution_mode)
+            cfg["mixed_request_min_total_tokens"] = int(
+                mixed_request_min_total_tokens)
+            cfg["mixed_request_min_tokens_per_split"] = int(
+                mixed_request_min_tokens_per_split)
+            cfg["mixed_request_max_single_request_ratio"] = float(
+                mixed_request_max_single_request_ratio)
+            cfg["mixed_request_max_padding_ratio_per_split"] = float(
+                mixed_request_max_padding_ratio_per_split)
+            cfg["mixed_request_min_prefill_reqs_for_prefill_split"] = int(
+                mixed_request_min_prefill_reqs_for_prefill_split)
         cfg["inplace_offset_match_policy"] = "bucket"
         offset_capture_sizes = (
             inplace_offset_capture_sizes
@@ -1390,6 +1462,19 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
             ctx["piecewise_scheduler_sync_policy"]),
         "piecewise_attention_enqueue_policy": (
             ctx["piecewise_attention_enqueue_policy"]),
+        "enable_mixed_request_split": ctx["enable_mixed_request_split"],
+        "mixed_request_split_execution_mode": (
+            ctx["mixed_request_split_execution_mode"]),
+        "mixed_request_min_total_tokens": (
+            ctx["mixed_request_min_total_tokens"]),
+        "mixed_request_min_tokens_per_split": (
+            ctx["mixed_request_min_tokens_per_split"]),
+        "mixed_request_max_single_request_ratio": (
+            ctx["mixed_request_max_single_request_ratio"]),
+        "mixed_request_max_padding_ratio_per_split": (
+            ctx["mixed_request_max_padding_ratio_per_split"]),
+        "mixed_request_min_prefill_reqs_for_prefill_split": (
+            ctx["mixed_request_min_prefill_reqs_for_prefill_split"]),
         "inplace_offset_capture_sizes": ctx["inplace_offset_capture_sizes"],
         "inplace_offset_max_graph_tokens_by_start": (
             ctx["inplace_offset_max_graph_tokens_by_start"]),
@@ -1658,6 +1743,20 @@ def main() -> int:
         "piecewise_scheduler_sync_policy"))
     piecewise_attention_enqueue_policy = str(args.pop(
         "piecewise_attention_enqueue_policy"))
+    enable_mixed_request_split = bool(
+        args.pop("enable_mixed_request_split"))
+    mixed_request_split_execution_mode = str(
+        args.pop("mixed_request_split_execution_mode"))
+    mixed_request_min_total_tokens = int(
+        args.pop("mixed_request_min_total_tokens"))
+    mixed_request_min_tokens_per_split = int(
+        args.pop("mixed_request_min_tokens_per_split"))
+    mixed_request_max_single_request_ratio = float(
+        args.pop("mixed_request_max_single_request_ratio"))
+    mixed_request_max_padding_ratio_per_split = float(
+        args.pop("mixed_request_max_padding_ratio_per_split"))
+    mixed_request_min_prefill_reqs_for_prefill_split = int(
+        args.pop("mixed_request_min_prefill_reqs_for_prefill_split"))
     _inplace_offset_capture_sizes_raw = str(
         args.pop("inplace_offset_capture_sizes") or "")
     inplace_offset_capture_sizes = (
@@ -1819,6 +1918,18 @@ def main() -> int:
         inplace_parallel_replay_policy=inplace_parallel_replay_policy,
         piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
         piecewise_attention_enqueue_policy=piecewise_attention_enqueue_policy,
+        enable_mixed_request_split=enable_mixed_request_split,
+        mixed_request_split_execution_mode=(
+            mixed_request_split_execution_mode),
+        mixed_request_min_total_tokens=mixed_request_min_total_tokens,
+        mixed_request_min_tokens_per_split=(
+            mixed_request_min_tokens_per_split),
+        mixed_request_max_single_request_ratio=(
+            mixed_request_max_single_request_ratio),
+        mixed_request_max_padding_ratio_per_split=(
+            mixed_request_max_padding_ratio_per_split),
+        mixed_request_min_prefill_reqs_for_prefill_split=(
+            mixed_request_min_prefill_reqs_for_prefill_split),
         macro_graph_config=None,
         pa_shape_list=pa_shape_list,
     )
@@ -1844,6 +1955,18 @@ def main() -> int:
         inplace_parallel_replay_policy=inplace_parallel_replay_policy,
         piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
         piecewise_attention_enqueue_policy=piecewise_attention_enqueue_policy,
+        enable_mixed_request_split=enable_mixed_request_split,
+        mixed_request_split_execution_mode=(
+            mixed_request_split_execution_mode),
+        mixed_request_min_total_tokens=mixed_request_min_total_tokens,
+        mixed_request_min_tokens_per_split=(
+            mixed_request_min_tokens_per_split),
+        mixed_request_max_single_request_ratio=(
+            mixed_request_max_single_request_ratio),
+        mixed_request_max_padding_ratio_per_split=(
+            mixed_request_max_padding_ratio_per_split),
+        mixed_request_min_prefill_reqs_for_prefill_split=(
+            mixed_request_min_prefill_reqs_for_prefill_split),
         macro_graph_config=macro_graph_config,
         pa_shape_list=pa_shape_list,
     )
@@ -1871,6 +1994,18 @@ def main() -> int:
             piecewise_scheduler_sync_policy=piecewise_scheduler_sync_policy,
             piecewise_attention_enqueue_policy=(
                 piecewise_attention_enqueue_policy),
+            enable_mixed_request_split=enable_mixed_request_split,
+            mixed_request_split_execution_mode=(
+                mixed_request_split_execution_mode),
+            mixed_request_min_total_tokens=mixed_request_min_total_tokens,
+            mixed_request_min_tokens_per_split=(
+                mixed_request_min_tokens_per_split),
+            mixed_request_max_single_request_ratio=(
+                mixed_request_max_single_request_ratio),
+            mixed_request_max_padding_ratio_per_split=(
+                mixed_request_max_padding_ratio_per_split),
+            mixed_request_min_prefill_reqs_for_prefill_split=(
+                mixed_request_min_prefill_reqs_for_prefill_split),
             inplace_offset_capture_sizes=inplace_offset_capture_sizes,
             inplace_offset_max_graph_tokens_by_start=(
                 inplace_offset_max_graph_tokens_by_start),
@@ -1919,6 +2054,18 @@ def main() -> int:
         "piecewise_scheduler_sync_policy": piecewise_scheduler_sync_policy,
         "piecewise_attention_enqueue_policy": (
             piecewise_attention_enqueue_policy),
+        "enable_mixed_request_split": enable_mixed_request_split,
+        "mixed_request_split_execution_mode": (
+            mixed_request_split_execution_mode),
+        "mixed_request_min_total_tokens": mixed_request_min_total_tokens,
+        "mixed_request_min_tokens_per_split": (
+            mixed_request_min_tokens_per_split),
+        "mixed_request_max_single_request_ratio": (
+            mixed_request_max_single_request_ratio),
+        "mixed_request_max_padding_ratio_per_split": (
+            mixed_request_max_padding_ratio_per_split),
+        "mixed_request_min_prefill_reqs_for_prefill_split": (
+            mixed_request_min_prefill_reqs_for_prefill_split),
         "inplace_offset_capture_sizes": inplace_offset_capture_sizes,
         "inplace_offset_max_graph_tokens_by_start": (
             inplace_offset_max_graph_tokens_by_start),

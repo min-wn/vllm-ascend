@@ -17,6 +17,7 @@ from vllm_ascend.worker.model_runner_v3 import (
     _template_fia_seq_lens_list,
 )
 from vllm_ascend.worker.ubatch_utils import create_inplace_split_batch_slices
+from vllm_ascend.worker.ubatch_utils import SplitBatchSlice
 
 
 def _plan_416():
@@ -404,6 +405,365 @@ def test_inplace_parallel_metadata_sets_parallel_context_and_offset_views():
     assert contexts[1].validate_inplace_input_ptrs is True
     assert contexts[1].validate_inplace_metadata_ptrs is True
     assert contexts[1].split_inplace_mode == "inplace_parallel"
+
+
+def test_mixed_request_compact_inputs_copy_second_split_to_zero_offset():
+    runner = object.__new__(NPUModelRunner)
+    input_ids = torch.arange(130, dtype=torch.int32)
+    positions = torch.arange(130, dtype=torch.int64)
+    runner.input_ids = SimpleNamespace(gpu=input_ids.clone())
+    runner.positions = SimpleNamespace(gpu=positions.clone())
+    runner.inputs_embeds = SimpleNamespace(gpu=None)
+    runner.input_ids_parallel_streams = SimpleNamespace(
+        gpu=torch.full((130, ), -1, dtype=torch.int32))
+    runner.positions_parallel_streams = SimpleNamespace(
+        gpu=torch.full((130, ), -1, dtype=torch.int64))
+    runner.inputs_embeds_parallel_streams = SimpleNamespace(gpu=None)
+    split_slices = [
+        SplitBatchSlice(slice(0, 3), slice(0, 66), padded_num_tokens=66),
+        SplitBatchSlice(slice(3, 4), slice(66, 130), padded_num_tokens=64),
+    ]
+
+    prepared = (
+        NPUModelRunner._prepare_mixed_request_split_compact_inputs(
+            runner,
+            split_slices,
+            input_ids,
+            positions,
+            inputs_embeds=None,
+            intermediate_tensors=None))
+
+    assert len(prepared) == 2
+    assert torch.equal(prepared[0]["input_ids"], input_ids[:66])
+    assert torch.equal(prepared[0]["positions"], positions[:66])
+    assert prepared[1]["input_ids"].storage_offset() == 0
+    assert prepared[1]["positions"].storage_offset() == 0
+    assert torch.equal(prepared[1]["input_ids"], input_ids[66:130])
+    assert torch.equal(prepared[1]["positions"], positions[66:130])
+    assert prepared[1]["local_ubatch_slice"] == UBatchSlice(
+        slice(0, 1), slice(0, 64))
+
+
+def test_mixed_request_compact_inputs_zero_pad_graph_tail():
+    runner = object.__new__(NPUModelRunner)
+    input_ids = torch.arange(130, dtype=torch.int32)
+    positions = torch.arange(130, dtype=torch.int64)
+    runner.input_ids = SimpleNamespace(
+        gpu=torch.full((192, ), -1, dtype=torch.int32))
+    runner.positions = SimpleNamespace(
+        gpu=torch.full((192, ), -1, dtype=torch.int64))
+    runner.inputs_embeds = SimpleNamespace(gpu=None)
+    runner.input_ids_parallel_streams = SimpleNamespace(
+        gpu=torch.full((192, ), -1, dtype=torch.int32))
+    runner.positions_parallel_streams = SimpleNamespace(
+        gpu=torch.full((192, ), -1, dtype=torch.int64))
+    runner.inputs_embeds_parallel_streams = SimpleNamespace(gpu=None)
+    split_slices = [
+        SplitBatchSlice(slice(0, 3), slice(0, 66), padded_num_tokens=128),
+        SplitBatchSlice(slice(3, 4), slice(66, 130), padded_num_tokens=64),
+    ]
+
+    prepared = (
+        NPUModelRunner._prepare_mixed_request_split_compact_inputs(
+            runner,
+            split_slices,
+            input_ids,
+            positions,
+            inputs_embeds=None,
+            intermediate_tensors=None))
+
+    assert prepared[0]["input_ids"].shape[0] == 128
+    assert prepared[0]["positions"].shape[0] == 128
+    assert torch.equal(prepared[0]["input_ids"][:66], input_ids[:66])
+    assert torch.equal(prepared[0]["positions"][:66], positions[:66])
+    assert torch.equal(prepared[0]["input_ids"][66:128],
+                       torch.zeros(62, dtype=torch.int32))
+    assert torch.equal(prepared[0]["positions"][66:128],
+                       torch.zeros(62, dtype=torch.int64))
+    assert prepared[0]["local_ubatch_slice"] == UBatchSlice(
+        slice(0, 3), slice(0, 128))
+
+
+def test_mixed_request_compact_inputs_snapshot_aliasing_source():
+    runner = object.__new__(NPUModelRunner)
+    input_ids = torch.arange(130, dtype=torch.int32)
+    positions = torch.arange(130, dtype=torch.int64)
+    expected_second_ids = input_ids[66:130].clone()
+    expected_second_positions = positions[66:130].clone()
+    runner.input_ids = SimpleNamespace(gpu=input_ids)
+    runner.positions = SimpleNamespace(gpu=positions)
+    runner.inputs_embeds = SimpleNamespace(gpu=None)
+    runner.input_ids_parallel_streams = SimpleNamespace(
+        gpu=torch.full((130, ), -1, dtype=torch.int32))
+    runner.positions_parallel_streams = SimpleNamespace(
+        gpu=torch.full((130, ), -1, dtype=torch.int64))
+    runner.inputs_embeds_parallel_streams = SimpleNamespace(gpu=None)
+    split_slices = [
+        SplitBatchSlice(slice(0, 3), slice(0, 66), padded_num_tokens=128),
+        SplitBatchSlice(slice(3, 4), slice(66, 130), padded_num_tokens=64),
+    ]
+
+    prepared = (
+        NPUModelRunner._prepare_mixed_request_split_compact_inputs(
+            runner,
+            split_slices,
+            input_ids,
+            positions,
+            inputs_embeds=None,
+            intermediate_tensors=None))
+
+    assert torch.equal(prepared[0]["input_ids"][66:128],
+                       torch.zeros(62, dtype=torch.int32))
+    assert torch.equal(prepared[0]["positions"][66:128],
+                       torch.zeros(62, dtype=torch.int64))
+    assert torch.equal(prepared[1]["input_ids"], expected_second_ids)
+    assert torch.equal(prepared[1]["positions"], expected_second_positions)
+
+
+def test_mixed_request_compact_metadata_padding_uses_fake_tail_requests():
+    runner = object.__new__(NPUModelRunner)
+    common = AscendCommonAttentionMetadata(
+        query_start_loc=torch.tensor([0, 2, 66], dtype=torch.int32),
+        query_start_loc_cpu=torch.tensor([0, 2, 66], dtype=torch.int32),
+        seq_lens_cpu=torch.tensor([2, 64], dtype=torch.int32),
+        seq_lens=torch.tensor([2, 64], dtype=torch.int32),
+        num_computed_tokens_cpu=torch.tensor([0, 0], dtype=torch.int32),
+        num_reqs=2,
+        num_actual_tokens=66,
+        max_query_len=64,
+        decode_token_per_req=1,
+        block_table_tensor=torch.ones((2, 4), dtype=torch.int32),
+        slot_mapping=torch.arange(66, dtype=torch.int64),
+        actual_seq_lengths_q=[2, 66],
+        positions=torch.arange(66, dtype=torch.int64),
+        attn_mask=None,
+        spec_attn_mask=None,
+        attn_state=AscendAttentionState.ChunkedPrefill,
+    )
+    split_slice = SplitBatchSlice(
+        slice(0, 2), slice(0, 66), padded_num_tokens=128)
+
+    padded = NPUModelRunner._pad_compact_common_attn_metadata_for_graph(
+        runner,
+        common,
+        split_slice,
+        split_idx=0)
+
+    assert padded.num_reqs == 64
+    assert padded.num_actual_tokens == 128
+    assert padded.num_input_tokens == 128
+    assert padded.graph_pad_size == 64
+    assert padded.query_start_loc_cpu.shape[0] == 65
+    assert padded.query_start_loc_cpu[-1].item() == 128
+    assert padded.actual_seq_lengths_q[:2] == [2, 66]
+    assert padded.actual_seq_lengths_q[-1] == 128
+    assert torch.equal(padded.seq_lens_cpu[:2], common.seq_lens_cpu)
+    assert torch.equal(padded.seq_lens_cpu[2:],
+                       torch.zeros(62, dtype=torch.int32))
+    assert torch.equal(padded.slot_mapping[:66], common.slot_mapping)
+    assert torch.equal(padded.slot_mapping[66:],
+                       torch.full((62, ), -1, dtype=torch.int64))
+    assert torch.equal(padded.block_table_tensor[:2],
+                       common.block_table_tensor)
+    assert torch.equal(padded.block_table_tensor[2:],
+                       torch.full((62, 4), -1, dtype=torch.int32))
+    assert torch.equal(padded.positions[:66], common.positions)
+    assert torch.equal(padded.positions[66:],
+                       torch.zeros(62, dtype=torch.int64))
+
+
+def test_mixed_request_serial_metadata_reuses_piecewise_graph_keys():
+    runner = object.__new__(NPUModelRunner)
+    runner.vllm_config = SimpleNamespace()
+    runner.input_ids = SimpleNamespace(gpu=torch.zeros(130, dtype=torch.int32))
+    runner.positions = SimpleNamespace(gpu=torch.zeros(130, dtype=torch.int64))
+    runner.inputs_embeds = SimpleNamespace(gpu=None)
+    runner.input_ids_parallel_streams = SimpleNamespace(
+        gpu=torch.zeros(130, dtype=torch.int32))
+    runner.positions_parallel_streams = SimpleNamespace(
+        gpu=torch.zeros(130, dtype=torch.int64))
+    runner.inputs_embeds_parallel_streams = SimpleNamespace(gpu=None)
+    runner.cudagraph_dispatcher = SimpleNamespace()
+    dispatch_calls = []
+
+    def fake_dispatch(**kwargs):
+        dispatch_calls.append(kwargs)
+        return CUDAGraphMode.PIECEWISE, BatchDescriptor(
+            num_tokens=kwargs["num_tokens"],
+            num_reqs=None,
+            uniform=False,
+            has_lora=kwargs["has_lora"],
+            start_num_tokens=kwargs["start_num_tokens"],
+            graph_variant=kwargs.get("graph_variant", ""),
+            attention_backend=kwargs.get("attention_backend", ""),
+            capture_metadata_mode=kwargs.get("capture_metadata_mode", ""),
+        )
+
+    runner.cudagraph_dispatcher.dispatch = fake_dispatch
+    current_context = SimpleNamespace(dp_metadata=None)
+    contexts = []
+
+    def fake_create_context(cur_forward_context, **kwargs):
+        context = SimpleNamespace(**kwargs)
+        contexts.append(context)
+        return context
+
+    input_ids = torch.arange(130, dtype=torch.int32)
+    positions = torch.arange(130, dtype=torch.int64)
+    split_slices = [
+        SplitBatchSlice(slice(0, 3), slice(0, 66), padded_num_tokens=66),
+        SplitBatchSlice(slice(3, 4), slice(66, 130), padded_num_tokens=64),
+    ]
+    attn_metadata = [
+        {"layer": SimpleNamespace(num_actual_tokens=66)},
+        {"layer": SimpleNamespace(num_actual_tokens=64)},
+    ]
+
+    with patch("vllm_ascend.worker.model_runner_v3.get_forward_context",
+               return_value=current_context), patch(
+                   "vllm_ascend.worker.model_runner_v3.create_ascend_forward_context",
+                   side_effect=fake_create_context):
+        metadata = (
+            NPUModelRunner._make_mixed_request_split_metadata_serial(
+                runner,
+                split_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds=None,
+                intermediate_tensors=None,
+                batch_descriptor=BatchDescriptor(num_tokens=130,
+                                                 num_reqs=None,
+                                                 uniform=False,
+                                                 has_lora=False),
+            ))
+
+    assert len(metadata) == 2
+    assert [call["uniform_decode"] for call in dispatch_calls] == [
+        False, False
+    ]
+    assert [call["disable_full"] for call in dispatch_calls] == [True, True]
+    assert [call["start_num_tokens"] for call in dispatch_calls] == [0, 0]
+    assert [call["allow_inplace_lazy_key"]
+            for call in dispatch_calls] == [False, False]
+    assert all("graph_variant" not in call for call in dispatch_calls)
+    assert all("attention_backend" not in call for call in dispatch_calls)
+    assert all("capture_metadata_mode" not in call for call in dispatch_calls)
+    assert torch.equal(metadata[0].input_ids, input_ids[:66])
+    assert metadata[1].input_ids.storage_offset() == 0
+    assert torch.equal(metadata[1].input_ids, input_ids[66:130])
+    assert contexts[0].ubatch_slices[0] == UBatchSlice(
+        slice(0, 3), slice(0, 66))
+    assert contexts[1].ubatch_slices[1] == UBatchSlice(
+        slice(0, 1), slice(0, 64))
+    assert contexts[0].batch_descriptor.uniform is False
+    assert contexts[0].batch_descriptor.graph_variant == ""
+    assert contexts[0].batch_descriptor.capture_metadata_mode == ""
+    assert contexts[1].batch_descriptor.start_num_tokens == 0
+    assert contexts[1].split_inplace_mode == "mixed_request_serial"
+
+
+def test_mixed_request_parallel_metadata_reuses_piecewise_graph_keys():
+    runner = object.__new__(NPUModelRunner)
+    runner.vllm_config = SimpleNamespace()
+    runner.stream_main = object()
+    runner.stream_parallel = object()
+    runner.input_ids = SimpleNamespace(gpu=torch.zeros(130, dtype=torch.int32))
+    runner.positions = SimpleNamespace(gpu=torch.zeros(130, dtype=torch.int64))
+    runner.inputs_embeds = SimpleNamespace(gpu=None)
+    runner.input_ids_parallel_streams = SimpleNamespace(
+        gpu=torch.zeros(130, dtype=torch.int32))
+    runner.positions_parallel_streams = SimpleNamespace(
+        gpu=torch.zeros(130, dtype=torch.int64))
+    runner.inputs_embeds_parallel_streams = SimpleNamespace(gpu=None)
+    runner.cudagraph_dispatcher = SimpleNamespace()
+    dispatch_calls = []
+
+    def fake_dispatch(**kwargs):
+        dispatch_calls.append(kwargs)
+        return CUDAGraphMode.PIECEWISE, BatchDescriptor(
+            num_tokens=kwargs["num_tokens"],
+            num_reqs=None,
+            uniform=False,
+            has_lora=kwargs["has_lora"],
+            start_num_tokens=kwargs["start_num_tokens"],
+            graph_variant=kwargs.get("graph_variant", ""),
+            attention_backend=kwargs.get("attention_backend", ""),
+            capture_metadata_mode=kwargs.get("capture_metadata_mode", ""),
+        )
+
+    class FakeNPUStream:
+
+        def __call__(self, stream):
+            return nullcontext()
+
+    runner.cudagraph_dispatcher.dispatch = fake_dispatch
+    current_context = SimpleNamespace(dp_metadata=None)
+    contexts = []
+
+    def fake_create_context(cur_forward_context, **kwargs):
+        context = SimpleNamespace(**kwargs)
+        contexts.append(context)
+        return context
+
+    input_ids = torch.arange(130, dtype=torch.int32)
+    positions = torch.arange(130, dtype=torch.int64)
+    split_slices = [
+        SplitBatchSlice(slice(0, 3), slice(0, 66), padded_num_tokens=66),
+        SplitBatchSlice(slice(3, 4), slice(66, 130), padded_num_tokens=64),
+    ]
+    attn_metadata = [
+        {"layer": SimpleNamespace(num_actual_tokens=66)},
+        {"layer": SimpleNamespace(num_actual_tokens=64)},
+    ]
+
+    with patch("vllm_ascend.worker.model_runner_v3.get_forward_context",
+               return_value=current_context), patch(
+                   "vllm_ascend.worker.model_runner_v3.create_ascend_forward_context",
+                   side_effect=fake_create_context), patch(
+                       "vllm_ascend.worker.model_runner_v3.torch.npu.stream",
+                       new=FakeNPUStream()):
+        metadata = (
+            NPUModelRunner._make_mixed_request_split_metadata_parallel(
+                runner,
+                split_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds=None,
+                intermediate_tensors=None,
+                batch_descriptor=BatchDescriptor(num_tokens=130,
+                                                 num_reqs=None,
+                                                 uniform=False,
+                                                 has_lora=False),
+            ))
+
+    assert len(metadata) == 2
+    assert [call["uniform_decode"] for call in dispatch_calls] == [
+        False, False
+    ]
+    assert [call["disable_full"] for call in dispatch_calls] == [True, True]
+    assert [call["start_num_tokens"] for call in dispatch_calls] == [0, 0]
+    assert [call["allow_inplace_lazy_key"]
+            for call in dispatch_calls] == [False, False]
+    assert all("graph_variant" not in call for call in dispatch_calls)
+    assert all("attention_backend" not in call for call in dispatch_calls)
+    assert all("capture_metadata_mode" not in call for call in dispatch_calls)
+    assert torch.equal(metadata[0].input_ids, input_ids[:66])
+    assert metadata[1].input_ids.storage_offset() == 0
+    assert torch.equal(metadata[1].input_ids, input_ids[66:130])
+    assert contexts[0].in_parallel_streams is False
+    assert contexts[1].in_parallel_streams is True
+    assert contexts[0].ubatch_slices[0] == UBatchSlice(
+        slice(0, 3), slice(0, 66))
+    assert contexts[1].ubatch_slices[1] == UBatchSlice(
+        slice(0, 1), slice(0, 64))
+    assert contexts[1].cos_sin_slot_id == 1
+    assert contexts[1].batch_descriptor.start_num_tokens == 0
+    assert contexts[1].batch_descriptor.graph_variant == ""
+    assert contexts[1].batch_descriptor.capture_metadata_mode == ""
+    assert (contexts[1].split_inplace_mode ==
+            "mixed_request_piecewise_attention_parallel")
 
 
 def test_inplace_serial_metadata_uses_padded_offset_graph_view():

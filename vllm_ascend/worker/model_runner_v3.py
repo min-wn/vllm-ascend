@@ -105,6 +105,9 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
 # yapf conflicts with isort for this block
 # yapf: disable
 from vllm_ascend.compilation.acl_graph import (ACLGraphWrapper,
+                                               ensure_graph_param_key,
+                                               get_graph_param_key,
+                                               get_graph_params,
                                                set_graph_params,
                                                set_graph_params_parallel,
                                                set_mtp_graph_params,
@@ -122,7 +125,12 @@ from vllm_ascend.eplb.core.eplb_worker import EplbProcess
 from vllm_ascend.eplb.eplb_updator import EplbUpdator
 from vllm_ascend.eplb.utils import model_register
 from vllm_ascend import inplace_split_debug as split_debug
-from vllm_ascend.ops.rotary_embedding import set_cos_and_sin, update_cos_sin
+from vllm_ascend.ops.rotary_embedding import (
+    disable_external_cos_sin_fast_path,
+    set_cos_and_sin,
+    set_external_cos_sin_fast_path_enabled,
+    update_cos_sin,
+)
 from vllm_ascend.ops.weight_prefetch import WeightPrefetchMethod
 from vllm_ascend.patch.worker.patch_module import patch_torch_npu_argsort
 from vllm_ascend.sample.logits_processor import build_logitsprocs
@@ -144,11 +152,13 @@ from vllm_ascend.worker.inplace_piecewise_scheduler import (
 )
 from vllm_ascend.worker.ubatch_utils import (INPLACE_SPLIT_DRY_RUN,
                                              InplaceSplitPlan,
+                                             MIXED_REQUEST_SPLIT_DRY_RUN,
                                              NO_SPLIT_ATTENTION_BACKEND_MISMATCH,
                                              SplitBatchSlice,
                                              SplitBatchSlices,
                                              create_inplace_split_batch_slices,
                                              create_macro_inplace_split_batch_slices,
+                                             create_mixed_request_split_batch_slices,
                                              inplace_split_first_graph_matches_attention_backend,
                                              select_inplace_attention_backend,
                                              split_batch_split, ubatch_split)
@@ -1168,6 +1178,78 @@ def _copy_tensor_values_for_macro_graph(dst: Any,
     return copied
 
 
+def _iter_macro_attn_metadata_pairs(captured: Any, current: Any):
+    if captured is None or current is None:
+        return
+    if isinstance(captured, dict) and isinstance(current, dict):
+        for key, captured_child in captured.items():
+            if key in current:
+                yield from _iter_macro_attn_metadata_pairs(
+                    captured_child, current[key])
+        return
+    if isinstance(captured, (list, tuple)) and isinstance(current,
+                                                         (list, tuple)):
+        for captured_child, current_child in zip(captured, current):
+            yield from _iter_macro_attn_metadata_pairs(captured_child,
+                                                       current_child)
+        return
+    yield captured, current
+
+
+def _copy_mixed_request_macro_metadata_values(captured: Any,
+                                              current: Any) -> int:
+    copied = 0
+    metadata_attrs = (
+        "seq_lens_list",
+        "actual_seq_lengths_q",
+        "num_actual_tokens",
+        "num_actual_tokens_pcp_padded",
+        "num_decode_tokens",
+        "num_prefill_tokens",
+        "num_decodes",
+        "num_prefills",
+        "attn_state",
+    )
+    for captured_meta, current_meta in _iter_macro_attn_metadata_pairs(
+            captured, current):
+        for attr in metadata_attrs:
+            if not hasattr(current_meta, attr):
+                continue
+            value = getattr(current_meta, attr)
+            if isinstance(value, list):
+                value = list(value)
+            setattr(captured_meta, attr, value)
+            copied += 1
+    return copied
+
+
+def _first_macro_attn_metadata(attn_metadata: Any) -> Any:
+    if isinstance(attn_metadata, dict):
+        if not attn_metadata:
+            return None
+        return next(iter(attn_metadata.values()))
+    if isinstance(attn_metadata, (list, tuple)):
+        if not attn_metadata:
+            return None
+        return _first_macro_attn_metadata(attn_metadata[0])
+    return attn_metadata
+
+
+def _macro_context_runtime_shape(context: Any) -> int:
+    attn_metadata = _first_macro_attn_metadata(
+        getattr(context, "attn_metadata", None))
+    actual_seq_lengths_q = getattr(attn_metadata, "actual_seq_lengths_q", None)
+    if actual_seq_lengths_q is not None and len(actual_seq_lengths_q) > 0:
+        return int(actual_seq_lengths_q[-1])
+    split_actual = getattr(context, "split_actual_num_tokens", None)
+    if split_actual is not None:
+        return int(split_actual)
+    descriptor = getattr(context, "batch_descriptor", None)
+    if descriptor is not None:
+        return int(getattr(descriptor, "num_tokens", 0) or 0)
+    return 0
+
+
 def _require_torchair_tagged_backend() -> tuple[Any, Any]:
     try:
         import torchair as tng
@@ -1411,6 +1493,7 @@ def _dual_stream_attention_plan_to_slices(
 
 
 _INPLACE_SPLIT_MODES = ("inplace_serial", "inplace_parallel")
+_NO_SPLIT_MIXED_MACRO_GRAPH_ENABLED = "no_split_mixed_macro_graph_enabled"
 
 
 def _inplace_split_precheck_reason(
@@ -1468,6 +1551,64 @@ def _inplace_split_precheck_reason(
         return "no_split_mla"
     if int(pcp_size) * int(dcp_size) > 1:
         return "no_split_pcp_or_context_parallel"
+    return None
+
+
+def _mixed_request_split_precheck_reason(
+        *,
+        split_enabled: bool,
+        mixed_enabled: bool,
+        split_mode: str,
+        enable_parallel_streams: bool,
+        replay_policy: str,
+        use_aclgraph: bool,
+        num_splits: int,
+        uniform_decode: bool,
+        with_prefill: bool,
+        enable_dbo: bool,
+        dual_stream_attention_enabled: bool,
+        has_spec_decode_tokens: bool,
+        has_lora: bool,
+        uses_mrope: bool,
+        use_mla: bool,
+        pcp_size: int,
+        dcp_size: int,
+        cudagraph_mode: CUDAGraphMode,
+) -> Optional[str]:
+    """Return why request-level mixed split is not plannable."""
+    if not mixed_enabled:
+        return "no_split_mixed_disabled"
+    if not split_enabled:
+        return "no_split_inplace_disabled"
+    if split_mode not in _INPLACE_SPLIT_MODES:
+        return "no_split_not_inplace_mode"
+    if split_mode == "inplace_parallel" and not enable_parallel_streams:
+        return "no_split_parallel_streams_disabled"
+    if (split_mode == "inplace_parallel"
+            and replay_policy != "piecewise_attention_parallel"):
+        return "no_split_mixed_not_piecewise_policy"
+    if not use_aclgraph:
+        return "no_split_no_aclgraph"
+    if int(num_splits) != 2:
+        return "no_split_num_splits_not_two"
+    if uniform_decode or not with_prefill:
+        return "no_split_mixed_decode_only"
+    if enable_dbo:
+        return "no_split_dbo_active"
+    if dual_stream_attention_enabled:
+        return "no_split_dual_stream_attention_enabled"
+    if has_spec_decode_tokens:
+        return "no_split_unsupported_spec_decode"
+    if has_lora:
+        return "no_split_unsupported_lora"
+    if uses_mrope:
+        return "no_split_unsupported_mrope"
+    if use_mla:
+        return "no_split_unsupported_mla"
+    if int(pcp_size) * int(dcp_size) > 1:
+        return "no_split_unsupported_pcp_dcp"
+    if cudagraph_mode.mixed_mode() != CUDAGraphMode.PIECEWISE:
+        return "no_split_runtime_mode_not_piecewise"
     return None
 
 
@@ -1626,6 +1767,7 @@ class NPUModelRunner(GPUModelRunner):
 
         # Ascend-specific configurations
         self.ascend_config = get_ascend_config()
+        set_external_cos_sin_fast_path_enabled(True)
         self._split_inplace_debug_step_id: Optional[int] = None
         self.weight_prefetch_method = WeightPrefetchMethod(
             self.ascend_config.weight_prefetch_config)
@@ -2231,6 +2373,48 @@ class NPUModelRunner(GPUModelRunner):
                             split_cfg,
                             "inplace_offset_allowed_graph_tokens_by_start",
                             None) if split_cfg is not None else None),
+                    "enable_mixed_request_split": (
+                        bool(getattr(split_cfg,
+                                     "enable_mixed_request_split", False))
+                        if split_cfg is not None else None),
+                    "mixed_request_split_policy": (
+                        getattr(split_cfg, "mixed_request_split_policy", None)
+                        if split_cfg is not None else None),
+                    "mixed_request_split_execution_mode": (
+                        getattr(split_cfg, "mixed_request_split_execution_mode",
+                                None) if split_cfg is not None else None),
+                    "mixed_request_min_total_tokens": (
+                        getattr(split_cfg, "mixed_request_min_total_tokens",
+                                None) if split_cfg is not None else None),
+                    "mixed_request_min_tokens_per_split": (
+                        getattr(split_cfg,
+                                "mixed_request_min_tokens_per_split", None)
+                        if split_cfg is not None else None),
+                    "mixed_request_max_single_request_ratio": (
+                        getattr(split_cfg,
+                                "mixed_request_max_single_request_ratio", None)
+                        if split_cfg is not None else None),
+                    "mixed_request_max_padding_tokens_per_split": (
+                        getattr(
+                            split_cfg,
+                            "mixed_request_max_padding_tokens_per_split",
+                            None) if split_cfg is not None else None),
+                    "mixed_request_max_padding_ratio_per_split": (
+                        getattr(
+                            split_cfg,
+                            "mixed_request_max_padding_ratio_per_split",
+                            None) if split_cfg is not None else None),
+                    "mixed_request_min_prefill_reqs_for_prefill_split": (
+                        getattr(
+                            split_cfg,
+                            "mixed_request_min_prefill_reqs_for_prefill_split",
+                            None) if split_cfg is not None else None),
+                    "mixed_request_decode_weight": (
+                        getattr(split_cfg, "mixed_request_decode_weight",
+                                None) if split_cfg is not None else None),
+                    "mixed_request_prefill_weight": (
+                        getattr(split_cfg, "mixed_request_prefill_weight",
+                                None) if split_cfg is not None else None),
                     "macro_graph_enabled": macro_graph_enabled,
                     "macro_graph_plan_source": (
                         getattr(macro_graph_cfg, "plan_source", None)
@@ -2256,8 +2440,156 @@ class NPUModelRunner(GPUModelRunner):
         # Split batch and DBO never conflict:
         # - DBO is for overlapping compute/communication
         # - Split batch is for splitting large uniform decode batches
-        if (split_mode in _INPLACE_SPLIT_MODES
-                and not dual_stream_attention_enabled):
+        mixed_request_split_attempted = bool(
+            split_cfg is not None
+            and getattr(split_cfg, "enable_mixed_request_split", False)
+            and split_mode in _INPLACE_SPLIT_MODES
+            and not dual_stream_attention_enabled
+            and not uniform_decode
+            and with_prefill)
+        if mixed_request_split_attempted:
+            mixed_request_execution_mode = getattr(
+                split_cfg, "mixed_request_split_execution_mode", "dry_run")
+            replay_policy = getattr(split_cfg, "inplace_parallel_replay_policy",
+                                    "full_graph_parallel")
+            reason = _mixed_request_split_precheck_reason(
+                split_enabled=split_enabled,
+                mixed_enabled=bool(
+                    getattr(split_cfg, "enable_mixed_request_split", False)),
+                split_mode=split_mode,
+                enable_parallel_streams=split_enable_parallel_streams,
+                replay_policy=replay_policy,
+                use_aclgraph=self.use_aclgraph,
+                num_splits=(int(getattr(split_cfg, "num_splits", 0))
+                            if split_cfg is not None else 0),
+                uniform_decode=uniform_decode,
+                with_prefill=with_prefill,
+                enable_dbo=ubatch_slices is not None,
+                dual_stream_attention_enabled=dual_stream_attention_enabled,
+                has_spec_decode_tokens=bool(
+                    scheduler_output.scheduled_spec_decode_tokens),
+                has_lora=bool(
+                    self.lora_config and len(
+                        self.input_batch.lora_id_to_lora_request) > 0),
+                uses_mrope=bool(self.uses_mrope),
+                use_mla=bool(self.model_config.use_mla),
+                pcp_size=int(self.pcp_size),
+                dcp_size=int(self.dcp_size),
+                cudagraph_mode=self.compilation_config.cudagraph_mode,
+            )
+            if reason is None:
+                if macro_graph_enabled:
+                    scheduled_tokens_np = np.asarray(
+                        num_scheduled_tokens, dtype=np.int32)
+                    has_decode_tokens = bool(
+                        np.any(scheduled_tokens_np <= int(
+                            self.decode_threshold)))
+                    has_prefill_tokens = bool(
+                        np.any(scheduled_tokens_np > int(
+                            self.decode_threshold)))
+                    if not (has_decode_tokens and has_prefill_tokens):
+                        reason = "no_split_mixed_macro_requires_decode_prefill"
+                if reason is None:
+                    inplace_split_plan, reason = (
+                        create_mixed_request_split_batch_slices(
+                            num_scheduled_tokens,
+                            total_num_scheduled_tokens,
+                            self.compilation_config.cudagraph_capture_sizes
+                            or [],
+                            decode_threshold=int(self.decode_threshold),
+                            min_total_tokens=getattr(
+                                split_cfg, "mixed_request_min_total_tokens",
+                                128),
+                            min_tokens_per_split=getattr(
+                                split_cfg,
+                                "mixed_request_min_tokens_per_split", 64),
+                            max_single_request_ratio=getattr(
+                                split_cfg,
+                                "mixed_request_max_single_request_ratio", 0.70),
+                            max_padding_tokens_per_split=getattr(
+                                split_cfg,
+                                "mixed_request_max_padding_tokens_per_split",
+                                None),
+                            max_padding_ratio_per_split=getattr(
+                                split_cfg,
+                                "mixed_request_max_padding_ratio_per_split",
+                                0.0),
+                            min_prefill_reqs_for_prefill_split=getattr(
+                                split_cfg,
+                                "mixed_request_min_prefill_reqs_for_prefill_split",
+                                2),
+                            decode_weight=getattr(
+                                split_cfg, "mixed_request_decode_weight", 1),
+                            prefill_weight=getattr(
+                                split_cfg, "mixed_request_prefill_weight", 4),
+                            split_policy=getattr(
+                                split_cfg, "mixed_request_split_policy",
+                                "balanced_attention"),
+                        ))
+            split_planner_decision = "no_split"
+            split_planner_payload.update({
+                "mode": split_mode,
+                "reason": reason,
+                "dry_run": True,
+                "fallback_to": "no_split",
+                "mixed_request_split": True,
+                "mixed_request_split_execution_mode":
+                mixed_request_execution_mode,
+            })
+            if inplace_split_plan is not None:
+                split_planner_decision = MIXED_REQUEST_SPLIT_DRY_RUN
+                split_planner_payload.update(
+                    inplace_split_plan.debug_payload())
+                split_planner_payload["target_batch_descriptors"] = [{
+                    "idx": idx,
+                    "actual_num_tokens": split_slice.num_tokens,
+                    "graph_num_tokens": split_slice.graph_num_tokens,
+                    "padding_tokens": (split_slice.graph_num_tokens -
+                                       split_slice.num_tokens),
+                    "num_reqs": split_slice.num_requests,
+                    "uniform": False,
+                    "has_lora": False,
+                    "start_num_tokens": split_slice.start_num_tokens,
+                } for idx, split_slice in enumerate(
+                    inplace_split_plan.split_slices)]
+                if (mixed_request_execution_mode == "serial"
+                        and split_mode == "inplace_serial"):
+                    (split_batch_slices, split_ubatch_slices) = (
+                        _inplace_plan_to_execution_slices(
+                            split_mode,
+                            inplace_split_plan,
+                            enable_parallel_streams=
+                            split_enable_parallel_streams))
+                    if split_batch_slices is not None:
+                        inplace_attention_backend = "mixed_request"
+                        split_planner_decision = (
+                            "mixed_request_split_execute_serial")
+                        split_planner_payload["dry_run"] = False
+                        split_planner_payload["fallback_to"] = None
+                        split_planner_payload[
+                            "inplace_attention_backend"] = (
+                                inplace_attention_backend)
+                elif (mixed_request_execution_mode ==
+                      "piecewise_attention_parallel"
+                      and split_mode == "inplace_parallel"):
+                    (split_batch_slices, split_ubatch_slices) = (
+                        _inplace_plan_to_execution_slices(
+                            split_mode,
+                            inplace_split_plan,
+                            enable_parallel_streams=
+                            split_enable_parallel_streams))
+                    if split_batch_slices is not None:
+                        inplace_attention_backend = "mixed_request"
+                        split_planner_decision = (
+                            "mixed_request_split_execute_"
+                            "piecewise_attention_parallel")
+                        split_planner_payload["dry_run"] = False
+                        split_planner_payload["fallback_to"] = None
+                        split_planner_payload[
+                            "inplace_attention_backend"] = (
+                                inplace_attention_backend)
+        elif (split_mode in _INPLACE_SPLIT_MODES
+              and not dual_stream_attention_enabled):
             #检查不可split的原因
             reason = _inplace_split_precheck_reason(
                 split_enabled=split_enabled,
@@ -3450,14 +3782,22 @@ class NPUModelRunner(GPUModelRunner):
                     update_attn_params(self.update_stream, forward_context,
                                        num_tokens,
                                        self.vllm_config)
-    
- 
+
+    def _ensure_update_streams(self) -> None:
+        if not hasattr(self, "update_stream"):
+            self.update_stream = torch.npu.Stream()
+        if not hasattr(self, "update_stream_main"):
+            self.update_stream_main = torch.npu.Stream()
+        if not hasattr(self, "update_stream_parallel"):
+            self.update_stream_parallel = torch.npu.Stream()
+
     def _update_attn_params_for_split_ubatch(self, forward_context,
                                              num_tokens: int,
                                              parallel_streams: bool = False) -> None:
         if (forward_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
                 or forward_context.capturing or self.use_sparse):
             return
+        self._ensure_update_streams()
         update_stream = self.update_stream_parallel if parallel_streams else self.update_stream_main
         if self.vllm_config.model_config.use_mla:
             if self.pcp_size * self.dcp_size > 1:
@@ -3669,7 +4009,8 @@ class NPUModelRunner(GPUModelRunner):
                                 stop: int,
                                 *,
                                 name: str,
-                                dim: int = 0) -> bool:
+                                dim: int = 0,
+                                value: int = 0) -> bool:
         if not isinstance(tensor, torch.Tensor) or stop <= start:
             return False
         start = int(start)
@@ -3681,9 +4022,9 @@ class NPUModelRunner(GPUModelRunner):
                 f"shape: tail_stop={stop}, shape={tuple(tensor.shape)}, "
                 f"dim={dim}")
         if dim == 0:
-            tensor[start:stop].fill_(0)
+            tensor[start:stop].fill_(value)
         elif dim == 1:
-            tensor[:, start:stop].fill_(0)
+            tensor[:, start:stop].fill_(value)
         else:
             raise ValueError(f"Unsupported dim={dim} for {name}")
         return True
@@ -3888,18 +4229,156 @@ class NPUModelRunner(GPUModelRunner):
             )
         return padded_common
 
+    def _pad_compact_common_attn_metadata_for_graph(
+            self,
+            common: AscendCommonAttentionMetadata,
+            split_slice: SplitBatchSlice,
+            *,
+            split_idx: int,
+            fill_padding: bool = True,
+    ) -> AscendCommonAttentionMetadata:
+        actual_tokens = int(split_slice.num_tokens)
+        graph_tokens = int(split_slice.graph_num_tokens)
+        if graph_tokens < actual_tokens:
+            raise RuntimeError(
+                "Compact mixed request metadata has fewer graph tokens than "
+                f"actual tokens: graph_tokens={graph_tokens}, "
+                f"actual_tokens={actual_tokens}")
+        if graph_tokens == actual_tokens:
+            return common
+
+        pad_tokens = graph_tokens - actual_tokens
+        actual_reqs = int(common.num_reqs)
+        graph_reqs = actual_reqs + pad_tokens
+
+        padded_common = copy(common)
+        # Compact mixed padding is not an original-batch offset. Represent the
+        # padded tail as fake one-token requests after the real request range so
+        # query_start_loc reaches graph_tokens without changing real requests.
+        padded_common.query_start_loc = self._pad_query_start_loc_for_graph(
+            common.query_start_loc, pad_tokens, 1)
+        padded_common.query_start_loc_cpu = (
+            self._pad_query_start_loc_for_graph(
+                common.query_start_loc_cpu, pad_tokens, 1))
+
+        padded_common.seq_lens = self._expand_tensor_view_for_graph(
+            common.seq_lens,
+            graph_reqs,
+            name="seq_lens",
+            allow_copy=True)
+        padded_common.seq_lens_cpu = self._expand_tensor_view_for_graph(
+            common.seq_lens_cpu,
+            graph_reqs,
+            name="seq_lens_cpu",
+            allow_copy=True)
+        padded_common.num_computed_tokens_cpu = (
+            self._expand_tensor_view_for_graph(
+                common.num_computed_tokens_cpu,
+                graph_reqs,
+                name="num_computed_tokens_cpu",
+                allow_copy=True))
+        padded_common.block_table_tensor = self._expand_tensor_view_for_graph(
+            common.block_table_tensor,
+            graph_reqs,
+            name="block_table_tensor",
+            allow_copy=True)
+        padded_common.slot_mapping = self._expand_tensor_view_for_graph(
+            common.slot_mapping,
+            graph_tokens,
+            name="slot_mapping",
+            allow_copy=True)
+        positions_dim = 1 if (
+            isinstance(common.positions, torch.Tensor)
+            and common.positions.ndim == 2) else 0
+        padded_common.positions = self._expand_tensor_view_for_graph(
+            common.positions,
+            graph_tokens,
+            name="positions",
+            dim=positions_dim,
+            allow_copy=True)
+
+        if fill_padding:
+            self._fill_tensor_local_tail(
+                padded_common.seq_lens,
+                actual_reqs,
+                graph_reqs,
+                name="seq_lens")
+            self._fill_tensor_local_tail(
+                padded_common.seq_lens_cpu,
+                actual_reqs,
+                graph_reqs,
+                name="seq_lens_cpu")
+            self._fill_tensor_local_tail(
+                padded_common.num_computed_tokens_cpu,
+                actual_reqs,
+                graph_reqs,
+                name="num_computed_tokens_cpu")
+            self._fill_tensor_local_tail(
+                padded_common.block_table_tensor,
+                actual_reqs,
+                graph_reqs,
+                name="block_table_tensor",
+                value=-1)
+            self._fill_tensor_local_tail(
+                padded_common.slot_mapping,
+                actual_tokens,
+                graph_tokens,
+                name="slot_mapping",
+                value=-1)
+            self._fill_tensor_local_tail(
+                padded_common.positions,
+                actual_tokens,
+                graph_tokens,
+                name="positions",
+                dim=positions_dim)
+
+        padded_common.num_reqs = graph_reqs
+        padded_common.num_actual_tokens = graph_tokens
+        padded_common.num_input_tokens = graph_tokens
+        padded_common.max_query_len = max(int(common.max_query_len), 1)
+        padded_common.actual_seq_lengths_q = (
+            padded_common.query_start_loc_cpu[1:].tolist())
+        padded_common.graph_pad_size = graph_reqs
+
+        if split_debug.is_enabled():
+            split_debug.log_event(
+                "mixed_request_compact_metadata_padded",
+                {
+                    "split_idx": int(split_idx),
+                    "actual_tokens": actual_tokens,
+                    "graph_tokens": graph_tokens,
+                    "actual_reqs": actual_reqs,
+                    "graph_reqs": graph_reqs,
+                    "pad_tokens": pad_tokens,
+                    "actual_seq_lengths_q_len":
+                    len(padded_common.actual_seq_lengths_q),
+                    "fill_padding": bool(fill_padding),
+                    **split_debug.metadata_tensor_info(padded_common),
+                },
+                step_id=_split_debug_step_from_runner(self),
+            )
+        return padded_common
+
     def _stabilize_inplace_common_attn_metadata(
             self,
             common: AscendCommonAttentionMetadata,
             *,
             split_idx: int,
             split_slice: Optional[SplitBatchSlice] = None,
+            offset_match_policy: str = "",
             fill_padding: bool = True,
     ) -> AscendCommonAttentionMetadata:
         # Experiment: use split metadata directly, including the rebased
         # query_start_loc tensor created by split_attn_metadata().
         if split_slice is not None and split_slice.start_num_tokens > 0:
             common = self._pad_inplace_common_attn_metadata_for_graph(
+                common,
+                split_slice,
+                split_idx=split_idx,
+                fill_padding=fill_padding)
+        elif (split_slice is not None and offset_match_policy == "compact"
+              and split_slice.graph_num_tokens > split_slice.num_tokens):
+            common = self._pad_compact_common_attn_metadata_for_graph(
                 common,
                 split_slice,
                 split_idx=split_idx,
@@ -3922,7 +4401,9 @@ class NPUModelRunner(GPUModelRunner):
                 self._stabilize_inplace_common_attn_metadata(
                     common_attn_metadata,
                     split_idx=split_idx,
-                    split_slice=split_slice))
+                    split_slice=split_slice,
+                    offset_match_policy=getattr(inplace_split_plan,
+                                                "offset_match_policy", "")))
         return stabilized
 
     def _intermediate_tensor_slice_for_tokens(self,
@@ -4190,6 +4671,179 @@ class NPUModelRunner(GPUModelRunner):
                 "inputs_embeds": split_inputs_embeds,
                 "padding_tail_payload": padding_tail_payload,
             })
+        return prepared
+
+    def _copy_compact_token_tensor(self,
+                                   source: Optional[torch.Tensor],
+                                   target: Optional[torch.Tensor],
+                                   token_slice: slice,
+                                   graph_tokens: int,
+                                   *,
+                                   name: str,
+                                   token_dim: int = 0) -> Optional[torch.Tensor]:
+        if source is None:
+            return None
+        if target is None:
+            raise RuntimeError(
+                f"Mixed request split requires compact buffer for {name}")
+        actual_tokens = int(token_slice.stop) - int(token_slice.start)
+        graph_tokens = int(graph_tokens)
+        if graph_tokens < actual_tokens:
+            raise RuntimeError(
+                "Mixed request split compact buffer graph size is smaller "
+                f"than actual tokens for {name}: graph={graph_tokens}, "
+                f"actual={actual_tokens}")
+        if token_dim == 0:
+            compact = target[:graph_tokens]
+            compact[:actual_tokens].copy_(
+                source[token_slice], non_blocking=True)
+            if graph_tokens > actual_tokens:
+                compact[actual_tokens:graph_tokens].fill_(0)
+            return compact
+        if token_dim == 1:
+            compact = target[:, :graph_tokens]
+            compact[:, :actual_tokens].copy_(
+                source[:, token_slice], non_blocking=True)
+            if graph_tokens > actual_tokens:
+                compact[:, actual_tokens:graph_tokens].fill_(0)
+            return compact
+        raise ValueError(f"Unsupported token_dim={token_dim} for {name}")
+
+    @staticmethod
+    def _shares_tensor_storage(lhs: Optional[torch.Tensor],
+                               rhs: Optional[torch.Tensor]) -> bool:
+        if not isinstance(lhs, torch.Tensor) or not isinstance(
+                rhs, torch.Tensor):
+            return False
+        try:
+            return (lhs.untyped_storage().data_ptr()
+                    == rhs.untyped_storage().data_ptr())
+        except Exception:
+            return lhs.data_ptr() == rhs.data_ptr()
+
+    @classmethod
+    def _needs_mixed_request_source_snapshot(
+            cls,
+            source: Optional[torch.Tensor],
+            target: Optional[torch.Tensor],
+            split_batch_slices: SplitBatchSlices,
+    ) -> bool:
+        if not cls._shares_tensor_storage(source, target):
+            return False
+        final_token_stop = max(int(s.token_slice.stop)
+                               for s in split_batch_slices)
+        for split_slice in split_batch_slices:
+            if (int(split_slice.graph_num_tokens) > int(
+                    split_slice.num_tokens)
+                    and int(split_slice.token_slice.stop) < final_token_stop):
+                return True
+        return False
+
+    def _prepare_mixed_request_split_compact_inputs(
+            self,
+            split_batch_slices: SplitBatchSlices,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+    ) -> list[dict[str, Any]]:
+        if intermediate_tensors is not None:
+            raise RuntimeError(
+                "mixed request split does not yet support intermediate_tensors"
+            )
+
+        main_input_target = getattr(getattr(self, "input_ids", None), "gpu",
+                                    input_ids)
+        main_positions_target = getattr(getattr(self, "positions", None),
+                                        "gpu", positions)
+        main_embeds_target = getattr(getattr(self, "inputs_embeds", None),
+                                     "gpu", inputs_embeds)
+        input_ids_source = input_ids
+        positions_source = positions
+        inputs_embeds_source = inputs_embeds
+        if self._needs_mixed_request_source_snapshot(
+                input_ids, main_input_target, split_batch_slices):
+            input_ids_source = input_ids.clone() if input_ids is not None else None
+        if self._needs_mixed_request_source_snapshot(
+                positions, main_positions_target, split_batch_slices):
+            positions_source = positions.clone()
+        if self._needs_mixed_request_source_snapshot(
+                inputs_embeds, main_embeds_target, split_batch_slices):
+            inputs_embeds_source = (
+                inputs_embeds.clone()
+                if inputs_embeds is not None else None)
+
+        prepared: list[dict[str, Any]] = []
+        for idx, split_slice in enumerate(split_batch_slices):
+            graph_tokens = int(split_slice.graph_num_tokens)
+            token_slice = split_slice.token_slice
+            if idx == 0:
+                input_target = main_input_target
+                positions_target = main_positions_target
+                embeds_target = main_embeds_target
+            else:
+                input_target = getattr(
+                    getattr(self, "input_ids_parallel_streams", None), "gpu",
+                    None)
+                positions_target = getattr(
+                    getattr(self, "positions_parallel_streams", None), "gpu",
+                    None)
+                embeds_target = getattr(
+                    getattr(self, "inputs_embeds_parallel_streams", None),
+                    "gpu", None)
+
+            compact_input_ids = self._copy_compact_token_tensor(
+                input_ids_source,
+                input_target,
+                token_slice,
+                graph_tokens,
+                name="input_ids")
+
+            positions_token_dim = 1 if positions.ndim == 2 else 0
+            compact_positions = self._copy_compact_token_tensor(
+                positions_source,
+                positions_target,
+                token_slice,
+                graph_tokens,
+                name="positions",
+                token_dim=positions_token_dim)
+
+            compact_inputs_embeds = self._copy_compact_token_tensor(
+                inputs_embeds_source,
+                embeds_target,
+                token_slice,
+                graph_tokens,
+                name="inputs_embeds")
+
+            prepared.append({
+                "input_ids": compact_input_ids,
+                "positions": compact_positions,
+                "inputs_embeds": compact_inputs_embeds,
+                "intermediate_tensors": None,
+                "local_ubatch_slice": UBatchSlice(
+                    slice(0, split_slice.num_requests),
+                    slice(0, graph_tokens)),
+            })
+
+            if split_debug.is_enabled():
+                split_debug.log_event(
+                    "mixed_request_compact_input",
+                    {
+                        "idx": idx,
+                        "source_token_start": int(token_slice.start),
+                        "source_token_stop": int(token_slice.stop),
+                        "num_tokens": int(split_slice.num_tokens),
+                        "graph_num_tokens": graph_tokens,
+                        "input_ids": split_debug.tensor_view_info(
+                            compact_input_ids),
+                        "positions": split_debug.tensor_view_info(
+                            compact_positions),
+                        "inputs_embeds": split_debug.tensor_view_info(
+                            compact_inputs_embeds),
+                    },
+                    step_id=_split_debug_step_from_runner(self),
+                )
+
         return prepared
 
     def _make_split_batch_metadata_parallel_streams(
@@ -4469,6 +5123,235 @@ class NPUModelRunner(GPUModelRunner):
                     inputs_embeds=sliced_inputs_embeds,
                     intermediate_tensors=sliced_intermediate_tensors,
                     num_tokens=split_slice.padded_num_tokens))
+
+        return ubatch_metadata
+
+    def _make_mixed_request_split_metadata_serial(
+            self,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            batch_descriptor: BatchDescriptor,
+    ) -> list[AscendUbatchMetadata]:
+        cur_forward_context = get_forward_context()
+        dp_metadata = cur_forward_context.dp_metadata
+        prepared_split_inputs = (
+            self._prepare_mixed_request_split_compact_inputs(
+                split_batch_slices,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors))
+        local_ubatch_slices = [
+            item["local_ubatch_slice"] for item in prepared_split_inputs
+        ]
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
+        for idx, split_slice in enumerate(split_batch_slices):
+            if split_slice.start_num_tokens != 0:
+                raise RuntimeError(
+                    "mixed request split requires compact start_num_tokens=0")
+
+            ubatch_attn_metadata = None
+            if attn_metadata is not None:
+                if isinstance(attn_metadata, list) and idx < len(
+                        attn_metadata):
+                    ubatch_attn_metadata = attn_metadata[idx]
+                else:
+                    ubatch_attn_metadata = attn_metadata
+
+            ubatch_cudagraph_mode, ubatch_batch_descriptor = (
+                self.cudagraph_dispatcher.dispatch(
+                    num_tokens=split_slice.graph_num_tokens,
+                    uniform_decode=False,
+                    has_lora=batch_descriptor.has_lora,
+                    disable_full=True,
+                    start_num_tokens=0,
+                    allow_inplace_lazy_key=False,
+                ))
+            if ubatch_cudagraph_mode not in (CUDAGraphMode.PIECEWISE,
+                                             CUDAGraphMode.NONE):
+                raise RuntimeError(
+                    "mixed request split serial execution requires "
+                    "CUDAGraphMode.PIECEWISE or NONE, got "
+                    f"{ubatch_cudagraph_mode}")
+
+            prepared = prepared_split_inputs[idx]
+            split_forward_context = create_ascend_forward_context(
+                cur_forward_context,
+                attn_metadata=ubatch_attn_metadata,
+                vllm_config=self.vllm_config,
+                dp_metadata=dp_metadata,
+                ubatch_slices=local_ubatch_slices,
+                batch_descriptor=ubatch_batch_descriptor,
+                cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                ubatch_num=idx,
+                positions=prepared["positions"],
+                in_parallel_streams=False,
+            )
+            _set_split_debug_step(split_forward_context,
+                                  _split_debug_step_from_runner(self))
+            setattr(split_forward_context, "split_inplace_mode",
+                    "mixed_request_serial")
+            setattr(split_forward_context, "forced_attention_backend", "")
+            setattr(split_forward_context, "allow_inplace_lazy_capture", False)
+            setattr(split_forward_context, "split_actual_num_tokens",
+                    int(split_slice.num_tokens))
+            setattr(split_forward_context, "split_graph_num_tokens",
+                    int(split_slice.graph_num_tokens))
+            setattr(split_forward_context, "validate_inplace_input_ptrs",
+                    False)
+            setattr(split_forward_context, "validate_inplace_metadata_ptrs",
+                    False)
+
+            if split_debug.is_enabled():
+                split_debug.log_event(
+                    "mixed_request_split_descriptor",
+                    {
+                        "idx": idx,
+                        "dispatch_num_tokens":
+                        int(split_slice.graph_num_tokens),
+                        "actual_num_tokens": int(split_slice.num_tokens),
+                        "runtime_mode": ubatch_cudagraph_mode.name,
+                        "batch_descriptor":
+                        split_debug.batch_descriptor_info(
+                            ubatch_batch_descriptor),
+                        "metadata": split_debug.metadata_tensor_info(
+                            split_forward_context.attn_metadata),
+                    },
+                    step_id=_split_debug_step_from_runner(self),
+                )
+
+            ubatch_metadata.append(
+                AscendUbatchMetadata(
+                    context=split_forward_context,
+                    input_ids=prepared["input_ids"],
+                    positions=prepared["positions"],
+                    inputs_embeds=prepared["inputs_embeds"],
+                    intermediate_tensors=None,
+                    num_tokens=split_slice.graph_num_tokens))
+
+        return ubatch_metadata
+
+    def _make_mixed_request_split_metadata_parallel(
+            self,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            inputs_embeds: Optional[torch.Tensor],
+            intermediate_tensors: Optional[IntermediateTensors],
+            batch_descriptor: BatchDescriptor,
+    ) -> list[AscendUbatchMetadata]:
+        cur_forward_context = get_forward_context()
+        dp_metadata = cur_forward_context.dp_metadata
+        prepared_split_inputs = (
+            self._prepare_mixed_request_split_compact_inputs(
+                split_batch_slices,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors))
+        local_ubatch_slices = [
+            item["local_ubatch_slice"] for item in prepared_split_inputs
+        ]
+
+        ubatch_metadata: list[AscendUbatchMetadata] = []
+        for idx, split_slice in enumerate(split_batch_slices):
+            if split_slice.start_num_tokens != 0:
+                raise RuntimeError(
+                    "mixed request split requires compact start_num_tokens=0")
+
+            ubatch_attn_metadata = None
+            if attn_metadata is not None:
+                if isinstance(attn_metadata, list) and idx < len(
+                        attn_metadata):
+                    ubatch_attn_metadata = attn_metadata[idx]
+                else:
+                    ubatch_attn_metadata = attn_metadata
+
+            ubatch_cudagraph_mode, ubatch_batch_descriptor = (
+                self.cudagraph_dispatcher.dispatch(
+                    num_tokens=split_slice.graph_num_tokens,
+                    uniform_decode=False,
+                    has_lora=batch_descriptor.has_lora,
+                    disable_full=True,
+                    start_num_tokens=0,
+                    allow_inplace_lazy_key=False,
+                ))
+            if ubatch_cudagraph_mode not in (CUDAGraphMode.PIECEWISE,
+                                             CUDAGraphMode.NONE):
+                raise RuntimeError(
+                    "mixed request split piecewise attention parallel "
+                    "requires CUDAGraphMode.PIECEWISE or NONE, got "
+                    f"{ubatch_cudagraph_mode}")
+
+            in_parallel_streams = idx > 0
+            prepared = prepared_split_inputs[idx]
+            ctx_stream = (self.stream_parallel if in_parallel_streams
+                          else self.stream_main)
+            with torch.npu.stream(ctx_stream):
+                split_forward_context = create_ascend_forward_context(
+                    cur_forward_context,
+                    attn_metadata=ubatch_attn_metadata,
+                    vllm_config=self.vllm_config,
+                    dp_metadata=dp_metadata,
+                    ubatch_slices=local_ubatch_slices,
+                    batch_descriptor=ubatch_batch_descriptor,
+                    cudagraph_runtime_mode=ubatch_cudagraph_mode,
+                    ubatch_num=idx,
+                    positions=prepared["positions"],
+                    in_parallel_streams=in_parallel_streams,
+                    cos_sin_slot_id=idx,
+                )
+            _set_split_debug_step(split_forward_context,
+                                  _split_debug_step_from_runner(self))
+            setattr(split_forward_context, "split_inplace_mode",
+                    "mixed_request_piecewise_attention_parallel")
+            setattr(split_forward_context, "forced_attention_backend", "")
+            setattr(split_forward_context, "allow_inplace_lazy_capture", False)
+            setattr(split_forward_context, "split_actual_num_tokens",
+                    int(split_slice.num_tokens))
+            setattr(split_forward_context, "split_graph_num_tokens",
+                    int(split_slice.graph_num_tokens))
+            setattr(split_forward_context, "validate_inplace_input_ptrs",
+                    False)
+            setattr(split_forward_context, "validate_inplace_metadata_ptrs",
+                    False)
+
+            if split_debug.is_enabled():
+                split_debug.log_event(
+                    "mixed_request_split_descriptor",
+                    {
+                        "idx": idx,
+                        "execution":
+                        "mixed_request_piecewise_attention_parallel",
+                        "stream": ("parallel" if in_parallel_streams
+                                   else "main"),
+                        "dispatch_num_tokens":
+                        int(split_slice.graph_num_tokens),
+                        "actual_num_tokens": int(split_slice.num_tokens),
+                        "runtime_mode": ubatch_cudagraph_mode.name,
+                        "batch_descriptor":
+                        split_debug.batch_descriptor_info(
+                            ubatch_batch_descriptor),
+                        "metadata": split_debug.metadata_tensor_info(
+                            split_forward_context.attn_metadata),
+                    },
+                    step_id=_split_debug_step_from_runner(self),
+                )
+
+            ubatch_metadata.append(
+                AscendUbatchMetadata(
+                    context=split_forward_context,
+                    input_ids=prepared["input_ids"],
+                    positions=prepared["positions"],
+                    inputs_embeds=prepared["inputs_embeds"],
+                    intermediate_tensors=None,
+                    num_tokens=split_slice.graph_num_tokens))
 
         return ubatch_metadata
 
@@ -5005,9 +5888,11 @@ class NPUModelRunner(GPUModelRunner):
         Python global after capture, so rebind it only while capturing the
         offset graph and make that graph retain the split-1 buffer address.
         """
-        if (not parallel_streams
-                or getattr(context, "split_inplace_mode", "")
-                != "inplace_parallel"):
+        split_mode = getattr(context, "split_inplace_mode", "")
+        if (not parallel_streams or split_mode not in (
+                "inplace_parallel",
+                "mixed_request_piecewise_attention_parallel",
+        )):
             yield
             return
 
@@ -5504,6 +6389,56 @@ class NPUModelRunner(GPUModelRunner):
                 torch.npu.synchronize()
 
 
+    def _run_mixed_request_split_serial(
+            self,
+            split_batch_slices: SplitBatchSlices,
+            attn_metadata: PerLayerAttnMetadata,
+            input_ids: Optional[torch.Tensor],
+            positions: torch.Tensor,
+            intermediate_tensors: Optional[IntermediateTensors],
+            inputs_embeds: Optional[torch.Tensor],
+            model_kwargs: dict[str, Any],
+            batch_descriptor: BatchDescriptor,
+    ) -> Any:
+        ubatch_metadata = self._make_mixed_request_split_metadata_serial(
+            split_batch_slices,
+            attn_metadata,
+            input_ids,
+            positions,
+            inputs_embeds,
+            intermediate_tensors,
+            batch_descriptor,
+        )
+
+        results: list[Any] = []
+        original_forward_context = get_forward_context()
+        self._t_replay_start = time.perf_counter()
+        try:
+            for slice_idx, split_slice in enumerate(split_batch_slices):
+                metadata = ubatch_metadata[slice_idx]
+                with torch.npu.stream(self.stream_main):
+                    with override_forward_context(metadata.context):
+                        with disable_external_cos_sin_fast_path():
+                            split_result = self.model(
+                                input_ids=metadata.input_ids,
+                                positions=metadata.positions,
+                                inputs_embeds=metadata.inputs_embeds,
+                                intermediate_tensors=
+                                metadata.intermediate_tensors,
+                                **model_kwargs,
+                            )
+                self.stream_main.synchronize()
+                results.append(
+                    self._clone_split_output(
+                        self._trim_split_output(split_result,
+                                                split_slice.num_tokens)))
+
+            with override_forward_context(original_forward_context):
+                return self._merge_split_outputs(results)
+        finally:
+            self._t_replay_end = time.perf_counter()
+
+
     def _run_split_batch_inplace_serial(
             self,
             split_ubatch_slices: UBatchSlices,
@@ -5610,18 +6545,29 @@ class NPUModelRunner(GPUModelRunner):
                 "piecewise_attention_parallel currently supports exactly "
                 f"2 splits, got {len(split_batch_slices)}")
 
-        ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
-            split_ubatch_slices,
-            split_batch_slices,
-            attn_metadata,
-            input_ids,
-            positions,
-            inputs_embeds,
-            intermediate_tensors,
-            batch_descriptor,
-            aclgraph_runtime_mode,
-            inplace_attention_backend,
-        )
+        if inplace_attention_backend == "mixed_request":
+            ubatch_metadata = self._make_mixed_request_split_metadata_parallel(
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+                batch_descriptor,
+            )
+        else:
+            ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+                inplace_attention_backend,
+            )
 
         original_forward_context = get_forward_context()
         runtime_calls = []
@@ -5630,15 +6576,20 @@ class NPUModelRunner(GPUModelRunner):
             for slice_idx, metadata in enumerate(ubatch_metadata):
                 target_stream = (self.stream_parallel if slice_idx > 0
                                  else self.stream_main)
+                rotary_context = (
+                    disable_external_cos_sin_fast_path()
+                    if inplace_attention_backend == "mixed_request"
+                    else nullcontext())
                 with self._bind_inplace_parallel_rope_capture_slot(
                         metadata.context, parallel_streams=(slice_idx > 0)):
-                    runtime_calls.append(
-                        capture_piecewise_model_call(
-                            model=self.model,
-                            metadata=metadata,
-                            model_kwargs=model_kwargs,
-                            stream=target_stream,
-                        ))
+                    with rotary_context:
+                        runtime_calls.append(
+                            capture_piecewise_model_call(
+                                model=self.model,
+                                metadata=metadata,
+                                model_kwargs=model_kwargs,
+                                stream=target_stream,
+                            ))
 
             handle = runtime_calls[0].handle
             if runtime_calls[1].handle is not handle:
@@ -5783,21 +6734,26 @@ class NPUModelRunner(GPUModelRunner):
             self,
             split_batch_slices: SplitBatchSlices,
             inplace_attention_backend: str,
+            *,
+            uniform_decode: bool = True,
     ) -> tuple[Any, ...]:
         split_actual_tokens = tuple(
             int(split_slice.num_tokens) for split_slice in split_batch_slices)
         split_graph_tokens = tuple(
             int(split_slice.graph_num_tokens)
             for split_slice in split_batch_slices)
+        split_num_reqs = tuple(
+            int(split_slice.num_requests) for split_slice in split_batch_slices)
         split_start_tokens = tuple(
             int(split_slice.start_num_tokens)
             for split_slice in split_batch_slices)
         macro_graph_cfg = self._macro_graph_config()
         return (
             sum(split_actual_tokens),
-            True,
+            bool(uniform_decode),
             split_actual_tokens,
             split_graph_tokens,
+            split_num_reqs,
             split_start_tokens,
             getattr(macro_graph_cfg, "schedule", ""),
             str(inplace_attention_backend),
@@ -5869,7 +6825,176 @@ class NPUModelRunner(GPUModelRunner):
                 getattr(captured.context, "positions", None),
                 getattr(current.context, "positions", None),
             )
+            if entry.inplace_attention_backend == "mixed_request":
+                copied += _copy_mixed_request_macro_metadata_values(
+                    getattr(captured.context, "attn_metadata", None),
+                    getattr(current.context, "attn_metadata", None),
+                )
         return copied
+
+    def _prepare_mixed_request_macro_contexts(
+            self,
+            entry: _PlannedMacroGraphEntry,
+            ubatch_metadata: list[AscendUbatchMetadata]) -> None:
+        for idx, metadata in enumerate(ubatch_metadata):
+            context = metadata.context
+            descriptor = getattr(context, "batch_descriptor", None)
+            has_lora = bool(getattr(descriptor, "has_lora", False))
+            split_slice = entry.plan.split_slices[int(idx)]
+            num_reqs = int(getattr(split_slice, "num_requests", 0) or 0)
+            if num_reqs <= 0:
+                first_meta = _first_macro_attn_metadata(
+                    getattr(context, "attn_metadata", None))
+                num_reqs = int(getattr(first_meta, "num_decodes", 0) or 0)
+                num_reqs += int(getattr(first_meta, "num_prefills", 0) or 0)
+                if num_reqs <= 0:
+                    num_reqs = getattr(descriptor, "num_reqs", None)
+            graph_tokens = int(getattr(context, "split_graph_num_tokens",
+                                       getattr(metadata, "num_tokens", 0))
+                               or getattr(metadata, "num_tokens", 0))
+            graph_variant = str(
+                getattr(context, "split_inplace_mode",
+                        "mixed_request_piecewise_attention_parallel"))
+            context.batch_descriptor = BatchDescriptor(
+                num_tokens=graph_tokens,
+                num_reqs=num_reqs,
+                uniform=False,
+                has_lora=has_lora,
+                start_num_tokens=0,
+                graph_variant=graph_variant,
+                attention_backend="mixed_request",
+                capture_metadata_mode="mixed_request_compact",
+            )
+            context.capturing = True
+
+    def _snapshot_mixed_request_macro_graph_params(
+            self, ubatch_metadata: list[AscendUbatchMetadata]
+    ) -> list[tuple[Any, Any, int, int, int]]:
+        snapshots: list[tuple[Any, Any, int, int, int]] = []
+        for metadata in ubatch_metadata:
+            context = metadata.context
+            in_parallel_streams = bool(
+                getattr(context, "in_parallel_streams", False))
+            graph_params = get_graph_params(in_parallel_streams)
+            if graph_params is None:
+                continue
+            runtime_shape = _macro_context_runtime_shape(context)
+            param_key = get_graph_param_key(context, runtime_shape)
+            ensure_graph_param_key(graph_params, param_key)
+            snapshots.append((
+                graph_params,
+                param_key,
+                len(graph_params.events[param_key]),
+                len(graph_params.handles[param_key]),
+                len(graph_params.attn_params[param_key]),
+            ))
+        return snapshots
+
+    def _restore_mixed_request_macro_graph_param_snapshots(
+            self, snapshots: list[tuple[Any, Any, int, int, int]]) -> None:
+        for graph_params, param_key, events_len, handles_len, params_len in snapshots:
+            del graph_params.events[param_key][events_len:]
+            del graph_params.handles[param_key][handles_len:]
+            del graph_params.attn_params[param_key][params_len:]
+
+    def _prewarm_mixed_request_macro_fia_workspaces(
+            self,
+            module: nn.Module,
+            ubatch_metadata: list[AscendUbatchMetadata],
+    ) -> None:
+        context_states: list[tuple[Any, bool, Any, bool, Any]] = []
+        for metadata in ubatch_metadata:
+            context = metadata.context
+            had_capturing = hasattr(context, "capturing")
+            old_capturing = getattr(context, "capturing", None)
+            had_warmup = hasattr(context, "macro_fia_workspace_warmup")
+            old_warmup = getattr(context, "macro_fia_workspace_warmup", None)
+            context_states.append((
+                context,
+                had_capturing,
+                old_capturing,
+                had_warmup,
+                old_warmup,
+            ))
+            context.capturing = False
+            context.macro_fia_workspace_warmup = True
+
+        snapshots = self._snapshot_mixed_request_macro_graph_params(
+            ubatch_metadata)
+        try:
+            with torch.inference_mode():
+                module()
+            torch.npu.synchronize()
+        finally:
+            for (context, had_capturing, old_capturing, had_warmup,
+                 old_warmup) in context_states:
+                if had_capturing:
+                    context.capturing = old_capturing
+                elif hasattr(context, "capturing"):
+                    delattr(context, "capturing")
+                if had_warmup:
+                    context.macro_fia_workspace_warmup = old_warmup
+                elif hasattr(context, "macro_fia_workspace_warmup"):
+                    delattr(context, "macro_fia_workspace_warmup")
+            self._restore_mixed_request_macro_graph_param_snapshots(snapshots)
+
+    def _update_mixed_request_macro_attention_params(
+            self, entry: _PlannedMacroGraphEntry) -> None:
+        if entry.captured_metadata is None:
+            raise RuntimeError(
+                "mixed_request macro graph has no captured metadata to "
+                "update before replay")
+        for idx, metadata in enumerate(entry.captured_metadata):
+            context = metadata.context
+            runtime_shape = _macro_context_runtime_shape(context)
+            if runtime_shape <= 0:
+                raise RuntimeError(
+                    "mixed_request macro graph could not determine runtime "
+                    f"shape for split {idx}")
+            self._ensure_update_streams()
+            parallel_streams = bool(idx > 0)
+            update_stream = (self.update_stream_parallel if parallel_streams
+                             else self.update_stream_main)
+            update_attn_params_split(
+                update_stream,
+                context,
+                runtime_shape,
+                self.vllm_config,
+                in_parallel_streams=parallel_streams,
+            )
+
+    def _promote_mixed_request_macro_metadata(
+            self, ubatch_metadata: list[AscendUbatchMetadata]) -> None:
+        seen: set[int] = set()
+
+        def visit(value: Any, device: torch.device) -> None:
+            if value is None:
+                return
+            if isinstance(value, dict):
+                for child in value.values():
+                    visit(child, device)
+                return
+            if isinstance(value, (list, tuple)):
+                for child in value:
+                    visit(child, device)
+                return
+            obj_id = id(value)
+            if obj_id in seen:
+                return
+            seen.add(obj_id)
+            seq_lens = getattr(value, "seq_lens", None)
+            if (isinstance(seq_lens, torch.Tensor)
+                    and seq_lens.device.type == "cpu"):
+                value.seq_lens = seq_lens.to(device, non_blocking=True)
+
+        for metadata in ubatch_metadata:
+            device_tensor = metadata.positions
+            if device_tensor is None and metadata.input_ids is not None:
+                device_tensor = metadata.input_ids
+            if not isinstance(device_tensor, torch.Tensor):
+                continue
+            visit(getattr(metadata.context, "attn_metadata", None),
+                  device_tensor.device)
 
     def _materialize_torchair_macro_graph_entry(
             self,
@@ -5879,20 +7004,31 @@ class NPUModelRunner(GPUModelRunner):
     ) -> None:
         macro_graph_cfg = self._macro_graph_config()
         tng, CompilerConfig = _require_torchair_tagged_backend()
+        if entry.inplace_attention_backend == "mixed_request":
+            self._prepare_mixed_request_macro_contexts(entry, ubatch_metadata)
 
         runtime_calls = []
-        for slice_idx, metadata in enumerate(ubatch_metadata):
-            target_stream = (self.stream_parallel if slice_idx > 0
-                             else self.stream_main)
-            with self._bind_inplace_parallel_rope_capture_slot(
-                    metadata.context, parallel_streams=(slice_idx > 0)):
-                runtime_calls.append(
-                    capture_piecewise_model_call(
-                        model=self.model,
-                        metadata=metadata,
-                        model_kwargs=model_kwargs,
-                        stream=target_stream,
-                    ))
+        snapshots = (self._snapshot_mixed_request_macro_graph_params(
+            ubatch_metadata)
+                     if entry.inplace_attention_backend == "mixed_request"
+                     else [])
+        try:
+            for slice_idx, metadata in enumerate(ubatch_metadata):
+                target_stream = (self.stream_parallel if slice_idx > 0
+                                 else self.stream_main)
+                rotary_context = nullcontext()
+                with self._bind_inplace_parallel_rope_capture_slot(
+                        metadata.context, parallel_streams=(slice_idx > 0)):
+                    with rotary_context:
+                        runtime_calls.append(
+                            capture_piecewise_model_call(
+                                model=self.model,
+                                metadata=metadata,
+                                model_kwargs=model_kwargs,
+                                stream=target_stream,
+                            ))
+        finally:
+            self._restore_mixed_request_macro_graph_param_snapshots(snapshots)
 
         event_tag_prefix = (
             f"vllm_macro_{os.getpid()}_{len(self._macro_graph_registry)}_"
@@ -5907,6 +7043,10 @@ class NPUModelRunner(GPUModelRunner):
             tng=tng,
         )
         if _MACRO_GRAPH_EAGER_PREFLIGHT:
+            snapshots = (self._snapshot_mixed_request_macro_graph_params(
+                ubatch_metadata)
+                         if entry.inplace_attention_backend == "mixed_request"
+                         else [])
             try:
                 module()
                 self.stream_main.synchronize()
@@ -5918,6 +7058,9 @@ class NPUModelRunner(GPUModelRunner):
                     traceback.format_exc(),
                 )
                 raise
+            finally:
+                self._restore_mixed_request_macro_graph_param_snapshots(
+                    snapshots)
         config = CompilerConfig()
         config.mode = "reduce-overhead"
         config.debug.aclgraph.enable_output_clone.value = True
@@ -5949,20 +7092,31 @@ class NPUModelRunner(GPUModelRunner):
     ) -> None:
         macro_graph_cfg = self._macro_graph_config()
         _require_npugraph_ex_backend()
+        if entry.inplace_attention_backend == "mixed_request":
+            self._prepare_mixed_request_macro_contexts(entry, ubatch_metadata)
 
         runtime_calls = []
-        for slice_idx, metadata in enumerate(ubatch_metadata):
-            target_stream = (self.stream_parallel if slice_idx > 0
-                             else self.stream_main)
-            with self._bind_inplace_parallel_rope_capture_slot(
-                    metadata.context, parallel_streams=(slice_idx > 0)):
-                runtime_calls.append(
-                    capture_piecewise_model_call(
-                        model=self.model,
-                        metadata=metadata,
-                        model_kwargs=model_kwargs,
-                        stream=target_stream,
-                    ))
+        snapshots = (self._snapshot_mixed_request_macro_graph_params(
+            ubatch_metadata)
+                     if entry.inplace_attention_backend == "mixed_request"
+                     else [])
+        try:
+            for slice_idx, metadata in enumerate(ubatch_metadata):
+                target_stream = (self.stream_parallel if slice_idx > 0
+                                 else self.stream_main)
+                rotary_context = nullcontext()
+                with self._bind_inplace_parallel_rope_capture_slot(
+                        metadata.context, parallel_streams=(slice_idx > 0)):
+                    with rotary_context:
+                        runtime_calls.append(
+                            capture_piecewise_model_call(
+                                model=self.model,
+                                metadata=metadata,
+                                model_kwargs=model_kwargs,
+                                stream=target_stream,
+                            ))
+        finally:
+            self._restore_mixed_request_macro_graph_param_snapshots(snapshots)
 
         context_key = (
             f"vllm_macro_npugraph_ex_{os.getpid()}_"
@@ -5975,7 +7129,18 @@ class NPUModelRunner(GPUModelRunner):
             validate_no_inner_aclgraph=bool(
                 getattr(macro_graph_cfg, "validate_no_inner_aclgraph", True)),
         )
-        if _MACRO_GRAPH_EAGER_PREFLIGHT:
+        if entry.inplace_attention_backend == "mixed_request":
+            try:
+                self._prewarm_mixed_request_macro_fia_workspaces(
+                    module, ubatch_metadata)
+            except Exception:
+                logger.error(
+                    "npugraph_ex mixed_request macro graph FIA workspace "
+                    "prewarm failed before torch.compile:\n%s",
+                    traceback.format_exc(),
+                )
+                raise
+        elif _MACRO_GRAPH_EAGER_PREFLIGHT:
             try:
                 module()
                 torch.npu.synchronize()
@@ -6025,7 +7190,10 @@ class NPUModelRunner(GPUModelRunner):
             inplace_attention_backend: str,
     ) -> Any:
         key = self._macro_graph_key_from_split_slices(
-            split_batch_slices, inplace_attention_backend)
+            split_batch_slices,
+            inplace_attention_backend,
+            uniform_decode=(inplace_attention_backend != "mixed_request"),
+        )
         entry = self._macro_graph_registry.get(key)
         if entry is None:
             macro_graph_cfg = self._macro_graph_config()
@@ -6035,23 +7203,37 @@ class NPUModelRunner(GPUModelRunner):
                 f"key={key!r}; miss_policy={miss_policy!r}. "
                 "Runtime lazy capture is disabled for macro graphs.")
 
-        ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
-            split_ubatch_slices,
-            split_batch_slices,
-            attn_metadata,
-            input_ids,
-            positions,
-            inputs_embeds,
-            intermediate_tensors,
-            batch_descriptor,
-            aclgraph_runtime_mode,
-            inplace_attention_backend,
-        )
+        if inplace_attention_backend == "mixed_request":
+            ubatch_metadata = self._make_mixed_request_split_metadata_parallel(
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+                batch_descriptor,
+            )
+        else:
+            ubatch_metadata = self._make_split_batch_metadata_inplace_parallel(
+                split_ubatch_slices,
+                split_batch_slices,
+                attn_metadata,
+                input_ids,
+                positions,
+                inputs_embeds,
+                intermediate_tensors,
+                batch_descriptor,
+                aclgraph_runtime_mode,
+                inplace_attention_backend,
+            )
 
         if len(ubatch_metadata) != 2:
             raise RuntimeError(
                 "multistream macro graph currently supports exactly "
                 f"2 splits, got {len(ubatch_metadata)}")
+        if inplace_attention_backend == "mixed_request":
+            self._promote_mixed_request_macro_metadata(ubatch_metadata)
+            self._prepare_mixed_request_macro_contexts(entry, ubatch_metadata)
 
         original_forward_context = get_forward_context()
         self._t_replay_start = time.perf_counter()
@@ -6090,6 +7272,9 @@ class NPUModelRunner(GPUModelRunner):
                         },
                         step_id=_split_debug_step_from_runner(self),
                     )
+
+            if entry.inplace_attention_backend == "mixed_request":
+                self._update_mixed_request_macro_attention_params(entry)
 
             compiled_call_start = time.perf_counter()
             outputs = entry.compiled_callable()
@@ -6784,21 +7969,35 @@ class NPUModelRunner(GPUModelRunner):
 
                 if split_ubatch_slices is not None:
                     if split_mode == "inplace_serial":
-                        assert inplace_attention_backend in ("fia", "pa")
-                        hidden_states = self._run_split_batch_inplace_serial(
-                            split_ubatch_slices,
-                            split_batch_slices,
-                            attn_metadata,
-                            input_ids,
-                            positions,
-                            intermediate_tensors,
-                            inputs_embeds,
-                            model_kwargs,
-                            batch_descriptor,
-                            aclgraph_runtime_mode,
-                            inplace_attention_backend)
+                        if inplace_attention_backend == "mixed_request":
+                            hidden_states = (
+                                self._run_mixed_request_split_serial(
+                                    split_batch_slices,
+                                    attn_metadata,
+                                    input_ids,
+                                    positions,
+                                    intermediate_tensors,
+                                    inputs_embeds,
+                                    model_kwargs,
+                                    batch_descriptor))
+                        else:
+                            assert inplace_attention_backend in ("fia", "pa")
+                            hidden_states = (
+                                self._run_split_batch_inplace_serial(
+                                    split_ubatch_slices,
+                                    split_batch_slices,
+                                    attn_metadata,
+                                    input_ids,
+                                    positions,
+                                    intermediate_tensors,
+                                    inputs_embeds,
+                                    model_kwargs,
+                                    batch_descriptor,
+                                    aclgraph_runtime_mode,
+                                    inplace_attention_backend))
                     elif split_mode == "inplace_parallel":
-                        assert inplace_attention_backend in ("fia", "pa")
+                        assert inplace_attention_backend in (
+                            "fia", "pa", "mixed_request")
                         if not split_enable_parallel_streams:
                             raise RuntimeError(
                                 "inplace_parallel execution requires "
@@ -8741,13 +9940,19 @@ class NPUModelRunner(GPUModelRunner):
         self._macro_graph_registry.clear()
         for plan in inplace_plans:
             split_batch_slices = plan.split_slices
-            inplace_attention_backend = select_inplace_attention_backend(
-                plan,
-                lambda shape: using_paged_attention(shape,
-                                                    self.vllm_config),
-            )
+            if getattr(plan, "offset_match_policy", "") == "compact":
+                inplace_attention_backend = "mixed_request"
+            else:
+                inplace_attention_backend = select_inplace_attention_backend(
+                    plan,
+                    lambda shape: using_paged_attention(shape,
+                                                        self.vllm_config),
+                )
             key = self._macro_graph_key_from_split_slices(
-                split_batch_slices, inplace_attention_backend)
+                split_batch_slices,
+                inplace_attention_backend,
+                uniform_decode=(inplace_attention_backend != "mixed_request"),
+            )
             if key in self._macro_graph_registry:
                 raise RuntimeError(
                     "Duplicate multistream macro graph key while planning "
@@ -8774,8 +9979,55 @@ class NPUModelRunner(GPUModelRunner):
             getattr(macro_graph_cfg, "backend", None),
         )
 
+    def _capture_macro_mixed_piecewise_aclgraphs(self) -> None:
+        macro_graph_cfg = self._macro_graph_config()
+        if macro_graph_cfg is None or not getattr(macro_graph_cfg, "enabled",
+                                                  False):
+            return
+        inplace_plans = self._macro_graph_capture_inplace_plans(
+            macro_graph_cfg)
+        main_sizes: set[int] = set()
+        parallel_sizes: set[int] = set()
+        for plan in inplace_plans:
+            if getattr(plan, "offset_match_policy", "") != "compact":
+                continue
+            main_sizes.add(int(plan.total_num_tokens))
+            for idx, split_slice in enumerate(plan.split_slices):
+                target = parallel_sizes if idx > 0 else main_sizes
+                target.add(int(split_slice.graph_num_tokens))
+        if not main_sizes and not parallel_sizes:
+            return
+        if not self.use_aclgraph:
+            raise RuntimeError(
+                "mixed_request macro graph requires ACL graph support for "
+                "inner PIECEWISE attention graphs")
+
+        self.initialize_aclgraph_capture()
+        set_cudagraph_capturing_enabled(True)
+        try:
+            if main_sizes:
+                with graph_capture(device=self.device):
+                    self._capture_aclgraphs(
+                        compilation_cases=list(reversed(sorted(main_sizes))),
+                        aclgraph_runtime_mode=CUDAGraphMode.PIECEWISE,
+                        uniform_decode=False,
+                        in_parallel_streams=False,
+                    )
+            if parallel_sizes:
+                with graph_capture(device=self.device):
+                    self._capture_aclgraphs(
+                        compilation_cases=list(
+                            reversed(sorted(parallel_sizes))),
+                        aclgraph_runtime_mode=CUDAGraphMode.PIECEWISE,
+                        uniform_decode=False,
+                        in_parallel_streams=True,
+                    )
+        finally:
+            set_cudagraph_capturing_enabled(False)
+
     def _capture_model(self):
         if self._macro_graph_enabled():
+            self._capture_macro_mixed_piecewise_aclgraphs()
             self._capture_multistream_macro_graphs()
             return
 

@@ -1,12 +1,19 @@
 import numpy as np
+import pytest
 
 from vllm_ascend.worker.ubatch_utils import (
     inplace_split_preserves_attention_backend,
     INPLACE_SPLIT_DRY_RUN,
+    MIXED_REQUEST_SPLIT_DRY_RUN,
     NO_SPLIT_ABOVE_MAX_CAPTURE_SIZE,
     NO_SPLIT_EXACT_GRAPH_HIT,
+    NO_SPLIT_GRAPH_BUCKET_MISSING,
     NO_SPLIT_INVALID_FIRST_TOKENS_POLICY,
+    NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY,
     NO_SPLIT_MACRO_GRAPH_MISS,
+    NO_SPLIT_MIN_TOKENS_PER_SPLIT,
+    NO_SPLIT_MIXED_DECODE_ONLY,
+    NO_SPLIT_MIXED_BELOW_MIN_TOTAL_TOKENS,
     NO_SPLIT_NO_LOWER_CAPTURE_SIZE,
     NO_SPLIT_NO_OFFSET_CAPTURE_SIZE,
     NO_SPLIT_OFFSET_BUCKET_TOO_SMALL,
@@ -14,9 +21,12 @@ from vllm_ascend.worker.ubatch_utils import (
     NO_SPLIT_OFFSET_GRAPH_EXCEEDS_START_CAP,
     NO_SPLIT_OFFSET_GRAPH_EXCEEDS_PADDED_BATCH,
     NO_SPLIT_OFFSET_PADDING_TOO_LARGE,
+    NO_SPLIT_PADDING_TOO_LARGE,
     NO_SPLIT_REMAINDER_TOO_LARGE,
+    NO_SPLIT_SINGLE_REQUEST_DOMINATES,
     create_inplace_split_batch_slices,
     create_macro_inplace_split_batch_slices,
+    create_mixed_request_split_batch_slices,
 )
 from vllm_ascend.ascend_config import SplitBatchConfig
 
@@ -68,6 +78,33 @@ def test_macro_inplace_split_uses_explicit_capture_plan():
     assert plan.split_slices[1].token_slice == slice(224, 427)
     assert plan.split_slices[1].graph_num_tokens == 224
     assert plan.split_slices[1].start_num_tokens == 224
+
+
+def test_macro_compact_split_uses_explicit_request_counts():
+    plan, reason = create_macro_inplace_split_batch_slices(
+        _tokens(68),
+        total_num_tokens=68,
+        uniform_decode_query_len=1,
+        macro_graph_config=_macro_graph_config(capture_plans=[{
+            "total_tokens": 68,
+            "split_actual_tokens": [36, 32],
+            "split_graph_tokens": [36, 32],
+            "split_start_tokens": [0, 0],
+            "split_num_reqs": [5, 1],
+        }]),
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.offset_match_policy == "compact"
+    assert plan.first_reqs == 5
+    assert plan.second_reqs == 1
+    assert plan.split_slices[0].request_slice == slice(0, 5)
+    assert plan.split_slices[0].token_slice == slice(0, 36)
+    assert plan.split_slices[0].start_num_tokens == 0
+    assert plan.split_slices[1].request_slice == slice(5, 6)
+    assert plan.split_slices[1].token_slice == slice(36, 68)
+    assert plan.split_slices[1].start_num_tokens == 0
 
 
 def test_macro_inplace_split_misses_unlisted_explicit_plan():
@@ -591,3 +628,269 @@ def test_inplace_split_backend_guard_accepts_same_backend_shapes():
     assert plan is not None
     assert inplace_split_preserves_attention_backend(
         plan, lambda shape: shape in {32, 384, 512})
+
+
+def _mixed_tokens(values: list[int]) -> np.ndarray:
+    return np.array(values, dtype=np.int32)
+
+
+def test_mixed_request_split_chooses_request_boundary_plan():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([1, 1, 64, 64]),
+        total_num_tokens=130,
+        cudagraph_capture_sizes={64, 66, 128},
+        decode_threshold=1,
+    )
+
+    assert reason == MIXED_REQUEST_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.reason == MIXED_REQUEST_SPLIT_DRY_RUN
+    assert plan.first_tokens == 66
+    assert plan.second_tokens == 64
+    assert plan.first_reqs == 3
+    assert plan.second_reqs == 1
+    assert plan.offset_match_policy == "compact"
+
+    first, second = plan.split_slices
+    assert first.request_slice == slice(0, 3)
+    assert first.token_slice == slice(0, 66)
+    assert first.graph_num_tokens == 66
+    assert first.start_num_tokens == 0
+    assert second.request_slice == slice(3, 4)
+    assert second.token_slice == slice(66, 130)
+    assert second.graph_num_tokens == 64
+    assert second.start_num_tokens == 0
+
+    payload = plan.debug_payload()
+    assert payload["mixed_request_split"] is True
+    assert payload["split_req_index"] == 3
+    assert payload["num_decode_reqs"] == 2
+    assert payload["num_prefill_reqs"] == 2
+    assert payload["num_decode_tokens"] == 2
+    assert payload["num_prefill_tokens"] == 128
+    assert payload["first_attention_cost"] == 258
+    assert payload["second_attention_cost"] == 256
+
+
+def test_mixed_request_split_supports_prefill_only_multi_request_batch():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([64, 64, 64, 64]),
+        total_num_tokens=256,
+        cudagraph_capture_sizes={128, 256},
+        decode_threshold=1,
+    )
+
+    assert reason == MIXED_REQUEST_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.first_tokens == 128
+    assert plan.second_tokens == 128
+    assert plan.split_slices[0].request_slice == slice(0, 2)
+    assert plan.split_slices[1].request_slice == slice(2, 4)
+    assert all(s.start_num_tokens == 0 for s in plan.split_slices)
+
+
+def test_mixed_request_split_rejects_decode_only_batch():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([1, 1, 1, 1]),
+        total_num_tokens=4,
+        cudagraph_capture_sizes={4},
+        decode_threshold=1,
+        min_total_tokens=1,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_MIXED_DECODE_ONLY
+
+
+def test_mixed_request_split_rejects_single_dominant_request():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([1, 1, 128]),
+        total_num_tokens=130,
+        cudagraph_capture_sizes={2, 128},
+        decode_threshold=1,
+        min_total_tokens=1,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_SINGLE_REQUEST_DOMINATES
+
+
+def test_mixed_request_split_rejects_below_min_total_tokens():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([32, 32]),
+        total_num_tokens=64,
+        cudagraph_capture_sizes={32},
+        decode_threshold=1,
+        min_total_tokens=128,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_MIXED_BELOW_MIN_TOTAL_TOKENS
+
+
+def test_mixed_request_split_rejects_min_tokens_per_split():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([1, 1, 64, 64]),
+        total_num_tokens=130,
+        cudagraph_capture_sizes={64, 66, 128},
+        decode_threshold=1,
+        min_tokens_per_split=128,
+        min_total_tokens=1,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_MIN_TOKENS_PER_SPLIT
+
+
+def test_mixed_request_split_rejects_missing_graph_bucket():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([64, 64, 64]),
+        total_num_tokens=192,
+        cudagraph_capture_sizes={64},
+        decode_threshold=1,
+        max_padding_ratio_per_split=None,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_GRAPH_BUCKET_MISSING
+
+
+def test_mixed_request_split_rejects_padding_ratio():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([1, 1, 64, 64]),
+        total_num_tokens=130,
+        cudagraph_capture_sizes={64, 128},
+        decode_threshold=1,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_PADDING_TOO_LARGE
+
+
+def test_mixed_request_split_rejects_invalid_policy():
+    plan, reason = create_mixed_request_split_batch_slices(
+        _mixed_tokens([64, 64]),
+        total_num_tokens=128,
+        cudagraph_capture_sizes={64},
+        decode_threshold=1,
+        split_policy="unknown",
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY
+
+
+def test_split_batch_config_accepts_mixed_request_split_config():
+    cfg = SplitBatchConfig({
+        "enabled": True,
+        "mode": "inplace_parallel",
+        "num_splits": 2,
+        "enable_parallel_streams": True,
+        "inplace_parallel_replay_policy": "piecewise_attention_parallel",
+        "enable_mixed_request_split": True,
+        "mixed_request_min_total_tokens": 256,
+        "mixed_request_min_tokens_per_split": 128,
+        "mixed_request_max_single_request_ratio": 0.8,
+        "mixed_request_max_padding_ratio_per_split": None,
+        "mixed_request_decode_weight": 2,
+        "mixed_request_prefill_weight": 5,
+    })
+
+    assert cfg.enable_mixed_request_split is True
+    assert cfg.mixed_request_split_policy == "balanced_attention"
+    assert cfg.mixed_request_split_execution_mode == "dry_run"
+    assert cfg.mixed_request_min_total_tokens == 256
+    assert cfg.mixed_request_min_tokens_per_split == 128
+    assert cfg.mixed_request_max_single_request_ratio == 0.8
+    assert cfg.mixed_request_max_padding_ratio_per_split is None
+    assert cfg.mixed_request_decode_weight == 2
+    assert cfg.mixed_request_prefill_weight == 5
+
+
+def test_split_batch_config_accepts_mixed_request_split_serial_execution():
+    cfg = SplitBatchConfig({
+        "enabled": True,
+        "mode": "inplace_serial",
+        "num_splits": 2,
+        "enable_mixed_request_split": True,
+        "mixed_request_split_execution_mode": "serial",
+    })
+
+    assert cfg.enable_mixed_request_split is True
+    assert cfg.mixed_request_split_execution_mode == "serial"
+
+
+def test_split_batch_config_accepts_mixed_request_split_piecewise_parallel_execution():
+    cfg = SplitBatchConfig({
+        "enabled": True,
+        "mode": "inplace_parallel",
+        "num_splits": 2,
+        "enable_parallel_streams": True,
+        "inplace_parallel_replay_policy": "piecewise_attention_parallel",
+        "enable_mixed_request_split": True,
+        "mixed_request_split_execution_mode":
+        "piecewise_attention_parallel",
+    })
+
+    assert cfg.enable_mixed_request_split is True
+    assert (cfg.mixed_request_split_execution_mode ==
+            "piecewise_attention_parallel")
+
+
+def test_split_batch_config_rejects_mixed_request_split_parallel_buffer():
+    with pytest.raises(ValueError,
+                       match="enable_mixed_request_split requires mode"):
+        SplitBatchConfig({
+            "enabled": True,
+            "mode": "parallel_buffer",
+            "enable_mixed_request_split": True,
+        })
+
+
+def test_split_batch_config_rejects_mixed_request_split_invalid_execution_mode():
+    with pytest.raises(ValueError,
+                       match="mixed_request_split_execution_mode"):
+        SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_serial",
+            "enable_mixed_request_split": True,
+            "mixed_request_split_execution_mode": "parallel",
+        })
+
+
+def test_split_batch_config_rejects_mixed_request_split_serial_execution_in_parallel_mode():
+    with pytest.raises(ValueError, match="requires mode='inplace_serial'"):
+        SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_parallel",
+            "num_splits": 2,
+            "enable_parallel_streams": True,
+            "inplace_parallel_replay_policy": "piecewise_attention_parallel",
+            "enable_mixed_request_split": True,
+            "mixed_request_split_execution_mode": "serial",
+        })
+
+
+def test_split_batch_config_rejects_mixed_request_split_piecewise_parallel_execution_in_serial_mode():
+    with pytest.raises(ValueError, match="requires mode='inplace_parallel'"):
+        SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_serial",
+            "num_splits": 2,
+            "enable_mixed_request_split": True,
+            "mixed_request_split_execution_mode":
+            "piecewise_attention_parallel",
+        })
+
+
+def test_split_batch_config_rejects_mixed_request_split_full_graph_policy():
+    with pytest.raises(ValueError,
+                       match="piecewise_attention_parallel"):
+        SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_parallel",
+            "num_splits": 2,
+            "enable_parallel_streams": True,
+            "inplace_parallel_replay_policy": "full_graph_parallel",
+            "enable_mixed_request_split": True,
+        })
