@@ -15,9 +15,10 @@
 # This file is a part of the vllm-ascend project.
 #
 
+import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar, List, Optional, Tuple, Type
+from typing import Any, ClassVar, List, Optional, Tuple, Type
 
 import torch
 import torch.nn as nn
@@ -38,13 +39,70 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          using_paged_attention)
 from vllm_ascend import inplace_split_debug as split_debug
 from vllm_ascend.compilation.acl_graph import (ensure_graph_param_key,
+                                               _ACL_GRAPH_UPDATE_PARAM_DIAG,
                                                _get_fia_key_t,
                                                get_graph_param_key,
                                                get_graph_params,
+                                               graph_param_key_info,
                                                maybe_template_fia_seq_lens,
+                                               _object_id_info,
+                                               _safe_sequence_tail,
+                                               _safe_tensor_info,
                                                update_graph_params_workspaces)
 from vllm_ascend.utils import (AscendDeviceType, get_ascend_device_type,
                                weak_ref_tensors)
+
+_DUAL_STREAM_FIA_PTA_UPDATE = os.environ.get(
+    "VLLM_ASCEND_DUAL_STREAM_FIA_PTA_UPDATE", "0") in ("1", "true", "True")
+
+
+def _retain_macro_graph_attention_tensors(forward_context: Any,
+                                          *values: Any) -> None:
+    retained = getattr(forward_context,
+                       "macro_graph_attention_tensor_retention", None)
+    if not isinstance(retained, list):
+        return
+    seen = getattr(forward_context,
+                   "macro_graph_attention_tensor_retention_seen", None)
+
+    def tensor_key(tensor: torch.Tensor) -> tuple[Any, ...]:
+        try:
+            ptr = int(tensor.data_ptr())
+        except Exception:
+            ptr = id(tensor)
+        try:
+            storage_offset = int(tensor.storage_offset())
+        except Exception:
+            storage_offset = 0
+        return (
+            ptr,
+            tuple(int(size) for size in tensor.shape),
+            str(tensor.dtype),
+            str(tensor.device),
+            storage_offset,
+        )
+
+    def visit(value: Any) -> None:
+        if value is None:
+            return
+        if isinstance(value, torch.Tensor):
+            key = tensor_key(value)
+            if isinstance(seen, set):
+                if key in seen:
+                    return
+                seen.add(key)
+            retained.append(value)
+            return
+        if isinstance(value, dict):
+            for child in value.values():
+                visit(child)
+            return
+        if isinstance(value, (list, tuple)):
+            for child in value:
+                visit(child)
+
+    for value in values:
+        visit(value)
 
 
 @register_backend(AttentionBackendEnum.CUSTOM, "ASCEND")
@@ -416,9 +474,13 @@ class AscendAttentionBackendImpl(AttentionImpl):
             return False
         return True
 
-    def full_graph_fia(self, query: torch.Tensor, key: torch.Tensor,
-                       value: torch.Tensor, attn_metadata: AscendMetadata,
-                       output: torch.Tensor) -> torch.Tensor:
+    def full_graph_fia(self,
+                       query: torch.Tensor,
+                       key: torch.Tensor,
+                       value: torch.Tensor,
+                       attn_metadata: AscendMetadata,
+                       output: torch.Tensor,
+                       record_graph_task: bool = True) -> torch.Tensor:
         key, value, block_size, block_table, actual_seq_lengths_kv \
             = self._get_fia_params(key, value, attn_metadata)
 
@@ -458,23 +520,79 @@ class AscendAttentionBackendImpl(AttentionImpl):
             update_graph_params_workspaces(param_key,
                                            workspace,
                                            in_parallel_streams=in_parallel_streams)
+        _retain_macro_graph_attention_tensors(
+            forward_context,
+            query,
+            key,
+            value,
+            block_table,
+            attn_metadata.attn_mask,
+            output,
+            softmax_lse,
+            workspace,
+        )
 
         # Handle graph capturing mode
         stream = torch_npu.npu.current_stream()
 
-        event = torch.npu.ExternalEvent()
-        event.wait(stream)
-        event.reset(stream)
-        graph_params.events[param_key].append(event)
-        graph_params.attn_params[param_key].append(
-            (weak_ref_tensors(query), weak_ref_tensors(key),
-             weak_ref_tensors(value), weak_ref_tensors(block_table),
-             weak_ref_tensors(attn_metadata.attn_mask), block_size,
-             actual_seq_lengths_kv, actual_seq_lengths_q, self.num_kv_heads,
-             self.num_heads, self.scale, weak_ref_tensors(output),
-             weak_ref_tensors(softmax_lse)))
+        event = None
+        if record_graph_task:
+            event = torch.npu.ExternalEvent()
+            event.wait(stream)
+            event.reset(stream)
+        layer_idx = len(graph_params.attn_params[param_key])
+        if (_ACL_GRAPH_UPDATE_PARAM_DIAG
+                and getattr(forward_context, "capturing", False)):
+            split_debug.log_event(
+                "macro_graph_fia_capture_params",
+                {
+                    "layer_idx": int(layer_idx),
+                    "runtime_shape": int(num_tokens),
+                    "graph_param_key": graph_param_key_info(param_key),
+                    "in_parallel_streams": bool(in_parallel_streams),
+                    "event_id": _object_id_info(event),
+                    "record_graph_task": bool(record_graph_task),
+                    "query": _safe_tensor_info(query),
+                    "key_cache": _safe_tensor_info(key),
+                    "value": _safe_tensor_info(value),
+                    "block_tables": _safe_tensor_info(block_table),
+                    "attn_mask": _safe_tensor_info(attn_metadata.attn_mask),
+                    "attn_output": _safe_tensor_info(output),
+                    "softmax_lse": _safe_tensor_info(softmax_lse),
+                    "workspace": _safe_tensor_info(workspace),
+                    "actual_seq_lengths_kv_type":
+                    type(actual_seq_lengths_kv).__name__,
+                    "actual_seq_lengths_kv_len": (
+                        len(actual_seq_lengths_kv)
+                        if hasattr(actual_seq_lengths_kv, "__len__") else None),
+                    "actual_seq_lengths_kv_tail":
+                    _safe_sequence_tail(actual_seq_lengths_kv),
+                    "actual_seq_lengths_q_type":
+                    type(actual_seq_lengths_q).__name__,
+                    "actual_seq_lengths_q_len": (
+                        len(actual_seq_lengths_q)
+                        if hasattr(actual_seq_lengths_q, "__len__") else None),
+                    "actual_seq_lengths_q_tail":
+                    _safe_sequence_tail(actual_seq_lengths_q),
+                    "block_size": int(block_size),
+                    "num_kv_heads": int(self.num_kv_heads),
+                    "num_heads": int(self.num_heads),
+                    "scale": float(self.scale),
+                },
+                step_id=getattr(forward_context, "split_inplace_debug_step_id",
+                                None),
+            )
+        if record_graph_task:
+            graph_params.events[param_key].append(event)
+            graph_params.attn_params[param_key].append(
+                (weak_ref_tensors(query), weak_ref_tensors(key),
+                 weak_ref_tensors(value), weak_ref_tensors(block_table),
+                 weak_ref_tensors(attn_metadata.attn_mask), block_size,
+                 actual_seq_lengths_kv, actual_seq_lengths_q, self.num_kv_heads,
+                 self.num_heads, self.scale, weak_ref_tensors(output),
+                 weak_ref_tensors(softmax_lse)))
 
-        torch.npu.graph_task_group_begin(stream)
+            torch.npu.graph_task_group_begin(stream)
         torch_npu.npu_fused_infer_attention_score.out(
             query=query,
             key=key,
@@ -495,8 +613,9 @@ class AscendAttentionBackendImpl(AttentionImpl):
 
         output = output.view(num_tokens, self.num_heads, self.head_size)
 
-        handle = torch.npu.graph_task_group_end(stream)
-        graph_params.handles[param_key].append(handle)
+        if record_graph_task:
+            handle = torch.npu.graph_task_group_end(stream)
+            graph_params.handles[param_key].append(handle)
         return output, num_tokens
 
     def warmup_full_graph_fia_workspace(
@@ -599,6 +718,17 @@ class AscendAttentionBackendImpl(AttentionImpl):
                     workspace_key,
                     workspace,
                     in_parallel_streams=in_parallel_streams)
+        _retain_macro_graph_attention_tensors(
+            forward_context,
+            query,
+            key_cache,
+            value_cache,
+            block_table,
+            attn_metadata.attn_mask,
+            output,
+            softmax_lse,
+            workspace,
+        )
 
         event = None
         if capturing and record_update_event:
@@ -712,7 +842,8 @@ class AscendAttentionBackendImpl(AttentionImpl):
             ensure_graph_param_key(graph_params, param_key)
 
         has_pta_dual_fia_update = (
-            hasattr(torch.npu, "make_dual_task_group_handle")
+            _DUAL_STREAM_FIA_PTA_UPDATE
+            and hasattr(torch.npu, "make_dual_task_group_handle")
             and hasattr(torch.npu, "dual_fused_infer_attention_score_update"))
         use_shared_update_event = bool(capturing and has_pta_dual_fia_update)
         shared_update_event = None
@@ -934,21 +1065,45 @@ class AscendAttentionBackendImpl(AttentionImpl):
                                       output: torch.Tensor):
         forward_context: ForwardContext = get_forward_context()
         batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+        mixed_macro_compact = (
+            getattr(batch_descriptor, "capture_metadata_mode", "")
+            == "mixed_request_compact")
         workspace_warmup = bool(
             getattr(forward_context, "macro_fia_workspace_warmup", False))
-        if (getattr(batch_descriptor, "capture_metadata_mode", "")
-                == "mixed_request_compact"
-                and not getattr(forward_context, "capturing", False)
-                and not workspace_warmup):
+        opaque_macro_update = bool(
+            getattr(forward_context, "macro_graph_opaque_attention_update",
+                    False))
+        external_macro_update = bool(
+            getattr(forward_context, "macro_graph_external_attention_update",
+                    False))
+        if (mixed_macro_compact and not getattr(forward_context, "capturing",
+                                                False) and not workspace_warmup
+                and not opaque_macro_update):
             raise RuntimeError(
                 "mixed macro attention must run with "
                 "forward_context.capturing=True")
-        if getattr(forward_context, "capturing", False):
-            self.full_graph_fia(query, key, value, attn_metadata, output)
-            return output
         if workspace_warmup:
             self.warmup_full_graph_fia_workspace(query, key, value,
                                                  attn_metadata)
+            return output
+        if opaque_macro_update:
+            self.full_graph_fia(query,
+                                key,
+                                value,
+                                attn_metadata,
+                                output,
+                                record_graph_task=False)
+            return output
+        if getattr(forward_context, "capturing", False):
+            record_graph_task = (
+                external_macro_update if mixed_macro_compact else True)
+            self.full_graph_fia(query,
+                                key,
+                                value,
+                                attn_metadata,
+                                output,
+                                record_graph_task=record_graph_task)
+            return output
         if (attn_metadata.attn_state == AscendAttentionState.DecodeOnly
                 and self.sliding_window is not None
                 and attn_metadata.seq_lens.shape[0] == query.size(0)):

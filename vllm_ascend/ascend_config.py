@@ -319,6 +319,7 @@ class MacroGraphCapturePlan:
     split_graph_tokens: tuple[int, int]
     split_start_tokens: tuple[int, int]
     split_num_reqs: Optional[tuple[int, int]] = None
+    split_req_caps: Optional[tuple[int, int]] = None
 
     @classmethod
     def from_config(cls, raw_plan: dict[str, Any]) -> "MacroGraphCapturePlan":
@@ -333,6 +334,14 @@ class MacroGraphCapturePlan:
             if len(split_num_reqs) != 2:
                 raise ValueError(
                     "macro_graph_config.capture_plans[].split_num_reqs "
+                    "must contain exactly 2 integers")
+        raw_req_caps = raw_plan.get("split_req_caps", None)
+        split_req_caps = None
+        if raw_req_caps is not None:
+            split_req_caps = tuple(int(v) for v in raw_req_caps)
+            if len(split_req_caps) != 2:
+                raise ValueError(
+                    "macro_graph_config.capture_plans[].split_req_caps "
                     "must contain exactly 2 integers")
         raw_start_tokens = raw_plan.get("split_start_tokens", None)
         if raw_start_tokens is None:
@@ -372,12 +381,23 @@ class MacroGraphCapturePlan:
             raise ValueError(
                 "macro_graph_config.capture_plans[].split_num_reqs "
                 "must contain positive integers")
+        if split_req_caps is not None and any(v < 1 for v in split_req_caps):
+            raise ValueError(
+                "macro_graph_config.capture_plans[].split_req_caps "
+                "must contain positive integers")
+        if (split_num_reqs is not None and split_req_caps is not None
+                and any(cap < req for cap, req in zip(split_req_caps,
+                                                      split_num_reqs))):
+            raise ValueError(
+                "macro_graph_config.capture_plans[].split_req_caps must be "
+                ">= split_num_reqs")
         return cls(
             total_tokens=total_tokens,
             split_actual_tokens=split_actual_tokens,
             split_graph_tokens=split_graph_tokens,
             split_start_tokens=split_start_tokens,
             split_num_reqs=split_num_reqs,
+            split_req_caps=split_req_caps,
         )
 
 
@@ -575,6 +595,31 @@ class MacroGraphConfig:
             macro_graph_config.get("max_capture_graphs", 16))
         self.validate_no_inner_aclgraph: bool = bool(
             macro_graph_config.get("validate_no_inner_aclgraph", True))
+        self.allow_bucket_match: bool = bool(
+            macro_graph_config.get("allow_bucket_match", False))
+        self.allow_padded_replay: bool = bool(
+            macro_graph_config.get("allow_padded_replay", False))
+        self.relax_mixed_request_gates: bool = bool(
+            macro_graph_config.get("relax_mixed_request_gates", False))
+        self.bucket_min_total_tokens: int = int(
+            macro_graph_config.get("bucket_min_total_tokens", 2))
+        self.bucket_min_tokens_per_split: int = int(
+            macro_graph_config.get("bucket_min_tokens_per_split", 1))
+        self.bucket_min_actual_tokens_per_split: int = int(
+            macro_graph_config.get("bucket_min_actual_tokens_per_split", 8))
+        self.bucket_min_prefill_reqs_for_prefill_split: int = int(
+            macro_graph_config.get(
+                "bucket_min_prefill_reqs_for_prefill_split", 1))
+        self.bucket_max_single_request_ratio: float = float(
+            macro_graph_config.get("bucket_max_single_request_ratio", 1.0))
+        self.bucket_padding_ratio_grace_tokens: int = int(
+            macro_graph_config.get("bucket_padding_ratio_grace_tokens", 0))
+        raw_max_padding_ratio = macro_graph_config.get(
+            "max_padding_ratio_per_split", 0.0)
+        if raw_max_padding_ratio is None:
+            self.max_padding_ratio_per_split: Optional[float] = None
+        else:
+            self.max_padding_ratio_per_split = float(raw_max_padding_ratio)
         raw_capture_plans = macro_graph_config.get("capture_plans", [])
         self.capture_plans: list[MacroGraphCapturePlan] = [
             MacroGraphCapturePlan.from_config(raw_plan)
@@ -644,6 +689,29 @@ class MacroGraphConfig:
         if self.min_padding_saved_tokens < 0:
             raise ValueError(
                 "macro_graph_config.min_padding_saved_tokens must be >= 0")
+        if (self.max_padding_ratio_per_split is not None
+                and self.max_padding_ratio_per_split < 0):
+            raise ValueError(
+                "macro_graph_config.max_padding_ratio_per_split must be >= 0")
+        if self.bucket_min_total_tokens < 1:
+            raise ValueError(
+                "macro_graph_config.bucket_min_total_tokens must be >= 1")
+        if self.bucket_min_tokens_per_split < 1:
+            raise ValueError(
+                "macro_graph_config.bucket_min_tokens_per_split must be >= 1")
+        if self.bucket_min_actual_tokens_per_split < 1:
+            raise ValueError(
+                "macro_graph_config.bucket_min_actual_tokens_per_split must be >= 1")
+        if self.bucket_min_prefill_reqs_for_prefill_split < 0:
+            raise ValueError(
+                "macro_graph_config."
+                "bucket_min_prefill_reqs_for_prefill_split must be >= 0")
+        if self.bucket_max_single_request_ratio <= 0:
+            raise ValueError(
+                "macro_graph_config.bucket_max_single_request_ratio must be > 0")
+        if self.bucket_padding_ratio_grace_tokens < 0:
+            raise ValueError(
+                "macro_graph_config.bucket_padding_ratio_grace_tokens must be >= 0")
         if any(num_tokens < 1 for num_tokens in self.capture_total_tokens):
             raise ValueError(
                 "macro_graph_config.capture_total_tokens must contain "

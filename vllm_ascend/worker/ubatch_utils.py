@@ -293,10 +293,24 @@ class SplitBatchSlice:
     # Runtime token offset for descriptor-aware inplace graphs. Existing
     # split-batch paths keep the default zero offset.
     start_num_tokens: int = 0
+    # Optional request metadata capacity for bucketed graph replay. This is
+    # independent of request_slice length so a captured graph can accept
+    # runtime fake one-token padding requests without changing real requests.
+    request_capacity: int = 0
+    # Maximum runtime query length inside this split. Mixed-request macro
+    # padding uses it to group token padding into bounded fake requests.
+    max_query_len: int = 0
 
     def __post_init__(self):
         if self.padded_num_tokens == 0:
             self.padded_num_tokens = self.num_tokens
+        if self.request_capacity == 0:
+            self.request_capacity = self.num_requests
+        if self.max_query_len == 0:
+            self.max_query_len = max(
+                1,
+                (self.num_tokens + max(1, self.num_requests) - 1) //
+                max(1, self.num_requests))
 
     @property
     def num_requests(self) -> int:
@@ -358,6 +372,10 @@ NO_SPLIT_TOO_FEW_PREFILL_REQUESTS = "no_split_too_few_prefill_requests"
 NO_SPLIT_MIN_TOKENS_PER_SPLIT = "no_split_min_tokens_per_split"
 NO_SPLIT_GRAPH_BUCKET_MISSING = "no_split_graph_bucket_missing"
 NO_SPLIT_PADDING_TOO_LARGE = "no_split_padding_too_large"
+NO_SPLIT_MACRO_BUCKET_ACTUAL_TOKENS_TOO_SMALL = (
+    "no_split_macro_bucket_actual_tokens_too_small")
+NO_SPLIT_BUCKET_REQ_CAPACITY_EXCEEDED = (
+    "no_split_bucket_req_capacity_exceeded")
 NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY = (
     "no_split_invalid_mixed_request_split_policy")
 
@@ -748,6 +766,17 @@ def _mixed_attention_cost(req_tokens: np.ndarray, decode_threshold: int,
         prefill_weight)
 
 
+def _macro_padding_req_chunks(padding_tokens: int,
+                              req_tokens: np.ndarray) -> int:
+    padding_tokens = int(padding_tokens)
+    if padding_tokens <= 0:
+        return 0
+    max_query_len = 1
+    if req_tokens.size > 0:
+        max_query_len = max(1, int(req_tokens.max()))
+    return (padding_tokens + max_query_len - 1) // max_query_len
+
+
 def _mixed_request_split_score(
     candidate: tuple[InplaceSplitPlan, int, int, int, int],
 ) -> tuple[int, int, int, int, int]:
@@ -760,6 +789,30 @@ def _mixed_request_split_score(
             plan.split_slices[1].graph_num_tokens),
         abs(plan.first_tokens - plan.second_tokens),
     )
+
+
+def _normalize_mixed_graph_bucket_plans(
+    graph_bucket_plans: Optional[Iterable[tuple[int, int, int, int]]],
+) -> list[tuple[int, int, int, int]]:
+    if graph_bucket_plans is None:
+        return []
+
+    normalized: set[tuple[int, int, int, int]] = set()
+    for plan in graph_bucket_plans:
+        if len(plan) != 4:
+            continue
+        first_graph, second_graph, first_req_cap, second_req_cap = (
+            int(plan[0]),
+            int(plan[1]),
+            int(plan[2]),
+            int(plan[3]),
+        )
+        if (first_graph <= 0 or second_graph <= 0 or first_req_cap <= 0
+                or second_req_cap <= 0):
+            continue
+        normalized.add(
+            (first_graph, second_graph, first_req_cap, second_req_cap))
+    return sorted(normalized)
 
 
 def create_mixed_request_split_batch_slices(
@@ -777,6 +830,10 @@ def create_mixed_request_split_batch_slices(
     decode_weight: int = 1,
     prefill_weight: int = 4,
     split_policy: str = "balanced_attention",
+    graph_bucket_plans: Optional[Iterable[tuple[int, int, int, int]]] = None,
+    bucket_padding_ratio_grace_tokens: int = 0,
+    bucket_min_actual_tokens_per_split: int = 1,
+    debug_info: Optional[dict[str, object]] = None,
 ) -> tuple[Optional[InplaceSplitPlan], str]:
     """Create a dry-run 2-way request-boundary split plan for mixed batches.
 
@@ -784,37 +841,70 @@ def create_mixed_request_split_batch_slices(
     per-split buffers. Therefore both split descriptors keep
     start_num_tokens=0 and do not rely on descriptor-aware offset graph keys.
     """
+    def _finish(reason: str) -> tuple[None, str]:
+        if debug_info is not None:
+            debug_info["mixed_planner_stop_reason"] = reason
+        return None, reason
+
     if split_policy != "balanced_attention":
-        return None, NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY
+        return _finish(NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY)
 
     tokens = np.asarray(num_scheduled_tokens_per_request, dtype=np.int32)
     total_tokens = int(total_num_tokens)
     if (tokens.ndim != 1 or len(tokens) == 0 or total_tokens <= 0
             or int(tokens.sum()) != total_tokens
             or np.any(tokens <= 0)):
-        return None, NO_SPLIT_INVALID_TOKEN_ACCOUNTING
+        return _finish(NO_SPLIT_INVALID_TOKEN_ACCOUNTING)
 
     capture_sizes = _normalize_capture_sizes(cudagraph_capture_sizes)
-    if not capture_sizes:
-        return None, NO_SPLIT_NO_CAPTURE_SIZES
+    bucket_plans = _normalize_mixed_graph_bucket_plans(graph_bucket_plans)
+    bucket_padding_ratio_grace_tokens = max(
+        0, int(bucket_padding_ratio_grace_tokens))
+    bucket_min_actual_tokens_per_split = max(
+        1, int(bucket_min_actual_tokens_per_split))
+    if debug_info is not None:
+        token_values, token_counts = np.unique(tokens, return_counts=True)
+        debug_info.update({
+            "mixed_planner_total_tokens":
+            total_tokens,
+            "mixed_planner_num_reqs":
+            int(len(tokens)),
+            "mixed_planner_request_token_histogram": {
+                str(int(token)): int(count)
+                for token, count in zip(token_values, token_counts)
+            },
+            "mixed_planner_request_tokens":
+            [int(token) for token in tokens.tolist()],
+            "mixed_planner_capture_sizes_considered":
+            [int(size) for size in capture_sizes],
+            "mixed_planner_bucket_plans_considered": [
+                [int(v) for v in plan] for plan in bucket_plans
+            ],
+            "mixed_planner_bucket_padding_ratio_grace_tokens":
+            bucket_padding_ratio_grace_tokens,
+            "mixed_planner_bucket_min_actual_tokens_per_split":
+            bucket_min_actual_tokens_per_split,
+        })
+    if not capture_sizes and not bucket_plans:
+        return _finish(NO_SPLIT_NO_CAPTURE_SIZES)
 
     if total_tokens < int(min_total_tokens):
-        return None, NO_SPLIT_MIXED_BELOW_MIN_TOTAL_TOKENS
+        return _finish(NO_SPLIT_MIXED_BELOW_MIN_TOTAL_TOKENS)
 
     decode_threshold = int(decode_threshold)
     if decode_threshold < 1:
-        return None, NO_SPLIT_INVALID_QUERY_LEN
+        return _finish(NO_SPLIT_INVALID_QUERY_LEN)
 
     decode_mask = tokens <= decode_threshold
     prefill_mask = ~decode_mask
     if not bool(prefill_mask.any()):
-        return None, NO_SPLIT_MIXED_DECODE_ONLY
+        return _finish(NO_SPLIT_MIXED_DECODE_ONLY)
 
     max_single_request_ratio = float(max_single_request_ratio)
     if max_single_request_ratio <= 0:
-        return None, NO_SPLIT_SINGLE_REQUEST_DOMINATES
+        return _finish(NO_SPLIT_SINGLE_REQUEST_DOMINATES)
     if float(int(tokens.max())) / float(total_tokens) > max_single_request_ratio:
-        return None, NO_SPLIT_SINGLE_REQUEST_DOMINATES
+        return _finish(NO_SPLIT_SINGLE_REQUEST_DOMINATES)
 
     num_decode_tokens = int(tokens[decode_mask].sum())
     num_prefill_tokens = int(tokens[prefill_mask].sum())
@@ -822,13 +912,17 @@ def create_mixed_request_split_batch_slices(
     num_prefill_reqs = int(prefill_mask.sum())
     if (num_prefill_reqs < int(min_prefill_reqs_for_prefill_split)
             and num_decode_tokens < int(min_tokens_per_split)):
-        return None, NO_SPLIT_TOO_FEW_PREFILL_REQUESTS
+        return _finish(NO_SPLIT_TOO_FEW_PREFILL_REQUESTS)
 
     if len(tokens) < 2:
-        return None, NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES
+        return _finish(NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES)
 
-    padded_without_split = _ceil_to_capture_size(total_tokens, capture_sizes)
-    if padded_without_split is None:
+    if capture_sizes:
+        padded_without_split = _ceil_to_capture_size(total_tokens,
+                                                     capture_sizes)
+        if padded_without_split is None:
+            padded_without_split = total_tokens
+    else:
         padded_without_split = total_tokens
 
     cu_tokens = np.concatenate(
@@ -836,80 +930,215 @@ def create_mixed_request_split_batch_slices(
          np.cumsum(tokens, dtype=np.int64)])
     last_reject_reason = NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES
     candidates: list[tuple[InplaceSplitPlan, int, int, int, int]] = []
+    debug_reject_counts: dict[str, int] = {}
+    debug_rejected_candidates: list[dict[str, object]] = []
+    debug_actual_candidates: list[tuple[tuple[int, int, int, int, int],
+                                        dict[str, object]]] = []
+
+    def _count_reject(reason: str) -> None:
+        debug_reject_counts[reason] = debug_reject_counts.get(reason, 0) + 1
+
+    def _append_rejected_candidate(payload: dict[str, object]) -> None:
+        if debug_info is None:
+            return
+        if len(debug_rejected_candidates) < 32:
+            debug_rejected_candidates.append(payload)
+
     for split_req in range(1, len(tokens)):
         left_tokens = int(cu_tokens[split_req])
         right_tokens = total_tokens - left_tokens
         if left_tokens <= 0 or right_tokens <= 0:
             last_reject_reason = NO_SPLIT_TOO_FEW_REQUEST_BOUNDARIES
+            _count_reject(last_reject_reason)
             continue
         if (left_tokens < int(min_tokens_per_split)
                 or right_tokens < int(min_tokens_per_split)):
             last_reject_reason = NO_SPLIT_MIN_TOKENS_PER_SPLIT
+            _count_reject(last_reject_reason)
             continue
-
-        left_graph_tokens = _ceil_to_capture_size(left_tokens, capture_sizes)
-        right_graph_tokens = _ceil_to_capture_size(right_tokens, capture_sizes)
-        if left_graph_tokens is None or right_graph_tokens is None:
-            last_reject_reason = NO_SPLIT_GRAPH_BUCKET_MISSING
-            continue
-
-        left_padding = int(left_graph_tokens) - left_tokens
-        right_padding = int(right_graph_tokens) - right_tokens
-        if (max_padding_tokens_per_split is not None
-                and (left_padding > int(max_padding_tokens_per_split)
-                     or right_padding > int(max_padding_tokens_per_split))):
-            last_reject_reason = NO_SPLIT_PADDING_TOO_LARGE
-            continue
-        if max_padding_ratio_per_split is not None:
-            max_padding_ratio = float(max_padding_ratio_per_split)
-            if (left_padding / float(left_tokens) > max_padding_ratio
-                    or right_padding / float(right_tokens) >
-                    max_padding_ratio):
-                last_reject_reason = NO_SPLIT_PADDING_TOO_LARGE
-                continue
 
         left_req_tokens = tokens[:split_req]
         right_req_tokens = tokens[split_req:]
+        right_reqs = len(tokens) - split_req
         left_cost = _mixed_attention_cost(left_req_tokens, decode_threshold,
                                           decode_weight, prefill_weight)
         right_cost = _mixed_attention_cost(right_req_tokens, decode_threshold,
                                            decode_weight, prefill_weight)
-        split_slices = [
-            SplitBatchSlice(
-                request_slice=slice(0, split_req),
-                token_slice=slice(0, left_tokens),
-                padded_num_tokens=int(left_graph_tokens),
-                start_num_tokens=0,
+        actual_candidate = {
+            "split_req_index": int(split_req),
+            "actual_tokens": [int(left_tokens), int(right_tokens)],
+            "actual_reqs": [int(split_req), int(right_reqs)],
+            "attention_cost": [int(left_cost), int(right_cost)],
+        }
+        debug_actual_candidates.append((
+            (
+                max(left_cost, right_cost),
+                abs(left_cost - right_cost),
+                abs(left_tokens - right_tokens),
+                int(split_req),
+                int(right_reqs),
             ),
-            SplitBatchSlice(
-                request_slice=slice(split_req, len(tokens)),
-                token_slice=slice(left_tokens, total_tokens),
-                padded_num_tokens=int(right_graph_tokens),
-                start_num_tokens=0,
-            ),
-        ]
-        plan = InplaceSplitPlan(
-            split_slices=split_slices,
-            reason=MIXED_REQUEST_SPLIT_DRY_RUN,
-            total_num_tokens=total_tokens,
-            padded_num_tokens_without_split=padded_without_split,
-            first_tokens=left_tokens,
-            second_tokens=right_tokens,
-            first_reqs=split_req,
-            second_reqs=len(tokens) - split_req,
-            lower_capture_size=int(left_graph_tokens),
-            remainder_tokens=right_tokens,
-            capture_sizes_considered=capture_sizes,
-            first_tokens_policy=split_policy,
-            offset_match_policy="compact",
-            second_actual_tokens=right_tokens,
-            second_graph_tokens=int(right_graph_tokens),
-            second_padding_tokens=right_padding,
-            offset_capture_sizes_considered=[],
-            offset_min_graph_tokens=0,
-            offset_max_graph_tokens_by_start=None,
-            offset_allowed_graph_tokens_by_start=None,
-            extra_debug_payload={
+            actual_candidate,
+        ))
+
+        graph_choices: list[tuple[int, int, Optional[tuple[int, int, int,
+                                                          int]]]] = []
+        if bucket_plans:
+            if (left_tokens < bucket_min_actual_tokens_per_split
+                    or right_tokens < bucket_min_actual_tokens_per_split):
+                last_reject_reason = (
+                    NO_SPLIT_MACRO_BUCKET_ACTUAL_TOKENS_TOO_SMALL)
+                _count_reject(last_reject_reason)
+                _append_rejected_candidate({
+                    **actual_candidate,
+                    "reason": last_reject_reason,
+                    "bucket_min_actual_tokens_per_split":
+                    bucket_min_actual_tokens_per_split,
+                })
+                continue
+            for bucket_plan in bucket_plans:
+                left_graph, right_graph, left_req_cap, right_req_cap = (
+                    bucket_plan)
+                left_padding = int(left_graph) - left_tokens
+                right_padding = int(right_graph) - right_tokens
+                if left_tokens <= left_graph and right_tokens <= right_graph:
+                    graph_choices.append(
+                        (left_graph, right_graph, bucket_plan))
+            if not graph_choices:
+                last_reject_reason = NO_SPLIT_GRAPH_BUCKET_MISSING
+                _count_reject(last_reject_reason)
+                _append_rejected_candidate({
+                    **actual_candidate,
+                    "reason": last_reject_reason,
+                    "bucket_plans_considered_count": len(bucket_plans),
+                })
+                continue
+        else:
+            left_graph_tokens = _ceil_to_capture_size(left_tokens,
+                                                      capture_sizes)
+            right_graph_tokens = _ceil_to_capture_size(right_tokens,
+                                                       capture_sizes)
+            if left_graph_tokens is None or right_graph_tokens is None:
+                last_reject_reason = NO_SPLIT_GRAPH_BUCKET_MISSING
+                _count_reject(last_reject_reason)
+                _append_rejected_candidate({
+                    **actual_candidate,
+                    "reason": last_reject_reason,
+                })
+                continue
+            graph_choices.append(
+                (int(left_graph_tokens), int(right_graph_tokens), None))
+
+        for left_graph_tokens, right_graph_tokens, bucket_plan in graph_choices:
+            left_padding = int(left_graph_tokens) - left_tokens
+            right_padding = int(right_graph_tokens) - right_tokens
+            reject_payload = {
+                **actual_candidate,
+                "graph_tokens":
+                [int(left_graph_tokens),
+                 int(right_graph_tokens)],
+                "padding_tokens": [int(left_padding),
+                                   int(right_padding)],
+                "padding_ratios": [
+                    float(left_padding / float(max(1, left_tokens))),
+                    float(right_padding / float(max(1, right_tokens))),
+                ],
+            }
+            if bucket_plan is not None:
+                left_padding_reqs = _macro_padding_req_chunks(
+                    left_padding, left_req_tokens)
+                right_padding_reqs = _macro_padding_req_chunks(
+                    right_padding, right_req_tokens)
+                left_effective_reqs = split_req + left_padding_reqs
+                right_effective_reqs = right_reqs + right_padding_reqs
+                reject_payload["bucket_req_caps"] = [
+                    int(bucket_plan[2]),
+                    int(bucket_plan[3])
+                ]
+                reject_payload["effective_reqs"] = [
+                    int(left_effective_reqs),
+                    int(right_effective_reqs)
+                ]
+                reject_payload["padding_req_chunks"] = [
+                    int(left_padding_reqs),
+                    int(right_padding_reqs)
+                ]
+                reject_payload["actual_reqs"] = [
+                    int(split_req),
+                    int(right_reqs)
+                ]
+                reject_payload["metadata_pad_reqs"] = [
+                    max(0, int(bucket_plan[2]) - int(left_effective_reqs)),
+                    max(0, int(bucket_plan[3]) - int(right_effective_reqs)),
+                ]
+                reject_payload["req_capacity_ok"] = bool(
+                    left_effective_reqs <= int(bucket_plan[2])
+                    and right_effective_reqs <= int(bucket_plan[3]))
+                if not reject_payload["req_capacity_ok"]:
+                    last_reject_reason = (
+                        NO_SPLIT_BUCKET_REQ_CAPACITY_EXCEEDED)
+                    _count_reject(last_reject_reason)
+                    reject_payload["reason"] = last_reject_reason
+                    _append_rejected_candidate(reject_payload)
+                    continue
+            if (max_padding_tokens_per_split is not None
+                    and (left_padding > int(max_padding_tokens_per_split)
+                         or right_padding >
+                         int(max_padding_tokens_per_split))):
+                last_reject_reason = NO_SPLIT_PADDING_TOO_LARGE
+                _count_reject(last_reject_reason)
+                reject_payload["reason"] = last_reject_reason
+                _append_rejected_candidate(reject_payload)
+                continue
+            if max_padding_ratio_per_split is not None:
+                max_padding_ratio = float(max_padding_ratio_per_split)
+                left_ratio_exempt = bool(
+                    bucket_plan is not None and left_tokens <=
+                    bucket_padding_ratio_grace_tokens)
+                right_ratio_exempt = bool(
+                    bucket_plan is not None and right_tokens <=
+                    bucket_padding_ratio_grace_tokens)
+                left_ratio_too_large = (
+                    not left_ratio_exempt
+                    and left_padding / float(left_tokens) > max_padding_ratio)
+                right_ratio_too_large = (
+                    not right_ratio_exempt
+                    and right_padding / float(right_tokens) > max_padding_ratio)
+                if left_ratio_too_large or right_ratio_too_large:
+                    last_reject_reason = NO_SPLIT_PADDING_TOO_LARGE
+                    _count_reject(last_reject_reason)
+                    reject_payload["reason"] = last_reject_reason
+                    reject_payload["padding_ratio_exempt"] = [
+                        left_ratio_exempt,
+                        right_ratio_exempt,
+                    ]
+                    reject_payload[
+                        "bucket_padding_ratio_grace_tokens"] = (
+                            bucket_padding_ratio_grace_tokens)
+                    _append_rejected_candidate(reject_payload)
+                    continue
+
+            split_slices = [
+                SplitBatchSlice(
+                    request_slice=slice(0, split_req),
+                    token_slice=slice(0, left_tokens),
+                    padded_num_tokens=int(left_graph_tokens),
+                    start_num_tokens=0,
+                    request_capacity=(int(bucket_plan[2])
+                                      if bucket_plan is not None else 0),
+                    max_query_len=max(1, int(left_req_tokens.max())),
+                ),
+                SplitBatchSlice(
+                    request_slice=slice(split_req, len(tokens)),
+                    token_slice=slice(left_tokens, total_tokens),
+                    padded_num_tokens=int(right_graph_tokens),
+                    start_num_tokens=0,
+                    request_capacity=(int(bucket_plan[3])
+                                      if bucket_plan is not None else 0),
+                    max_query_len=max(1, int(right_req_tokens.max())),
+                ),
+            ]
+            extra_debug_payload = {
                 "mixed_request_split": True,
                 "split_policy": split_policy,
                 "split_req_index": split_req,
@@ -926,15 +1155,107 @@ def create_mixed_request_split_batch_slices(
                 "max_padding_ratio_per_split":
                 (None if max_padding_ratio_per_split is None else
                  float(max_padding_ratio_per_split)),
-            },
-        )
-        candidates.append(
-            (plan, left_cost, right_cost, left_padding, right_padding))
+            }
+            if bucket_plan is not None:
+                extra_debug_payload.update({
+                    "macro_bucket_plan": True,
+                    "macro_bucket_graph_tokens": [
+                        int(left_graph_tokens),
+                        int(right_graph_tokens)
+                    ],
+                    "macro_bucket_req_caps": [
+                        int(bucket_plan[2]),
+                        int(bucket_plan[3])
+                    ],
+                    "macro_bucket_effective_reqs": [
+                        int(left_effective_reqs),
+                        int(right_effective_reqs),
+                    ],
+                    "macro_bucket_padding_req_chunks": [
+                        int(left_padding_reqs),
+                        int(right_padding_reqs),
+                    ],
+                    "macro_bucket_actual_reqs": [
+                        int(split_req),
+                        int(right_reqs),
+                    ],
+                    "macro_bucket_metadata_pad_reqs": [
+                        max(0,
+                            int(bucket_plan[2]) - int(left_effective_reqs)),
+                        max(0,
+                            int(bucket_plan[3]) - int(right_effective_reqs)),
+                    ],
+                    "macro_bucket_padding_ratio_exempt": [
+                        bool(left_tokens <=
+                             bucket_padding_ratio_grace_tokens),
+                        bool(right_tokens <=
+                             bucket_padding_ratio_grace_tokens),
+                    ],
+                    "macro_bucket_padding_ratio_grace_tokens":
+                    bucket_padding_ratio_grace_tokens,
+                    "macro_bucket_min_actual_tokens_per_split":
+                    bucket_min_actual_tokens_per_split,
+                    "macro_bucket_plans_considered": [
+                        list(plan) for plan in bucket_plans
+                    ],
+                })
+            plan = InplaceSplitPlan(
+                split_slices=split_slices,
+                reason=MIXED_REQUEST_SPLIT_DRY_RUN,
+                total_num_tokens=total_tokens,
+                padded_num_tokens_without_split=padded_without_split,
+                first_tokens=left_tokens,
+                second_tokens=right_tokens,
+                first_reqs=split_req,
+                second_reqs=len(tokens) - split_req,
+                lower_capture_size=int(left_graph_tokens),
+                remainder_tokens=right_tokens,
+                capture_sizes_considered=capture_sizes,
+                first_tokens_policy=split_policy,
+                offset_match_policy="compact",
+                second_actual_tokens=right_tokens,
+                second_graph_tokens=int(right_graph_tokens),
+                second_padding_tokens=right_padding,
+                offset_capture_sizes_considered=[],
+                offset_min_graph_tokens=0,
+                offset_max_graph_tokens_by_start=None,
+                offset_allowed_graph_tokens_by_start=None,
+                extra_debug_payload=extra_debug_payload,
+            )
+            candidates.append(
+                (plan, left_cost, right_cost, left_padding, right_padding))
 
     if candidates:
-        return (min(candidates,
-                    key=_mixed_request_split_score)[0],
-                MIXED_REQUEST_SPLIT_DRY_RUN)
+        best = min(candidates, key=_mixed_request_split_score)[0]
+        if debug_info is not None:
+            debug_info.update({
+                "mixed_planner_stop_reason":
+                MIXED_REQUEST_SPLIT_DRY_RUN,
+                "mixed_planner_candidate_count":
+                len(candidates),
+                "mixed_planner_reject_counts":
+                debug_reject_counts,
+                "mixed_planner_best_actual_candidates": [
+                    candidate for _, candidate in sorted(
+                        debug_actual_candidates, key=lambda item: item[0])[:8]
+                ],
+            })
+        return best, MIXED_REQUEST_SPLIT_DRY_RUN
+    if debug_info is not None:
+        debug_info.update({
+            "mixed_planner_stop_reason":
+            last_reject_reason,
+            "mixed_planner_candidate_count":
+            0,
+            "mixed_planner_reject_counts":
+            debug_reject_counts,
+            "mixed_planner_best_actual_candidates": [
+                candidate for _, candidate in sorted(
+                    debug_actual_candidates, key=lambda item: item[0])[:8]
+            ],
+            "mixed_planner_rejected_candidates":
+            debug_rejected_candidates,
+        })
     return None, last_reject_reason
 
 
@@ -949,6 +1270,7 @@ def _macro_capture_plan_to_inplace_plan(
     uniform_decode_query_len: int,
     capture_plans_considered: list[int],
     macro_graph_config,
+    allow_mixed_request_plan: bool = False,
 ) -> tuple[Optional[InplaceSplitPlan], str]:
     q = int(uniform_decode_query_len)
     if q <= 0:
@@ -960,11 +1282,16 @@ def _macro_capture_plan_to_inplace_plan(
     split_num_reqs = getattr(capture_plan, "split_num_reqs", None)
     if split_num_reqs is not None:
         split_num_reqs = tuple(int(v) for v in split_num_reqs)
+    split_req_caps = getattr(capture_plan, "split_req_caps", None)
+    if split_req_caps is not None:
+        split_req_caps = tuple(int(v) for v in split_req_caps)
     total_tokens = int(capture_plan.total_tokens)
     if len(actual_tokens) != 2 or len(graph_tokens) != 2 \
             or len(start_tokens) != 2:
         return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
     if split_num_reqs is not None and len(split_num_reqs) != 2:
+        return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
+    if split_req_caps is not None and len(split_req_caps) != 2:
         return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
     if sum(actual_tokens) != total_tokens:
         return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
@@ -983,8 +1310,19 @@ def _macro_capture_plan_to_inplace_plan(
         second_reqs = second_actual // q
     else:
         first_reqs, second_reqs = split_num_reqs
+        if (not allow_mixed_request_plan
+                and (first_actual != first_reqs * q
+                     or second_actual != second_reqs * q)):
+            return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
     if first_reqs <= 0 or second_reqs <= 0:
         return None, NO_SPLIT_SECOND_EMPTY
+    if split_req_caps is None:
+        first_req_cap = first_reqs + max(0, first_graph - first_actual)
+        second_req_cap = second_reqs + max(0, second_graph - second_actual)
+    else:
+        first_req_cap, second_req_cap = split_req_caps
+    if first_req_cap < first_reqs or second_req_cap < second_reqs:
+        return None, NO_SPLIT_MACRO_GRAPH_INVALID_PLAN
 
     split_slices = [
         SplitBatchSlice(
@@ -992,12 +1330,19 @@ def _macro_capture_plan_to_inplace_plan(
             token_slice=slice(0, first_actual),
             padded_num_tokens=first_graph,
             start_num_tokens=start_tokens[0],
+            request_capacity=first_req_cap,
+            max_query_len=max(1,
+                              (first_actual + first_reqs - 1) // first_reqs),
         ),
         SplitBatchSlice(
             request_slice=slice(first_reqs, first_reqs + second_reqs),
             token_slice=slice(first_actual, total_tokens),
             padded_num_tokens=second_graph,
             start_num_tokens=start_tokens[1],
+            request_capacity=second_req_cap,
+            max_query_len=max(1,
+                              (second_actual + second_reqs - 1) //
+                              second_reqs),
         ),
     ]
     graph_total_tokens = first_graph + second_graph
