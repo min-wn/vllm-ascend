@@ -267,6 +267,43 @@ def test_inplace_split_bucket_respects_allowed_sizes_by_start():
     }
 
 
+def test_inplace_split_bucket_rejects_start_missing_from_allowed_table():
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(24),
+        total_num_tokens=24,
+        uniform_decode_query_len=1,
+        cudagraph_capture_sizes={16, 32, 64},
+        offset_match_policy="bucket",
+        offset_capture_sizes={16, 32},
+        offset_allowed_graph_tokens_by_start={
+            32: [16, 32],
+        },
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_NO_OFFSET_CAPTURE_SIZE
+
+
+def test_inplace_split_bucket_accepts_default_allowed_start():
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(47),
+        total_num_tokens=47,
+        uniform_decode_query_len=1,
+        cudagraph_capture_sizes={32, 64},
+        offset_match_policy="bucket",
+        offset_capture_sizes={16, 32},
+        offset_allowed_graph_tokens_by_start={
+            32: [16, 32],
+        },
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.first_tokens == 32
+    assert plan.second_actual_tokens == 15
+    assert plan.second_graph_tokens == 16
+
+
 def test_inplace_split_exact_rejects_offset_graph_below_min_size():
     plan, reason = create_inplace_split_batch_slices(
         _tokens(65),

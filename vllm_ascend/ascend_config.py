@@ -20,6 +20,15 @@ from vllm.logger import logger
 from vllm.triton_utils import HAS_TRITON
 
 
+DEFAULT_INPLACE_OFFSET_ALLOWED_GRAPH_TOKENS_BY_START: dict[int, list[int]] = {
+    32: [16, 32],
+    64: [16, 32, 64],
+    128: [32, 64, 128],
+    256: [32, 64, 128],
+    384: [32, 64, 128],
+}
+
+
 def check_kv_extra_config(vllm_config):
 
     def _check(name: str, config: dict):
@@ -346,7 +355,12 @@ class SplitBatchConfig:
             split_batch_config.get("force_split", False))
 
         self.enable_inplace_lazy_capture: bool = bool(
-            split_batch_config.get("enable_inplace_lazy_capture", True))
+            split_batch_config.get("enable_inplace_lazy_capture", False))
+        self.enable_inplace_offset_graph_dispatch: bool = bool(
+            split_batch_config.get("enable_inplace_offset_graph_dispatch",
+                                   True))
+        self.enable_inplace_offset_precapture: bool = bool(
+            split_batch_config.get("enable_inplace_offset_precapture", True))
         self.inplace_serial_first: bool = bool(
             split_batch_config.get("inplace_serial_first", True))
         raw_inplace_max_remainder_tokens = split_batch_config.get(
@@ -412,6 +426,12 @@ class SplitBatchConfig:
         raw_inplace_offset_allowed_graph_tokens_by_start = (
             split_batch_config.get(
                 "inplace_offset_allowed_graph_tokens_by_start", None))
+        if raw_inplace_offset_allowed_graph_tokens_by_start is None:
+            if self.mode.startswith("inplace"):
+                raw_inplace_offset_allowed_graph_tokens_by_start = (
+                    DEFAULT_INPLACE_OFFSET_ALLOWED_GRAPH_TOKENS_BY_START)
+            else:
+                raw_inplace_offset_allowed_graph_tokens_by_start = None
         if raw_inplace_offset_allowed_graph_tokens_by_start is None:
             self.inplace_offset_allowed_graph_tokens_by_start: Optional[
                 dict[int, list[int]]] = None

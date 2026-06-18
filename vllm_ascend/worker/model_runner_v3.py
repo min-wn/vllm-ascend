@@ -138,6 +138,7 @@ from vllm_ascend.worker.npu_ubatch_wrapper import (AscendUBatchWrapper,
 from vllm_ascend.worker.ubatch_utils import (INPLACE_SPLIT_DRY_RUN,
                                              InplaceSplitPlan,
                                              NO_SPLIT_ATTENTION_BACKEND_MISMATCH,
+                                             NO_SPLIT_EXACT_GRAPH_HIT,
                                              SplitBatchSlice,
                                              SplitBatchSlices,
                                              create_inplace_split_batch_slices,
@@ -1226,54 +1227,50 @@ class NPUModelRunner(GPUModelRunner):
                 "no_split_dbo_active"
                 if reason == "no_split_dbo_active" else "no_split")
             if reason is None:
-                if int(total_num_scheduled_tokens) < 64:
-                    reason = "no_split_inplace_below_64"
-
-                if reason is None:
-                    inplace_split_plan, reason = (
-                        create_inplace_split_batch_slices(
-                            num_scheduled_tokens,
-                            total_num_scheduled_tokens,
-                            self.uniform_decode_query_len,
-                            self.compilation_config.cudagraph_capture_sizes
-                            or [],
-                            getattr(split_cfg, "inplace_max_remainder_tokens",
-                                    None),
-                            offset_match_policy=getattr(
-                                split_cfg, "inplace_offset_match_policy",
-                                "exact"),
-                            offset_capture_sizes=inplace_offset_capture_sizes,
-                            offset_min_graph_tokens=getattr(
-                                split_cfg,
-                                "inplace_offset_min_graph_tokens", 1),
-                            offset_max_padding_tokens=getattr(
-                                split_cfg,
-                                "inplace_offset_max_padding_tokens", None),
-                            offset_max_padding_ratio=getattr(
-                                split_cfg,
-                                "inplace_offset_max_padding_ratio", None),
-                            offset_max_graph_tokens_by_start=getattr(
-                                split_cfg,
-                                "inplace_offset_max_graph_tokens_by_start",
+                inplace_split_plan, reason = (
+                    create_inplace_split_batch_slices(
+                        num_scheduled_tokens,
+                        total_num_scheduled_tokens,
+                        self.uniform_decode_query_len,
+                        self.compilation_config.cudagraph_capture_sizes
+                        or [],
+                        getattr(split_cfg, "inplace_max_remainder_tokens",
                                 None),
-                            offset_allowed_graph_tokens_by_start=getattr(
-                                split_cfg,
-                                "inplace_offset_allowed_graph_tokens_by_start",
-                                None),
-                            first_tokens_policy=getattr(
-                                split_cfg, "inplace_split_planner_policy",
-                                getattr(split_cfg,
-                                        "inplace_split_first_tokens_policy",
-                                        "largest_lower")),
-                        ))
-                    if (inplace_split_plan is not None and
-                            not inplace_split_first_graph_matches_attention_backend(
-                                inplace_split_plan,
-                                lambda shape: using_paged_attention(
-                                    shape, self.vllm_config),
-                            )):
-                        reason = NO_SPLIT_ATTENTION_BACKEND_MISMATCH
-                        inplace_split_plan = None
+                        offset_match_policy=getattr(
+                            split_cfg, "inplace_offset_match_policy",
+                            "exact"),
+                        offset_capture_sizes=inplace_offset_capture_sizes,
+                        offset_min_graph_tokens=getattr(
+                            split_cfg,
+                            "inplace_offset_min_graph_tokens", 1),
+                        offset_max_padding_tokens=getattr(
+                            split_cfg,
+                            "inplace_offset_max_padding_tokens", None),
+                        offset_max_padding_ratio=getattr(
+                            split_cfg,
+                            "inplace_offset_max_padding_ratio", None),
+                        offset_max_graph_tokens_by_start=getattr(
+                            split_cfg,
+                            "inplace_offset_max_graph_tokens_by_start",
+                            None),
+                        offset_allowed_graph_tokens_by_start=getattr(
+                            split_cfg,
+                            "inplace_offset_allowed_graph_tokens_by_start",
+                            None),
+                        first_tokens_policy=getattr(
+                            split_cfg, "inplace_split_planner_policy",
+                            getattr(split_cfg,
+                                    "inplace_split_first_tokens_policy",
+                                    "largest_lower")),
+                    ))
+                if (inplace_split_plan is not None and
+                        not inplace_split_first_graph_matches_attention_backend(
+                            inplace_split_plan,
+                            lambda shape: using_paged_attention(
+                                shape, self.vllm_config),
+                        )):
+                    reason = NO_SPLIT_ATTENTION_BACKEND_MISMATCH
+                    inplace_split_plan = None
 
             split_planner_payload.update({
                 "mode": split_mode,
@@ -2818,6 +2815,13 @@ class NPUModelRunner(GPUModelRunner):
             return self._graph_token_slice_for_split(split_slice)
         return split_slice.token_slice
 
+    def _ubatch_slices_for_inplace_metadata(
+            self, split_batch_slices: SplitBatchSlices) -> UBatchSlices:
+        return [
+            UBatchSlice(s.request_slice, s.token_slice)
+            for s in split_batch_slices
+        ]
+
     def _context_ubatch_slices_for_inplace(
             self, split_batch_slices: SplitBatchSlices) -> UBatchSlices:
         return [
@@ -3172,6 +3176,8 @@ class NPUModelRunner(GPUModelRunner):
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         allow_lazy = bool(split_cfg is not None and getattr(
             split_cfg, "enable_inplace_lazy_capture", True))
+        allow_offset_key = bool(split_cfg is not None and getattr(
+            split_cfg, "enable_inplace_offset_graph_dispatch", True))
         force_pa_for_offset = bool(
             split_cfg is not None
             and getattr(split_cfg, "inplace_force_pa_for_offset", False))
@@ -3203,6 +3209,8 @@ class NPUModelRunner(GPUModelRunner):
                     start_num_tokens=split_slice.start_num_tokens,
                     allow_inplace_lazy_key=(
                         allow_lazy and split_slice.start_num_tokens > 0),
+                    allow_inplace_offset_key=(
+                        allow_offset_key and split_slice.start_num_tokens > 0),
                     graph_variant=("inplace_serial"
                                    if split_slice.start_num_tokens > 0 else ""),
                     attention_backend=(split_attention_backend
@@ -3365,6 +3373,8 @@ class NPUModelRunner(GPUModelRunner):
         split_debug_enabled = split_debug.is_enabled()
         allow_lazy = bool(split_cfg is not None and getattr(
             split_cfg, "enable_inplace_lazy_capture", True))
+        allow_offset_key = bool(split_cfg is not None and getattr(
+            split_cfg, "enable_inplace_offset_graph_dispatch", True))
         force_pa_for_offset = bool(
             split_cfg is not None
             and getattr(split_cfg, "inplace_force_pa_for_offset", False))
@@ -3406,6 +3416,8 @@ class NPUModelRunner(GPUModelRunner):
                     start_num_tokens=split_slice.start_num_tokens,
                     allow_inplace_lazy_key=(
                         allow_lazy and split_slice.start_num_tokens > 0),
+                    allow_inplace_offset_key=(
+                        allow_offset_key and split_slice.start_num_tokens > 0),
                     graph_variant=("inplace_parallel"
                                    if split_slice.start_num_tokens > 0 else ""),
                     attention_backend=(split_attention_backend
@@ -3710,6 +3722,7 @@ class NPUModelRunner(GPUModelRunner):
                     step_id=_split_debug_step_from_runner(self),
                 )
 
+    @torch.inference_mode()
     def _run_inplace_serial_offset_capture(
             self,
             metadata: AscendUbatchMetadata,
@@ -4329,9 +4342,8 @@ class NPUModelRunner(GPUModelRunner):
 
 
                     with torch.npu.stream(target_stream):
-                        results[slice_idx] = self._clone_split_output(
-                            self._trim_split_output(split_result,
-                                                    split_slice.num_tokens))
+                        results[slice_idx] = self._trim_split_output(
+                            split_result, split_slice.num_tokens)
             except Exception as e:
                 with split_error_lock:
                     split_errors.append((slice_idx, e))
@@ -5308,6 +5320,8 @@ class NPUModelRunner(GPUModelRunner):
         aclgraph_runtime_mode: Optional[CUDAGraphMode] = None,
         force_attention: bool = False,
         ubatch_slices=None,
+        split_mode: str = "",
+        inplace_split_plan: Optional[InplaceSplitPlan] = None,
     ) -> Optional[PerLayerAttnMetadata]:
 
         attn_metadata: Optional[PerLayerAttnMetadata] = None
@@ -5410,6 +5424,11 @@ class NPUModelRunner(GPUModelRunner):
                         common_attn_metadata_list = split_attn_metadata(
                             ubatch_slices, common_attn_metadata,
                             self.max_num_tokens)
+                        common_attn_metadata_list = (
+                            self._stabilize_inplace_common_attn_metadata_list(
+                                common_attn_metadata_list,
+                                split_mode=split_mode,
+                                inplace_split_plan=inplace_split_plan))
                         _validate_split_attn_metadata_count(
                             "dummy_capture",
                             common_attn_metadata_list,
@@ -5418,9 +5437,17 @@ class NPUModelRunner(GPUModelRunner):
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
                             assert common_attn_metadata.max_query_len == 1
-                            attn_metadata_i = (attn_group\
-                                               .get_metadata_builder(ubatch_id=ubid)\
-                                               .build_for_cudagraph_capture(common_attn_metadata, attn_state, self.get_model()))
+                            ubatch_builder = attn_group.get_metadata_builder(
+                                ubatch_id=ubid)
+                            build_for_capture = getattr(
+                                ubatch_builder, "build_for_cudagraph_capture",
+                                None)
+                            if build_for_capture is None:
+                                build_for_capture = (
+                                    ubatch_builder.build_for_graph_capture)
+                            attn_metadata_i = build_for_capture(
+                                common_attn_metadata, attn_state,
+                                self.get_model())
                             for layer_name in attn_group.layer_names:
                                 assert type(attn_metadata) is list
                                 attn_metadata[ubid][
@@ -6676,6 +6703,264 @@ class NPUModelRunner(GPUModelRunner):
                             in_parallel_streams=in_parallel_streams,
                             )
 
+    def _find_inplace_offset_precapture_plan(
+            self, *, start_tokens: int, graph_tokens: int,
+            capture_sizes: list[int], offset_capture_sizes: list[int],
+            allowed: dict[int, list[int]]) -> Optional[InplaceSplitPlan]:
+        split_cfg = self.ascend_config.split_batch_config
+        query_len = int(self.uniform_decode_query_len)
+        if query_len <= 0:
+            return None
+
+        for second_actual_tokens in range(int(graph_tokens), 0, -query_len):
+            total_tokens = int(start_tokens) + second_actual_tokens
+            if total_tokens > self.scheduler_config.max_num_seqs:
+                continue
+            if total_tokens > self.scheduler_config.max_num_batched_tokens:
+                continue
+            num_reqs = total_tokens // query_len
+            if num_reqs * query_len != total_tokens:
+                continue
+            num_scheduled_tokens = np.full(
+                num_reqs, query_len, dtype=np.int32)
+            plan, reason = create_inplace_split_batch_slices(
+                num_scheduled_tokens,
+                total_tokens,
+                query_len,
+                capture_sizes,
+                getattr(split_cfg, "inplace_max_remainder_tokens", None),
+                offset_match_policy=getattr(
+                    split_cfg, "inplace_offset_match_policy", "bucket"),
+                offset_capture_sizes=offset_capture_sizes,
+                offset_min_graph_tokens=getattr(
+                    split_cfg, "inplace_offset_min_graph_tokens", 1),
+                offset_max_padding_tokens=getattr(
+                    split_cfg, "inplace_offset_max_padding_tokens", None),
+                offset_max_padding_ratio=getattr(
+                    split_cfg, "inplace_offset_max_padding_ratio", None),
+                offset_max_graph_tokens_by_start=getattr(
+                    split_cfg, "inplace_offset_max_graph_tokens_by_start",
+                    None),
+                offset_allowed_graph_tokens_by_start=allowed,
+                first_tokens_policy=getattr(
+                    split_cfg, "inplace_split_planner_policy",
+                    getattr(split_cfg, "inplace_split_first_tokens_policy",
+                            "largest_lower")),
+            )
+            if plan is None:
+                if reason != NO_SPLIT_EXACT_GRAPH_HIT:
+                    logger.debug(
+                        "Skip inplace offset precapture candidate "
+                        "start=%s graph=%s actual=%s: %s",
+                        start_tokens, graph_tokens, second_actual_tokens,
+                        reason)
+                continue
+            if (plan.first_tokens != start_tokens
+                    or plan.second_graph_tokens != graph_tokens):
+                continue
+            if not inplace_split_first_graph_matches_attention_backend(
+                    plan,
+                    lambda shape: using_paged_attention(shape,
+                                                        self.vllm_config),
+            ):
+                continue
+            return plan
+        return None
+
+    def _iter_inplace_offset_precapture_plans(
+            self) -> list[InplaceSplitPlan]:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        if split_cfg is None or not getattr(split_cfg, "enabled", False):
+            return []
+        if getattr(split_cfg, "mode", "") not in _INPLACE_SPLIT_MODES:
+            return []
+        allowed = getattr(split_cfg,
+                          "inplace_offset_allowed_graph_tokens_by_start",
+                          None)
+        if not allowed:
+            return []
+
+        plans: list[InplaceSplitPlan] = []
+        capture_sizes = sorted(set(self.compilation_config.
+                                   cudagraph_capture_sizes or []))
+        offset_capture_sizes = sorted(
+            set(
+                getattr(split_cfg, "inplace_offset_capture_sizes", None)
+                or getattr(split_cfg, "parallel_capture_sizes", None)
+                or capture_sizes))
+        for start_tokens, graph_tokens_list in sorted(allowed.items()):
+            start_tokens = int(start_tokens)
+            for graph_tokens in sorted({int(v) for v in graph_tokens_list}):
+                plan = self._find_inplace_offset_precapture_plan(
+                    start_tokens=start_tokens,
+                    graph_tokens=graph_tokens,
+                    capture_sizes=capture_sizes,
+                    offset_capture_sizes=offset_capture_sizes,
+                    allowed=allowed,
+                )
+                if plan is None:
+                    logger.debug(
+                        "Skip inplace offset precapture start=%s graph=%s: "
+                        "no runtime batch can materialize this offset graph",
+                        start_tokens, graph_tokens)
+                    continue
+                plans.append(plan)
+        return plans
+
+    def _capture_inplace_offset_aclgraphs(self) -> None:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        if split_cfg is None:
+            return
+        split_mode = getattr(split_cfg, "mode", "")
+        if split_mode not in _INPLACE_SPLIT_MODES:
+            return
+        if not bool(getattr(split_cfg, "enable_inplace_offset_precapture",
+                            True)):
+            return
+        if self.compilation_config.cudagraph_mode.decode_mode(
+        ) != CUDAGraphMode.FULL:
+            return
+
+        plans = self._iter_inplace_offset_precapture_plans()
+        if not plans:
+            return
+        logger.info("Starting to precapture inplace offset ACL graphs: %s",
+                    [p.debug_payload() for p in plans])
+
+        force_attention = True
+        previous_lazy = bool(getattr(split_cfg, "enable_inplace_lazy_capture",
+                                     False))
+        split_cfg.enable_inplace_lazy_capture = True
+        try:
+            iterable = tqdm(
+                list(reversed(plans)),
+                disable=not self.load_config.use_tqdm_on_load,
+                desc="Capturing inplace offset ACL graphs")
+            for plan in iterable:
+                total_tokens = int(plan.total_num_tokens)
+                num_scheduled_tokens = np.ones(total_tokens, dtype=np.int32)
+                num_reqs = total_tokens
+                num_sampled_tokens = np.ones(num_reqs, dtype=np.int32)
+                max_query_len = self.uniform_decode_query_len
+
+                self.seq_lens.np[:num_reqs] = max_query_len
+                self.seq_lens.np[num_reqs:] = 0
+                self.seq_lens.copy_to_gpu()
+                cu_num_tokens, _ = self._get_cumsum_and_arange(
+                    num_scheduled_tokens)
+                self.query_start_loc.cpu[1:num_reqs + 1] = torch.Tensor(
+                    cu_num_tokens)
+                self.query_lens = torch.from_numpy(num_scheduled_tokens)
+                self.attn_mask = self.attn_mask_builder.get_splitfuse_attn_mask()
+
+                metadata_ubatch_slices = (
+                    self._ubatch_slices_for_inplace_metadata(
+                        plan.split_slices))
+                split_ubatch_slices = [
+                    UBatchSlice(s.request_slice,
+                                self._tokens_slice_for_inplace_execution(s))
+                    for s in plan.split_slices
+                ]
+                attn_metadata = self._build_dummy_attn_metadata(
+                    False,
+                    num_reqs=num_reqs,
+                    num_tokens=total_tokens,
+                    max_query_len=max_query_len,
+                    aclgraph_runtime_mode=CUDAGraphMode.FULL,
+                    force_attention=force_attention,
+                    num_scheduled_tokens=num_scheduled_tokens,
+                    ubatch_slices=metadata_ubatch_slices,
+                    split_mode=split_mode,
+                    inplace_split_plan=plan,
+                )
+
+                has_lora = bool(
+                    self.lora_config and
+                    self.compilation_config.cudagraph_specialize_lora)
+                _, batch_descriptor = self.cudagraph_dispatcher.dispatch(
+                    num_tokens=total_tokens,
+                    uniform_decode=True,
+                    has_lora=has_lora)
+
+                if self.is_multimodal_model or self.enable_prompt_embeds:
+                    input_ids = None
+                    inputs_embeds = self.inputs_embeds.gpu[:total_tokens]
+                else:
+                    input_ids = self.input_ids.gpu[:total_tokens]
+                    inputs_embeds = None
+                positions = (self.mrope_positions.gpu[:, :total_tokens]
+                             if self.uses_mrope else
+                             self.positions.gpu[:total_tokens])
+                update_cos_sin(positions)
+
+                with self.maybe_dummy_run_with_lora(self.lora_config,
+                                                    num_scheduled_tokens,
+                                                    num_sampled_tokens):
+                    with set_ascend_forward_context(
+                            attn_metadata,
+                            self.vllm_config,
+                            num_tokens=total_tokens,
+                            with_prefill=False,
+                            num_actual_tokens=total_tokens,
+                            aclgraph_runtime_mode=CUDAGraphMode.FULL,
+                            batch_descriptor=batch_descriptor,
+                            prefetch_stream=self.prefetch_stream,
+                            model_instance=self.model,
+                            weight_prefetch_method=
+                            self.weight_prefetch_method,
+                            ubatch_slices=split_ubatch_slices,
+                    ):
+                        cur_context = get_forward_context()
+                        _set_split_debug_step(
+                            cur_context,
+                            _split_debug_step_from_runner(self))
+                        model_kwargs = self._init_model_kwargs(total_tokens)
+                        attention_backend = select_inplace_attention_backend(
+                            plan,
+                            lambda shape: using_paged_attention(
+                                shape, self.vllm_config),
+                        )
+                        if split_mode == "inplace_parallel":
+                            metadata = self._make_split_batch_metadata_inplace_parallel(
+                                split_ubatch_slices,
+                                plan.split_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                inputs_embeds,
+                                None,
+                                batch_descriptor,
+                                CUDAGraphMode.FULL,
+                                attention_backend,
+                            )[1]
+                            self._run_inplace_serial_offset_capture(
+                                metadata,
+                                plan.split_slices[1],
+                                model_kwargs,
+                                parallel_streams=True,
+                            )
+                        else:
+                            metadata = self._make_split_batch_metadata_inplace_serial(
+                                split_ubatch_slices,
+                                plan.split_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                inputs_embeds,
+                                None,
+                                batch_descriptor,
+                                CUDAGraphMode.FULL,
+                                attention_backend,
+                            )[1]
+                            self._run_inplace_serial_offset_capture(
+                                metadata,
+                                plan.split_slices[1],
+                                model_kwargs,
+                                parallel_streams=False,
+                            )
+        finally:
+            split_cfg.enable_inplace_lazy_capture = previous_lazy
+
     def _capture_model(self):
         if not self.use_aclgraph:
             logger.warning(
@@ -6791,6 +7076,9 @@ class NPUModelRunner(GPUModelRunner):
                         aclgraph_runtime_mode=CUDAGraphMode.FULL,
                         uniform_decode=True,
                         in_parallel_streams=True)
+
+        with graph_capture(device=self.device):
+            self._capture_inplace_offset_aclgraphs()
 
         # Disable aclgraph capturing globally, so any unexpected aclgraph
         # capturing will be detected and raise an error after here.

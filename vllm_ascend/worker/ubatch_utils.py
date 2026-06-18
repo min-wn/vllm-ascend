@@ -496,7 +496,9 @@ def _allowed_graph_tokens_for_start(
     if allowed_sizes is None:
         return None
     sizes = allowed_sizes.get(int(start_num_tokens))
-    return set(sizes or [])
+    if sizes is None:
+        return set()
+    return set(sizes)
 
 
 def _balanced_inplace_split_score(

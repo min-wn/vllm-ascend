@@ -102,7 +102,9 @@ class TestAscendConfig(TestBase):
         self.assertEqual(split_config.min_batch_size_for_split, 4)
         self.assertIsNone(split_config.parallel_capture_sizes)
         self.assertFalse(split_config.force_split)
-        self.assertTrue(split_config.enable_inplace_lazy_capture)
+        self.assertFalse(split_config.enable_inplace_lazy_capture)
+        self.assertTrue(split_config.enable_inplace_offset_graph_dispatch)
+        self.assertTrue(split_config.enable_inplace_offset_precapture)
         self.assertTrue(split_config.inplace_serial_first)
         self.assertIsNone(split_config.inplace_max_remainder_tokens)
         self.assertFalse(split_config.inplace_validate_metadata_ptrs)
@@ -223,6 +225,25 @@ class TestAscendConfig(TestBase):
 
         self.assertEqual(split_config.mode, "inplace_parallel")
         self.assertEqual(split_config.num_splits, 2)
+
+    def test_split_batch_config_uses_default_inplace_offset_allowed_table(self):
+        split_config = SplitBatchConfig({
+            "enabled": True,
+            "mode": "inplace_serial",
+            "num_splits": 2,
+        })
+
+        self.assertFalse(split_config.enable_inplace_lazy_capture)
+        self.assertTrue(split_config.enable_inplace_offset_graph_dispatch)
+        self.assertTrue(split_config.enable_inplace_offset_precapture)
+        self.assertEqual(
+            split_config.inplace_offset_allowed_graph_tokens_by_start, {
+                32: [16, 32],
+                64: [16, 32, 64],
+                128: [32, 64, 128],
+                256: [32, 64, 128],
+                384: [32, 64, 128],
+            })
 
     def test_split_batch_config_rejects_invalid_mode(self):
         with self.assertRaisesRegex(ValueError, "split_batch_config.mode"):
