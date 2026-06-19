@@ -1,0 +1,25 @@
+{
+  "tag": "dual_inplace",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "batch_size": 416,
+  "capture_sizes": [
+    256,
+    384,
+    512
+  ],
+  "max_tokens": 128,
+  "split_enabled": true,
+  "split_mode": "inplace_parallel",
+  "enable_parallel_streams": true,
+  "force_split": true,
+  "total_output_tokens": 53248,
+  "elapsed_seconds": 4.509663542732596,
+  "throughput_tok_per_sec": 11807.5,
+  "tpot_ms": 0.085,
+  "num_perf_steps": 508,
+  "perf_summary": {
+    "avg_replay_ms": 14.46,
+    "p50_replay_ms": 12.86,
+    "p99_replay_ms": 14.17
+  }
+}

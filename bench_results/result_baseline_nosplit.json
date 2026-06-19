@@ -1,0 +1,25 @@
+{
+  "tag": "baseline_nosplit",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "batch_size": 416,
+  "capture_sizes": [
+    256,
+    384,
+    512
+  ],
+  "max_tokens": 128,
+  "split_enabled": false,
+  "split_mode": null,
+  "enable_parallel_streams": false,
+  "force_split": false,
+  "total_output_tokens": 53248,
+  "elapsed_seconds": 3.766888582147658,
+  "throughput_tok_per_sec": 14135.8,
+  "tpot_ms": 0.071,
+  "num_perf_steps": 508,
+  "perf_summary": {
+    "avg_replay_ms": 7.36,
+    "p50_replay_ms": 7.32,
+    "p99_replay_ms": 8.31
+  }
+}

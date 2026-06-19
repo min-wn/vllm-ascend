@@ -1,0 +1,25 @@
+{
+  "tag": "qwen3-4b_dual_inplace",
+  "model": "/vllm-workspace/models/Qwen3-4B",
+  "batch_size": 416,
+  "capture_sizes": [
+    256,
+    384,
+    512
+  ],
+  "max_tokens": 128,
+  "split_enabled": true,
+  "split_mode": "inplace_parallel",
+  "enable_parallel_streams": true,
+  "force_split": true,
+  "total_output_tokens": 53248,
+  "elapsed_seconds": 9.224363755434752,
+  "throughput_tok_per_sec": 5772.5,
+  "tpot_ms": 0.173,
+  "num_perf_steps": 508,
+  "perf_summary": {
+    "avg_replay_ms": 52.18,
+    "p50_replay_ms": 51.39,
+    "p99_replay_ms": 54.53
+  }
+}

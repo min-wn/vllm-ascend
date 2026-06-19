@@ -4292,6 +4292,7 @@ class NPUModelRunner(GPUModelRunner):
             try:
                 split_slice = split_batch_slices[slice_idx]
                 metadata = ubatch_metadata[slice_idx]
+                current_padded_num_tokens = split_slice.padded_num_tokens
                 parallel_streams = slice_idx > 0
                 target_stream = (self.stream_parallel if parallel_streams
                                  else self.stream_main)
@@ -4330,15 +4331,10 @@ class NPUModelRunner(GPUModelRunner):
                                 )
                                 if (metadata.context.cudagraph_runtime_mode
                                         == CUDAGraphMode.FULL):
-                                    if split_slice.start_num_tokens > 0:
-                                        self._update_attn_params_for_split_ubatch(
-                                            metadata.context,
-                                            split_slice.graph_num_tokens,
-                                            parallel_streams=parallel_streams)
-                                    else:
-                                        self._update_attn_params_for_wrapper(
-                                            metadata.context,
-                                            split_slice.graph_num_tokens)
+                                    self._update_attn_params_for_split_ubatch(
+                                        metadata.context,
+                                        current_padded_num_tokens,
+                                        parallel_streams=parallel_streams)
 
 
                     with torch.npu.stream(target_stream):

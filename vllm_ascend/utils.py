@@ -918,7 +918,10 @@ def npu_stream_switch(target_stream: torch.npu.Stream,
 
 
 def create_hccl_pg_options(group_name: str):
-    options = torch_npu._C._distributed_c10d.ProcessGroupHCCL.Options()
+    distributed_c10d = getattr(torch_npu._C, "_distributed_c10d", None)
+    if distributed_c10d is None:
+        return None
+    options = distributed_c10d.ProcessGroupHCCL.Options()
     hccl_config = get_hccl_config_for_pg_options(group_name)
     if hccl_config is not None:
         options.hccl_config = hccl_config
