@@ -123,8 +123,13 @@ def graph_param_key_info(key: GraphParamKey) -> dict[str, Any]:
 
 def should_template_fia_seq_lens(forward_context: Any) -> bool:
     batch_descriptor = getattr(forward_context, "batch_descriptor", None)
-    return (getattr(batch_descriptor, "capture_metadata_mode", "") == "template"
-            and getattr(batch_descriptor, "attention_backend", "") == "fia")
+    capture_metadata_mode = getattr(batch_descriptor, "capture_metadata_mode",
+                                    "")
+    attention_backend = getattr(batch_descriptor, "attention_backend", "")
+    if capture_metadata_mode == "template" and attention_backend == "fia":
+        return True
+    return (capture_metadata_mode == "mixed_request_compact"
+            and attention_backend == "mixed_request")
 
 
 def _get_fia_key_t(key_tensor: Any, fallback: int) -> int:

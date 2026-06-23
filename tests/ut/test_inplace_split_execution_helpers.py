@@ -14,6 +14,7 @@ from vllm_ascend.worker.model_runner_v3 import (
     NPUModelRunner,
     _inplace_split_precheck_reason,
     _inplace_plan_to_execution_slices,
+    _macro_template_fia_seq_lens_for_update,
     _template_fia_seq_lens_list,
 )
 from vllm_ascend.worker.ubatch_utils import create_inplace_split_batch_slices
@@ -549,24 +550,23 @@ def test_mixed_request_compact_metadata_padding_uses_fake_tail_requests():
         split_slice,
         split_idx=0)
 
-    assert padded.num_reqs == 64
+    assert padded.num_reqs == 4
     assert padded.num_actual_tokens == 128
     assert padded.num_input_tokens == 128
-    assert padded.graph_pad_size == 64
-    assert padded.query_start_loc_cpu.shape[0] == 65
-    assert padded.query_start_loc_cpu[-1].item() == 128
+    assert padded.graph_pad_size == 4
+    assert padded.query_start_loc_cpu.tolist() == [0, 2, 66, 99, 128]
     assert padded.actual_seq_lengths_q[:2] == [2, 66]
     assert padded.actual_seq_lengths_q[-1] == 128
     assert torch.equal(padded.seq_lens_cpu[:2], common.seq_lens_cpu)
     assert torch.equal(padded.seq_lens_cpu[2:],
-                       torch.zeros(62, dtype=torch.int32))
+                       torch.full((2, ), 64, dtype=torch.int32))
     assert torch.equal(padded.slot_mapping[:66], common.slot_mapping)
     assert torch.equal(padded.slot_mapping[66:],
-                       torch.full((62, ), -1, dtype=torch.int64))
+                       torch.arange(192, 254, dtype=torch.int64))
     assert torch.equal(padded.block_table_tensor[:2],
                        common.block_table_tensor)
     assert torch.equal(padded.block_table_tensor[2:],
-                       torch.full((62, 4), -1, dtype=torch.int32))
+                       torch.ones((2, 4), dtype=torch.int32))
     assert torch.equal(padded.positions[:66], common.positions)
     assert torch.equal(padded.positions[66:],
                        torch.zeros(62, dtype=torch.int64))
@@ -1009,6 +1009,40 @@ def test_template_fia_seq_lens_list_sets_tail_to_target_t():
     assert attn_metadata["layer.0"].seq_lens_list == [9, 32]
     assert attn_metadata["layer.1"].seq_lens_list == [10, 32]
     assert attn_metadata["ignored"].seq_lens_list == []
+
+
+def test_macro_template_fia_seq_lens_for_update_copies_sequence_tail():
+    seq_lens = [33, 33, 32]
+
+    templated, detail = _macro_template_fia_seq_lens_for_update(seq_lens, 128)
+
+    assert templated == [33, 33, 128]
+    assert seq_lens == [33, 33, 32]
+    assert detail["applied"] is True
+    assert detail["tail_before"] == 32
+    assert detail["tail_after"] == 128
+
+
+def test_macro_template_fia_seq_lens_for_update_accepts_tuple_and_numpy():
+    tuple_templated, tuple_detail = _macro_template_fia_seq_lens_for_update(
+        (1, 2), 64)
+    numpy_templated, numpy_detail = _macro_template_fia_seq_lens_for_update(
+        np.array([3, 4], dtype=np.int32), 64)
+
+    assert tuple_templated == [1, 64]
+    assert tuple_detail["applied"] is True
+    assert numpy_templated == [3, 64]
+    assert numpy_detail["applied"] is True
+
+
+def test_macro_template_fia_seq_lens_for_update_ignores_tensors():
+    seq_lens = torch.tensor([1, 2], dtype=torch.int32)
+
+    templated, detail = _macro_template_fia_seq_lens_for_update(seq_lens, 64)
+
+    assert templated is seq_lens
+    assert detail["applied"] is False
+    assert detail["reason"] == "none_or_tensor_or_unsupported"
 
 
 def test_inplace_serial_uses_fia_template_for_offset_metadata():

@@ -206,6 +206,24 @@ class TestGraphParamKey(TestBase):
         self.assertEqual(templated_seq_lens, [9, 32])
         self.assertEqual(seq_lens, [9, 9])
 
+    def test_maybe_template_fia_seq_lens_handles_mixed_request_compact(self):
+        descriptor = BatchDescriptor(
+            num_tokens=68,
+            num_reqs=6,
+            uniform=False,
+            has_lora=False,
+            graph_variant="mixed_request_piecewise_attention_parallel",
+            attention_backend="mixed_request",
+            capture_metadata_mode="mixed_request_compact")
+        context = SimpleNamespace(batch_descriptor=descriptor)
+        seq_lens = [34, 32]
+
+        templated_seq_lens = maybe_template_fia_seq_lens(
+            context, seq_lens, target_t=128)
+
+        self.assertEqual(templated_seq_lens, [34, 128])
+        self.assertEqual(seq_lens, [34, 32])
+
     def test_maybe_template_fia_seq_lens_ignores_regular_fia_descriptor(self):
         descriptor = BatchDescriptor(num_tokens=384,
                                      num_reqs=384,

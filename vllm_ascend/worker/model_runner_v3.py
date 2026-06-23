@@ -114,7 +114,6 @@ from vllm_ascend.compilation.acl_graph import (ACLGraphWrapper,
                                                get_graph_param_key,
                                                get_graph_params,
                                                graph_param_key_info,
-                                               maybe_template_fia_seq_lens,
                                                set_graph_params,
                                                set_graph_params_parallel,
                                                set_mtp_graph_params,
@@ -442,6 +441,26 @@ _MACRO_GRAPH_COMPACT_FAKE_SLOT_POLICY = os.environ.get(
     "VLLM_ASCEND_MACRO_GRAPH_COMPACT_FAKE_SLOT_POLICY", "scratch").lower()
 _MACRO_GRAPH_COMPACT_FAKE_SEQ_LENS_POLICY = os.environ.get(
     "VLLM_ASCEND_MACRO_GRAPH_COMPACT_FAKE_SEQ_LENS_POLICY", "last").lower()
+_MACRO_GRAPH_MIXED_UPDATE_TEMPLATE_SEQ_LENS = os.environ.get(
+    "VLLM_ASCEND_MACRO_GRAPH_MIXED_UPDATE_TEMPLATE_SEQ_LENS", "1") not in (
+        "0", "false", "False")
+_MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER = os.environ.get(
+    "VLLM_ASCEND_MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER", "both").lower()
+if _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER in ("0", "all", "both"):
+    _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER = "both"
+elif _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER in ("split0", "0",
+                                                   "split0_only"):
+    _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER = "split0"
+elif _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER in ("split1", "1",
+                                                   "split1_only"):
+    _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER = "split1"
+else:
+    logger.warning(
+        "Unsupported VLLM_ASCEND_MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER=%r; "
+        "falling back to both",
+        _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER,
+    )
+    _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER = "both"
 
 
 def _append_split_metadata_debug(tag: str, payload: Any) -> None:
@@ -2173,6 +2192,111 @@ def _macro_tensor_debug_info(tensor: Any) -> Optional[dict[str, Any]]:
         "storage_offset": storage_offset,
         "is_contiguous": bool(tensor.is_contiguous()),
     }
+
+
+def _macro_tensor_debug_sample(tensor: Any,
+                               *,
+                               max_rows: int = 6,
+                               max_cols: int = 8) -> Optional[dict[str, Any]]:
+    if not isinstance(tensor, torch.Tensor):
+        return None
+    info = _macro_tensor_debug_info(tensor)
+    if info is None:
+        return None
+    try:
+        sample = tensor.detach()
+        if sample.ndim == 0:
+            value = sample.cpu().item()
+        elif sample.ndim == 1:
+            sample = sample[:int(max_rows)]
+            value = sample.cpu().tolist()
+        elif sample.ndim == 2:
+            sample = sample[:int(max_rows), :int(max_cols)]
+            value = sample.cpu().tolist()
+        else:
+            sample = sample.reshape(-1)[:int(max_rows) * int(max_cols)]
+            value = sample.cpu().tolist()
+        info["sample"] = value
+    except Exception as exc:
+        info["sample_error"] = f"{type(exc).__name__}: {exc}"
+    return info
+
+
+def _macro_sequence_snapshot(value: Any) -> Optional[list[Any]]:
+    if isinstance(value, torch.Tensor):
+        return None
+    try:
+        if isinstance(value, np.ndarray):
+            return value.reshape(-1).tolist()
+        if isinstance(value, (list, tuple)):
+            return list(value)
+    except Exception:
+        return None
+    return None
+
+
+def _macro_sequence_debug_info(value: Any,
+                               *,
+                               max_items: int = 6) -> dict[str, Any]:
+    info: dict[str, Any] = {"type": type(value).__name__}
+    if value is None:
+        info["len"] = None
+        info["tail"] = None
+        return info
+    if isinstance(value, torch.Tensor):
+        info["tensor"] = _macro_tensor_debug_info(value)
+        try:
+            info["len"] = int(value.numel())
+        except Exception:
+            info["len"] = None
+        info["tail"] = None
+        return info
+    snapshot = _macro_sequence_snapshot(value)
+    if snapshot is None:
+        try:
+            info["len"] = int(len(value))
+        except Exception:
+            info["len"] = None
+        info["tail"] = None
+        return info
+    info["len"] = int(len(snapshot))
+    info["tail"] = snapshot[-int(max_items):]
+    return info
+
+
+def _macro_sequences_equal(left: Any, right: Any) -> Optional[bool]:
+    left_snapshot = _macro_sequence_snapshot(left)
+    right_snapshot = _macro_sequence_snapshot(right)
+    if left_snapshot is None or right_snapshot is None:
+        return None
+    return left_snapshot == right_snapshot
+
+
+def _macro_template_fia_seq_lens_for_update(
+        seq_lens: Any, target_t: int) -> tuple[Any, dict[str, Any]]:
+    snapshot = _macro_sequence_snapshot(seq_lens)
+    detail: dict[str, Any] = {
+        "target_t": int(target_t),
+        "source_type": type(seq_lens).__name__,
+        "applied": False,
+    }
+    if snapshot is None:
+        detail["reason"] = "none_or_tensor_or_unsupported"
+        return seq_lens, detail
+    detail["len"] = int(len(snapshot))
+    if not snapshot:
+        detail["reason"] = "empty"
+        return seq_lens, detail
+    detail["tail_before"] = snapshot[-1]
+    if not _MACRO_GRAPH_MIXED_UPDATE_TEMPLATE_SEQ_LENS:
+        detail["reason"] = "disabled_by_env"
+        return seq_lens, detail
+
+    templated_seq_lens = list(snapshot)
+    templated_seq_lens[-1] = int(target_t)
+    detail["tail_after"] = templated_seq_lens[-1]
+    detail["applied"] = True
+    return templated_seq_lens, detail
 
 
 def _macro_same_tensor_ref(left: Any, right: Any) -> bool:
@@ -5203,8 +5327,9 @@ class NPUModelRunner(GPUModelRunner):
             return detail
 
         block_size = int(
-            getattr(getattr(self.vllm_config, "cache_config", None),
-                    "block_size", 0) or 0)
+            getattr(
+                getattr(getattr(self, "vllm_config", None), "cache_config",
+                        None), "block_size", 0) or 0)
         if block_size <= 0:
             block_size = 128
         seq_lens_cpu = getattr(common, "seq_lens_cpu", None)
@@ -9192,13 +9317,35 @@ class NPUModelRunner(GPUModelRunner):
             layer_key: Any,
             split_entry: dict[str, Any],
             runtime_metadata: Optional[AscendUbatchMetadata],
+            collect_tensor_samples: bool = False,
+            force_event_only: bool = False,
     ) -> dict[str, Any]:
         (query, key_cache, value, block_tables, attn_mask, block_size, seq_lens,
          query_start_loc, num_kv_heads, num_heads, scale, attn_output,
          softmax_lse) = split_entry["param"]
+        graph_param_seq_lens = seq_lens
+        graph_param_actual_seq_lengths_q = query_start_loc
         context = split_entry["context"]
         captured_metadata = self._mixed_request_macro_attn_metadata_for_key(
             getattr(context, "attn_metadata", None), layer_key)
+        captured_seq_lens = getattr(captured_metadata, "seq_lens_list", None)
+        captured_actual_seq_lengths_q = getattr(captured_metadata,
+                                                "actual_seq_lengths_q", None)
+        raw_runtime_seq_lens = captured_seq_lens
+        raw_runtime_actual_seq_lengths_q = captured_actual_seq_lengths_q
+        seq_lens_target_t = _get_fia_key_t(key_cache, block_size)
+        tensor_samples_enabled = bool(
+            collect_tensor_samples and split_debug.is_enabled())
+        graph_block_table_before_refresh_sample = (
+            _macro_tensor_debug_sample(block_tables)
+            if tensor_samples_enabled else None)
+        runtime_metadata_source = "captured_metadata"
+        seq_lens_template_detail: dict[str, Any] = {
+            "target_t": int(seq_lens_target_t),
+            "source_type": type(seq_lens).__name__,
+            "applied": False,
+            "reason": "captured_graph_param",
+        }
         use_captured_params = bool(
             _ACL_GRAPH_FIA_UPDATE_USE_CAPTURED_PARAMS
             and getattr(getattr(context, "batch_descriptor", None),
@@ -9206,40 +9353,62 @@ class NPUModelRunner(GPUModelRunner):
         external_update_mode = str(
             getattr(context, "macro_graph_external_attention_update_mode",
                     _MACRO_GRAPH_EXTERNAL_ATTENTION_UPDATE_MODE))
-        event_only = bool(external_update_mode == "event_only")
+        event_only = bool(
+            external_update_mode == "event_only" or force_event_only)
+        event_only_reason = (
+            "split_filter" if force_event_only else external_update_mode)
         if event_only:
             runtime_attn_metadata = captured_metadata
             actual_seq_lengths_q = query_start_loc
             metadata_block_table = block_tables
             metadata_block_source = "event_only_captured_graph_param"
             block_table_refreshed = False
+            runtime_metadata_source = "event_only_captured_graph_param"
+            seq_lens_template_detail["reason"] = event_only_reason
         elif use_captured_params:
             runtime_attn_metadata = captured_metadata
             actual_seq_lengths_q = query_start_loc
             metadata_block_table = block_tables
             metadata_block_source = "captured_graph_param"
             block_table_refreshed = False
+            runtime_metadata_source = "captured_graph_param"
         else:
             runtime_attn_metadata = (
                 self._runtime_mixed_request_macro_attn_metadata(
                     context, runtime_metadata, layer_key))
-            seq_lens = maybe_template_fia_seq_lens(
-                context,
-                getattr(runtime_attn_metadata, "seq_lens_list",
-                        captured_metadata.seq_lens_list),
-                _get_fia_key_t(key_cache, block_size),
-                source=(
-                    f"macro_graph_update_paired:{layer_key}:"
-                    f"{split_entry['split_idx']}"),
-            )
+            raw_runtime_seq_lens = getattr(runtime_attn_metadata,
+                                           "seq_lens_list",
+                                           captured_seq_lens)
+            seq_lens, seq_lens_template_detail = (
+                _macro_template_fia_seq_lens_for_update(
+                    raw_runtime_seq_lens, seq_lens_target_t))
+            raw_runtime_actual_seq_lengths_q = getattr(
+                runtime_attn_metadata,
+                "actual_seq_lengths_q",
+                captured_actual_seq_lengths_q)
             actual_seq_lengths_q = getattr(
                 runtime_attn_metadata,
                 "actual_seq_lengths_q",
-                captured_metadata.actual_seq_lengths_q)
+                captured_actual_seq_lengths_q)
             metadata_block_table, metadata_block_source = (
                 _extract_block_table_from_metadata(runtime_attn_metadata))
             block_table_refreshed = _refresh_block_table_in_place(
                 block_tables, metadata_block_table)
+            runtime_metadata_source = "runtime_metadata"
+        graph_block_table_after_refresh_sample = (
+            _macro_tensor_debug_sample(block_tables)
+            if tensor_samples_enabled else None)
+        metadata_block_table_sample = (
+            _macro_tensor_debug_sample(metadata_block_table)
+            if tensor_samples_enabled else None)
+        captured_slot_mapping_sample = (
+            _macro_tensor_debug_sample(
+                getattr(captured_metadata, "slot_mapping", None))
+            if tensor_samples_enabled else None)
+        runtime_slot_mapping_sample = (
+            _macro_tensor_debug_sample(
+                getattr(runtime_attn_metadata, "slot_mapping", None))
+            if tensor_samples_enabled else None)
         workspace = split_entry["graph_params"].workspaces.get(
             split_entry["param_key"])
 
@@ -9278,6 +9447,8 @@ class NPUModelRunner(GPUModelRunner):
                     "layer_key": str(layer_key),
                     "split_idx": int(split_entry["split_idx"]),
                     "event_only": bool(event_only),
+                    "force_event_only": bool(force_event_only),
+                    "event_only_reason": event_only_reason,
                     "external_update_mode": external_update_mode,
                     "handle_id":
                     _macro_graph_object_id_info(split_entry["handle"]),
@@ -9300,6 +9471,8 @@ class NPUModelRunner(GPUModelRunner):
                     "layer_key": str(layer_key),
                     "split_idx": int(split_entry["split_idx"]),
                     "event_only": bool(event_only),
+                    "force_event_only": bool(force_event_only),
+                    "event_only_reason": event_only_reason,
                     "external_update_mode": external_update_mode,
                     "handle_id":
                     _macro_graph_object_id_info(split_entry["handle"]),
@@ -9325,18 +9498,53 @@ class NPUModelRunner(GPUModelRunner):
             "block_tables": _macro_tensor_debug_info(block_tables),
             "metadata_block_table": _macro_tensor_debug_info(
                 metadata_block_table),
+            "graph_block_table_before_refresh_sample":
+            graph_block_table_before_refresh_sample,
+            "graph_block_table_after_refresh_sample":
+            graph_block_table_after_refresh_sample,
+            "metadata_block_table_sample": metadata_block_table_sample,
+            "captured_slot_mapping_sample": captured_slot_mapping_sample,
+            "runtime_slot_mapping_sample": runtime_slot_mapping_sample,
             "attn_output": _macro_tensor_debug_info(attn_output),
             "workspace": _macro_tensor_debug_info(workspace),
             "block_table_refreshed": bool(block_table_refreshed),
             "metadata_block_source": metadata_block_source,
             "use_captured_params": bool(use_captured_params),
             "event_only": bool(event_only),
+            "force_event_only": bool(force_event_only),
+            "event_only_reason": event_only_reason,
             "external_update_mode": external_update_mode,
-            "seq_lens_tail": (list(seq_lens[-6:])
-                              if isinstance(seq_lens, (list, tuple)) else None),
+            "split_filter": _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER,
+            "runtime_metadata_source": runtime_metadata_source,
+            "runtime_metadata_type": type(runtime_attn_metadata).__name__,
+            "fia_key_t": int(seq_lens_target_t),
+            "captured_seq_lens": _macro_sequence_debug_info(captured_seq_lens),
+            "graph_param_seq_lens":
+            _macro_sequence_debug_info(graph_param_seq_lens),
+            "raw_runtime_seq_lens":
+            _macro_sequence_debug_info(raw_runtime_seq_lens),
+            "seq_lens": _macro_sequence_debug_info(seq_lens),
+            "seq_lens_template": seq_lens_template_detail,
+            "seq_lens_tail": _macro_sequence_debug_info(seq_lens)["tail"],
+            "raw_runtime_seq_lens_matches_captured":
+            _macro_sequences_equal(raw_runtime_seq_lens, captured_seq_lens),
+            "seq_lens_matches_captured":
+            _macro_sequences_equal(seq_lens, captured_seq_lens),
+            "seq_lens_matches_raw_runtime":
+            _macro_sequences_equal(seq_lens, raw_runtime_seq_lens),
+            "captured_actual_seq_lengths_q":
+            _macro_sequence_debug_info(captured_actual_seq_lengths_q),
+            "graph_param_actual_seq_lengths_q":
+            _macro_sequence_debug_info(graph_param_actual_seq_lengths_q),
+            "raw_runtime_actual_seq_lengths_q":
+            _macro_sequence_debug_info(raw_runtime_actual_seq_lengths_q),
+            "actual_seq_lengths_q":
+            _macro_sequence_debug_info(actual_seq_lengths_q),
             "actual_seq_lengths_q_tail":
-            (list(actual_seq_lengths_q[-6:]) if isinstance(
-                actual_seq_lengths_q, (list, tuple)) else None),
+            _macro_sequence_debug_info(actual_seq_lengths_q)["tail"],
+            "actual_seq_lengths_q_matches_captured":
+            _macro_sequences_equal(actual_seq_lengths_q,
+                                   captured_actual_seq_lengths_q),
         }
 
     def _try_update_mixed_request_macro_attention_params_paired(
@@ -9366,9 +9574,15 @@ class NPUModelRunner(GPUModelRunner):
                 self._macro_attention_update_wait_prior_replay(
                     entry, update_stream))
             for layer in plan:
+                collect_tensor_samples = bool(
+                    layer["layer_idx"] in (0, len(plan) - 1))
                 split_debug_details = []
                 for split_entry in layer["splits"]:
                     split_idx = int(split_entry["split_idx"])
+                    force_event_only = (
+                        _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER != "both"
+                        and _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER !=
+                        f"split{split_idx}")
                     split_runtime_metadata = (
                         runtime_ubatch_metadata[split_idx]
                         if runtime_ubatch_metadata is not None else None)
@@ -9379,6 +9593,8 @@ class NPUModelRunner(GPUModelRunner):
                             layer_key=layer["key"],
                             split_entry=split_entry,
                             runtime_metadata=split_runtime_metadata,
+                            collect_tensor_samples=collect_tensor_samples,
+                            force_event_only=force_event_only,
                         ))
                 if layer["layer_idx"] in (0, len(plan) - 1):
                     layer_samples.append({
@@ -9391,6 +9607,7 @@ class NPUModelRunner(GPUModelRunner):
             "applied": True,
             "mode": "paired_single_update_stream",
             "external_update_mode": _MACRO_GRAPH_EXTERNAL_ATTENTION_UPDATE_MODE,
+            "split_filter": _MACRO_GRAPH_ATTENTION_UPDATE_SPLIT_FILTER,
             "update_stream": {
                 "repr": repr(update_stream),
                 "stream_id": getattr(update_stream, "stream_id", None),
