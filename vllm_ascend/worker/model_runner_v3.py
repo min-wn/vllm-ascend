@@ -28,7 +28,8 @@ from contextlib import contextmanager, nullcontext
 from copy import copy, deepcopy
 from dataclasses import dataclass
 from multiprocessing import Manager
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Union
+from typing import (TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple,
+                    Optional, Union)
 
 import numpy as np
 import regex as re
@@ -114,12 +115,14 @@ from vllm_ascend.compilation.acl_graph import (ACLGraphWrapper,
                                                get_graph_param_key,
                                                get_graph_params,
                                                graph_param_key_info,
+                                               has_dual_split_fia_graph_update,
                                                set_graph_params,
                                                set_graph_params_parallel,
                                                set_mtp_graph_params,
                                                update_attn_dcp_pcp_params,
                                                update_attn_params,
                                                update_attn_params_split,
+                                               update_attn_params_split_pair,
                                                update_mla_attn_dcp_pcp_params,
                                                update_mla_attn_params)
 # yapf: enable
@@ -160,6 +163,7 @@ from vllm_ascend.worker.ubatch_utils import (INPLACE_SPLIT_DRY_RUN,
                                              InplaceSplitPlan,
                                              MIXED_REQUEST_SPLIT_DRY_RUN,
                                              NO_SPLIT_ATTENTION_BACKEND_MISMATCH,
+                                             NO_SPLIT_EXACT_GRAPH_HIT,
                                              SplitBatchSlice,
                                              SplitBatchSlices,
                                              _macro_capture_plan_to_inplace_plan,
@@ -367,6 +371,95 @@ _PERF_STATS_FILE = os.environ.get(
     "VLLM_ASCEND_PERF_STATS_FILE",
     "",
 )
+_SYNCED_PERF_TIMING = (
+    bool(_PERF_STATS_FILE)
+    and os.environ.get("VLLM_ASCEND_SYNCED_PERF_TIMING", "1")
+    not in ("0", "false", "False")
+)
+_INPLACE_PARALLEL_MERGE_SYNC_POLICY = os.environ.get(
+    "VLLM_ASCEND_INPLACE_PARALLEL_MERGE_SYNC_POLICY", "event_wait").strip(
+    ).lower()
+if _INPLACE_PARALLEL_MERGE_SYNC_POLICY not in ("event_wait", "host_sync"):
+    logger.warning(
+        "Unknown VLLM_ASCEND_INPLACE_PARALLEL_MERGE_SYNC_POLICY=%r; "
+        "falling back to event_wait",
+        _INPLACE_PARALLEL_MERGE_SYNC_POLICY,
+    )
+    _INPLACE_PARALLEL_MERGE_SYNC_POLICY = "event_wait"
+
+_INPLACE_PARALLEL_REPLAY_THREAD_MODE = os.environ.get(
+    "VLLM_ASCEND_INPLACE_PARALLEL_REPLAY_THREAD_MODE", "threaded").strip(
+    ).lower()
+if _INPLACE_PARALLEL_REPLAY_THREAD_MODE not in ("threaded", "single_thread"):
+    logger.warning(
+        "Unknown VLLM_ASCEND_INPLACE_PARALLEL_REPLAY_THREAD_MODE=%r; "
+        "falling back to threaded",
+        _INPLACE_PARALLEL_REPLAY_THREAD_MODE,
+    )
+    _INPLACE_PARALLEL_REPLAY_THREAD_MODE = "threaded"
+
+_INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS = os.environ.get(
+    "VLLM_ASCEND_INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS", "1") not in (
+        "0", "false", "False")
+_INPLACE_PARALLEL_REUSE_SPLIT0_COS_SIN = os.environ.get(
+    "VLLM_ASCEND_INPLACE_PARALLEL_REUSE_SPLIT0_COS_SIN", "1") not in (
+        "0", "false", "False")
+_INPLACE_PARALLEL_CLONE_COS_SIN = os.environ.get(
+    "VLLM_ASCEND_INPLACE_PARALLEL_CLONE_COS_SIN", "1") not in (
+        "0", "false", "False")
+
+
+def _parse_stream_limit_pair(value: str, env_name: str) -> Optional[tuple[int,
+                                                                          int]]:
+    parts = [part.strip() for part in value.split(",")]
+    if len(parts) != 2:
+        logger.warning(
+            "Ignoring %s=%r: expected cube,vector",
+            env_name,
+            value,
+        )
+        return None
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError:
+        logger.warning(
+            "Ignoring %s=%r: cube/vector must be integers",
+            env_name,
+            value,
+        )
+        return None
+
+
+def _parse_stream_limit_spec(
+        env_name: str) -> Optional[tuple[tuple[int, int], tuple[int, int]]]:
+    raw = os.environ.get(env_name, "").strip()
+    if not raw:
+        return None
+    parts = [part.strip() for part in raw.split(";")]
+    if len(parts) == 1:
+        limit = _parse_stream_limit_pair(parts[0], env_name)
+        if limit is None:
+            return None
+        return limit, limit
+    if len(parts) == 2:
+        main_limit = _parse_stream_limit_pair(parts[0], env_name)
+        parallel_limit = _parse_stream_limit_pair(parts[1], env_name)
+        if main_limit is None or parallel_limit is None:
+            return None
+        return main_limit, parallel_limit
+    logger.warning(
+        "Ignoring %s=%r: expected cube,vector or "
+        "main_cube,main_vector;parallel_cube,parallel_vector",
+        env_name,
+        raw,
+    )
+    return None
+
+
+_INPLACE_PARALLEL_REPLAY_STREAM_LIMITS = _parse_stream_limit_spec(
+    "VLLM_ASCEND_INPLACE_PARALLEL_REPLAY_STREAM_LIMITS")
+_INPLACE_PARALLEL_UPDATE_STREAM_LIMITS = _parse_stream_limit_spec(
+    "VLLM_ASCEND_INPLACE_PARALLEL_UPDATE_STREAM_LIMITS")
 _SPLIT_MERGE_DUMP = os.environ.get(
     "VLLM_ASCEND_SPLIT_MERGE_DUMP", "1") not in ("0", "false", "False")
 
@@ -3011,21 +3104,31 @@ class NPUModelRunner(GPUModelRunner):
 
         self.stream_main = torch.npu.current_stream()
         self.stream_parallel = torch.npu.Stream(device=self.device)
+        self._inplace_parallel_update_stream_limits_applied = False
+        self._apply_inplace_parallel_replay_stream_limits()
         self._macro_graph_registry: dict[tuple[Any, ...], Any] = {}
 
         # Performance measurement accumulators.
-        # _perf_accum holds running totals across all decode steps so that
-        # callers can compute TPOT = total_replay_ms / total_output_tokens.
-        # _last_step_perf holds the most recent step's breakdown.
+        # _perf_accum holds running totals across all decode steps.
+        # _last_step_perf holds the most recent internal replay breakdown.
         self._perf_accum: dict = {
             "total_replay_ms": 0.0,
+            "total_synced_replay_ms": 0.0,
+            "total_decode_step_wall_ms": 0.0,
             "total_header_ms": 0.0,
             "total_output_tokens": 0,
             "num_decode_steps": 0,
         }
         self._last_step_perf: dict = {}
+        self._pending_decode_step_perf: Optional[dict[str, Any]] = None
+        self._last_prepare_inputs_perf: Optional[dict[str, float]] = None
         self._t_replay_start: float = 0.0
+        self._t_replay_enqueue_end: float = 0.0
+        self._t_replay_sync_end: float = 0.0
+        self._t_replay_merge_end: float = 0.0
         self._t_replay_end: float = 0.0
+        self._replay_num_graph_replays: int = 0
+        self._replay_num_stream_syncs: int = 0
         self._t_header_start: float = 0.0
 
 
@@ -3034,6 +3137,143 @@ class NPUModelRunner(GPUModelRunner):
 
     def _sync_device(self) -> None:
         torch.npu.synchronize()
+
+    def _set_stream_limit(self, stream: torch.npu.Stream,
+                          limit: tuple[int, int], label: str) -> None:
+        cube_num, vector_num = limit
+        try:
+            torch.npu.set_stream_limit(stream,
+                                       cube_num=cube_num,
+                                       vector_num=vector_num)
+            logger.info_once(
+                "Applied inplace_parallel stream limit for %s: "
+                "cube_num=%s vector_num=%s",
+                label,
+                cube_num,
+                vector_num,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Failed to apply inplace_parallel stream limit for %s: %s",
+                label,
+                exc,
+            )
+
+    def _apply_inplace_parallel_replay_stream_limits(self) -> None:
+        limits = _INPLACE_PARALLEL_REPLAY_STREAM_LIMITS
+        if limits is None:
+            return
+        self._set_stream_limit(self.stream_main, limits[0], "replay_main")
+        self._set_stream_limit(self.stream_parallel, limits[1],
+                               "replay_parallel")
+
+    def _apply_inplace_parallel_update_stream_limits(self) -> None:
+        limits = _INPLACE_PARALLEL_UPDATE_STREAM_LIMITS
+        if limits is None or self._inplace_parallel_update_stream_limits_applied:
+            return
+        self._set_stream_limit(self.update_stream_main, limits[0],
+                               "update_main")
+        self._set_stream_limit(self.update_stream_parallel, limits[1],
+                               "update_parallel")
+        self._inplace_parallel_update_stream_limits_applied = True
+
+    def _reset_replay_timing(self) -> None:
+        self._t_replay_start = 0.0
+        self._t_replay_enqueue_end = 0.0
+        self._t_replay_sync_end = 0.0
+        self._t_replay_merge_end = 0.0
+        self._t_replay_end = 0.0
+        self._replay_num_graph_replays = 0
+        self._replay_num_stream_syncs = 0
+
+    def _begin_replay_timing(self, num_graph_replays: int = 0) -> None:
+        self._reset_replay_timing()
+        self._t_replay_start = time.perf_counter()
+        self._replay_num_graph_replays = max(0, int(num_graph_replays))
+
+    def _mark_replay_enqueue_end(self) -> None:
+        if self._t_replay_start:
+            self._t_replay_enqueue_end = time.perf_counter()
+
+    def _mark_replay_sync_end(self, num_stream_syncs: int = 0) -> None:
+        if not self._t_replay_start:
+            return
+        now = time.perf_counter()
+        if not self._t_replay_enqueue_end:
+            self._t_replay_enqueue_end = now
+        self._t_replay_sync_end = now
+        self._replay_num_stream_syncs = max(0, int(num_stream_syncs))
+
+    def _mark_replay_merge_end(self) -> None:
+        if not self._t_replay_start:
+            return
+        now = time.perf_counter()
+        if not self._t_replay_enqueue_end:
+            self._t_replay_enqueue_end = now
+        self._t_replay_merge_end = now
+        self._t_replay_end = now
+
+    def _record_replay_stream_event(
+            self, stream: torch.npu.Stream) -> torch.npu.Event:
+        event = torch.npu.Event()
+        event.record(stream)
+        return event
+
+    def _wait_replay_stream_events(
+            self, stream: torch.npu.Stream,
+            events: Iterable[Optional[torch.npu.Event]]) -> None:
+        for event in events:
+            if event is not None:
+                stream.wait_event(event)
+
+    def _should_collect_perf_breakdown(self) -> bool:
+        return bool(_PERF_STATS_FILE) and self._pending_decode_step_perf is not None
+
+    def _add_pending_perf_ms(self, key: str, start: float) -> None:
+        if not self._should_collect_perf_breakdown():
+            return
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        self._pending_decode_step_perf[key] = (
+            self._pending_decode_step_perf.get(key, 0.0) + elapsed_ms)
+
+    def _add_pending_perf_value(self, key: str, value: Any) -> None:
+        if not self._should_collect_perf_breakdown():
+            return
+        if isinstance(value, bool):
+            value = int(value)
+        if not isinstance(value, (int, float)):
+            return
+        self._pending_decode_step_perf[key] = (
+            self._pending_decode_step_perf.get(key, 0.0) + value)
+
+    def _record_inplace_model_call_perf(self, split_idx: int,
+                                        start: float) -> None:
+        if not self._should_collect_perf_breakdown():
+            return
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        self._add_pending_perf_value("inplace_python_model_calls", 1)
+        self._add_pending_perf_value("inplace_model_call_host_ms", elapsed_ms)
+        self._add_pending_perf_value(
+            f"inplace_model_call_host_ms_split{int(split_idx)}", elapsed_ms)
+
+    def _record_attn_update_perf(self, *, start: float, kind: str,
+                                 parallel_streams: bool,
+                                 forward_context: Any) -> None:
+        if not self._should_collect_perf_breakdown():
+            return
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        stream_label = "parallel" if parallel_streams else "main"
+        self._add_pending_perf_value("attn_update_python_calls", 1)
+        self._add_pending_perf_value(f"attn_update_{kind}_calls", 1)
+        self._add_pending_perf_value("attn_update_host_ms", elapsed_ms)
+        self._add_pending_perf_value(
+            f"attn_update_host_ms_{stream_label}", elapsed_ms)
+
+        stats = getattr(forward_context, "last_acl_graph_update_stats", None)
+        if not isinstance(stats, dict):
+            return
+        for key, value in stats.items():
+            self._add_pending_perf_value(f"acl_{key}", value)
 
     def _set_up_drafter(self):
         # Set up speculative decoding.
@@ -3217,12 +3457,25 @@ class NPUModelRunner(GPUModelRunner):
                Optional[str]]:
         total_num_scheduled_tokens = scheduler_output.total_num_scheduled_tokens
         assert total_num_scheduled_tokens > 0
+        self._last_prepare_inputs_perf = None
+        collect_prepare_perf = bool(_PERF_STATS_FILE)
+        prepare_inputs_perf: Optional[dict[str, float]] = (
+            {} if collect_prepare_perf else None)
+
+        def mark_prepare_ms(key: str, start: float) -> None:
+            if prepare_inputs_perf is None:
+                return
+            prepare_inputs_perf[key] = (
+                prepare_inputs_perf.get(key, 0.0) +
+                (time.perf_counter() - start) * 1000.0)
+
         self._dual_stream_attention_metadata = None
         self._dual_stream_attention_slices = None
         self._dual_stream_attention_plan = None
         num_reqs = self.input_batch.num_reqs
         assert num_reqs > 0
 
+        block_slot_start = time.perf_counter() if collect_prepare_perf else 0.0
         # OPTIMIZATION: Start copying the block table first.
         # This way, we can overlap the copy with the following CPU operations.
         self.input_batch.block_table.commit_block_table(num_reqs)
@@ -3244,7 +3497,9 @@ class NPUModelRunner(GPUModelRunner):
             req_indices, positions_np)
         self.input_batch.block_table.commit_slot_mapping(
             total_num_scheduled_tokens)
+        mark_prepare_ms("prepare_block_slot_ms", block_slot_start)
 
+        basic_shape_start = time.perf_counter() if collect_prepare_perf else 0.0
         total_num_pcp_pads = 0
         if self.pcp_size > 1:
             if not self.vllm_config.model_config.use_mla:
@@ -3317,17 +3572,21 @@ class NPUModelRunner(GPUModelRunner):
             enable_dbo = True
         else:
             enable_dbo = False
+        mark_prepare_ms("prepare_basic_shape_ms", basic_shape_start)
 
         # Get info across DP ranks.
         # NOTE: maybe_padded_num_tokens is only used when using TorchAir with DP,
         # Otherwise, it's just max_tokens_across_dp_cpu
+        dp_sync_start = time.perf_counter() if collect_prepare_perf else 0.0
         (maybe_padded_num_tokens, num_tokens_across_dp, with_prefill,
          enable_dbo) = self._sync_metadata_across_dp(num_input_tokens,
                                                      with_prefill, enable_dbo)
+        mark_prepare_ms("prepare_dp_sync_ms", dp_sync_start)
 
         if not enable_dbo:
             ubatch_slices = None
 
+        split_plan_start = time.perf_counter() if collect_prepare_perf else 0.0
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         split_mode = (getattr(split_cfg, "mode", "parallel_buffer")
                       if split_cfg is not None else "parallel_buffer")
@@ -4135,6 +4394,8 @@ class NPUModelRunner(GPUModelRunner):
                 )
 
 
+        mark_prepare_ms("prepare_split_plan_ms", split_plan_start)
+
         # TODO: Now that num_input_tokens is basically identical with maybe_padded_num_tokens
         # We should consider removing maybe_padded_num_tokens later
         if (split_mode in ("inplace_serial", "inplace_parallel")
@@ -4143,6 +4404,7 @@ class NPUModelRunner(GPUModelRunner):
         else:
             num_input_tokens = maybe_padded_num_tokens
 
+        dual_plan_start = time.perf_counter() if collect_prepare_perf else 0.0
         dual_stream_attention_plan = self._select_dual_stream_attention_plan(
             total_num_scheduled_tokens=int(total_num_scheduled_tokens),
             graph_num_tokens=int(num_input_tokens),
@@ -4184,7 +4446,10 @@ class NPUModelRunner(GPUModelRunner):
                     },
                     step_id=self._split_inplace_debug_step_id,
                 )
+        mark_prepare_ms("prepare_dual_plan_ms", dual_plan_start)
 
+        tokens_positions_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         # Hot-Swap lora model
         if self.lora_config:
             self.set_active_loras(self.input_batch, num_scheduled_tokens)
@@ -4299,12 +4564,16 @@ class NPUModelRunner(GPUModelRunner):
                                 cu_num_tokens)
         self.positions.cpu[total_num_scheduled_tokens:num_input_tokens].zero_()
         self.positions.copy_to_gpu()
+        mark_prepare_ms("prepare_tokens_positions_ms",
+                        tokens_positions_start)
 
         # OPTIMIZATION: If split batch is enabled, directly write the second split's
         # data to parallel_streams buffers during preparation, avoiding the copy
         # overhead in _make_split_batch_metadata_parallel_streams.
         # NOTE: inputs_embeds is handled separately in _make_split_batch_metadata_parallel_streams
         # because it's populated after _prepare_inputs returns.
+        split_input_buffers_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         if split_batch_slices is not None and len(split_batch_slices) > 1:
             if split_mode == "parallel_buffer":
                 second_split = split_batch_slices[1]
@@ -4395,7 +4664,11 @@ class NPUModelRunner(GPUModelRunner):
                     )
             elif split_mode in ("inplace_serial", "inplace_parallel"):
                 assert inplace_split_plan is not None
+        mark_prepare_ms("prepare_split_input_buffers_ms",
+                        split_input_buffers_start)
 
+        sampling_state_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         attn_state = self._build_attn_state(num_reqs, num_scheduled_tokens,
                                             num_valid_tokens)
         self.attn_mask = self._make_attention_mask(attn_state)
@@ -4442,7 +4715,9 @@ class NPUModelRunner(GPUModelRunner):
         self.discard_request_indices.np[:self.num_discarded_requests] = (
             discard_request_indices)
         self.discard_request_indices.copy_to_gpu(self.num_discarded_requests)
+        mark_prepare_ms("prepare_sampling_state_ms", sampling_state_start)
 
+        embeddings_start = time.perf_counter() if collect_prepare_perf else 0.0
         # _prepare_inputs may reorder the batch, so we must gather
         # multi-modal outputs after that to ensure the correct order
         if self.is_multimodal_model:
@@ -4506,7 +4781,10 @@ class NPUModelRunner(GPUModelRunner):
         positions = self.positions.gpu[:num_input_tokens]
         if self.uses_mrope:
             positions = self.mrope_positions.gpu[:, :num_input_tokens]
+        mark_prepare_ms("prepare_embeddings_ms", embeddings_start)
 
+        intermediate_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         # type: ignore
         if get_pp_group().is_first_rank:
             intermediate_tensors = None
@@ -4550,7 +4828,10 @@ class NPUModelRunner(GPUModelRunner):
                 v[:num_input_tokens_with_flashcomm1]
                 for k, v in self.intermediate_tensors.items()
             })
+        mark_prepare_ms("prepare_intermediate_ms", intermediate_start)
 
+        logits_spec_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         use_spec_decode = len(
             scheduler_output.scheduled_spec_decode_tokens) > 0
         if not use_spec_decode:
@@ -4614,8 +4895,11 @@ class NPUModelRunner(GPUModelRunner):
 
         long_seq_metadata = self._generate_pcp_metadata(
             total_num_scheduled_tokens)
+        mark_prepare_ms("prepare_logits_spec_ms", logits_spec_start)
         # Prepare the attention metadata for each KV cache group and make layers
         # in the same group share the same metadata.
+        attn_metadata_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         for kv_cache_group_id, kv_cache_group_spec in enumerate(
                 self.kv_cache_config.kv_cache_groups):
             # NOTE: This is strange, why did we use total_num_scheduled_tokens before?
@@ -4880,8 +5164,12 @@ class NPUModelRunner(GPUModelRunner):
                                 dual_stream_attention_metadata[ubid][
                                     layer_name] = dual_attn_metadata_i
 
+        mark_prepare_ms("prepare_attn_metadata_ms", attn_metadata_start)
+        update_cos_sin_start = (
+            time.perf_counter() if collect_prepare_perf else 0.0)
         # update global cos, sin
         update_cos_sin(positions)
+        mark_prepare_ms("prepare_update_cos_sin_ms", update_cos_sin_start)
 
         if dual_stream_attention_plan is not None:
             if dual_stream_attention_metadata is None:
@@ -4896,6 +5184,11 @@ class NPUModelRunner(GPUModelRunner):
             logits_indices = nn.functional.pad(
                 logits_indices,
                 (0, max_num_reqs_across_dp - logits_indices.shape[0]))
+
+        if prepare_inputs_perf is not None:
+            prepare_inputs_perf["prepare_inputs_internal_accounted_ms"] = sum(
+                prepare_inputs_perf.values())
+            self._last_prepare_inputs_perf = prepare_inputs_perf
 
         return (attn_metadata, positions, num_scheduled_tokens,
                 num_input_tokens, num_tokens_across_dp,
@@ -4912,7 +5205,7 @@ class NPUModelRunner(GPUModelRunner):
         assert self.model is not None
         forward_context = get_forward_context()
         # torch.npu.set_stream_limit(self.stream_main, cube_num=20, vector_num=20)
-        self._t_replay_start = time.perf_counter()
+        self._begin_replay_timing(num_graph_replays=1)
         with torch.npu.stream(self.stream_main):
             hidden_states = self.model(
                 input_ids=input_ids,
@@ -4930,6 +5223,8 @@ class NPUModelRunner(GPUModelRunner):
         if get_forward_context().sp_enabled and not get_forward_context(
         ).dbo_enabled and not isinstance(hidden_states, IntermediateTensors):
             hidden_states = tensor_model_parallel_all_gather(hidden_states, 0)
+
+        self._mark_replay_enqueue_end()
         
         return hidden_states
     
@@ -4944,27 +5239,41 @@ class NPUModelRunner(GPUModelRunner):
         forward_context = get_forward_context()
         if forward_context.cudagraph_runtime_mode == CUDAGraphMode.FULL \
             and not self.use_sparse:
+            collect_perf = self._should_collect_perf_breakdown()
+            update_start = time.perf_counter() if collect_perf else 0.0
+            if collect_perf:
+                setattr(forward_context, "last_acl_graph_update_stats", None)
+                setattr(forward_context, "collect_acl_graph_update_stats", True)
             # TODO: maybe_padded_num_tokens will be removed, use num_input_tokens instead
-            if self.vllm_config.model_config.use_mla:
-                if self.pcp_size * self.dcp_size > 1:
-                    # FIXME: Try using `auto_dispatch_capture=True`
-                    update_mla_attn_dcp_pcp_params(self.update_stream,
+            try:
+                if self.vllm_config.model_config.use_mla:
+                    if self.pcp_size * self.dcp_size > 1:
+                        # FIXME: Try using `auto_dispatch_capture=True`
+                        update_mla_attn_dcp_pcp_params(self.update_stream,
+                                                       forward_context,
+                                                       num_tokens)
+                    else:
+                        # FIXME: Try using `auto_dispatch_capture=True`
+                        update_mla_attn_params(self.update_stream,
+                                               forward_context, num_tokens,
+                                               self.speculative_config)
+                else:
+                    if self.pcp_size * self.dcp_size > 1:
+                        update_attn_dcp_pcp_params(self.update_stream,
                                                    forward_context,
                                                    num_tokens)
-                else:
-                    # FIXME: Try using `auto_dispatch_capture=True`
-                    update_mla_attn_params(self.update_stream, forward_context,
-                                           num_tokens,
-                                           self.speculative_config)
-            else:
-                if self.pcp_size * self.dcp_size > 1:
-                    update_attn_dcp_pcp_params(self.update_stream,
-                                               forward_context,
-                                               num_tokens)
-                else:
-                    update_attn_params(self.update_stream, forward_context,
-                                       num_tokens,
-                                       self.vllm_config)
+                    else:
+                        update_attn_params(self.update_stream, forward_context,
+                                           num_tokens, self.vllm_config)
+            finally:
+                if collect_perf:
+                    self._record_attn_update_perf(
+                        start=update_start,
+                        kind="wrapper",
+                        parallel_streams=False,
+                        forward_context=forward_context)
+                    setattr(forward_context, "collect_acl_graph_update_stats",
+                            False)
 
     def _ensure_update_streams(self) -> None:
         if not hasattr(self, "update_stream"):
@@ -4973,6 +5282,7 @@ class NPUModelRunner(GPUModelRunner):
             self.update_stream_main = torch.npu.Stream()
         if not hasattr(self, "update_stream_parallel"):
             self.update_stream_parallel = torch.npu.Stream()
+        self._apply_inplace_parallel_update_stream_limits()
 
     def _update_attn_params_for_split_ubatch(self, forward_context,
                                              num_tokens: int,
@@ -4982,29 +5292,94 @@ class NPUModelRunner(GPUModelRunner):
             return
         self._ensure_update_streams()
         update_stream = self.update_stream_parallel if parallel_streams else self.update_stream_main
-        if self.vllm_config.model_config.use_mla:
-            if self.pcp_size * self.dcp_size > 1:
-                update_mla_attn_dcp_pcp_params(update_stream,
-                                               forward_context,
-                                               num_tokens,
-                                               in_parallel_streams=parallel_streams)
+        collect_perf = self._should_collect_perf_breakdown()
+        update_start = time.perf_counter() if collect_perf else 0.0
+        if collect_perf:
+            setattr(forward_context, "last_acl_graph_update_stats", None)
+            setattr(forward_context, "collect_acl_graph_update_stats", True)
+        try:
+            if self.vllm_config.model_config.use_mla:
+                if self.pcp_size * self.dcp_size > 1:
+                    update_mla_attn_dcp_pcp_params(
+                        update_stream,
+                        forward_context,
+                        num_tokens,
+                        in_parallel_streams=parallel_streams)
+                else:
+                    update_mla_attn_params(
+                        update_stream,
+                        forward_context,
+                        num_tokens,
+                        self.speculative_config,
+                        in_parallel_streams=parallel_streams)
             else:
-                update_mla_attn_params(update_stream, forward_context,
-                                       num_tokens,
-                                       self.speculative_config,
-                                       in_parallel_streams=parallel_streams)
-        else:
-            if self.pcp_size * self.dcp_size > 1:
-                update_attn_dcp_pcp_params(update_stream,
-                                           forward_context,
-                                           num_tokens,
-                                           in_parallel_streams=parallel_streams)
-            else:
-                update_attn_params_split(update_stream,
-                                         forward_context,
-                                         num_tokens,
-                                         self.vllm_config,
-                                         in_parallel_streams=parallel_streams)
+                if self.pcp_size * self.dcp_size > 1:
+                    update_attn_dcp_pcp_params(
+                        update_stream,
+                        forward_context,
+                        num_tokens,
+                        in_parallel_streams=parallel_streams)
+                else:
+                    update_attn_params_split(
+                        update_stream,
+                        forward_context,
+                        num_tokens,
+                        self.vllm_config,
+                        in_parallel_streams=parallel_streams)
+        finally:
+            if collect_perf:
+                self._record_attn_update_perf(
+                    start=update_start,
+                    kind="split",
+                    parallel_streams=parallel_streams,
+                    forward_context=forward_context)
+                setattr(forward_context, "collect_acl_graph_update_stats",
+                        False)
+
+    def _update_attn_params_for_split_pair(
+            self,
+            first_update: dict[str, Any],
+            second_update: dict[str, Any]) -> bool:
+        first_context = first_update["context"]
+        second_context = second_update["context"]
+        if (first_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
+                or second_context.cudagraph_runtime_mode != CUDAGraphMode.FULL
+                or first_context.capturing or second_context.capturing
+                or self.use_sparse):
+            return False
+
+        self._ensure_update_streams()
+        collect_perf = self._should_collect_perf_breakdown()
+        update_start = time.perf_counter() if collect_perf else 0.0
+        if collect_perf:
+            for context in (first_context, second_context):
+                setattr(context, "last_acl_graph_update_stats", None)
+                setattr(context, "collect_acl_graph_update_stats", True)
+        paired = False
+        try:
+            paired = update_attn_params_split_pair(
+                self.update_stream_main,
+                first_context,
+                int(first_update["num_tokens"]),
+                second_context,
+                int(second_update["num_tokens"]),
+                self.vllm_config,
+                first_refresh_block_table=bool(
+                    first_update.get("refresh_block_table", False)),
+                second_refresh_block_table=bool(
+                    second_update.get("refresh_block_table", True)),
+            )
+            return paired
+        finally:
+            if collect_perf:
+                if paired:
+                    self._record_attn_update_perf(
+                        start=update_start,
+                        kind="dual_split",
+                        parallel_streams=True,
+                        forward_context=first_context)
+                for context in (first_context, second_context):
+                    setattr(context, "collect_acl_graph_update_stats", False)
 
     def _select_dual_stream_attention_plan(
             self,
@@ -6107,6 +6482,13 @@ class NPUModelRunner(GPUModelRunner):
             return self._graph_token_slice_for_split(split_slice)
         return split_slice.token_slice
 
+    def _ubatch_slices_for_inplace_metadata(
+            self, split_batch_slices: SplitBatchSlices) -> UBatchSlices:
+        return [
+            UBatchSlice(s.request_slice, s.token_slice)
+            for s in split_batch_slices
+        ]
+
     def _context_ubatch_slices_for_inplace(
             self, split_batch_slices: SplitBatchSlices) -> UBatchSlices:
         return [
@@ -6126,8 +6508,11 @@ class NPUModelRunner(GPUModelRunner):
             stream_for_split: Optional[Any] = None,
             collect_debug_payload: bool = False,
     ) -> list[dict[str, Any]]:
+        collect_perf = self._should_collect_perf_breakdown()
+        prepare_start = time.perf_counter() if collect_perf else 0.0
         prepared: list[dict[str, Any]] = []
         for idx, split_slice in enumerate(split_batch_slices):
+            expand_start = time.perf_counter() if collect_perf else 0.0
             tokens_slice = self._tokens_slice_for_inplace_execution(
                 split_slice)
             (split_input_ids, split_positions, split_inputs_embeds) = (
@@ -6136,7 +6521,11 @@ class NPUModelRunner(GPUModelRunner):
                     input_ids,
                     positions,
                     inputs_embeds))
+            if collect_perf:
+                self._add_pending_perf_ms("inplace_expand_inputs_ms",
+                                          expand_start)
             stream = stream_for_split(idx) if stream_for_split else None
+            tail_start = time.perf_counter() if collect_perf else 0.0
             padding_tail_payload = self._fill_inplace_padding_tail(
                 split_slice,
                 split_input_ids,
@@ -6145,6 +6534,8 @@ class NPUModelRunner(GPUModelRunner):
                 intermediate_tensors,
                 stream=stream,
                 collect_debug_payload=collect_debug_payload)
+            if collect_perf:
+                self._add_pending_perf_ms("inplace_tail_fill_ms", tail_start)
             prepared.append({
                 "tokens_slice": tokens_slice,
                 "input_ids": split_input_ids,
@@ -6152,6 +6543,9 @@ class NPUModelRunner(GPUModelRunner):
                 "inputs_embeds": split_inputs_embeds,
                 "padding_tail_payload": padding_tail_payload,
             })
+        if collect_perf:
+            self._add_pending_perf_ms("inplace_prepare_inputs_ms",
+                                      prepare_start)
         return prepared
 
     def _copy_compact_token_tensor(self,
@@ -6867,6 +7261,8 @@ class NPUModelRunner(GPUModelRunner):
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         allow_lazy = bool(split_cfg is not None and getattr(
             split_cfg, "enable_inplace_lazy_capture", True))
+        allow_offset_key = bool(split_cfg is not None and getattr(
+            split_cfg, "enable_inplace_offset_graph_dispatch", True))
         force_pa_for_offset = bool(
             split_cfg is not None
             and getattr(split_cfg, "inplace_force_pa_for_offset", False))
@@ -6898,6 +7294,8 @@ class NPUModelRunner(GPUModelRunner):
                     start_num_tokens=split_slice.start_num_tokens,
                     allow_inplace_lazy_key=(
                         allow_lazy and split_slice.start_num_tokens > 0),
+                    allow_inplace_offset_key=(
+                        allow_offset_key and split_slice.start_num_tokens > 0),
                     graph_variant=("inplace_serial"
                                    if split_slice.start_num_tokens > 0 else ""),
                     attention_backend=(split_attention_backend
@@ -7059,6 +7457,8 @@ class NPUModelRunner(GPUModelRunner):
             aclgraph_runtime_mode: CUDAGraphMode,
             inplace_attention_backend: str) -> list[AscendUbatchMetadata]:
 
+        collect_perf = self._should_collect_perf_breakdown()
+        metadata_start = time.perf_counter() if collect_perf else 0.0
         cur_forward_context = get_forward_context()
         dp_metadata = cur_forward_context.dp_metadata
         context_ubatch_slices = self._context_ubatch_slices_for_inplace(
@@ -7067,6 +7467,8 @@ class NPUModelRunner(GPUModelRunner):
         split_debug_enabled = split_debug.is_enabled()
         allow_lazy = bool(split_cfg is not None and getattr(
             split_cfg, "enable_inplace_lazy_capture", True))
+        allow_offset_key = bool(split_cfg is not None and getattr(
+            split_cfg, "enable_inplace_offset_graph_dispatch", True))
         force_pa_for_offset = bool(
             split_cfg is not None
             and getattr(split_cfg, "inplace_force_pa_for_offset", False))
@@ -7100,6 +7502,7 @@ class NPUModelRunner(GPUModelRunner):
                 else:
                     ubatch_attn_metadata = attn_metadata
 
+            dispatch_start = time.perf_counter() if collect_perf else 0.0
             ubatch_cudagraph_mode, ubatch_batch_descriptor = (
                 self.cudagraph_dispatcher.dispatch(
                     num_tokens=split_slice.graph_num_tokens,
@@ -7108,6 +7511,8 @@ class NPUModelRunner(GPUModelRunner):
                     start_num_tokens=split_slice.start_num_tokens,
                     allow_inplace_lazy_key=(
                         allow_lazy and split_slice.start_num_tokens > 0),
+                    allow_inplace_offset_key=(
+                        allow_offset_key and split_slice.start_num_tokens > 0),
                     graph_variant=("inplace_parallel"
                                    if split_slice.start_num_tokens > 0 else ""),
                     attention_backend=(split_attention_backend
@@ -7115,6 +7520,9 @@ class NPUModelRunner(GPUModelRunner):
                                        else ""),
                     capture_metadata_mode=capture_metadata_mode,
                 ))
+            if collect_perf:
+                self._add_pending_perf_ms("inplace_dispatch_ms",
+                                          dispatch_start)
 
             allow_inplace_lazy_capture = bool(
                 allow_lazy and split_slice.start_num_tokens > 0
@@ -7181,6 +7589,7 @@ class NPUModelRunner(GPUModelRunner):
 
             ctx_stream = (self.stream_parallel if in_parallel_streams
                           else self.stream_main)
+            context_start = time.perf_counter() if collect_perf else 0.0
             with torch.npu.stream(ctx_stream):
                 split_forward_context = create_ascend_forward_context(
                     cur_forward_context,
@@ -7194,7 +7603,14 @@ class NPUModelRunner(GPUModelRunner):
                     positions=prepared_split_inputs[i]["positions"],
                     in_parallel_streams=in_parallel_streams,
                     cos_sin_slot_id=i,
+                    reuse_existing_cos_sin=(
+                        _INPLACE_PARALLEL_REUSE_SPLIT0_COS_SIN
+                        and i == 0),
+                    clone_cos_sin=_INPLACE_PARALLEL_CLONE_COS_SIN,
                 )
+            if collect_perf:
+                self._add_pending_perf_ms("inplace_create_context_ms",
+                                          context_start)
             if split_debug_enabled:
                 _set_split_debug_step(split_forward_context,
                                       _split_debug_step_from_runner(self))
@@ -7217,12 +7633,16 @@ class NPUModelRunner(GPUModelRunner):
             prepared_inputs = prepared_split_inputs[i]
             tokens_slice = prepared_inputs["tokens_slice"]
             padding_tail_payload = prepared_inputs["padding_tail_payload"]
+            slice_start = time.perf_counter() if collect_perf else 0.0
             sliced_input_ids, sliced_positions, sliced_inputs_embeds, \
             sliced_intermediate_tensors = self._slice_split_batch_inputs(
                 tokens_slice, prepared_inputs["input_ids"],
                 prepared_inputs["positions"],
                 prepared_inputs["inputs_embeds"],
                 intermediate_tensors)
+            if collect_perf:
+                self._add_pending_perf_ms("inplace_slice_inputs_ms",
+                                          slice_start)
 
             if split_debug_enabled:
                 split_debug.log_event(
@@ -7271,9 +7691,14 @@ class NPUModelRunner(GPUModelRunner):
                     input_ids=sliced_input_ids,
                     positions=sliced_positions,
                     inputs_embeds=sliced_inputs_embeds,
-                    intermediate_tensors=sliced_intermediate_tensors,
-                    num_tokens=split_slice.graph_num_tokens))
+	                    intermediate_tensors=sliced_intermediate_tensors,
+	                    num_tokens=split_slice.graph_num_tokens))
 
+        if collect_perf:
+            self._pending_decode_step_perf["inplace_num_splits"] = len(
+                split_batch_slices)
+            self._add_pending_perf_ms("inplace_metadata_total_ms",
+                                      metadata_start)
         return ubatch_metadata
 
     def _merge_intermediate_tensors(self, intermediate_tensor_list):
@@ -7430,6 +7855,7 @@ class NPUModelRunner(GPUModelRunner):
                     step_id=_split_debug_step_from_runner(self),
                 )
 
+    @torch.inference_mode()
     def _run_inplace_serial_offset_capture(
             self,
             metadata: AscendUbatchMetadata,
@@ -7456,6 +7882,11 @@ class NPUModelRunner(GPUModelRunner):
         step_id = _split_debug_step_from_runner(self)
         target_stream = (self.stream_parallel if parallel_streams
                          else self.stream_main)
+        if (getattr(batch_descriptor, "capture_metadata_mode", "") ==
+                "template"
+                and getattr(batch_descriptor, "attention_backend", "") ==
+                "fia"):
+            warmups = 0
 
         if split_debug.is_enabled():
             split_debug.log_event(
@@ -10808,9 +11239,19 @@ class NPUModelRunner(GPUModelRunner):
         original_forward_context = get_forward_context()
         num_splits = len(split_batch_slices)
         results: list[Optional[Any]] = [None] * num_splits
+        split_done_events: list[Optional[torch.npu.Event]] = [None] * num_splits
+        deferred_attn_updates: list[Optional[dict[str, Any]]] = (
+            [None] * num_splits)
         split_errors: list[tuple[int, Exception]] = []
         split_error_lock = threading.Lock()
-        self._t_replay_start = time.perf_counter()
+        defer_dual_split_updates = (
+            num_splits == 2
+            and has_dual_split_fia_graph_update()
+            and all(
+                metadata.context.cudagraph_runtime_mode == CUDAGraphMode.FULL
+                and not self._needs_inplace_serial_offset_capture(metadata)
+                for metadata in ubatch_metadata))
+        self._begin_replay_timing(num_graph_replays=num_splits)
 
         def _run_inplace_parallel_worker(slice_idx: int) -> None:
             try:
@@ -10844,17 +11285,36 @@ class NPUModelRunner(GPUModelRunner):
                                 f"{metadata.context.batch_descriptor!r}")
                         with torch.npu.stream(target_stream):
                             with override_forward_context(metadata.context):
-                                split_result = self.model(
-                                    input_ids=metadata.input_ids,
-                                    positions=metadata.positions,
-                                    inputs_embeds=metadata.inputs_embeds,
-                                    intermediate_tensors=
-                                    metadata.intermediate_tensors,
-                                    **model_kwargs,
-                                )
+                                model_call_start = (
+                                    time.perf_counter()
+                                    if self._should_collect_perf_breakdown()
+                                    else 0.0)
+                                try:
+                                    split_result = self.model(
+                                        input_ids=metadata.input_ids,
+                                        positions=metadata.positions,
+                                        inputs_embeds=metadata.inputs_embeds,
+                                        intermediate_tensors=
+                                        metadata.intermediate_tensors,
+                                        **model_kwargs,
+                                    )
+                                finally:
+                                    if model_call_start:
+                                        self._record_inplace_model_call_perf(
+                                            slice_idx, model_call_start)
                                 if (metadata.context.cudagraph_runtime_mode
                                         == CUDAGraphMode.FULL):
-                                    if split_slice.start_num_tokens > 0:
+                                    if defer_dual_split_updates:
+                                        deferred_attn_updates[slice_idx] = {
+                                            "context": metadata.context,
+                                            "num_tokens":
+                                            split_slice.graph_num_tokens,
+                                            "parallel_streams":
+                                            parallel_streams,
+                                            "refresh_block_table":
+                                            split_slice.start_num_tokens > 0,
+                                        }
+                                    elif split_slice.start_num_tokens > 0:
                                         self._update_attn_params_for_split_ubatch(
                                             metadata.context,
                                             split_slice.graph_num_tokens,
@@ -10866,14 +11326,20 @@ class NPUModelRunner(GPUModelRunner):
 
 
                     with torch.npu.stream(target_stream):
-                        results[slice_idx] = self._clone_split_output(
-                            self._trim_split_output(split_result,
-                                                    split_slice.num_tokens))
+                        trimmed_result = self._trim_split_output(
+                            split_result, split_slice.num_tokens)
+                        if _INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS:
+                            trimmed_result = self._clone_split_output(
+                                trimmed_result)
+                        results[slice_idx] = trimmed_result
+                        if parallel_streams:
+                            split_done_events[slice_idx] = (
+                                self._record_replay_stream_event(
+                                    target_stream))
             except Exception as e:
                 with split_error_lock:
                     split_errors.append((slice_idx, e))
 
-        split_workers: list[threading.Thread] = []
         try:
             # torch.npu.set_stream_limit(self.update_stream_main,
             #                            cube_num=10,
@@ -10881,16 +11347,21 @@ class NPUModelRunner(GPUModelRunner):
             # torch.npu.set_stream_limit(self.update_stream_parallel,
             #                            cube_num=10,
             #                            vector_num=20)
-            for slice_idx in range(num_splits):
-                worker = threading.Thread(
-                    target=_run_inplace_parallel_worker,
-                    args=(slice_idx,),
-                    name=f"inplace-parallel-replay-{slice_idx}")
-                split_workers.append(worker)
-                worker.start()
+            if _INPLACE_PARALLEL_REPLAY_THREAD_MODE == "single_thread":
+                for slice_idx in range(num_splits):
+                    _run_inplace_parallel_worker(slice_idx)
+            else:
+                split_workers: list[threading.Thread] = []
+                for slice_idx in range(num_splits):
+                    worker = threading.Thread(
+                        target=_run_inplace_parallel_worker,
+                        args=(slice_idx,),
+                        name=f"inplace-parallel-replay-{slice_idx}")
+                    split_workers.append(worker)
+                    worker.start()
 
-            for worker in split_workers:
-                worker.join()
+                for worker in split_workers:
+                    worker.join()
 
             if split_errors:
                 split_errors.sort(key=lambda item: item[0])
@@ -10899,9 +11370,23 @@ class NPUModelRunner(GPUModelRunner):
                     "inplace parallel replay worker failed at "
                     f"slice_idx={failed_slice_idx}") from first_error
 
-            self.stream_main.synchronize()
-            if num_splits > 1:
-                self.stream_parallel.synchronize()
+            if defer_dual_split_updates:
+                if any(update is None for update in deferred_attn_updates):
+                    raise RuntimeError(
+                        "Missing deferred inplace parallel attention update")
+                paired_update = self._update_attn_params_for_split_pair(
+                    deferred_attn_updates[0], deferred_attn_updates[1])
+                if not paired_update:
+                    for update in deferred_attn_updates:
+                        assert update is not None
+                        if update["refresh_block_table"]:
+                            self._update_attn_params_for_split_ubatch(
+                                update["context"],
+                                update["num_tokens"],
+                                parallel_streams=update["parallel_streams"])
+                        else:
+                            self._update_attn_params_for_wrapper(
+                                update["context"], update["num_tokens"])
 
             merged_results: list[Any] = [
                 result for result in results if result is not None
@@ -10911,8 +11396,30 @@ class NPUModelRunner(GPUModelRunner):
                     "Missing inplace parallel split result: "
                     f"expected={num_splits}, got={len(merged_results)}")
 
-            with override_forward_context(original_forward_context):
-                return self._merge_split_outputs(merged_results)
+            if _INPLACE_PARALLEL_MERGE_SYNC_POLICY == "host_sync":
+                self._mark_replay_enqueue_end()
+                num_stream_syncs = 1
+                self.stream_main.synchronize()
+                if num_splits > 1:
+                    self.stream_parallel.synchronize()
+                    num_stream_syncs += 1
+                self._mark_replay_sync_end(num_stream_syncs=num_stream_syncs)
+                with override_forward_context(original_forward_context):
+                    result = self._merge_split_outputs(merged_results)
+                self._mark_replay_merge_end()
+                return result
+
+            self._mark_replay_enqueue_end()
+            with torch.npu.stream(self.stream_main):
+                self._wait_replay_stream_events(self.stream_main,
+                                                split_done_events)
+                for merged_result in merged_results:
+                    _record_stream_tree_for_npugraph_ex(merged_result,
+                                                        self.stream_main)
+                with override_forward_context(original_forward_context):
+                    result = self._merge_split_outputs(merged_results)
+            self._mark_replay_merge_end()
+            return result
         finally:
             self._t_replay_end = time.perf_counter()
 
@@ -10986,7 +11493,7 @@ class NPUModelRunner(GPUModelRunner):
         split_errors: list[tuple[int, Exception]] = []
         split_error_lock = threading.Lock()
 
-        self._t_replay_start = time.perf_counter()
+        self._begin_replay_timing(num_graph_replays=num_splits)
         def _run_split_replay_worker(slice_idx: int) -> None:
             try:
                 split_slice = split_batch_slices[slice_idx]
@@ -11090,8 +11597,10 @@ class NPUModelRunner(GPUModelRunner):
                 f"split replay worker failed at slice_idx={failed_slice_idx}"
             ) from first_error
 
+        self._mark_replay_enqueue_end()
         # Wait per stream instead of using a device-wide barrier to preserve
         # overlap between split-0(main) and split-1(parallel) replay.
+        num_stream_syncs = 1
         logger.debug("[split_batch] synchronizing stream_main")
         self.stream_main.synchronize()
         logger.debug("[split_batch] stream_main synchronized")
@@ -11099,6 +11608,8 @@ class NPUModelRunner(GPUModelRunner):
             logger.debug("[split_batch] synchronizing stream_parallel")
             self.stream_parallel.synchronize()
             logger.debug("[split_batch] stream_parallel synchronized")
+            num_stream_syncs += 1
+        self._mark_replay_sync_end(num_stream_syncs=num_stream_syncs)
         merged_results: list[Any] = [result for result in results
                                         if result is not None]
 
@@ -11106,6 +11617,7 @@ class NPUModelRunner(GPUModelRunner):
         with override_forward_context(original_forward_context):
             result = self._merge_split_outputs(merged_results)
         logger.debug("[split_batch] merge done, returning result")
+        self._mark_replay_merge_end()
 
         if (_SPLIT_MERGE_DUMP
                 and not getattr(self, "_split_batch_dumped", False)):
@@ -11280,8 +11792,26 @@ class NPUModelRunner(GPUModelRunner):
         # Record the header-overhead start time: everything from execute_model
         # entry up to this point (prepare_inputs, metadata, etc.) is "header".
         self._t_header_start = time.perf_counter()
+        self._pending_decode_step_perf = None
+        self._last_prepare_inputs_perf = None
+        prepare_input_start = (
+            time.perf_counter() if _PERF_STATS_FILE else 0.0)
+        prepare_stage_perf: Optional[dict[str, float]] = (
+            {} if _PERF_STATS_FILE else None)
+
+        def mark_prepare_stage_ms(key: str, start: float) -> None:
+            if prepare_stage_perf is None:
+                return
+            prepare_stage_perf[key] = (
+                prepare_stage_perf.get(key, 0.0) +
+                (time.perf_counter() - start) * 1000.0)
+
         with ProfileExecuteDuration().capture_async("prepare input"):
+            update_states_start = (
+                time.perf_counter() if prepare_stage_perf is not None else 0.0)
             self._update_states(scheduler_output)
+            mark_prepare_stage_ms("prepare_update_states_ms",
+                                  update_states_start)
             if has_ec_transfer() and get_ec_transfer().is_producer:
                 with self.maybe_get_ec_connector_output(
                         scheduler_output,
@@ -11298,12 +11828,19 @@ class NPUModelRunner(GPUModelRunner):
                     )
                     # Return empty ModelRunnerOuptut if there's no work to do.
                     return EMPTY_MODEL_RUNNER_OUTPUT
-                return self.kv_connector_no_forward(scheduler_output,
-                                                    self.vllm_config)
+                    return self.kv_connector_no_forward(scheduler_output,
+                                                        self.vllm_config)
 
             if self.dynamic_eplb:
+                dynamic_eplb_before_start = (
+                    time.perf_counter()
+                    if prepare_stage_perf is not None else 0.0)
                 self.eplb_updator.forward_before()
+                mark_prepare_stage_ms("prepare_dynamic_eplb_before_ms",
+                                      dynamic_eplb_before_start)
 
+            prepare_inputs_call_start = (
+                time.perf_counter() if prepare_stage_perf is not None else 0.0)
             (attn_metadata, positions, num_scheduled_tokens_np,
              num_input_tokens, num_tokens_across_dp, maybe_padded_num_tokens,
              logits_indices, spec_decode_metadata, input_ids, inputs_embeds,
@@ -11311,9 +11848,16 @@ class NPUModelRunner(GPUModelRunner):
              split_batch_slices, num_tokens_after_padding,
              inplace_attention_backend) = (
                  self._prepare_inputs(scheduler_output, intermediate_tensors))
+            mark_prepare_stage_ms("prepare_inputs_call_ms",
+                                  prepare_inputs_call_start)
 
             if self.dynamic_eplb:
+                dynamic_eplb_after_start = (
+                    time.perf_counter()
+                    if prepare_stage_perf is not None else 0.0)
                 self.eplb_updator.take_update_info_from_eplb_process()
+                mark_prepare_stage_ms("prepare_dynamic_eplb_after_ms",
+                                      dynamic_eplb_after_start)
 
         # prevent debugger is None
         need_dump = self.dump_enable and self.debugger is not None
@@ -11331,9 +11875,37 @@ class NPUModelRunner(GPUModelRunner):
         uniform_decode = (max_query_len == self.uniform_decode_query_len) and (
             scheduler_output.total_num_scheduled_tokens
             == self.input_batch.num_reqs * max_query_len)
+        if uniform_decode:
+            self._pending_decode_step_perf = {
+                "_decode_step_wall_start": self._t_header_start,
+            }
+            if _PERF_STATS_FILE:
+                self._pending_decode_step_perf["prepare_input_ms"] = (
+                    time.perf_counter() - prepare_input_start) * 1000.0
+                if prepare_stage_perf:
+                    self._pending_decode_step_perf.update(prepare_stage_perf)
+                if self._last_prepare_inputs_perf:
+                    self._pending_decode_step_perf.update(
+                        self._last_prepare_inputs_perf)
+                prepare_inputs_call_ms = self._pending_decode_step_perf.get(
+                    "prepare_inputs_call_ms")
+                prepare_inputs_accounted_ms = (
+                    self._pending_decode_step_perf.get(
+                        "prepare_inputs_internal_accounted_ms"))
+                if (prepare_inputs_call_ms is not None
+                        and prepare_inputs_accounted_ms is not None):
+                    self._pending_decode_step_perf[
+                        "prepare_inputs_unaccounted_ms"] = max(
+                            0.0, prepare_inputs_call_ms -
+                            prepare_inputs_accounted_ms)
         has_lora = len(self.input_batch.lora_id_to_lora_request) > 0
+        root_dispatch_start = (
+            time.perf_counter() if self._should_collect_perf_breakdown()
+            else 0.0)
         aclgraph_runtime_mode, batch_descriptor = \
             self.cudagraph_dispatcher.dispatch(num_tokens=num_input_tokens, uniform_decode=uniform_decode, has_lora=has_lora)
+        if self._should_collect_perf_breakdown():
+            self._add_pending_perf_ms("root_dispatch_ms", root_dispatch_start)
 
         if self.ascend_config.enable_async_exponential != 0:
             self.sampler.do_async_exponential(
@@ -11354,13 +11926,19 @@ class NPUModelRunner(GPUModelRunner):
             num_input_tokens = ubatch_slices[0].num_tokens
             num_tokens_across_dp = num_tokens_after_padding
 
+        model_kwargs_start = (
+            time.perf_counter() if self._should_collect_perf_breakdown()
+            else 0.0)
         model_kwargs = self._init_model_kwargs(maybe_padded_num_tokens)
+        if self._should_collect_perf_breakdown():
+            self._add_pending_perf_ms("model_kwargs_ms", model_kwargs_start)
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         split_mode = (getattr(split_cfg, "mode", "parallel_buffer")
                       if split_cfg is not None else "parallel_buffer")
         split_enable_parallel_streams = bool(split_cfg is not None
                                  and getattr(split_cfg, "enable_parallel_streams", False))
         # Run forward pass
+        self._reset_replay_timing()
         with ProfileExecuteDuration().capture_async("forward"):
             with set_ascend_forward_context(
                     attn_metadata,
@@ -11494,19 +12072,53 @@ class NPUModelRunner(GPUModelRunner):
             if uniform_decode:
                 _header_ms = (self._t_replay_start - self._t_header_start) * 1000.0
                 _replay_ms = (self._t_replay_end - self._t_replay_start) * 1000.0
+                _enqueue_end = self._t_replay_enqueue_end or self._t_replay_end
+                _merge_end = self._t_replay_merge_end or self._t_replay_end
+                _has_sync = bool(self._t_replay_sync_end)
+                _sync_end = self._t_replay_sync_end if _has_sync else 0.0
+                _enqueue_ms = max(
+                    0.0, (_enqueue_end - self._t_replay_start) * 1000.0)
+                if _has_sync:
+                    if _merge_end and _merge_end <= _sync_end:
+                        _merge_ms = max(
+                            0.0, (_merge_end - _enqueue_end) * 1000.0)
+                        _sync_ms = max(
+                            0.0, (_sync_end - _merge_end) * 1000.0)
+                    else:
+                        _sync_ms = max(
+                            0.0, (_sync_end - _enqueue_end) * 1000.0)
+                        _merge_ms = max(
+                            0.0, (_merge_end - _sync_end) * 1000.0)
+                    _synced_replay_ms = max(
+                        0.0, (_sync_end - self._t_replay_start) * 1000.0)
+                else:
+                    _sync_ms = 0.0
+                    _merge_ms = max(
+                        0.0, (_merge_end - _enqueue_end) * 1000.0)
                 _n_tokens = self.input_batch.num_reqs
                 self._last_step_perf = {
                     "header_ms": _header_ms,
                     "replay_ms": _replay_ms,
+                    "enqueue_ms": _enqueue_ms,
+                    "sync_ms": _sync_ms,
+                    "merge_ms": _merge_ms,
                     "batch_size": _n_tokens,
                     "is_split": split_ubatch_slices is not None,
+                    "num_graph_replays": self._replay_num_graph_replays,
+                    "num_stream_syncs": self._replay_num_stream_syncs,
                     "debug_step_id": self._split_inplace_debug_step_id,
                 }
+                if _has_sync:
+                    self._last_step_perf["synced_replay_ms"] = _synced_replay_ms
+                if self._pending_decode_step_perf is not None:
+                    self._pending_decode_step_perf.update(self._last_step_perf)
                 self._perf_accum["total_header_ms"] += _header_ms
                 self._perf_accum["total_replay_ms"] += _replay_ms
+                if _has_sync:
+                    self._perf_accum[
+                        "total_synced_replay_ms"] += _synced_replay_ms
                 self._perf_accum["total_output_tokens"] += _n_tokens
                 self._perf_accum["num_decode_steps"] += 1
-                _write_perf_stats(self._last_step_perf)
 
             aux_hidden_states = None
             if self.drafter and self.drafter.name == SpecDcodeType.EAGLE3:
@@ -11656,6 +12268,17 @@ class NPUModelRunner(GPUModelRunner):
             scheduler_output.total_num_scheduled_tokens,
             spec_decode_metadata,
         )
+        pending_perf = self._pending_decode_step_perf
+        self._pending_decode_step_perf = None
+        if pending_perf is not None:
+            step_start = pending_perf.pop("_decode_step_wall_start", 0.0)
+            if step_start:
+                decode_step_wall_ms = (
+                    time.perf_counter() - step_start) * 1000.0
+                pending_perf["decode_step_wall_ms"] = decode_step_wall_ms
+                self._perf_accum[
+                    "total_decode_step_wall_ms"] += decode_step_wall_ms
+            _write_perf_stats(pending_perf)
 
         with ProfileExecuteDuration().capture_async("Draft"):
             if self.speculative_config:
@@ -11878,6 +12501,8 @@ class NPUModelRunner(GPUModelRunner):
         aclgraph_runtime_mode: Optional[CUDAGraphMode] = None,
         force_attention: bool = False,
         ubatch_slices=None,
+        split_mode: str = "",
+        inplace_split_plan: Optional[InplaceSplitPlan] = None,
     ) -> Optional[PerLayerAttnMetadata]:
 
         attn_metadata: Optional[PerLayerAttnMetadata] = None
@@ -12006,6 +12631,11 @@ class NPUModelRunner(GPUModelRunner):
                         common_attn_metadata_list = split_attn_metadata(
                             ubatch_slices, common_attn_metadata,
                             self.max_num_tokens)
+                        common_attn_metadata_list = (
+                            self._stabilize_inplace_common_attn_metadata_list(
+                                common_attn_metadata_list,
+                                split_mode=split_mode,
+                                inplace_split_plan=inplace_split_plan))
                         _validate_split_attn_metadata_count(
                             "dummy_capture",
                             common_attn_metadata_list,
@@ -12014,9 +12644,17 @@ class NPUModelRunner(GPUModelRunner):
                         for ubid, common_attn_metadata in enumerate(
                                 common_attn_metadata_list):
                             assert common_attn_metadata.max_query_len == 1
-                            attn_metadata_i = (attn_group\
-                                               .get_metadata_builder(ubatch_id=ubid)\
-                                               .build_for_cudagraph_capture(common_attn_metadata, attn_state, self.get_model()))
+                            ubatch_builder = attn_group.get_metadata_builder(
+                                ubatch_id=ubid)
+                            build_for_capture = getattr(
+                                ubatch_builder, "build_for_cudagraph_capture",
+                                None)
+                            if build_for_capture is None:
+                                build_for_capture = (
+                                    ubatch_builder.build_for_graph_capture)
+                            attn_metadata_i = build_for_capture(
+                                common_attn_metadata, attn_state,
+                                self.get_model())
                             for layer_name in attn_group.layer_names:
                                 assert type(attn_metadata) is list
                                 attn_metadata[ubid][
@@ -13333,7 +13971,7 @@ class NPUModelRunner(GPUModelRunner):
                 # different from the case where `FULL` implies capture
                 # attention while `PIECEWISE` implies no attention.
                 self._dummy_run(num_tokens,
-                                aclgraph_runtime_mode=None,
+                                aclgraph_runtime_mode=CUDAGraphMode.NONE,
                                 force_attention=force_attention,
                                 uniform_decode=uniform_decode,
                                 allow_microbatching=allow_microbatching,
@@ -13484,6 +14122,264 @@ class NPUModelRunner(GPUModelRunner):
         finally:
             set_cudagraph_capturing_enabled(False)
 
+    def _find_inplace_offset_precapture_plan(
+            self, *, start_tokens: int, graph_tokens: int,
+            capture_sizes: list[int], offset_capture_sizes: list[int],
+            allowed: dict[int, list[int]]) -> Optional[InplaceSplitPlan]:
+        split_cfg = self.ascend_config.split_batch_config
+        query_len = int(self.uniform_decode_query_len)
+        if query_len <= 0:
+            return None
+
+        for second_actual_tokens in range(int(graph_tokens), 0, -query_len):
+            total_tokens = int(start_tokens) + second_actual_tokens
+            if total_tokens > self.scheduler_config.max_num_seqs:
+                continue
+            if total_tokens > self.scheduler_config.max_num_batched_tokens:
+                continue
+            num_reqs = total_tokens // query_len
+            if num_reqs * query_len != total_tokens:
+                continue
+            num_scheduled_tokens = np.full(
+                num_reqs, query_len, dtype=np.int32)
+            plan, reason = create_inplace_split_batch_slices(
+                num_scheduled_tokens,
+                total_tokens,
+                query_len,
+                capture_sizes,
+                getattr(split_cfg, "inplace_max_remainder_tokens", None),
+                offset_match_policy=getattr(
+                    split_cfg, "inplace_offset_match_policy", "bucket"),
+                offset_capture_sizes=offset_capture_sizes,
+                offset_min_graph_tokens=getattr(
+                    split_cfg, "inplace_offset_min_graph_tokens", 1),
+                offset_max_padding_tokens=getattr(
+                    split_cfg, "inplace_offset_max_padding_tokens", None),
+                offset_max_padding_ratio=getattr(
+                    split_cfg, "inplace_offset_max_padding_ratio", None),
+                offset_max_graph_tokens_by_start=getattr(
+                    split_cfg, "inplace_offset_max_graph_tokens_by_start",
+                    None),
+                offset_allowed_graph_tokens_by_start=allowed,
+                first_tokens_policy=getattr(
+                    split_cfg, "inplace_split_planner_policy",
+                    getattr(split_cfg, "inplace_split_first_tokens_policy",
+                            "largest_lower")),
+            )
+            if plan is None:
+                if reason != NO_SPLIT_EXACT_GRAPH_HIT:
+                    logger.debug(
+                        "Skip inplace offset precapture candidate "
+                        "start=%s graph=%s actual=%s: %s",
+                        start_tokens, graph_tokens, second_actual_tokens,
+                        reason)
+                continue
+            if (plan.first_tokens != start_tokens
+                    or plan.second_graph_tokens != graph_tokens):
+                continue
+            if not inplace_split_first_graph_matches_attention_backend(
+                    plan,
+                    lambda shape: using_paged_attention(shape,
+                                                        self.vllm_config),
+            ):
+                continue
+            return plan
+        return None
+
+    def _iter_inplace_offset_precapture_plans(
+            self) -> list[InplaceSplitPlan]:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        if split_cfg is None or not getattr(split_cfg, "enabled", False):
+            return []
+        if getattr(split_cfg, "mode", "") not in _INPLACE_SPLIT_MODES:
+            return []
+        allowed = getattr(split_cfg,
+                          "inplace_offset_allowed_graph_tokens_by_start",
+                          None)
+        if not allowed:
+            return []
+
+        plans: list[InplaceSplitPlan] = []
+        capture_sizes = sorted(set(self.compilation_config.
+                                   cudagraph_capture_sizes or []))
+        offset_capture_sizes = sorted(
+            set(
+                getattr(split_cfg, "inplace_offset_capture_sizes", None)
+                or getattr(split_cfg, "parallel_capture_sizes", None)
+                or capture_sizes))
+        for start_tokens, graph_tokens_list in sorted(allowed.items()):
+            start_tokens = int(start_tokens)
+            for graph_tokens in sorted({int(v) for v in graph_tokens_list}):
+                plan = self._find_inplace_offset_precapture_plan(
+                    start_tokens=start_tokens,
+                    graph_tokens=graph_tokens,
+                    capture_sizes=capture_sizes,
+                    offset_capture_sizes=offset_capture_sizes,
+                    allowed=allowed,
+                )
+                if plan is None:
+                    logger.debug(
+                        "Skip inplace offset precapture start=%s graph=%s: "
+                        "no runtime batch can materialize this offset graph",
+                        start_tokens, graph_tokens)
+                    continue
+                plans.append(plan)
+        return plans
+
+    def _capture_inplace_offset_aclgraphs(self) -> None:
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        if split_cfg is None:
+            return
+        split_mode = getattr(split_cfg, "mode", "")
+        if split_mode not in _INPLACE_SPLIT_MODES:
+            return
+        if not bool(getattr(split_cfg, "enable_inplace_offset_precapture",
+                            True)):
+            return
+        if self.compilation_config.cudagraph_mode.decode_mode(
+        ) != CUDAGraphMode.FULL:
+            return
+
+        plans = self._iter_inplace_offset_precapture_plans()
+        if not plans:
+            return
+        logger.info("Starting to precapture inplace offset ACL graphs: %s",
+                    [p.debug_payload() for p in plans])
+
+        force_attention = True
+        previous_lazy = bool(getattr(split_cfg, "enable_inplace_lazy_capture",
+                                     False))
+        split_cfg.enable_inplace_lazy_capture = True
+        try:
+            iterable = tqdm(
+                list(reversed(plans)),
+                disable=not self.load_config.use_tqdm_on_load,
+                desc="Capturing inplace offset ACL graphs")
+            for plan in iterable:
+                total_tokens = int(plan.total_num_tokens)
+                num_scheduled_tokens = np.ones(total_tokens, dtype=np.int32)
+                num_reqs = total_tokens
+                num_sampled_tokens = np.ones(num_reqs, dtype=np.int32)
+                max_query_len = self.uniform_decode_query_len
+
+                self.seq_lens.np[:num_reqs] = max_query_len
+                self.seq_lens.np[num_reqs:] = 0
+                self.seq_lens.copy_to_gpu()
+                cu_num_tokens, _ = self._get_cumsum_and_arange(
+                    num_scheduled_tokens)
+                self.query_start_loc.cpu[1:num_reqs + 1] = torch.Tensor(
+                    cu_num_tokens)
+                self.query_lens = torch.from_numpy(num_scheduled_tokens)
+                self.attn_mask = self.attn_mask_builder.get_splitfuse_attn_mask()
+
+                metadata_ubatch_slices = (
+                    self._ubatch_slices_for_inplace_metadata(
+                        plan.split_slices))
+                split_ubatch_slices = [
+                    UBatchSlice(s.request_slice,
+                                self._tokens_slice_for_inplace_execution(s))
+                    for s in plan.split_slices
+                ]
+                attn_metadata = self._build_dummy_attn_metadata(
+                    False,
+                    num_reqs=num_reqs,
+                    num_tokens=total_tokens,
+                    max_query_len=max_query_len,
+                    aclgraph_runtime_mode=CUDAGraphMode.FULL,
+                    force_attention=force_attention,
+                    num_scheduled_tokens=num_scheduled_tokens,
+                    ubatch_slices=metadata_ubatch_slices,
+                    split_mode=split_mode,
+                    inplace_split_plan=plan,
+                )
+
+                has_lora = bool(
+                    self.lora_config and
+                    self.compilation_config.cudagraph_specialize_lora)
+                _, batch_descriptor = self.cudagraph_dispatcher.dispatch(
+                    num_tokens=total_tokens,
+                    uniform_decode=True,
+                    has_lora=has_lora)
+
+                if self.is_multimodal_model or self.enable_prompt_embeds:
+                    input_ids = None
+                    inputs_embeds = self.inputs_embeds.gpu[:total_tokens]
+                else:
+                    input_ids = self.input_ids.gpu[:total_tokens]
+                    inputs_embeds = None
+                positions = (self.mrope_positions.gpu[:, :total_tokens]
+                             if self.uses_mrope else
+                             self.positions.gpu[:total_tokens])
+                update_cos_sin(positions)
+
+                with self.maybe_dummy_run_with_lora(self.lora_config,
+                                                    num_scheduled_tokens,
+                                                    num_sampled_tokens):
+                    with set_ascend_forward_context(
+                            attn_metadata,
+                            self.vllm_config,
+                            num_tokens=total_tokens,
+                            with_prefill=False,
+                            num_actual_tokens=total_tokens,
+                            aclgraph_runtime_mode=CUDAGraphMode.FULL,
+                            batch_descriptor=batch_descriptor,
+                            prefetch_stream=self.prefetch_stream,
+                            model_instance=self.model,
+                            weight_prefetch_method=
+                            self.weight_prefetch_method,
+                            ubatch_slices=split_ubatch_slices,
+                    ):
+                        cur_context = get_forward_context()
+                        _set_split_debug_step(
+                            cur_context,
+                            _split_debug_step_from_runner(self))
+                        model_kwargs = self._init_model_kwargs(total_tokens)
+                        attention_backend = select_inplace_attention_backend(
+                            plan,
+                            lambda shape: using_paged_attention(
+                                shape, self.vllm_config),
+                        )
+                        if split_mode == "inplace_parallel":
+                            metadata = self._make_split_batch_metadata_inplace_parallel(
+                                split_ubatch_slices,
+                                plan.split_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                inputs_embeds,
+                                None,
+                                batch_descriptor,
+                                CUDAGraphMode.FULL,
+                                attention_backend,
+                            )[1]
+                            self._run_inplace_serial_offset_capture(
+                                metadata,
+                                plan.split_slices[1],
+                                model_kwargs,
+                                parallel_streams=True,
+                            )
+                        else:
+                            metadata = self._make_split_batch_metadata_inplace_serial(
+                                split_ubatch_slices,
+                                plan.split_slices,
+                                attn_metadata,
+                                input_ids,
+                                positions,
+                                inputs_embeds,
+                                None,
+                                batch_descriptor,
+                                CUDAGraphMode.FULL,
+                                attention_backend,
+                            )[1]
+                            self._run_inplace_serial_offset_capture(
+                                metadata,
+                                plan.split_slices[1],
+                                model_kwargs,
+                                parallel_streams=False,
+                            )
+        finally:
+            split_cfg.enable_inplace_lazy_capture = previous_lazy
+
     def _capture_model(self):
         if self._macro_graph_enabled():
             self._capture_macro_mixed_piecewise_aclgraphs()
@@ -13604,6 +14500,9 @@ class NPUModelRunner(GPUModelRunner):
                         aclgraph_runtime_mode=CUDAGraphMode.FULL,
                         uniform_decode=True,
                         in_parallel_streams=True)
+
+        with graph_capture(device=self.device):
+            self._capture_inplace_offset_aclgraphs()
 
         # Disable aclgraph capturing globally, so any unexpected aclgraph
         # capturing will be detected and raise an error after here.

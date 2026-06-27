@@ -421,9 +421,17 @@ def _make_metadata_with_slice(
 
     num_requests = request_slice.stop - request_slice.start
     num_actual_tokens = token_slice.stop - token_slice.start
-    max_query_len = int(
-        torch.max(torch.abs(query_start_loc_cpu[1:] -
-                            query_start_loc_cpu[:-1])).item())
+    decode_token_per_req = int(
+        getattr(attn_metadata, "decode_token_per_req", 0) or 0)
+    if (not splits_first_request and not splits_last_request
+            and decode_token_per_req > 0 and num_actual_tokens
+            == num_requests * decode_token_per_req
+            and int(attn_metadata.max_query_len) <= decode_token_per_req):
+        max_query_len = decode_token_per_req
+    else:
+        max_query_len = int(
+            torch.max(torch.abs(query_start_loc_cpu[1:] -
+                                query_start_loc_cpu[:-1])).item())
 
     # This is to account for the case where we are in a dummy
     # run and query_start_loc_cpu is full of 0s

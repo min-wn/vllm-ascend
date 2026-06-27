@@ -353,6 +353,21 @@ class AscendAttentionMetadataBuilder:
             query_start_loc = query_start_loc_cpu.pin_memory().to(
                 self.device, non_blocking=True)
 
+        actual_seq_lengths_q = common_attn_metadata.actual_seq_lengths_q
+        if (not actual_seq_lengths_q
+                or len(actual_seq_lengths_q) != num_reqs
+                or int(actual_seq_lengths_q[-1]) != num_actual_tokens):
+            decode_token_per_req = int(
+                getattr(common_attn_metadata, "decode_token_per_req", 0) or 0)
+            if (common_attn_metadata.max_query_len <= self.decode_threshold
+                    and decode_token_per_req > 0
+                    and num_actual_tokens == num_reqs * decode_token_per_req):
+                actual_seq_lengths_q = list(
+                    range(decode_token_per_req, num_actual_tokens + 1,
+                          decode_token_per_req))
+            else:
+                actual_seq_lengths_q = query_start_loc_cpu[1:].tolist()
+
         attn_metadata = AscendMetadata(
             num_actual_tokens=num_actual_tokens,
             num_decode_tokens=num_decode_tokens,
@@ -362,7 +377,7 @@ class AscendAttentionMetadataBuilder:
             seq_lens=seq_lens,
             seq_lens_list=seq_lens.tolist(),
             max_query_len=common_attn_metadata.max_query_len,
-            actual_seq_lengths_q=query_start_loc_cpu[1:].tolist(),
+            actual_seq_lengths_q=actual_seq_lengths_q,
             slot_mapping=slot_mapping,
             attn_mask=attn_mask,
             attn_state=attn_state,

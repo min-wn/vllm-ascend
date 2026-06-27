@@ -292,6 +292,14 @@ _ACL_GRAPH_FIA_UPDATE_EVENT_ONLY = (
     os.environ.get("VLLM_ASCEND_ACLGRAPH_FIA_UPDATE_EVENT_ONLY", "0")
     in ("1", "true", "True")
 )
+_ACL_GRAPH_USE_FUSED_FIA_UPDATE = (
+    os.environ.get("VLLM_ASCEND_ACLGRAPH_USE_FUSED_FIA_UPDATE", "0")
+    in ("1", "true", "True")
+)
+_ACL_GRAPH_USE_DUAL_SPLIT_FIA_UPDATE = (
+    os.environ.get("VLLM_ASCEND_ACLGRAPH_USE_DUAL_SPLIT_FIA_UPDATE", "0")
+    in ("1", "true", "True")
+)
 
 
 def _append_acl_graph_debug(tag: str, payload: Any) -> None:
@@ -1265,15 +1273,29 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
     graph_params = get_graph_params(in_parallel_streams)
     param_key = get_graph_param_key(forward_context, runtime_shape)
     require_graph_param_key(graph_params, param_key, op="_update_attn_pa_params")
+    collect_update_stats = _should_collect_acl_update_stats(forward_context)
+    update_start = time.perf_counter() if collect_update_stats else 0.0
+    update_stats: Optional[dict[str, Any]] = ({
+        "pa_layers": 0,
+        "pa_runtime_task_updates": 0,
+        "pa_python_workspace_calls": 0,
+        "pa_python_pa_calls": 0,
+        "pa_python_graph_task_calls": 0,
+        "pa_event_records": 0,
+        "pa_block_table_refreshes": 0,
+    } if collect_update_stats else None)
     # FIXME: Behold! We are using a temporary hack here to update the args
     # for each layer's attention op in the graph.
     with torch.npu.stream(update_stream):
-        for key, param, handle, event in zip(
+        attn_items = list(zip(
                 forward_context.attn_metadata,
                 graph_params.attn_params[param_key],
                 graph_params.handles[param_key],
                 graph_params.events[param_key],
-        ):
+        ))
+        if update_stats is not None:
+            update_stats["pa_layers"] = len(attn_items)
+        for key, param, handle, event in attn_items:
             (
                 query,
                 key_cache,
@@ -1307,6 +1329,9 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                     metadata_block_table=metadata_block_table,
                     block_table_refreshed=block_table_refreshed,
                 )
+                if block_table_refreshed:
+                    _add_acl_update_stat(update_stats,
+                                         "pa_block_table_refreshes")
             # _maybe_log_acl_graph_diag(
             #     "acl_graph_attn_update_diag",
             #     {
@@ -1344,7 +1369,11 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                 block_table=block_table,
                 context_lens=seq_lens,
                 out=output)
+            _add_acl_update_stat(update_stats, "pa_python_workspace_calls")
+            _add_acl_update_stat(update_stats, "pa_runtime_task_updates")
+            _add_acl_update_stat(update_stats, "pa_python_graph_task_calls", 2)
             torch.npu.graph_task_update_begin(update_stream, handle)
+            _add_acl_update_stat(update_stats, "pa_python_pa_calls")
             torch_npu._npu_paged_attention(query=query,
                                            key_cache=key_cache,
                                            value_cache=value_cache,
@@ -1358,6 +1387,8 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
             torch.npu.graph_task_update_end(update_stream)
 
             event.record(update_stream)
+            _add_acl_update_stat(update_stats, "pa_event_records")
+    _finish_acl_update_stats(forward_context, update_stats, update_start)
 
 
 def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
@@ -1366,6 +1397,19 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
     graph_params = get_graph_params(in_parallel_streams)
     param_key = get_graph_param_key(forward_context, runtime_shape)
     require_graph_param_key(graph_params, param_key, op="_update_attn_fia_params")
+    collect_update_stats = _should_collect_acl_update_stats(forward_context)
+    update_start = time.perf_counter() if collect_update_stats else 0.0
+    update_stats: Optional[dict[str, Any]] = ({
+        "fia_layers": 0,
+        "fia_runtime_task_updates": 0,
+        "fia_python_fused_update_calls": 0,
+        "fia_python_fia_calls": 0,
+        "fia_python_graph_task_calls": 0,
+        "fia_event_records": 0,
+        "fia_event_only_layers": 0,
+        "fia_block_table_refreshes": 0,
+    } if collect_update_stats else None)
+    fused_fia_graph_update = _get_fused_fia_graph_update()
     # For Qwen3-next, since the kv_cache_config has already categorized
     # linear_attn and self_attn, the attn_metadata is first arranged with
     # self_attn followed by linear_attn. Therefore, using zip directly
@@ -1377,6 +1421,8 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                 graph_params.handles[param_key],
                 graph_params.events[param_key],
         ))
+        if update_stats is not None:
+            update_stats["fia_layers"] = len(attn_items)
         for layer_idx, (key, param, handle, event) in enumerate(attn_items):
             (query, key_cache, value, block_tables, attn_mask, block_size,
              seq_lens, query_start_loc, num_kv_heads, num_heads, scale,
@@ -1427,6 +1473,9 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                     metadata_block_table=metadata_block_table,
                     block_table_refreshed=block_table_refreshed,
                 )
+                if block_table_refreshed:
+                    _add_acl_update_stat(update_stats,
+                                         "fia_block_table_refreshes")
             if (_ACL_GRAPH_UPDATE_PARAM_DIAG
                     and layer_idx in (0, len(attn_items) - 1)):
                 split_debug.log_event(
@@ -1494,9 +1543,41 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
             # )
             if event_only:
                 event.record(update_stream)
+                _add_acl_update_stat(update_stats, "fia_event_only_layers")
+                _add_acl_update_stat(update_stats, "fia_event_records")
                 continue
 
+            _add_acl_update_stat(update_stats, "fia_runtime_task_updates")
+            if fused_fia_graph_update is not None:
+                _add_acl_update_stat(update_stats,
+                                     "fia_python_fused_update_calls")
+                fused_fia_graph_update(
+                    update_stream,
+                    handle,
+                    event,
+                    query,
+                    key_cache,
+                    value,
+                    block_table=block_tables,
+                    atten_mask=attn_mask,
+                    input_layout="TND",
+                    block_size=block_size,
+                    actual_seq_lengths=actual_seq_lengths_q,
+                    actual_seq_lengths_kv=seq_lens,
+                    num_key_value_heads=num_kv_heads,
+                    num_heads=num_heads,
+                    scale=scale,
+                    sparse_mode=3,
+                    workspace=graph_params.workspaces.get(param_key),
+                    out=[attn_output, softmax_lse],
+                )
+                _add_acl_update_stat(update_stats, "fia_event_records")
+                continue
+
+            _add_acl_update_stat(update_stats, "fia_python_graph_task_calls",
+                                 2)
             torch.npu.graph_task_update_begin(update_stream, handle)
+            _add_acl_update_stat(update_stats, "fia_python_fia_calls")
             torch_npu.npu_fused_infer_attention_score.out(
                 query=query,
                 key=key_cache,
@@ -1517,6 +1598,8 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
             torch.npu.graph_task_update_end(update_stream)
 
             event.record(update_stream)
+            _add_acl_update_stat(update_stats, "fia_event_records")
+    _finish_acl_update_stats(forward_context, update_stats, update_start)
 
 
 def _has_dual_stream_attention_metadata(forward_context) -> bool:
@@ -1531,6 +1614,321 @@ def _same_tensor_ref(left: Any, right: Any) -> bool:
     if left_ptr is not None or right_ptr is not None:
         return left_ptr == right_ptr
     return left is right
+
+
+def _should_collect_acl_update_stats(forward_context: Any) -> bool:
+    return bool(getattr(forward_context, "collect_acl_graph_update_stats",
+                        False))
+
+
+def _finish_acl_update_stats(forward_context: Any,
+                             update_stats: Optional[dict[str, Any]],
+                             update_start: float) -> None:
+    if update_stats is None:
+        return
+    update_stats["update_ms"] = (time.perf_counter() -
+                                 update_start) * 1000.0
+    setattr(forward_context, "last_acl_graph_update_stats", update_stats)
+
+
+def _add_acl_update_stat(update_stats: Optional[dict[str, Any]],
+                         key: str,
+                         value: int | float = 1) -> None:
+    if update_stats is not None:
+        update_stats[key] = update_stats.get(key, 0) + value
+
+
+def _get_fused_fia_graph_update():
+    if not _ACL_GRAPH_USE_FUSED_FIA_UPDATE:
+        return None
+    fused_update = getattr(torch.npu, "fused_infer_attention_score_update",
+                           None)
+    if callable(fused_update):
+        return fused_update
+    c_ext = getattr(torch_npu, "_C", None)
+    fused_update = getattr(c_ext, "_npu_fused_infer_attention_score_out_graph",
+                           None)
+    return fused_update if callable(fused_update) else None
+
+
+def _get_dual_split_fia_graph_update():
+    if not _ACL_GRAPH_USE_DUAL_SPLIT_FIA_UPDATE:
+        return None
+    c_ext = getattr(torch_npu, "_C", None)
+    if not callable(
+            getattr(c_ext, "_dual_split_fused_infer_attention_score_update",
+                    None)):
+        return None
+    dual_split_update = getattr(
+        torch.npu, "dual_split_fused_infer_attention_score_update", None)
+    return dual_split_update if callable(dual_split_update) else None
+
+
+def _get_dual_split_fia_graph_update_many():
+    if not _ACL_GRAPH_USE_DUAL_SPLIT_FIA_UPDATE:
+        return None
+    c_ext = getattr(torch_npu, "_C", None)
+    if not callable(
+            getattr(c_ext,
+                    "_dual_split_fused_infer_attention_score_update_many",
+                    None)):
+        return None
+    dual_split_update_many = getattr(
+        torch.npu, "dual_split_fused_infer_attention_score_update_many",
+        None)
+    return dual_split_update_many if callable(
+        dual_split_update_many) else None
+
+
+def has_dual_split_fia_graph_update() -> bool:
+    return (_get_dual_split_fia_graph_update_many() is not None
+            or _get_dual_split_fia_graph_update() is not None)
+
+
+def _is_acl_graph_fia_update_event_only(forward_context: Any) -> bool:
+    return bool(
+        _ACL_GRAPH_FIA_UPDATE_EVENT_ONLY
+        and getattr(
+            getattr(forward_context, "batch_descriptor", None),
+            "capture_metadata_mode", "") == "mixed_request_compact")
+
+
+def _prepare_dual_split_fia_update_record(
+        *,
+        forward_context: Any,
+        layer_key: Any,
+        param: tuple,
+        handle: Any,
+        event: Any,
+        graph_params: Any,
+        param_key: GraphParamKey,
+        runtime_shape: Any,
+        refresh_block_table: bool,
+        in_parallel_streams: bool,
+        update_stats: Optional[dict[str, Any]]) -> Optional[tuple[Any, ...]]:
+    (query, key_cache, value, block_tables, attn_mask, block_size, seq_lens,
+     query_start_loc, num_kv_heads, num_heads, scale, attn_output,
+     softmax_lse) = param
+
+    metadata = forward_context.attn_metadata[layer_key]
+    use_captured_params = bool(
+        _ACL_GRAPH_FIA_UPDATE_USE_CAPTURED_PARAMS
+        and getattr(
+            getattr(forward_context, "batch_descriptor", None),
+            "capture_metadata_mode", "") == "mixed_request_compact")
+    if _is_acl_graph_fia_update_event_only(forward_context):
+        return None
+    if use_captured_params:
+        actual_seq_lengths_q = query_start_loc
+        metadata_block_table = block_tables
+        metadata_block_source = "captured_graph_param"
+    else:
+        runtime_metadata = _get_attention_update_metadata(
+            forward_context, layer_key)
+        seq_lens = maybe_template_fia_seq_lens(
+            forward_context,
+            getattr(runtime_metadata, "seq_lens_list",
+                    metadata.seq_lens_list),
+            _get_fia_key_t(key_cache, block_size),
+            source=f"acl_graph_dual_split_update:{layer_key}")
+        actual_seq_lengths_q = getattr(runtime_metadata,
+                                       "actual_seq_lengths_q",
+                                       metadata.actual_seq_lengths_q)
+        metadata_block_table, metadata_block_source = (
+            _extract_block_table_from_metadata(runtime_metadata))
+
+    if refresh_block_table and not use_captured_params:
+        block_table_refreshed = _refresh_block_table_in_place(
+            block_tables, metadata_block_table)
+        _log_block_table_refresh_diag(
+            attn_impl="fia_dual_split",
+            key=layer_key,
+            forward_context=forward_context,
+            runtime_shape=runtime_shape,
+            in_parallel_streams=in_parallel_streams,
+            metadata_block_source=metadata_block_source,
+            graph_block_table=block_tables,
+            metadata_block_table=metadata_block_table,
+            block_table_refreshed=block_table_refreshed,
+        )
+        if block_table_refreshed:
+            _add_acl_update_stat(update_stats,
+                                 "dual_split_fia_block_table_refreshes")
+
+    return (
+        handle,
+        event,
+        query,
+        key_cache,
+        value,
+        attn_mask,
+        block_tables,
+        actual_seq_lengths_q,
+        seq_lens,
+        graph_params.workspaces.get(param_key),
+        attn_output,
+        softmax_lse,
+        int(num_heads),
+        float(scale),
+        int(block_size),
+        int(num_kv_heads),
+        3,
+        "TND",
+        2147483647,
+        2147483647,
+        False,
+    )
+
+
+def update_attn_params_split_pair(update_stream, first_forward_context,
+                                  first_runtime_shape,
+                                  second_forward_context,
+                                  second_runtime_shape, vllm_config,
+                                  first_refresh_block_table: bool = False,
+                                  second_refresh_block_table: bool = True
+                                  ) -> bool:
+    dual_split_update = _get_dual_split_fia_graph_update()
+    dual_split_update_many = _get_dual_split_fia_graph_update_many()
+    if dual_split_update is None and dual_split_update_many is None:
+        return False
+    if using_paged_attention(first_runtime_shape, vllm_config,
+                             first_forward_context):
+        return False
+    if using_paged_attention(second_runtime_shape, vllm_config,
+                             second_forward_context):
+        return False
+    if (_is_acl_graph_fia_update_event_only(first_forward_context)
+            or _is_acl_graph_fia_update_event_only(second_forward_context)):
+        return False
+
+    first_graph_params = get_graph_params(False)
+    second_graph_params = get_graph_params(True)
+    first_param_key = get_graph_param_key(first_forward_context,
+                                          first_runtime_shape)
+    second_param_key = get_graph_param_key(second_forward_context,
+                                           second_runtime_shape)
+    require_graph_param_key(first_graph_params,
+                            first_param_key,
+                            op="update_attn_params_split_pair:first")
+    require_graph_param_key(second_graph_params,
+                            second_param_key,
+                            op="update_attn_params_split_pair:second")
+
+    first_items = list(zip(
+        first_forward_context.attn_metadata,
+        first_graph_params.attn_params[first_param_key],
+        first_graph_params.handles[first_param_key],
+        first_graph_params.events[first_param_key],
+    ))
+    second_items = list(zip(
+        second_forward_context.attn_metadata,
+        second_graph_params.attn_params[second_param_key],
+        second_graph_params.handles[second_param_key],
+        second_graph_params.events[second_param_key],
+    ))
+    if len(first_items) != len(second_items):
+        return False
+    first_keys = [item[0] for item in first_items]
+    second_keys = [item[0] for item in second_items]
+    if first_keys != second_keys:
+        return False
+
+    collect_update_stats = (
+        _should_collect_acl_update_stats(first_forward_context)
+        or _should_collect_acl_update_stats(second_forward_context))
+    update_start = time.perf_counter() if collect_update_stats else 0.0
+    update_stats: Optional[dict[str, Any]] = ({
+        "dual_split_fia_layers": 0,
+        "dual_split_fia_runtime_task_updates": 0,
+        "dual_split_fia_python_update_calls": 0,
+        "dual_split_fia_python_update_many_calls": 0,
+        "dual_split_fia_event_records": 0,
+        "dual_split_fia_block_table_refreshes": 0,
+    } if collect_update_stats else None)
+
+    records: list[tuple[tuple[Any, ...], tuple[Any, ...]]] = []
+    with torch.npu.stream(update_stream):
+        for layer_idx, (first_item, second_item) in enumerate(
+                zip(first_items, second_items)):
+            first_key, first_param, first_handle, first_event = first_item
+            second_key, second_param, second_handle, second_event = second_item
+            first_record = _prepare_dual_split_fia_update_record(
+                forward_context=first_forward_context,
+                layer_key=first_key,
+                param=first_param,
+                handle=first_handle,
+                event=first_event,
+                graph_params=first_graph_params,
+                param_key=first_param_key,
+                runtime_shape=first_runtime_shape,
+                refresh_block_table=first_refresh_block_table,
+                in_parallel_streams=False,
+                update_stats=update_stats)
+            second_record = _prepare_dual_split_fia_update_record(
+                forward_context=second_forward_context,
+                layer_key=second_key,
+                param=second_param,
+                handle=second_handle,
+                event=second_event,
+                graph_params=second_graph_params,
+                param_key=second_param_key,
+                runtime_shape=second_runtime_shape,
+                refresh_block_table=second_refresh_block_table,
+                in_parallel_streams=True,
+                update_stats=update_stats)
+            if first_record is None or second_record is None:
+                return False
+            if (_ACL_GRAPH_UPDATE_PARAM_DIAG
+                    and layer_idx in (0, len(first_items) - 1)):
+                split_debug.log_event(
+                    "acl_graph_dual_split_fia_update_params",
+                    {
+                        "layer_idx": int(layer_idx),
+                        "key": first_key,
+                        "first_runtime_shape": first_runtime_shape,
+                        "second_runtime_shape": second_runtime_shape,
+                        "first_graph_param_key":
+                        graph_param_key_info(first_param_key),
+                        "second_graph_param_key":
+                        graph_param_key_info(second_param_key),
+                        "first_handle_id": _object_id_info(first_handle),
+                        "second_handle_id": _object_id_info(second_handle),
+                        "first_event_id": _object_id_info(first_event),
+                        "second_event_id": _object_id_info(second_event),
+                    },
+                    step_id=getattr(first_forward_context,
+                                    "split_inplace_debug_step_id", None),
+                )
+
+            records.append((first_record, second_record))
+
+        if dual_split_update_many is not None:
+            dual_split_update_many(update_stream, records)
+            _add_acl_update_stat(update_stats,
+                                 "dual_split_fia_python_update_calls")
+            _add_acl_update_stat(update_stats,
+                                 "dual_split_fia_python_update_many_calls")
+            _add_acl_update_stat(update_stats,
+                                 "dual_split_fia_runtime_task_updates",
+                                 2 * len(records))
+            _add_acl_update_stat(update_stats,
+                                 "dual_split_fia_event_records",
+                                 2 * len(records))
+        else:
+            for first_record, second_record in records:
+                assert dual_split_update is not None
+                dual_split_update(update_stream, first_record, second_record)
+                _add_acl_update_stat(update_stats,
+                                     "dual_split_fia_python_update_calls")
+                _add_acl_update_stat(update_stats,
+                                     "dual_split_fia_runtime_task_updates", 2)
+                _add_acl_update_stat(update_stats,
+                                     "dual_split_fia_event_records", 2)
+        if update_stats is not None:
+            update_stats["dual_split_fia_layers"] = len(records)
+
+    _finish_acl_update_stats(first_forward_context, update_stats, update_start)
+    return True
 
 
 def _require_same_dual_fia_tensor(name: str, left: Any, right: Any,
@@ -1556,6 +1954,18 @@ def _update_attn_dual_fia_params(update_stream, forward_context,
         raise RuntimeError(
             "dual_stream_attention_metadata must contain exactly two splits")
 
+    update_stats: dict[str, Any] = {
+        "dual_fia_layers": 0,
+        "dual_fia_pta_layers": 0,
+        "dual_fia_legacy_layers": 0,
+        "dual_fia_runtime_task_updates_est": 0,
+        "dual_fia_python_pta_update_calls": 0,
+        "dual_fia_python_legacy_fia_calls": 0,
+        "dual_fia_python_legacy_graph_task_calls": 0,
+        "dual_fia_event_records": 0,
+        "dual_fia_pta_enabled": False,
+    }
+    update_start = time.perf_counter()
     with torch.npu.stream(update_stream):
         attn_items = list(zip(
                 forward_context.attn_metadata,
@@ -1563,6 +1973,7 @@ def _update_attn_dual_fia_params(update_stream, forward_context,
                 graph_params.handles[param_key],
                 graph_params.events[param_key],
         ))
+        update_stats["dual_fia_layers"] = len(attn_items)
         for layer_idx, (key, param, handles, events) in enumerate(attn_items):
             if not isinstance(param, tuple) or len(param) < 2:
                 raise RuntimeError(
@@ -1570,6 +1981,10 @@ def _update_attn_dual_fia_params(update_stream, forward_context,
                     f"entry for layer {key!s}")
 
             if param[0] == "dual_stream_fia_pta":
+                update_stats["dual_fia_pta_layers"] += 1
+                update_stats["dual_fia_runtime_task_updates_est"] += 2
+                update_stats["dual_fia_python_pta_update_calls"] += 1
+                update_stats["dual_fia_pta_enabled"] = True
                 if len(param) != 5:
                     raise RuntimeError(
                         "PTA dual-stream FIA GraphParams entry must contain "
@@ -1718,6 +2133,7 @@ def _update_attn_dual_fia_params(update_stream, forward_context,
                 )
                 for event in update_events:
                     event.record(update_stream)
+                update_stats["dual_fia_event_records"] += len(update_events)
                 continue
 
             if param[0] != "dual_stream_fia":
@@ -1747,6 +2163,10 @@ def _update_attn_dual_fia_params(update_stream, forward_context,
                                     "split_inplace_debug_step_id", None),
                 )
 
+            update_stats["dual_fia_legacy_layers"] += 1
+            update_stats["dual_fia_runtime_task_updates_est"] += 2
+            update_stats["dual_fia_python_legacy_fia_calls"] += 2
+            update_stats["dual_fia_python_legacy_graph_task_calls"] += 4
             for split_idx, split_param in enumerate(split_params):
                 (query, key_cache, value, block_tables, attn_mask, block_size,
                  seq_lens, query_start_loc, num_kv_heads, num_heads, scale,
@@ -1803,6 +2223,11 @@ def _update_attn_dual_fia_params(update_stream, forward_context,
                 )
                 torch.npu.graph_task_update_end(update_stream)
                 events[split_idx].record(update_stream)
+                update_stats["dual_fia_event_records"] += 1
+
+    update_stats["dual_fia_update_ms"] = (
+        time.perf_counter() - update_start) * 1000.0
+    setattr(forward_context, "last_acl_graph_update_stats", update_stats)
 
 
 def update_attn_params(update_stream, forward_context, runtime_shape,
