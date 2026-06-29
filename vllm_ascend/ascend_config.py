@@ -773,6 +773,10 @@ class SplitBatchConfig:
 
         self.enable_inplace_lazy_capture: bool = bool(
             split_batch_config.get("enable_inplace_lazy_capture", True))
+        self.enable_inplace_offset_graph_dispatch: bool = bool(
+            split_batch_config.get("enable_inplace_offset_graph_dispatch", True))
+        self.enable_inplace_offset_precapture: bool = bool(
+            split_batch_config.get("enable_inplace_offset_precapture", True))
         self.inplace_serial_first: bool = bool(
             split_batch_config.get("inplace_serial_first", True))
         self.inplace_parallel_replay_policy: str = str(
@@ -829,6 +833,15 @@ class SplitBatchConfig:
         else:
             self.inplace_max_remainder_tokens = int(
                 raw_inplace_max_remainder_tokens)
+        raw_inplace_min_padding_saved_tokens = split_batch_config.get(
+            "inplace_min_padding_saved_tokens", None)
+        if raw_inplace_min_padding_saved_tokens is None:
+            self.inplace_min_padding_saved_tokens: Optional[int] = None
+        else:
+            self.inplace_min_padding_saved_tokens = int(
+                raw_inplace_min_padding_saved_tokens)
+        self.inplace_split_overhead_tokens: int = int(
+            split_batch_config.get("inplace_split_overhead_tokens", 0))
         self.inplace_validate_metadata_ptrs: bool = bool(
             split_batch_config.get("inplace_validate_metadata_ptrs", False))
         self.inplace_force_pa_for_offset: bool = bool(
@@ -1030,6 +1043,15 @@ class SplitBatchConfig:
             raise ValueError(
                 "split_batch_config.inplace_max_remainder_tokens must be >= 1"
             )
+        if (self.inplace_min_padding_saved_tokens is not None
+                and self.inplace_min_padding_saved_tokens < 0):
+            raise ValueError(
+                "split_batch_config.inplace_min_padding_saved_tokens must be "
+                ">= 0")
+        if self.inplace_split_overhead_tokens < 0:
+            raise ValueError(
+                "split_batch_config.inplace_split_overhead_tokens must be "
+                ">= 0")
         valid_offset_match_policies = ("exact", "bucket")
         if self.inplace_offset_match_policy not in valid_offset_match_policies:
             raise ValueError(

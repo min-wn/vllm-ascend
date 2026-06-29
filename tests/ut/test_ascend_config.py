@@ -103,8 +103,12 @@ class TestAscendConfig(TestBase):
         self.assertIsNone(split_config.parallel_capture_sizes)
         self.assertFalse(split_config.force_split)
         self.assertTrue(split_config.enable_inplace_lazy_capture)
+        self.assertTrue(split_config.enable_inplace_offset_graph_dispatch)
+        self.assertTrue(split_config.enable_inplace_offset_precapture)
         self.assertTrue(split_config.inplace_serial_first)
         self.assertIsNone(split_config.inplace_max_remainder_tokens)
+        self.assertIsNone(split_config.inplace_min_padding_saved_tokens)
+        self.assertEqual(split_config.inplace_split_overhead_tokens, 0)
         self.assertFalse(split_config.inplace_validate_metadata_ptrs)
         self.assertFalse(split_config.inplace_force_pa_for_offset)
         self.assertFalse(split_config.enable_inplace_spec_decode)
@@ -170,8 +174,12 @@ class TestAscendConfig(TestBase):
             "mode": "inplace_serial",
             "num_splits": 2,
             "enable_inplace_lazy_capture": False,
+            "enable_inplace_offset_graph_dispatch": False,
+            "enable_inplace_offset_precapture": False,
             "inplace_serial_first": False,
             "inplace_max_remainder_tokens": 64,
+            "inplace_min_padding_saved_tokens": 96,
+            "inplace_split_overhead_tokens": 24,
             "inplace_validate_metadata_ptrs": True,
             "inplace_force_pa_for_offset": False,
             "enable_inplace_spec_decode": True,
@@ -196,8 +204,12 @@ class TestAscendConfig(TestBase):
 
         self.assertEqual(split_config.mode, "inplace_serial")
         self.assertFalse(split_config.enable_inplace_lazy_capture)
+        self.assertFalse(split_config.enable_inplace_offset_graph_dispatch)
+        self.assertFalse(split_config.enable_inplace_offset_precapture)
         self.assertFalse(split_config.inplace_serial_first)
         self.assertEqual(split_config.inplace_max_remainder_tokens, 64)
+        self.assertEqual(split_config.inplace_min_padding_saved_tokens, 96)
+        self.assertEqual(split_config.inplace_split_overhead_tokens, 24)
         self.assertTrue(split_config.inplace_validate_metadata_ptrs)
         self.assertFalse(split_config.inplace_force_pa_for_offset)
         self.assertTrue(split_config.enable_inplace_spec_decode)
@@ -440,6 +452,18 @@ class TestAscendConfig(TestBase):
         with self.assertRaisesRegex(ValueError,
                                     "inplace_max_remainder_tokens"):
             SplitBatchConfig({"inplace_max_remainder_tokens": 0})
+
+    def test_split_batch_config_rejects_invalid_inplace_min_padding_saved_tokens(
+            self):
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_min_padding_saved_tokens"):
+            SplitBatchConfig({"inplace_min_padding_saved_tokens": -1})
+
+    def test_split_batch_config_rejects_invalid_inplace_split_overhead_tokens(
+            self):
+        with self.assertRaisesRegex(ValueError,
+                                    "inplace_split_overhead_tokens"):
+            SplitBatchConfig({"inplace_split_overhead_tokens": -1})
 
     def test_split_batch_config_rejects_invalid_offset_policy(self):
         with self.assertRaisesRegex(ValueError,

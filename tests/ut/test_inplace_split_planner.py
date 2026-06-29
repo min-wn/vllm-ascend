@@ -8,6 +8,7 @@ from vllm_ascend.worker.ubatch_utils import (
     NO_SPLIT_ABOVE_MAX_CAPTURE_SIZE,
     NO_SPLIT_EXACT_GRAPH_HIT,
     NO_SPLIT_GRAPH_BUCKET_MISSING,
+    NO_SPLIT_INPLACE_PADDING_SAVING_TOO_SMALL,
     NO_SPLIT_INVALID_FIRST_TOKENS_POLICY,
     NO_SPLIT_INVALID_MIXED_REQUEST_SPLIT_POLICY,
     NO_SPLIT_MACRO_GRAPH_MISS,
@@ -278,6 +279,77 @@ def test_inplace_split_bucket_pads_second_split_graph_tokens():
     assert second.num_tokens == 121
     assert second.graph_num_tokens == 128
     assert second.start_num_tokens == 128
+
+
+def test_inplace_split_respects_min_padding_saved_tokens():
+    capture_sizes = {1, 2, 4, 8, 16, 32, 64, 128, 256}
+
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(130),
+        total_num_tokens=130,
+        uniform_decode_query_len=1,
+        cudagraph_capture_sizes=capture_sizes,
+        offset_match_policy="bucket",
+        offset_capture_sizes={32, 64, 128},
+        inplace_min_padding_saved_tokens=96,
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.first_tokens == 128
+    assert plan.second_actual_tokens == 2
+    assert plan.second_graph_tokens == 32
+    assert plan.debug_payload()["padding_saved_tokens"] == 96
+    assert plan.debug_payload()["inplace_min_padding_saved_tokens"] == 96
+    assert plan.debug_payload()["inplace_split_overhead_tokens"] == 0
+    assert plan.debug_payload()["inplace_effective_padding_saved_tokens"] == 96
+    assert plan.debug_payload()["inplace_required_padding_saved_tokens"] == 96
+
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(130),
+        total_num_tokens=130,
+        uniform_decode_query_len=1,
+        cudagraph_capture_sizes=capture_sizes,
+        offset_match_policy="bucket",
+        offset_capture_sizes={32, 64, 128},
+        inplace_min_padding_saved_tokens=97,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_INPLACE_PADDING_SAVING_TOO_SMALL
+
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(130),
+        total_num_tokens=130,
+        uniform_decode_query_len=1,
+        cudagraph_capture_sizes=capture_sizes,
+        offset_match_policy="bucket",
+        offset_capture_sizes={32, 64, 128},
+        inplace_min_padding_saved_tokens=64,
+        inplace_split_overhead_tokens=32,
+    )
+
+    assert reason == INPLACE_SPLIT_DRY_RUN
+    assert plan is not None
+    assert plan.debug_payload()["padding_saved_tokens"] == 96
+    assert plan.debug_payload()["inplace_min_padding_saved_tokens"] == 64
+    assert plan.debug_payload()["inplace_split_overhead_tokens"] == 32
+    assert plan.debug_payload()["inplace_effective_padding_saved_tokens"] == 64
+    assert plan.debug_payload()["inplace_required_padding_saved_tokens"] == 96
+
+    plan, reason = create_inplace_split_batch_slices(
+        _tokens(130),
+        total_num_tokens=130,
+        uniform_decode_query_len=1,
+        cudagraph_capture_sizes=capture_sizes,
+        offset_match_policy="bucket",
+        offset_capture_sizes={32, 64, 128},
+        inplace_min_padding_saved_tokens=64,
+        inplace_split_overhead_tokens=33,
+    )
+
+    assert plan is None
+    assert reason == NO_SPLIT_INPLACE_PADDING_SAVING_TOO_SMALL
 
 
 def test_inplace_split_bucket_maps_adjacent_remainders_to_same_graph():

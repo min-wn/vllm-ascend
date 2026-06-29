@@ -376,6 +376,13 @@ _SYNCED_PERF_TIMING = (
     and os.environ.get("VLLM_ASCEND_SYNCED_PERF_TIMING", "1")
     not in ("0", "false", "False")
 )
+try:
+    _HEADER_DELAY_MS = max(
+        0.0, float(os.environ.get("VLLM_ASCEND_HEADER_DELAY_MS", "0") or 0.0))
+except ValueError:
+    logger.warning("Ignoring invalid VLLM_ASCEND_HEADER_DELAY_MS=%r",
+                   os.environ.get("VLLM_ASCEND_HEADER_DELAY_MS"))
+    _HEADER_DELAY_MS = 0.0
 _INPLACE_PARALLEL_MERGE_SYNC_POLICY = os.environ.get(
     "VLLM_ASCEND_INPLACE_PARALLEL_MERGE_SYNC_POLICY", "event_wait").strip(
     ).lower()
@@ -398,15 +405,124 @@ if _INPLACE_PARALLEL_REPLAY_THREAD_MODE not in ("threaded", "single_thread"):
     )
     _INPLACE_PARALLEL_REPLAY_THREAD_MODE = "threaded"
 
-_INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS = os.environ.get(
-    "VLLM_ASCEND_INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS", "1") not in (
-        "0", "false", "False")
 _INPLACE_PARALLEL_REUSE_SPLIT0_COS_SIN = os.environ.get(
     "VLLM_ASCEND_INPLACE_PARALLEL_REUSE_SPLIT0_COS_SIN", "1") not in (
         "0", "false", "False")
-_INPLACE_PARALLEL_CLONE_COS_SIN = os.environ.get(
-    "VLLM_ASCEND_INPLACE_PARALLEL_CLONE_COS_SIN", "1") not in (
-        "0", "false", "False")
+
+
+def _parse_inplace_parallel_split_output_mode() -> str:
+    mode = os.environ.get("VLLM_ASCEND_INPLACE_PARALLEL_SPLIT_OUTPUT_MODE")
+    if mode is None:
+        legacy_clone = os.environ.get(
+            "VLLM_ASCEND_INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS")
+        if legacy_clone is None:
+            return "auto"
+        return ("direct" if legacy_clone in ("0", "false", "False") else
+                "clone")
+
+    mode = mode.strip().lower()
+    if mode in ("auto", "clone", "direct"):
+        return mode
+    if mode in ("0", "false"):
+        return "direct"
+    if mode in ("1", "true"):
+        return "clone"
+    logger.warning(
+        "Unknown VLLM_ASCEND_INPLACE_PARALLEL_SPLIT_OUTPUT_MODE=%r; "
+        "falling back to auto",
+        mode,
+    )
+    return "auto"
+
+
+_INPLACE_PARALLEL_SPLIT_OUTPUT_MODE = (
+    _parse_inplace_parallel_split_output_mode())
+
+
+def _inplace_parallel_clone_split_outputs(
+        *,
+        allow_auto_direct_outputs: bool,
+        split_cfg: Any,
+        split_batch_slices: SplitBatchSlices,
+        aclgraph_runtime_mode: CUDAGraphMode,
+        merge_sync_policy: str) -> bool:
+    if _INPLACE_PARALLEL_SPLIT_OUTPUT_MODE == "clone":
+        return True
+    if _INPLACE_PARALLEL_SPLIT_OUTPUT_MODE == "direct":
+        return False
+
+    if not allow_auto_direct_outputs:
+        return True
+    if aclgraph_runtime_mode != CUDAGraphMode.FULL:
+        return True
+    if merge_sync_policy != "event_wait":
+        return True
+    if split_cfg is None:
+        return True
+    if getattr(split_cfg, "mode", "") != "inplace_parallel":
+        return True
+    if not bool(getattr(split_cfg, "enable_parallel_streams", False)):
+        return True
+    if len(split_batch_slices) != 2:
+        return True
+    return False
+
+
+def _parse_inplace_parallel_cos_sin_mode() -> str:
+    mode = os.environ.get("VLLM_ASCEND_INPLACE_PARALLEL_COS_SIN_MODE")
+    if mode is None:
+        legacy_clone = os.environ.get(
+            "VLLM_ASCEND_INPLACE_PARALLEL_CLONE_COS_SIN")
+        if legacy_clone is None:
+            return "auto"
+        return ("direct" if legacy_clone in ("0", "false", "False") else
+                "clone")
+
+    mode = mode.strip().lower()
+    if mode in ("auto", "clone", "direct"):
+        return mode
+    if mode in ("0", "false"):
+        return "direct"
+    if mode in ("1", "true"):
+        return "clone"
+    logger.warning(
+        "Unknown VLLM_ASCEND_INPLACE_PARALLEL_COS_SIN_MODE=%r; "
+        "falling back to auto",
+        mode,
+    )
+    return "auto"
+
+
+_INPLACE_PARALLEL_COS_SIN_MODE = _parse_inplace_parallel_cos_sin_mode()
+
+
+def _inplace_parallel_clone_cos_sin(
+        *,
+        allow_auto_direct_cos_sin: bool,
+        split_cfg: Any,
+        split_batch_slices: SplitBatchSlices,
+        aclgraph_runtime_mode: CUDAGraphMode,
+        attention_backend: str) -> bool:
+    if _INPLACE_PARALLEL_COS_SIN_MODE == "clone":
+        return True
+    if _INPLACE_PARALLEL_COS_SIN_MODE == "direct":
+        return False
+
+    if not allow_auto_direct_cos_sin:
+        return True
+    if aclgraph_runtime_mode != CUDAGraphMode.FULL:
+        return True
+    if attention_backend == "mixed_request":
+        return True
+    if split_cfg is None:
+        return True
+    if getattr(split_cfg, "mode", "") != "inplace_parallel":
+        return True
+    if not bool(getattr(split_cfg, "enable_parallel_streams", False)):
+        return True
+    if len(split_batch_slices) != 2:
+        return True
+    return False
 
 
 def _parse_stream_limit_pair(value: str, env_name: str) -> Optional[tuple[int,
@@ -3130,6 +3246,8 @@ class NPUModelRunner(GPUModelRunner):
         self._replay_num_graph_replays: int = 0
         self._replay_num_stream_syncs: int = 0
         self._t_header_start: float = 0.0
+        self._inplace_parallel_output_release_events: list[
+            Optional[torch.npu.Event]] = []
 
 
     def _init_device_properties(self) -> None:
@@ -3187,6 +3305,8 @@ class NPUModelRunner(GPUModelRunner):
         self._replay_num_stream_syncs = 0
 
     def _begin_replay_timing(self, num_graph_replays: int = 0) -> None:
+        if _HEADER_DELAY_MS > 0.0:
+            time.sleep(_HEADER_DELAY_MS / 1000.0)
         self._reset_replay_timing()
         self._t_replay_start = time.perf_counter()
         self._replay_num_graph_replays = max(0, int(num_graph_replays))
@@ -3225,6 +3345,22 @@ class NPUModelRunner(GPUModelRunner):
         for event in events:
             if event is not None:
                 stream.wait_event(event)
+
+    def _wait_inplace_parallel_output_release_events(
+            self, streams: Iterable[torch.npu.Stream]) -> int:
+        events = getattr(self, "_inplace_parallel_output_release_events", [])
+        if not events:
+            return 0
+        self._inplace_parallel_output_release_events = []
+        for stream in streams:
+            self._wait_replay_stream_events(stream, events)
+        return len(events)
+
+    def _record_inplace_parallel_output_release_event(
+            self) -> torch.npu.Event:
+        event = self._record_replay_stream_event(self.stream_main)
+        self._inplace_parallel_output_release_events = [event]
+        return event
 
     def _should_collect_perf_breakdown(self) -> bool:
         return bool(_PERF_STATS_FILE) and self._pending_decode_step_perf is not None
@@ -3686,6 +3822,9 @@ class NPUModelRunner(GPUModelRunner):
                     "inplace_max_remainder_tokens": (
                         getattr(split_cfg, "inplace_max_remainder_tokens",
                                 None) if split_cfg is not None else None),
+                    "inplace_min_padding_saved_tokens": (
+                        getattr(split_cfg, "inplace_min_padding_saved_tokens",
+                                None) if split_cfg is not None else None),
                     "inplace_validate_metadata_ptrs": (
                         bool(getattr(split_cfg,
                                      "inplace_validate_metadata_ptrs", False))
@@ -4079,6 +4218,12 @@ class NPUModelRunner(GPUModelRunner):
                                 cudagraph_capture_sizes or [],
                                 getattr(split_cfg,
                                         "inplace_max_remainder_tokens", None),
+                                inplace_min_padding_saved_tokens=getattr(
+                                    split_cfg,
+                                    "inplace_min_padding_saved_tokens", None),
+                                inplace_split_overhead_tokens=getattr(
+                                    split_cfg,
+                                    "inplace_split_overhead_tokens", 0),
                                 offset_match_policy=getattr(
                                     split_cfg, "inplace_offset_match_policy",
                                     "exact"),
@@ -5368,6 +5513,7 @@ class NPUModelRunner(GPUModelRunner):
                     first_update.get("refresh_block_table", False)),
                 second_refresh_block_table=bool(
                     second_update.get("refresh_block_table", True)),
+                second_update_stream=self.update_stream_parallel,
             )
             return paired
         finally:
@@ -6536,6 +6682,17 @@ class NPUModelRunner(GPUModelRunner):
                 collect_debug_payload=collect_debug_payload)
             if collect_perf:
                 self._add_pending_perf_ms("inplace_tail_fill_ms", tail_start)
+                padding_tokens = max(
+                    0,
+                    int(split_slice.graph_num_tokens) -
+                    int(split_slice.num_tokens))
+                self._add_pending_perf_value("inplace_tail_padding_tokens",
+                                             padding_tokens)
+                if padding_tokens:
+                    self._add_pending_perf_value(
+                        "inplace_tail_padding_splits", 1)
+                if bool(padding_tail_payload.get("tail_filled", False)):
+                    self._add_pending_perf_value("inplace_tail_fill_calls", 1)
             prepared.append({
                 "tokens_slice": tokens_slice,
                 "input_ids": split_input_ids,
@@ -7243,7 +7400,8 @@ class NPUModelRunner(GPUModelRunner):
             intermediate_tensors: Optional[IntermediateTensors],
             batch_descriptor: BatchDescriptor,
             aclgraph_runtime_mode: CUDAGraphMode,
-            inplace_attention_backend: str) -> list[AscendUbatchMetadata]:
+            inplace_attention_backend: str
+    ) -> list[AscendUbatchMetadata]:
 
         forward_contexts = []
         cur_forward_context = get_forward_context()
@@ -7455,14 +7613,20 @@ class NPUModelRunner(GPUModelRunner):
             intermediate_tensors: Optional[IntermediateTensors],
             batch_descriptor: BatchDescriptor,
             aclgraph_runtime_mode: CUDAGraphMode,
-            inplace_attention_backend: str) -> list[AscendUbatchMetadata]:
+            inplace_attention_backend: str,
+            allow_auto_direct_cos_sin: bool = False
+    ) -> list[AscendUbatchMetadata]:
 
         collect_perf = self._should_collect_perf_breakdown()
         metadata_start = time.perf_counter() if collect_perf else 0.0
         cur_forward_context = get_forward_context()
         dp_metadata = cur_forward_context.dp_metadata
+        context_slices_start = time.perf_counter() if collect_perf else 0.0
         context_ubatch_slices = self._context_ubatch_slices_for_inplace(
             split_batch_slices)
+        if collect_perf:
+            self._add_pending_perf_ms("inplace_context_ubatch_slices_ms",
+                                      context_slices_start)
         split_cfg = getattr(self.ascend_config, "split_batch_config", None)
         split_debug_enabled = split_debug.is_enabled()
         allow_lazy = bool(split_cfg is not None and getattr(
@@ -7472,10 +7636,19 @@ class NPUModelRunner(GPUModelRunner):
         force_pa_for_offset = bool(
             split_cfg is not None
             and getattr(split_cfg, "inplace_force_pa_for_offset", False))
+        clone_cos_sin = _inplace_parallel_clone_cos_sin(
+            allow_auto_direct_cos_sin=allow_auto_direct_cos_sin,
+            split_cfg=split_cfg,
+            split_batch_slices=split_batch_slices,
+            aclgraph_runtime_mode=aclgraph_runtime_mode,
+            attention_backend=inplace_attention_backend,
+        )
 
         def _stream_for_split(split_idx: int):
             return self.stream_parallel if split_idx > 0 else self.stream_main
 
+        prepare_split_inputs_start = (
+            time.perf_counter() if collect_perf else 0.0)
         prepared_split_inputs = self._prepare_inplace_split_inputs_for_execution(
             split_batch_slices,
             input_ids,
@@ -7484,6 +7657,9 @@ class NPUModelRunner(GPUModelRunner):
             intermediate_tensors,
             stream_for_split=_stream_for_split,
             collect_debug_payload=split_debug_enabled)
+        if collect_perf:
+            self._add_pending_perf_ms("inplace_prepare_split_inputs_call_ms",
+                                      prepare_split_inputs_start)
 
         ubatch_metadata: list[AscendUbatchMetadata] = []
         for i, split_slice in enumerate(split_batch_slices):
@@ -7583,6 +7759,8 @@ class NPUModelRunner(GPUModelRunner):
                         force_pa_for_offset,
                         "templated_fia_seq_lens":
                         templated_fia_seq_lens,
+                        "clone_cos_sin":
+                        clone_cos_sin,
                     },
                     step_id=_split_debug_step_from_runner(self),
                 )
@@ -7606,7 +7784,9 @@ class NPUModelRunner(GPUModelRunner):
                     reuse_existing_cos_sin=(
                         _INPLACE_PARALLEL_REUSE_SPLIT0_COS_SIN
                         and i == 0),
-                    clone_cos_sin=_INPLACE_PARALLEL_CLONE_COS_SIN,
+                    clone_cos_sin=clone_cos_sin,
+                    perf_callback=(self._add_pending_perf_value
+                                   if collect_perf else None),
                 )
             if collect_perf:
                 self._add_pending_perf_ms("inplace_create_context_ms",
@@ -7614,6 +7794,7 @@ class NPUModelRunner(GPUModelRunner):
             if split_debug_enabled:
                 _set_split_debug_step(split_forward_context,
                                       _split_debug_step_from_runner(self))
+            context_attrs_start = time.perf_counter() if collect_perf else 0.0
             setattr(split_forward_context, "split_inplace_mode",
                     "inplace_parallel")
             setattr(split_forward_context, "forced_attention_backend",
@@ -7630,6 +7811,9 @@ class NPUModelRunner(GPUModelRunner):
                     validate_inplace_ptrs)
             setattr(split_forward_context, "validate_inplace_metadata_ptrs",
                     validate_inplace_metadata_ptrs)
+            if collect_perf:
+                self._add_pending_perf_ms("inplace_context_attrs_ms",
+                                          context_attrs_start)
             prepared_inputs = prepared_split_inputs[i]
             tokens_slice = prepared_inputs["tokens_slice"]
             padding_tail_payload = prepared_inputs["padding_tail_payload"]
@@ -11234,10 +11418,21 @@ class NPUModelRunner(GPUModelRunner):
             batch_descriptor,
             aclgraph_runtime_mode,
             inplace_attention_backend,
+            allow_auto_direct_cos_sin=True,
         )
 
         original_forward_context = get_forward_context()
         num_splits = len(split_batch_slices)
+        clone_split_outputs = _inplace_parallel_clone_split_outputs(
+            allow_auto_direct_outputs=True,
+            split_cfg=split_cfg,
+            split_batch_slices=split_batch_slices,
+            aclgraph_runtime_mode=aclgraph_runtime_mode,
+            merge_sync_policy=_INPLACE_PARALLEL_MERGE_SYNC_POLICY,
+        )
+        if self._should_collect_perf_breakdown():
+            self._add_pending_perf_value("inplace_clone_split_outputs",
+                                         int(clone_split_outputs))
         results: list[Optional[Any]] = [None] * num_splits
         split_done_events: list[Optional[torch.npu.Event]] = [None] * num_splits
         deferred_attn_updates: list[Optional[dict[str, Any]]] = (
@@ -11252,6 +11447,51 @@ class NPUModelRunner(GPUModelRunner):
                 and not self._needs_inplace_serial_offset_capture(metadata)
                 for metadata in ubatch_metadata))
         self._begin_replay_timing(num_graph_replays=num_splits)
+        release_wait_start = (
+            time.perf_counter()
+            if self._should_collect_perf_breakdown() else 0.0)
+        release_waits = self._wait_inplace_parallel_output_release_events(
+            (self.stream_main, self.stream_parallel))
+        if release_wait_start:
+            self._add_pending_perf_ms("inplace_output_release_wait_ms",
+                                      release_wait_start)
+            self._add_pending_perf_value("inplace_output_release_wait_events",
+                                         release_waits)
+
+        def _finish_inplace_parallel_split_result(
+                slice_idx: int,
+                split_result: Any,
+                *,
+                parallel_streams: bool,
+                target_stream: torch.npu.Stream) -> None:
+            split_slice = split_batch_slices[slice_idx]
+            with torch.npu.stream(target_stream):
+                trim_start = (
+                    time.perf_counter()
+                    if self._should_collect_perf_breakdown() else 0.0)
+                trimmed_result = self._trim_split_output(
+                    split_result, split_slice.num_tokens)
+                if trim_start:
+                    self._add_pending_perf_ms("inplace_trim_output_ms",
+                                              trim_start)
+                if clone_split_outputs:
+                    clone_start = (
+                        time.perf_counter()
+                        if self._should_collect_perf_breakdown() else 0.0)
+                    trimmed_result = self._clone_split_output(trimmed_result)
+                    if clone_start:
+                        self._add_pending_perf_ms(
+                            "inplace_clone_split_output_ms", clone_start)
+                results[slice_idx] = trimmed_result
+                if parallel_streams:
+                    event_start = (
+                        time.perf_counter()
+                        if self._should_collect_perf_breakdown() else 0.0)
+                    split_done_events[slice_idx] = (
+                        self._record_replay_stream_event(target_stream))
+                    if event_start:
+                        self._add_pending_perf_ms(
+                            "inplace_record_done_event_ms", event_start)
 
         def _run_inplace_parallel_worker(slice_idx: int) -> None:
             try:
@@ -11325,17 +11565,11 @@ class NPUModelRunner(GPUModelRunner):
                                             split_slice.graph_num_tokens)
 
 
-                    with torch.npu.stream(target_stream):
-                        trimmed_result = self._trim_split_output(
-                            split_result, split_slice.num_tokens)
-                        if _INPLACE_PARALLEL_CLONE_SPLIT_OUTPUTS:
-                            trimmed_result = self._clone_split_output(
-                                trimmed_result)
-                        results[slice_idx] = trimmed_result
-                        if parallel_streams:
-                            split_done_events[slice_idx] = (
-                                self._record_replay_stream_event(
-                                    target_stream))
+                    _finish_inplace_parallel_split_result(
+                        slice_idx,
+                        split_result,
+                        parallel_streams=parallel_streams,
+                        target_stream=target_stream)
             except Exception as e:
                 with split_error_lock:
                     split_errors.append((slice_idx, e))
@@ -11405,19 +11639,62 @@ class NPUModelRunner(GPUModelRunner):
                     num_stream_syncs += 1
                 self._mark_replay_sync_end(num_stream_syncs=num_stream_syncs)
                 with override_forward_context(original_forward_context):
+                    merge_outputs_start = (
+                        time.perf_counter()
+                        if self._should_collect_perf_breakdown() else 0.0)
                     result = self._merge_split_outputs(merged_results)
+                    if merge_outputs_start:
+                        self._add_pending_perf_ms("inplace_merge_outputs_ms",
+                                                  merge_outputs_start)
+                    if not clone_split_outputs:
+                        release_start = (
+                            time.perf_counter()
+                            if self._should_collect_perf_breakdown() else 0.0)
+                        self._record_inplace_parallel_output_release_event()
+                        if release_start:
+                            self._add_pending_perf_ms(
+                                "inplace_output_release_record_ms",
+                                release_start)
                 self._mark_replay_merge_end()
                 return result
 
             self._mark_replay_enqueue_end()
             with torch.npu.stream(self.stream_main):
+                merge_wait_start = (
+                    time.perf_counter()
+                    if self._should_collect_perf_breakdown() else 0.0)
                 self._wait_replay_stream_events(self.stream_main,
                                                 split_done_events)
+                if merge_wait_start:
+                    self._add_pending_perf_ms("inplace_merge_wait_events_ms",
+                                              merge_wait_start)
+                record_tree_start = (
+                    time.perf_counter()
+                    if self._should_collect_perf_breakdown() else 0.0)
                 for merged_result in merged_results:
                     _record_stream_tree_for_npugraph_ex(merged_result,
                                                         self.stream_main)
+                if record_tree_start:
+                    self._add_pending_perf_ms(
+                        "inplace_merge_record_stream_tree_ms",
+                        record_tree_start)
                 with override_forward_context(original_forward_context):
+                    merge_outputs_start = (
+                        time.perf_counter()
+                        if self._should_collect_perf_breakdown() else 0.0)
                     result = self._merge_split_outputs(merged_results)
+                    if merge_outputs_start:
+                        self._add_pending_perf_ms("inplace_merge_outputs_ms",
+                                                  merge_outputs_start)
+                    if not clone_split_outputs:
+                        release_start = (
+                            time.perf_counter()
+                            if self._should_collect_perf_breakdown() else 0.0)
+                        self._record_inplace_parallel_output_release_event()
+                        if release_start:
+                            self._add_pending_perf_ms(
+                                "inplace_output_release_record_ms",
+                                release_start)
             self._mark_replay_merge_end()
             return result
         finally:
@@ -11913,12 +12190,25 @@ class NPUModelRunner(GPUModelRunner):
                 head_dim=self.model_config.get_vocab_size(),
                 generators=self.input_batch.sampling_metadata.generators)
 
+        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
+        split_mode = (getattr(split_cfg, "mode", "parallel_buffer")
+                      if split_cfg is not None else "parallel_buffer")
         split_ubatch_slices = None
         if split_batch_slices is not None:
-            split_ubatch_slices = [
-                UBatchSlice(s.request_slice, s.token_slice)
-                for s in split_batch_slices
-            ]
+            split_ubatch_slices_start = (
+                time.perf_counter() if self._should_collect_perf_breakdown()
+                else 0.0)
+            if split_mode in ("inplace_serial", "inplace_parallel"):
+                split_ubatch_slices = self._ubatch_slices_for_inplace_metadata(
+                    split_batch_slices)
+            else:
+                split_ubatch_slices = [
+                    UBatchSlice(s.request_slice, s.token_slice)
+                    for s in split_batch_slices
+                ]
+            if self._should_collect_perf_breakdown():
+                self._add_pending_perf_ms("split_ubatch_slices_ms",
+                                          split_ubatch_slices_start)
 
         # This is currently to get around the assert in the DPMetadata
         # where it wants `num_tokens_across_dp` to align with `num_tokens`
@@ -11932,9 +12222,6 @@ class NPUModelRunner(GPUModelRunner):
         model_kwargs = self._init_model_kwargs(maybe_padded_num_tokens)
         if self._should_collect_perf_breakdown():
             self._add_pending_perf_ms("model_kwargs_ms", model_kwargs_start)
-        split_cfg = getattr(self.ascend_config, "split_batch_config", None)
-        split_mode = (getattr(split_cfg, "mode", "parallel_buffer")
-                      if split_cfg is not None else "parallel_buffer")
         split_enable_parallel_streams = bool(split_cfg is not None
                                  and getattr(split_cfg, "enable_parallel_streams", False))
         # Run forward pass
@@ -14148,6 +14435,10 @@ class NPUModelRunner(GPUModelRunner):
                 query_len,
                 capture_sizes,
                 getattr(split_cfg, "inplace_max_remainder_tokens", None),
+                inplace_min_padding_saved_tokens=getattr(
+                    split_cfg, "inplace_min_padding_saved_tokens", None),
+                inplace_split_overhead_tokens=getattr(
+                    split_cfg, "inplace_split_overhead_tokens", 0),
                 offset_match_policy=getattr(
                     split_cfg, "inplace_offset_match_policy", "bucket"),
                 offset_capture_sizes=offset_capture_sizes,
@@ -14351,6 +14642,7 @@ class NPUModelRunner(GPUModelRunner):
                                 batch_descriptor,
                                 CUDAGraphMode.FULL,
                                 attention_backend,
+                                allow_auto_direct_cos_sin=True,
                             )[1]
                             self._run_inplace_serial_offset_capture(
                                 metadata,

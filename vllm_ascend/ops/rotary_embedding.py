@@ -129,12 +129,11 @@ def update_cos_sin(positions, slot_id=0):
         return
 
     num_tokens = positions.size(0)
-    _cos_slots[slot_id][:, :num_tokens] = _cos_sin_cache.index_select(
-        0, positions).view(num_tokens, 2, -1).repeat(1, 1, 2).chunk(
-            2, dim=-2)[0]
-    _sin_slots[slot_id][:, :num_tokens] = _cos_sin_cache.index_select(
-        0, positions).view(num_tokens, 2, -1).repeat(1, 1, 2).chunk(
-            2, dim=-2)[1]
+    cos_sin = _cos_sin_cache.index_select(0, positions).view(
+        num_tokens, 2, -1).repeat(1, 1, 2)
+    cos, sin = cos_sin.chunk(2, dim=-2)
+    _cos_slots[slot_id][:, :num_tokens] = cos
+    _sin_slots[slot_id][:, :num_tokens] = sin
     _cos_slice_slots[slot_id] = _cos_slots[slot_id][:, :num_tokens]
     _sin_slice_slots[slot_id] = _sin_slots[slot_id][:, :num_tokens]
 

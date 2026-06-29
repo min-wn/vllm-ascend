@@ -11,6 +11,7 @@ from vllm.platforms import CpuArchEnum
 
 from tests.ut.base import TestBase
 from vllm_ascend.ascend_forward_context import set_ascend_forward_context
+from vllm_ascend.ops import rotary_embedding
 from vllm_ascend.ops.rotary_embedding import _custom_rotary_embedding_enabled
 from vllm_ascend.utils import AscendDeviceType
 
@@ -72,6 +73,40 @@ class TestCustomRotaryEmbeddingEnabled(unittest.TestCase):
             result = _custom_rotary_embedding_enabled(self.query, True,
                                                       self.head_size)
             self.assertFalse(result)
+
+
+class TestUpdateCosSin(unittest.TestCase):
+
+    def tearDown(self):
+        rotary_embedding._cos_sin_cache = None
+        rotary_embedding._cos_slots = [None] * 2
+        rotary_embedding._sin_slots = [None] * 2
+        rotary_embedding._cos_slice_slots = [None] * 2
+        rotary_embedding._sin_slice_slots = [None] * 2
+
+    def test_update_cos_sin_matches_original_two_gather_layout(self):
+        positions = torch.tensor([3, 1, 4], dtype=torch.long)
+        cos_sin_cache = torch.arange(6 * 8, dtype=torch.float32).reshape(6, 8)
+        rotary_embedding._cos_sin_cache = cos_sin_cache
+        rotary_embedding._cos_slots = [torch.empty(1, 8, 1, 8), None]
+        rotary_embedding._sin_slots = [torch.empty(1, 8, 1, 8), None]
+
+        rotary_embedding.update_cos_sin(positions)
+
+        num_tokens = positions.size(0)
+        expected_cos = cos_sin_cache.index_select(0, positions).view(
+            num_tokens, 2, -1).repeat(1, 1, 2).chunk(2, dim=-2)[0]
+        expected_sin = cos_sin_cache.index_select(0, positions).view(
+            num_tokens, 2, -1).repeat(1, 1, 2).chunk(2, dim=-2)[1]
+
+        torch.testing.assert_close(rotary_embedding._cos_slots[0][:, :3],
+                                   expected_cos.unsqueeze(0))
+        torch.testing.assert_close(rotary_embedding._sin_slots[0][:, :3],
+                                   expected_sin.unsqueeze(0))
+        self.assertIs(rotary_embedding._cos_slice_slots[0]._base,
+                      rotary_embedding._cos_slots[0])
+        self.assertIs(rotary_embedding._sin_slice_slots[0]._base,
+                      rotary_embedding._sin_slots[0])
 
 
 class TestAscendRotaryEmbedding(unittest.TestCase):

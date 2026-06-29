@@ -1,7 +1,8 @@
 import math
+import time
 from contextlib import contextmanager
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import torch
 from vllm.config import CUDAGraphMode, VllmConfig
@@ -195,7 +196,12 @@ def create_ascend_forward_context(
     cos_sin_slot_id: int = 0,
     reuse_existing_cos_sin: bool = False,
     clone_cos_sin: bool = True,
+    perf_callback: Optional[Callable[[str, float], None]] = None,
 ):
+    def record_elapsed_ms(name: str, start: float) -> None:
+        if perf_callback is not None and start:
+            perf_callback(name, (time.perf_counter() - start) * 1000.0)
+
     new_forward_context = ForwardContext(
         no_compile_layers=vllm_config.compilation_config.
         static_forward_context,
@@ -278,6 +284,7 @@ def create_ascend_forward_context(
     # vllm-ascend use global cos/sin cache, which should be sliced when using dbo
     from vllm_ascend.ops.rotary_embedding import update_cos_sin, get_cos_and_sin_slice, get_cos_and_sin_mla
     if ubatch_slices and ubatch_slices[ubatch_num]:
+        cos_sin_total_start = time.perf_counter() if perf_callback else 0.0
         token_slice = ubatch_slices[ubatch_num].token_slice
         positions = slice_positions_by_token(positions, token_slice)
         # slice cos_mla/sin_mla for dbo
@@ -308,12 +315,18 @@ def create_ascend_forward_context(
                 cos_slice = None
                 sin_slice = None
         if cos_slice is None or sin_slice is None:
+            update_start = time.perf_counter() if perf_callback else 0.0
             update_cos_sin(positions, slot_id=cos_sin_slot_id)
+            record_elapsed_ms("inplace_context_cos_sin_update_ms",
+                              update_start)
             cos_slice, sin_slice = get_cos_and_sin_slice(
                 slot_id=cos_sin_slot_id)
         if clone_cos_sin:
+            clone_start = time.perf_counter() if perf_callback else 0.0
             new_forward_context.cos = cos_slice.clone()
             new_forward_context.sin = sin_slice.clone()
+            record_elapsed_ms("inplace_context_cos_sin_clone_ms",
+                              clone_start)
         else:
             new_forward_context.cos = cos_slice
             new_forward_context.sin = sin_slice
@@ -325,6 +338,8 @@ def create_ascend_forward_context(
 
         new_forward_context.sin_mla = sin_mla[
             mla_slice] if sin_mla is not None else None
+        record_elapsed_ms("inplace_context_cos_sin_total_ms",
+                          cos_sin_total_start)
 
     return new_forward_context
 

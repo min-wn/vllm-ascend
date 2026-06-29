@@ -12,6 +12,8 @@ from vllm_ascend.attention.utils import (AscendCommonAttentionMetadata,
                                          split_attn_metadata)
 from vllm_ascend.worker.model_runner_v3 import (
     NPUModelRunner,
+    _inplace_parallel_clone_cos_sin,
+    _inplace_parallel_clone_split_outputs,
     _inplace_split_precheck_reason,
     _inplace_plan_to_execution_slices,
     _macro_template_fia_seq_lens_for_update,
@@ -43,6 +45,44 @@ def _plan_249_bucket():
     )
     assert plan is not None, reason
     return plan
+
+
+def _cos_sin_clone_policy(**overrides):
+    kwargs = {
+        "allow_auto_direct_cos_sin": True,
+        "split_cfg": SimpleNamespace(mode="inplace_parallel",
+                                     enable_parallel_streams=True),
+        "split_batch_slices": [
+            SplitBatchSlice(slice(0, 256), slice(0, 256)),
+            SplitBatchSlice(slice(256, 300),
+                            slice(256, 300),
+                            padded_num_tokens=64,
+                            start_num_tokens=256),
+        ],
+        "aclgraph_runtime_mode": CUDAGraphMode.FULL,
+        "attention_backend": "fia",
+    }
+    kwargs.update(overrides)
+    return _inplace_parallel_clone_cos_sin(**kwargs)
+
+
+def _split_output_clone_policy(**overrides):
+    kwargs = {
+        "allow_auto_direct_outputs": True,
+        "split_cfg": SimpleNamespace(mode="inplace_parallel",
+                                     enable_parallel_streams=True),
+        "split_batch_slices": [
+            SplitBatchSlice(slice(0, 256), slice(0, 256)),
+            SplitBatchSlice(slice(256, 300),
+                            slice(256, 300),
+                            padded_num_tokens=64,
+                            start_num_tokens=256),
+        ],
+        "aclgraph_runtime_mode": CUDAGraphMode.FULL,
+        "merge_sync_policy": "event_wait",
+    }
+    kwargs.update(overrides)
+    return _inplace_parallel_clone_split_outputs(**kwargs)
 
 
 def _precheck_reason(**overrides):
@@ -103,6 +143,60 @@ def _common_decode_metadata(num_reqs: int,
         attn_state=AscendAttentionState.DecodeOnly,
         num_input_tokens=num_reqs,
     )
+
+
+def test_inplace_parallel_cos_sin_auto_policy_is_full_graph_only():
+    with patch(
+            "vllm_ascend.worker.model_runner_v3."
+            "_INPLACE_PARALLEL_COS_SIN_MODE", "auto"):
+        assert _cos_sin_clone_policy() is False
+        assert _cos_sin_clone_policy(allow_auto_direct_cos_sin=False) is True
+        assert _cos_sin_clone_policy(
+            aclgraph_runtime_mode=CUDAGraphMode.PIECEWISE) is True
+        assert _cos_sin_clone_policy(attention_backend="mixed_request") is True
+        assert _cos_sin_clone_policy(split_batch_slices=[
+            SplitBatchSlice(slice(0, 128), slice(0, 128))
+        ]) is True
+
+
+def test_inplace_parallel_cos_sin_forced_modes_override_auto_policy():
+    with patch(
+            "vllm_ascend.worker.model_runner_v3."
+            "_INPLACE_PARALLEL_COS_SIN_MODE", "clone"):
+        assert _cos_sin_clone_policy() is True
+
+    with patch(
+            "vllm_ascend.worker.model_runner_v3."
+            "_INPLACE_PARALLEL_COS_SIN_MODE", "direct"):
+        assert _cos_sin_clone_policy(allow_auto_direct_cos_sin=False) is False
+
+
+def test_inplace_parallel_split_output_auto_policy_is_full_graph_event_wait():
+    with patch(
+            "vllm_ascend.worker.model_runner_v3."
+            "_INPLACE_PARALLEL_SPLIT_OUTPUT_MODE", "auto"):
+        assert _split_output_clone_policy() is False
+        assert _split_output_clone_policy(
+            allow_auto_direct_outputs=False) is True
+        assert _split_output_clone_policy(
+            aclgraph_runtime_mode=CUDAGraphMode.PIECEWISE) is True
+        assert _split_output_clone_policy(merge_sync_policy="host_sync") is True
+        assert _split_output_clone_policy(split_batch_slices=[
+            SplitBatchSlice(slice(0, 128), slice(0, 128))
+        ]) is True
+
+
+def test_inplace_parallel_split_output_forced_modes_override_auto_policy():
+    with patch(
+            "vllm_ascend.worker.model_runner_v3."
+            "_INPLACE_PARALLEL_SPLIT_OUTPUT_MODE", "clone"):
+        assert _split_output_clone_policy() is True
+
+    with patch(
+            "vllm_ascend.worker.model_runner_v3."
+            "_INPLACE_PARALLEL_SPLIT_OUTPUT_MODE", "direct"):
+        assert _split_output_clone_policy(
+            allow_auto_direct_outputs=False) is False
 
 
 def test_inplace_split_precheck_accepts_supported_decode_only():
@@ -1329,7 +1423,7 @@ def test_offset_capture_replays_and_updates_before_return():
                                  start_num_tokens=384,
                                  graph_variant="inplace_serial",
                                  attention_backend="fia",
-                                 capture_metadata_mode="template")
+                                 capture_metadata_mode="")
     metadata = SimpleNamespace(
         context=SimpleNamespace(cudagraph_runtime_mode=CUDAGraphMode.FULL,
                                 capturing=False,

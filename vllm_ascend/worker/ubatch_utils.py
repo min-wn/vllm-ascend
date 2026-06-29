@@ -350,6 +350,8 @@ NO_SPLIT_OFFSET_BUCKET_TOO_SMALL = "no_split_offset_bucket_too_small"
 NO_SPLIT_OFFSET_PADDING_TOO_LARGE = "no_split_offset_padding_too_large"
 NO_SPLIT_OFFSET_GRAPH_EXCEEDS_PADDED_BATCH = (
     "no_split_offset_graph_exceeds_padded_batch")
+NO_SPLIT_INPLACE_PADDING_SAVING_TOO_SMALL = (
+    "no_split_inplace_padding_saving_too_small")
 NO_SPLIT_OFFSET_GRAPH_EXCEEDS_START_CAP = (
     "no_split_offset_graph_exceeds_start_cap")
 NO_SPLIT_OFFSET_GRAPH_BELOW_MIN_SIZE = (
@@ -557,6 +559,8 @@ def create_inplace_split_batch_slices(
     cudagraph_capture_sizes: Iterable[int],
     inplace_max_remainder_tokens: Optional[int] = None,
     *,
+    inplace_min_padding_saved_tokens: Optional[int] = None,
+    inplace_split_overhead_tokens: int = 0,
     offset_match_policy: str = "exact",
     offset_capture_sizes: Optional[Iterable[int]] = None,
     offset_min_graph_tokens: int = 1,
@@ -596,6 +600,13 @@ def create_inplace_split_batch_slices(
     capture_sizes = _normalize_capture_sizes(cudagraph_capture_sizes)
     if not capture_sizes:
         return None, NO_SPLIT_NO_CAPTURE_SIZES
+    min_padding_saved_tokens = (
+        None if inplace_min_padding_saved_tokens is None else
+        int(inplace_min_padding_saved_tokens))
+    split_overhead_tokens = max(0, int(inplace_split_overhead_tokens))
+    required_padding_saved_tokens = (
+        None if min_padding_saved_tokens is None else
+        min_padding_saved_tokens + split_overhead_tokens)
 
     total_tokens = int(total_num_tokens)
     max_capture_size = capture_sizes[-1]
@@ -703,9 +714,11 @@ def create_inplace_split_batch_slices(
                 and second_padding_tokens > int(offset_max_padding_tokens)):
             last_reject_reason = NO_SPLIT_OFFSET_PADDING_TOO_LARGE
             continue
-        if first_tokens + second_graph_tokens > padded_without_split:
+        split_graph_tokens = first_tokens + second_graph_tokens
+        if split_graph_tokens > padded_without_split:
             last_reject_reason = NO_SPLIT_OFFSET_GRAPH_EXCEEDS_PADDED_BATCH
             continue
+        padding_saved_tokens = padded_without_split - split_graph_tokens
 
         split_slices = [
             SplitBatchSlice(
@@ -745,14 +758,34 @@ def create_inplace_split_batch_slices(
             offset_max_graph_tokens_by_start,
             offset_allowed_graph_tokens_by_start=
             offset_allowed_graph_tokens_by_start,
+            extra_debug_payload={
+                "split_graph_tokens": split_graph_tokens,
+                "padding_saved_tokens": padding_saved_tokens,
+                "inplace_min_padding_saved_tokens":
+                min_padding_saved_tokens,
+                "inplace_split_overhead_tokens": split_overhead_tokens,
+                "inplace_effective_padding_saved_tokens":
+                padding_saved_tokens - split_overhead_tokens,
+                "inplace_required_padding_saved_tokens":
+                required_padding_saved_tokens,
+            },
         )
         if first_tokens_policy == "largest_lower":
+            if (required_padding_saved_tokens is not None
+                    and padding_saved_tokens < required_padding_saved_tokens):
+                return None, NO_SPLIT_INPLACE_PADDING_SAVING_TOO_SMALL
             return plan, INPLACE_SPLIT_DRY_RUN
         candidate_plans.append(plan)
 
     if candidate_plans:
-        return min(candidate_plans,
-                   key=_balanced_inplace_split_score), INPLACE_SPLIT_DRY_RUN
+        best_plan = min(candidate_plans, key=_balanced_inplace_split_score)
+        padding_saved_tokens = (
+            best_plan.padded_num_tokens_without_split -
+            (best_plan.first_tokens + best_plan.second_graph_tokens))
+        if (required_padding_saved_tokens is not None
+                and padding_saved_tokens < required_padding_saved_tokens):
+            return None, NO_SPLIT_INPLACE_PADDING_SAVING_TOO_SMALL
+        return best_plan, INPLACE_SPLIT_DRY_RUN
 
     return None, last_reject_reason
 
