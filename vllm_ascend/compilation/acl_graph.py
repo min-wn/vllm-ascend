@@ -210,6 +210,36 @@ def maybe_template_fia_seq_lens(forward_context: Any, seq_lens: Any,
     return templated_seq_lens
 
 
+def _tensor_head(value, n=9):
+    if isinstance(value, torch.Tensor):
+        return value.detach().cpu().flatten()[:n].tolist()
+    return str(value)[:120]
+
+def _dump_fia_update_param(path, forward_context, key, param_key, runtime_shape, in_parallel_streams, seq_lens, actual_seq_lengths_q, block_tables, block_size, metadata):
+    try:
+        import json
+        slot_mapping = getattr(metadata, "slot_mapping", None)
+        positions = getattr(forward_context, "positions", None)
+        batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+        record = {
+            "layer_key": str(key),
+            "param_key": str(param_key),
+            "runtime_shape": int(runtime_shape) if hasattr(runtime_shape, "__int__") else str(runtime_shape),
+            "in_parallel_streams": bool(in_parallel_streams),
+            "batch_descriptor": str(batch_descriptor),
+            "seq_lens_head": _tensor_head(seq_lens),
+            "actual_seq_lengths_q_head": _tensor_head(actual_seq_lengths_q),
+            "block_table_head": block_tables.detach().cpu()[:2, :8].tolist() if isinstance(block_tables, torch.Tensor) and block_tables.ndim >= 2 else _tensor_head(block_tables),
+            "slot_mapping_head": _tensor_head(slot_mapping),
+            "positions_head": _tensor_head(positions),
+            "block_size": int(block_size),
+        }
+        with open(path, "a") as f:
+            f.write(json.dumps(record, default=str) + "\n")
+    except Exception as exc:
+        with open(path, "a") as f:
+            f.write('{"dump_error": %r}\n' % (repr(exc)[:200],))
+
 def _get_attention_update_metadata(forward_context: Any, key: Any) -> Any:
     """Return runtime metadata for graph_task_update.
 
@@ -1283,6 +1313,29 @@ class ACLGraphWrapper:
         return entry.output
 
 
+def _dump_pa_update_param(path, forward_context, key, param_key, runtime_shape, in_parallel_streams, seq_lens, block_table, metadata):
+    try:
+        import json
+        slot_mapping = getattr(metadata, "slot_mapping", None)
+        positions = getattr(forward_context, "positions", None)
+        batch_descriptor = getattr(forward_context, "batch_descriptor", None)
+        record = {
+            "layer_key": str(key),
+            "param_key": str(param_key),
+            "runtime_shape": int(runtime_shape) if hasattr(runtime_shape, "__int__") else str(runtime_shape),
+            "in_parallel_streams": bool(in_parallel_streams),
+            "batch_descriptor": str(batch_descriptor),
+            "seq_lens_head": _tensor_head(seq_lens),
+            "block_table_head": block_table.detach().cpu()[:2, :8].tolist() if isinstance(block_table, torch.Tensor) and block_table.ndim >= 2 else _tensor_head(block_table),
+            "slot_mapping_head": _tensor_head(slot_mapping),
+            "positions_head": _tensor_head(positions),
+        }
+        with open(path, "a") as f:
+            f.write(json.dumps(record, default=str) + "\n")
+    except Exception as exc:
+        with open(path, "a") as f:
+            f.write('{"dump_error": %r}\n' % (repr(exc)[:200],))
+
 def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                            refresh_block_table: bool = False,
                            in_parallel_streams: bool = False):
@@ -1330,6 +1383,7 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
                                metadata.seq_lens)
             metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
                 runtime_metadata)
+            _dump_pa_update_param("/tmp/source_pa_update.jsonl", forward_context, key, param_key, runtime_shape, in_parallel_streams, seq_lens, block_table, metadata)
             block_table_refreshed = False
             if refresh_block_table:
                 block_table_refreshed = _refresh_block_table_in_place(
@@ -1474,6 +1528,8 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                                                metadata.actual_seq_lengths_q)
                 metadata_block_table, metadata_block_source = (
                     _extract_block_table_from_metadata(runtime_metadata))
+            if True:
+                _dump_fia_update_param("/tmp/source_fia_update.jsonl", forward_context, key, param_key, runtime_shape, in_parallel_streams, seq_lens, actual_seq_lengths_q, block_tables, block_size, metadata)
             block_table_refreshed = False
             if refresh_block_table and not use_captured_params:
                 block_table_refreshed = _refresh_block_table_in_place(

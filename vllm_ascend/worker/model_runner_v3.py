@@ -3074,7 +3074,7 @@ class NPUModelRunner(GPUModelRunner):
         self.dump_enable = dump_cfg.enable_dump
         self.debugger = None
         if self.dump_enable:
-            if self.model_config.enforce_eager:
+            if self.model_config.enforce__build_dual_stream_attention_metadataeager:
                 from msprobe.pytorch import PrecisionDebugger
                 self.debugger = PrecisionDebugger(dump_cfg.config_path)
             else:
