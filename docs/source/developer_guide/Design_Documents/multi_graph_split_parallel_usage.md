@@ -53,7 +53,7 @@ On 2026-10-15, Qwen2.5-0.5B-Instruct passed eager/single/serial/parallel compari
 
 ## Measured routing
 
-Run the benchmark with `--decode-costs --repeats 5` to produce `serial.costs.json` and `parallel.costs.json`. This mode synchronizes before and after each decode model forward and includes input preparation, graph updates and output merge. It runs independently from the optional profiler pass. Generation latency remains a separate metric and cannot be imported as decode cost.
+Run the benchmark with `--decode-costs --repeats 5` to produce `serial.costs.json` and `parallel.costs.json`. A separate fresh process per mode synchronizes before and after each decode model forward, including the adapter's buffer refresh, graph updates and output merge. Scheduler preprocessing and logits/sampling outside the forward are excluded. The primary generation timing has no per-step synchronization. Profiling runs in another fresh process. Generation latency cannot be imported as decode cost.
 
 Set `selection_policy="measured"`, `cost_table_path="/absolute/path/parallel.costs.json"`, `minimum_cost_samples=5` and `minimum_gain_fraction=0.05` using the same model, capture sizes, graph budget and software/device environment used for calibration. Capture identity excludes routing policy, execution mode and cost file path. Records still distinguish serial and parallel execution. Model configuration, capture configuration, device name/index, dtype, backend, KV layout, graph generation and torch/torch-npu/vLLM/plugin versions must match. An invalid, oversized or incompatible file fails startup before lane stream allocation.
 
@@ -85,6 +85,36 @@ python benchmarks/multi_graph_split.py --batch-size 7 --dtype bfloat16 --trace -
 The FIA test captures two independent pools, changes query tensors and KV lengths over repeated replays, and compares with the same eager FIA operator. A subprocess timeout detects hangs. The model test covers even/odd batches and both dtypes across eager, single, serial split and parallel split; it asserts split execution occurred and compares tokens and selected-token log probabilities.
 
 The benchmark uses fresh processes, records repeated warm generation latency plus versions/device identity, and optionally exports NPU traces in a separate profiling run. Generation latency includes prefill and sampling; it is not a decode-only kernel measurement. Inspect traces to establish actual stream overlap. No speedup is claimed from CPU tests.
+
+## Padding performance comparison
+
+Use the same card for sequential mode runs. For a 7-request batch, a single graph of capacity 8 pads one row; split sizes 4 and 3 contain no padding:
+
+```bash
+ASCEND_RT_VISIBLE_DEVICES=0 python benchmarks/multi_graph_split.py \
+  --model /workspace/models/Qwen2.5-0.5B-Instruct \
+  --kv-cache-layout contiguous \
+  --batch-size 7 --single-capacity 8 --lane-sizes 4 3 \
+  --prompt-tokens 32 --prompt-pattern staggered --prompt-spread 32 \
+  --output-tokens 64 --max-model-len 512 \
+  --kv-blocks 256 --prefix-cache off \
+  --warmups 3 --repeats 20 --decode-costs --trace \
+  --output-dir padding_comparison
+```
+
+`--batch-size`, `--single-capacity` and `--lane-sizes` are independent. For example, 416 requests can compare a capacity-512 single graph with exact split sizes 384 and 32, subject to hardware resource limits and correctness validation. Lane sizes must sum to the actual batch; padded split entries remain unsupported. The single capture list contains only the requested capacity so the reference cannot silently select a smaller exact graph. All graph modes still capture that single graph for fallback; split modes additionally capture the two lane entries.
+
+Synthetic prompts use valid tokenizer IDs with exact requested token lengths. Patterns are `uniform`, `staggered` and `bimodal`; `--prompt-spread` controls the difference in input lengths. Maximum prompt plus output length is checked. All modes use block size 128 and the same explicit `num_gpu_blocks_override`, either `--kv-blocks` or a derived capacity. An insufficient workload KV budget fails before execution. Split modes retain the explicit startup graph reservation; because the block override fixes actual KV capacity, that reservation does not give the baseline more KV blocks. JSON reports actual blocks, memory after warmup, peak allocated/reserved memory, startup time and graph reservation. Changing KV capacity can change workspace/algorithm selection, so retain these fields when comparing runs.
+
+The default scheduler token budget covers the complete prefill batch and the single-graph capacity, preventing the benchmark from unintentionally becoming a mixed/partially admitted decode test. `--max-batched-tokens` may override that budget but must still cover both. With prefix caching off, the audit requires exactly `repeats * (output_tokens - 1)` decode steps; missing steps invalidate the measurement.
+
+The default prefix cache policy is off; `--prefix-cache on` instead measures repeated warm-cache requests and must be reported as such. Default warmup count is 3 and measured generation count is 20. Each generation boundary is synchronized. JSON includes raw samples, p50/p90/p95/p99, standard deviation, coefficient of variation and output tokens/second. A p99 from a small sample is descriptive rather than a stable tail estimate. These statistics do not replace repeated runs under controlled device load and thermal conditions.
+
+Use `--mode-order parallel serial single eager` to repeat the experiment in reversed order and check order/thermal effects. The order is saved in the summary. Per-mode metadata records the source commit, dirty-worktree flag, benchmark file hash, driver/CANN information and package versions.
+
+Primary files are `eager.json`, `single.json`, `serial.json` and `parallel.json`. With `--decode-costs`, additional `*.decode.json` files contain synchronized forward samples and per-step audits. The audit observes actual single-graph replay capacity, actual lane sizes, KV lengths, padding fraction and fallback reasons; an unexpected route aborts the comparison. With `--trace`, `*.trace.json` records profiler-run metadata and `*.trace.trace.json` contains Chrome traces; those runs have one measured generation and are excluded from throughput ratios. Inspect NPU kernel intervals on the lane streams to establish overlap; multiple streams alone are not evidence of parallel execution.
+
+`summary.json` checks tokens and selected-token log probabilities across all measured repetitions against the eager/single controls, checks common KV block capacity, and reports ratios only for primary generation measurements. Decode cost records pair identical ordered KV vectors and executed split shapes. The model-forward metric includes adapter overhead and synchronization effects; it is neither isolated kernel latency nor production inter-token latency. Use the serial split to distinguish split overhead from benefits of parallel execution.
 
 ## CPU verification
 

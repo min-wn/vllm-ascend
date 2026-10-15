@@ -24,6 +24,10 @@ def test_multi_graph_tokens_and_selected_logprobs(tmp_path, dtype, batch_size, k
             str(batch_size),
             "--repeats",
             "2",
+            "--warmups",
+            "1",
+            "--output-tokens",
+            "16",
             "--kv-cache-layout",
             kv_cache_layout,
             "--output-dir",
@@ -36,6 +40,10 @@ def test_multi_graph_tokens_and_selected_logprobs(tmp_path, dtype, batch_size, k
         mode: json.loads((tmp_path / f"{mode}.json").read_text(encoding="utf-8"))
         for mode in ("eager", "single", "serial", "parallel")
     }
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["measurements"]["generation"]["correctness"]["all_repeats_checked"]
+    assert len({result["resources"]["kv_blocks"] for result in results.values()}) == 1
+    assert all(result["prefix_cache"] == "off" for result in results.values())
     baseline = results["single"]["requests"]
     eager = results["eager"]["requests"]
     for mode, result in results.items():
