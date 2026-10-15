@@ -1,8 +1,28 @@
 from __future__ import annotations
 
+import json
 import math
 import statistics
+from pathlib import Path
 from typing import Any
+
+
+def inspect_device_trace(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    events = payload if isinstance(payload, list) else payload["traceEvents"]
+    device_pids = {
+        event["pid"]
+        for event in events
+        if event.get("name") == "process_name" and event.get("args", {}).get("name") == "Ascend Hardware"
+    }
+    durations = [
+        event
+        for event in events
+        if event.get("pid") in device_pids and event.get("ph") == "X" and float(event.get("dur", 0)) > 0
+    ]
+    if not durations:
+        raise ValueError("profiler trace contains no Ascend device execution events")
+    return {"device_events": len(durations), "device_streams": sorted({event["tid"] for event in durations})}
 
 
 def summarize(values: list[float]) -> dict[str, float | int]:

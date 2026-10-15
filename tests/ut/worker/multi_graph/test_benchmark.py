@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from vllm_ascend.worker.multi_graph.benchmark import (
+    inspect_device_trace,
     resolve_workload,
     summarize,
     verify_decode_steps,
@@ -89,6 +90,20 @@ def test_statistics_include_interpolated_percentiles_and_variance():
     assert result["p95"] == pytest.approx(3.85)
     assert result["count"] == 4 and result["stdev"] > 0
     assert summarize([1.0])["stdev"] == 0
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_profiler_requires_real_device_events(tmp_path, wrapped):
+    events = [
+        {"name": "process_name", "ph": "M", "pid": 7, "args": {"name": "Ascend Hardware"}},
+        {"name": "MatMul", "ph": "X", "pid": 7, "tid": 11, "dur": 1.5},
+    ]
+    path = tmp_path / "trace.json"
+    path.write_text(json.dumps({"traceEvents": events} if wrapped else events))
+    assert inspect_device_trace(path) == {"device_events": 1, "device_streams": [11]}
+    path.write_text(json.dumps(events[:1]))
+    with pytest.raises(ValueError, match="no Ascend"):
+        inspect_device_trace(path)
 
 
 @pytest.mark.parametrize("values", [[], [0.0], [-1.0], [float("nan")], [float("inf")]])

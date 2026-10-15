@@ -14,7 +14,13 @@ import sys
 import time
 from pathlib import Path
 
-from vllm_ascend.worker.multi_graph.benchmark import resolve_workload, summarize, verify_decode_steps, verify_outputs
+from vllm_ascend.worker.multi_graph.benchmark import (
+    inspect_device_trace,
+    resolve_workload,
+    summarize,
+    verify_decode_steps,
+    verify_outputs,
+)
 
 
 def run_child(args) -> None:
@@ -163,7 +169,8 @@ def run_child(args) -> None:
     profiler = None
     if args.measurement == "trace":
         profiler = torch_npu.profiler.profile(
-            activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU]
+            activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU],
+            schedule=torch_npu.profiler.schedule(wait=0, warmup=0, active=1, repeat=1),
         )
         profiler.start()
     for _ in range(repeats):
@@ -190,9 +197,13 @@ def run_child(args) -> None:
         generations.append(requests)
         token_counts.append(sum(len(request["tokens"]) for request in requests))
     state["recording"] = False
+    trace_info = None
     if profiler is not None:
+        profiler.step()
         profiler.stop()
-        profiler.export_chrome_trace(str(Path(args.result).with_suffix(".trace.json")))
+        trace_path = Path(args.result).with_suffix(".trace.json")
+        profiler.export_chrome_trace(str(trace_path))
+        trace_info = inspect_device_trace(trace_path)
     if args.mode in ("serial", "parallel") and not state["split_steps"]:
         raise ValueError("test never entered split execution")
     if args.measurement != "generation":
@@ -240,6 +251,7 @@ def run_child(args) -> None:
         "decode_metric": "synchronized_decode_forward_us" if args.measurement == "decode" else None,
         "decode_samples": samples,
         "capture_signatures": signatures,
+        "trace": trace_info,
         "decode_forward_us": summarize([sample["elapsed_us"] for sample in samples]) if samples else None,
         "resources": resource,
         "environment": {
