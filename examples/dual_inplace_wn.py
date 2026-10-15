@@ -8,8 +8,7 @@ os.environ["VLLM_USE_MODELSCOPE"] = "True"
 os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-MODE = sys.argv[1]
-OUT = sys.argv[2]
+
 
 sys.path.insert(0, "/vllm-workspace/vllm")
 sys.path.insert(0, "/vllm-workspace")
