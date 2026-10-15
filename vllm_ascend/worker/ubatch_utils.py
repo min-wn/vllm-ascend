@@ -423,10 +423,6 @@ def split_batch_split(
         cudagraph_capture_sizes: Set of captured graph sizes (for validation)
         custom_split_sizes: Optional list of exact split sizes (number of requests per split).
                           If provided, must sum to total number of requests.
-        exact_shape_num_tokens: Optional full-batch execution shape hint.
-                          This is only applied when cudagraph capture sizes
-                          are unavailable. When ACL graphs are enabled, each
-                          split keeps its own smallest matching capture size.
         
     Returns:
         tuple[Optional[SplitBatchSlices], Optional[int]]:
@@ -461,32 +457,7 @@ def split_batch_split(
     if not split_slices or len(split_slices) < 2:
         return (None, None)
 
-    # if exact_shape_num_tokens is not None and not cudagraph_capture_sizes:
-    if exact_shape_num_tokens is not None:
-        padded_size = int(exact_shape_num_tokens)
-        if padded_size < num_tokens_padded:
-            logger.warning(
-                "Exact-shape split requested with padded_size=%s smaller than "
-                "full padded tokens=%s; ignoring exact-shape override.",
-                padded_size,
-                num_tokens_padded,
-            )
-        else:
-            padded_total = 0
-            for split_slice in split_slices:
-                if padded_size < split_slice.num_tokens:
-                    logger.warning(
-                        "Exact-shape split requested with padded_size=%s smaller "
-                        "than split tokens=%s; ignoring exact-shape override.",
-                        padded_size,
-                        split_slice.num_tokens,
-                    )
-                    break
-                split_slice.padded_num_tokens = padded_size
-                split_slice.physical_num_tokens = padded_size
-                padded_total += padded_size
-            else:
-                return (split_slices, padded_total)
+
 
     # Validate that each split size has a corresponding captured graph
     # (only relevant when cudagraph is enabled)

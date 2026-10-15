@@ -42,253 +42,6 @@ class ACLGraphEntry:
     attn_metadata_addresses: Optional[dict[str, list[dict[str, Any]]]] = None
 
 
-_ACL_GRAPH_DIAG_ENABLE = (
-    os.environ.get("VLLM_ASCEND_ACLGRAPH_DIAG", "0") in ("1", "true", "True")
-    or os.environ.get("VLLM_ASCEND_SPLIT_DIAG", "0") in ("1", "true", "True")
-)
-_ACL_GRAPH_DIAG_MAX_LOGS = int(
-    os.environ.get("VLLM_ASCEND_ACLGRAPH_DIAG_MAX_LOGS", "600"))
-_acl_graph_diag_count = 0
-_ACLGRAPH_REPLAY_GLOBAL_SYNC = (
-    os.environ.get("VLLM_ASCEND_ACLGRAPH_REPLAY_GLOBAL_SYNC", "0")
-    in ("1", "true", "True")
-)
-_ACLGRAPH_ADDR_CHECK = (
-    envs.VLLM_LOGGING_LEVEL == "DEBUG"
-    or os.environ.get("VLLM_ASCEND_ACLGRAPH_ADDR_CHECK", "0")
-    in ("1", "true", "True")
-)
-_ACLGRAPH_ATTN_METADATA_ADDR_CHECK = (
-    os.environ.get("VLLM_ASCEND_ACLGRAPH_ATTN_METADATA_ADDR_CHECK", "0")
-    in ("1", "true", "True")
-)
-_ACLGRAPH_ATTN_METADATA_ADDR_HARD_FAIL = (
-    os.environ.get("VLLM_ASCEND_ACLGRAPH_ATTN_METADATA_ADDR_HARD_FAIL", "1")
-    not in ("0", "false", "False")
-)
-_ACLGRAPH_ATTN_METADATA_ADDR_IGNORED_KEYS = {
-    key.strip() for key in os.environ.get(
-        "VLLM_ASCEND_ACLGRAPH_ATTN_METADATA_ADDR_IGNORED_KEYS",
-        "query_start_loc,query_start_loc_cpu,seq_lens,seq_lens_cpu,"
-        "cos,sin,cos_mla,sin_mla,positions",
-    ).split(",") if key.strip()
-}
-_ACL_GRAPH_DEBUG_FILE = os.environ.get(
-    "VLLM_ASCEND_ACL_GRAPH_DEBUG_FILE",
-    os.environ.get(
-        "VLLM_ASCEND_SPLIT_METADATA_DEBUG_FILE",
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "acl_graph_debug.log")),
-    ),
-)
-
-
-def _append_acl_graph_debug(tag: str, payload: Any) -> None:
-    try:
-        with open(_ACL_GRAPH_DEBUG_FILE, "a", encoding="utf-8") as f:
-            ts = time.strftime("%Y-%m-%d %H:%M:%S")
-            f.write("[{}] {}: {}\n".format(ts, tag, payload))
-    except Exception as e:
-        logger.warning(
-            "Failed to write acl graph debug file %s: %s",
-            _ACL_GRAPH_DEBUG_FILE,
-            e,
-        )
-
-
-def _safe_tensor_shape(tensor: Any):
-    if not isinstance(tensor, torch.Tensor):
-        return None
-    try:
-        return list(tensor.shape)
-    except Exception:
-        return None
-
-
-def _safe_tensor_ptr(tensor: Any):
-    if not isinstance(tensor, torch.Tensor):
-        return None
-    try:
-        return int(tensor.data_ptr())
-    except Exception:
-        return None
-
-
-def _safe_tensor_head(tensor: Any, max_items: int = 4):
-    # Keep compatibility for older payload keys; intentionally disabled.
-    return None
-
-
-def _resolve_callable_arg_names(runnable: Callable) -> Optional[list[str]]:
-    try:
-        return list(inspect.signature(runnable).parameters.keys())
-    except Exception:
-        return None
-
-
-def _resolve_callable_name(runnable: Callable) -> str:
-    if hasattr(runnable, "__qualname__"):
-        return str(getattr(runnable, "__qualname__"))
-    if hasattr(runnable, "__name__"):
-        return str(getattr(runnable, "__name__"))
-    return type(runnable).__name__
-
-
-def _collect_tensor_arg_infos(
-    args: tuple[Any, ...],
-    arg_names: Optional[list[str]] = None,
-) -> tuple[list[int], list[dict[str, Any]]]:
-    addresses: list[int] = []
-    tensor_infos: list[dict[str, Any]] = []
-    for arg_index, arg in enumerate(args):
-        if not isinstance(arg, torch.Tensor):
-            continue
-        ptr = _safe_tensor_ptr(arg)
-        if ptr is None:
-            # Keep list lengths stable for index-based mismatch diagnostics.
-            ptr = -1
-        addresses.append(ptr)
-        tensor_infos.append({
-            "tensor_index": len(addresses) - 1,
-            "arg_index": arg_index,
-            "arg_name": (
-                arg_names[arg_index]
-                if arg_names is not None and arg_index < len(arg_names)
-                else None
-            ),
-            "shape": _safe_tensor_shape(arg),
-            "dtype": str(arg.dtype),
-            "device": str(arg.device),
-            "stride": list(arg.stride()),
-            "is_contiguous": bool(arg.is_contiguous()),
-        })
-    return addresses, tensor_infos
-
-
-def _collect_attn_metadata_tensor_infos(
-    attn_metadata: Any,
-    max_layers: int = 2,
-    max_depth: int = 3,
-) -> dict[str, list[dict[str, Any]]]:
-    """Collect tensor addresses from the first few attention metadata objects.
-
-    This mirrors the CUDA graph debug guard: ACL graphs bind many metadata
-    tensor addresses at capture time, so replay should use the same storage.
-    """
-    result: dict[str, list[dict[str, Any]]] = {}
-    if not isinstance(attn_metadata, dict):
-        return result
-
-    def visit(obj: Any, prefix: str, depth: int, out: list[dict[str, Any]]) -> None:
-        if obj is None or depth > max_depth:
-            return
-        if isinstance(obj, torch.Tensor):
-            attr_name = prefix.rsplit(".", 1)[-1].split("[", 1)[0]
-            if attr_name in _ACLGRAPH_ATTN_METADATA_ADDR_IGNORED_KEYS:
-                return
-            out.append({
-                "name": prefix,
-                "ptr": _safe_tensor_ptr(obj),
-                "shape": _safe_tensor_shape(obj),
-                "dtype": str(obj.dtype),
-                "device": str(obj.device),
-                "stride": list(obj.stride()),
-            })
-            return
-        if isinstance(obj, dict):
-            for key, value in obj.items():
-                visit(value, f"{prefix}.{key}", depth + 1, out)
-            return
-        if isinstance(obj, (list, tuple)):
-            for idx, value in enumerate(obj[:8]):
-                visit(value, f"{prefix}[{idx}]", depth + 1, out)
-            return
-        for name, value in getattr(obj, "__dict__", {}).items():
-            if name.startswith("_"):
-                continue
-            if isinstance(value, (torch.Tensor, dict, list, tuple)) or hasattr(
-                    value, "__dict__"):
-                visit(value, f"{prefix}.{name}", depth + 1, out)
-
-    for layer_index, (layer_name, metadata) in enumerate(attn_metadata.items()):
-        if layer_index >= max_layers:
-            break
-        layer_infos: list[dict[str, Any]] = []
-        visit(metadata, str(layer_name), 0, layer_infos)
-        result[str(layer_name)] = layer_infos
-    return result
-
-
-def _build_attn_metadata_address_mismatch(
-    expected: dict[str, list[dict[str, Any]]],
-    got: dict[str, list[dict[str, Any]]],
-    max_items: int = 16,
-) -> dict[str, Any]:
-    mismatches: list[dict[str, Any]] = []
-    for layer_name, expected_infos in expected.items():
-        got_infos = got.get(layer_name, [])
-        expected_by_name = {info.get("name"): info for info in expected_infos}
-        got_by_name = {info.get("name"): info for info in got_infos}
-        for tensor_name, expected_info in expected_by_name.items():
-            got_info = got_by_name.get(tensor_name)
-            if got_info is None or expected_info.get("ptr") != got_info.get("ptr"):
-                mismatches.append({
-                    "layer": layer_name,
-                    "tensor": tensor_name,
-                    "expected": expected_info,
-                    "got": got_info,
-                })
-                if len(mismatches) >= max_items:
-                    break
-        if len(mismatches) >= max_items:
-            break
-    return {
-        "expected_layers": list(expected.keys()),
-        "got_layers": list(got.keys()),
-        "mismatch_count": len(mismatches),
-        "mismatches": mismatches,
-    }
-
-
-def _build_input_address_mismatch(
-    expected: list[int],
-    got: list[int],
-    expected_infos: Optional[list[dict[str, Any]]],
-    got_infos: Optional[list[dict[str, Any]]],
-    max_items: int = 8,
-) -> dict[str, Any]:
-    mismatches: list[dict[str, Any]] = []
-    for idx, (exp, new) in enumerate(zip(expected, got)):
-        if exp == new:
-            continue
-        capture_info = expected_infos[idx] if expected_infos and idx < len(expected_infos) else None
-        replay_info = got_infos[idx] if got_infos and idx < len(got_infos) else None
-        mismatches.append({
-            "tensor_index": idx,
-            "arg_index": (
-                capture_info.get("arg_index")
-                if isinstance(capture_info, dict) and "arg_index" in capture_info
-                else (
-                    replay_info.get("arg_index")
-                    if isinstance(replay_info, dict) and "arg_index" in replay_info
-                    else None
-                )
-            ),
-            "expected_ptr": exp,
-            "got_ptr": new,
-            "capture": capture_info,
-            "replay": replay_info,
-        })
-        if len(mismatches) >= max_items:
-            break
-
-    return {
-        "expected_len": len(expected),
-        "got_len": len(got),
-        "length_mismatch": len(expected) != len(got),
-        "mismatch_count": sum(1 for exp, new in zip(expected, got) if exp != new),
-        "mismatches": mismatches,
-    }
-
 
 def _extract_block_table_from_metadata(metadata: Any):
     metadata_block_table = None
@@ -368,37 +121,9 @@ def _refresh_block_table_in_place(graph_block_table: Any,
         return False
 
 
-def _build_replay_block_table_diag(forward_context: Any, runtime_shape: Any) -> dict[str, Any]:
-    attn_metadata = getattr(forward_context, "attn_metadata", None)
-    if not attn_metadata:
-        return {}
-
-    first_key = next(iter(attn_metadata), None)
-    if first_key is None:
-        return {}
-
-    metadata = attn_metadata[first_key]
-    metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(metadata)
-    graph_block_table, graph_block_table_source = _extract_graph_param_block_table(runtime_shape)
-    return {
-        "first_key": first_key,
-        "runtime_shape": runtime_shape,
-        "meta_block_table_source": metadata_block_source,
-        "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
-        "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
-        "graph_block_table_source": graph_block_table_source,
-        "graph_block_table_shape": _safe_tensor_shape(graph_block_table),
-        "graph_block_table_ptr": _safe_tensor_ptr(graph_block_table),
-    }
 
 
-def _maybe_log_acl_graph_diag(tag: str, payload: Any) -> None:
-    global _acl_graph_diag_count
-    if ((not _ACL_GRAPH_DIAG_ENABLE and envs.VLLM_LOGGING_LEVEL != "DEBUG")
-            or _acl_graph_diag_count >= _ACL_GRAPH_DIAG_MAX_LOGS):
-        return
-    logger.info("%s: %s", tag, payload)
-    _acl_graph_diag_count += 1
+
 def refresh_attn_block_table_for_split(update_stream, forward_context,
                                        runtime_shape, vllm_config,
                                        parallel_group: int = 0,
@@ -439,21 +164,7 @@ def _refresh_attn_pa_block_table_only(update_stream, forward_context,
                 _extract_block_table_from_metadata(metadata)
             block_table_refreshed = _refresh_block_table_in_place(
                 block_table, metadata_block_table)
-            _maybe_log_acl_graph_diag(
-                "acl_graph_block_table_refresh_diag",
-                {
-                    "attn_impl": "pa",
-                    "key": key,
-                    "runtime_shape": runtime_shape,
-                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                    "graph_block_table_shape": _safe_tensor_shape(block_table),
-                    "graph_block_table_ptr": _safe_tensor_ptr(block_table),
-                    "meta_block_table_source": metadata_block_source,
-                    "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
-                    "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
-                    "block_table_refreshed": block_table_refreshed,
-                },
-            )
+
 
 
 def _refresh_attn_fia_block_table_only(update_stream, forward_context,
@@ -481,21 +192,7 @@ def _refresh_attn_fia_block_table_only(update_stream, forward_context,
                 _extract_block_table_from_metadata(metadata)
             block_table_refreshed = _refresh_block_table_in_place(
                 block_tables, metadata_block_table)
-            _maybe_log_acl_graph_diag(
-                "acl_graph_block_table_refresh_diag",
-                {
-                    "attn_impl": "fia",
-                    "key": key,
-                    "runtime_shape": runtime_shape,
-                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                    "graph_block_table_shape": _safe_tensor_shape(block_tables),
-                    "graph_block_table_ptr": _safe_tensor_ptr(block_tables),
-                    "meta_block_table_source": metadata_block_source,
-                    "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
-                    "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
-                    "block_table_refreshed": block_table_refreshed,
-                },
-            )
+
 
 
 class ACLGraphWrapper:
@@ -537,8 +234,6 @@ class ACLGraphWrapper:
 
         self.first_run_finished = False
         self.is_debugging_mode = envs.VLLM_LOGGING_LEVEL == "DEBUG"
-        self.runnable_name = _resolve_callable_name(runnable)
-        self.runnable_arg_names = _resolve_callable_arg_names(runnable)
 
         # assert runtime_mode is not NONE(no aclgraph), otherwise, we don't
         # need to initialize a ACLGraphWrapper.
@@ -565,13 +260,6 @@ class ACLGraphWrapper:
         raise AttributeError(f"Attribute {key} not exists in the runnable of "
                              f"aclgraph wrapper: {self.runnable}")
 
-    def get_attn_params_offset(self,
-                                batch_descriptor,
-                                parallel_streams: bool = False,
-                                parallel_group: int = 0) -> int:
-        """Compatibility stub: the new in_parallel_streams design does not
-        use offset-based indexing, so this always returns 0."""
-        return 0
 
     def unwrap(self) -> Callable:
         # in case we need to access the original runnable.
@@ -608,6 +296,8 @@ class ACLGraphWrapper:
         entry = current_concrete_aclgraph_entries[batch_descriptor]
         entry_select_payload = {
             "batch_descriptor": str(batch_descriptor),
+            "graph_num_tokens": getattr(batch_descriptor, "num_tokens", None),
+            "graph_num_reqs": getattr(batch_descriptor, "num_reqs", None),
             "ubatch_num": getattr(forward_context, "ubatch_num", None),
             "in_parallel_streams": in_parallel_streams,
             "entry_created": is_new_entry,
@@ -619,7 +309,6 @@ class ACLGraphWrapper:
                 else str(aclgraph_runtime_mode)
             ),
         }
-        _append_acl_graph_debug("acl_graph_entry_select", entry_select_payload)
         selected_pool=(self.graph_pool_parallel_streams
                      if in_parallel_streams else self.graph_pool)
         if entry.aclgraph is None:
@@ -632,16 +321,6 @@ class ACLGraphWrapper:
                              self.runtime_mode.name, entry.batch_descriptor)
             # validate that aclgraph capturing is legal at this point.
             validate_cudagraph_capturing_enabled()
-            input_addresses, input_tensor_infos = _collect_tensor_arg_infos(
-                args,
-                self.runnable_arg_names,
-            )
-            entry.input_addresses = input_addresses
-            entry.input_tensor_infos = input_tensor_infos
-            if _ACLGRAPH_ATTN_METADATA_ADDR_CHECK:
-                entry.attn_metadata_addresses = (
-                    _collect_attn_metadata_tensor_infos(
-                        getattr(forward_context, "attn_metadata", None)))
             aclgraph = torch.npu.NPUGraph()
             
             with ExitStack() as stack:
@@ -682,100 +361,15 @@ class ACLGraphWrapper:
             # the weak ref of the output, so that pytorch can correctly
             # manage the memory during acl graph capture
             return output
-
-        if _ACLGRAPH_ADDR_CHECK:
-            # check if the input addresses are the same
-            new_input_addresses, new_input_tensor_infos = _collect_tensor_arg_infos(
-                args,
-                self.runnable_arg_names,
-            )
-            if new_input_addresses != entry.input_addresses:
-                mismatch_detail = _build_input_address_mismatch(
-                    entry.input_addresses,
-                    new_input_addresses,
-                    entry.input_tensor_infos,
-                    new_input_tensor_infos,
-                )
-                _append_acl_graph_debug(
-                    "acl_graph_input_addr_mismatch",
-                    {
-                        "entry_id": id(entry),
-                        "runnable": self.runnable_name,
-                        "runnable_arg_names": self.runnable_arg_names,
-                        "batch_descriptor": str(batch_descriptor),
-                        "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                        "in_parallel_streams": in_parallel_streams,
-                        **mismatch_detail,
-                    },
-                )
-                raise AssertionError(
-                    "Input addresses for aclgraphs are different during replay. "
-                    f"mismatch_detail={mismatch_detail}"
-                )
-        if (_ACLGRAPH_ATTN_METADATA_ADDR_CHECK
-                and entry.attn_metadata_addresses is not None):
-            current_attn_metadata_addresses = (
-                _collect_attn_metadata_tensor_infos(
-                    getattr(forward_context, "attn_metadata", None)))
-            mismatch_detail = _build_attn_metadata_address_mismatch(
-                entry.attn_metadata_addresses,
-                current_attn_metadata_addresses,
-            )
-            if mismatch_detail["mismatch_count"] > 0:
-                _append_acl_graph_debug(
-                    "acl_graph_attn_metadata_addr_mismatch",
-                    {
-                        "entry_id": id(entry),
-                        "batch_descriptor": str(batch_descriptor),
-                        "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                        "in_parallel_streams": in_parallel_streams,
-                        **mismatch_detail,
-                    },
-                )
-                # if _ACLGRAPH_ATTN_METADATA_ADDR_HARD_FAIL:
-                #     raise AssertionError(
-                #         "Attention metadata addresses for aclgraphs are "
-                #         "different during replay. "
-                #         f"mismatch_detail={mismatch_detail}"
-                #     )
-
         logger.info_once("Replaying aclgraph")
         # In async scheduling or multi-threaded (MT) scenarios, it is possible that
         # the CPU's record event (from update_attn_params) for the iteration i completes
         # before the grph replay of iteration i-1.
         # To ensure proper ordering, we must call synchronize here before replaying,
         # so that update_attn_params only executes after the previous graph replay has fully completed.
-        runtime_shape = getattr(batch_descriptor, "num_tokens", None)
-        replay_payload = {
-            "entry_id": id(entry),
-            "batch_descriptor": str(batch_descriptor),
-            "ubatch_num": getattr(forward_context, "ubatch_num", None),
-            "in_parallel_streams": in_parallel_streams,
-            "replay_global_sync": bool(_ACLGRAPH_REPLAY_GLOBAL_SYNC
-                                         and not in_parallel_streams),
-            "phase": "pre",
-            "runtime_shape": runtime_shape,
-        }
-        _append_acl_graph_debug("acl_graph_replay", replay_payload)
-        # Keep legacy ordering for the main stream path, but avoid global
-        # barriers for split parallel replay so two streams can overlap.
-        if _ACLGRAPH_REPLAY_GLOBAL_SYNC and not in_parallel_streams:
-            torch.npu.synchronize()
+        torch.npu.synchronize()
         set_graph_pool_id(selected_pool)
         entry.aclgraph.replay()
-        replay_post_diag = _build_replay_block_table_diag(
-            forward_context, runtime_shape)
-        _maybe_log_acl_graph_diag(
-            "acl_graph_replay_post",
-            {
-                "entry_id": id(entry),
-                "batch_descriptor": str(batch_descriptor),
-                "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                "in_parallel_streams": in_parallel_streams,
-                "phase": "post",
-                **replay_post_diag,
-            },
-        )
         return entry.output
 
 
@@ -805,15 +399,7 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
             ) = param
             seq_lens = forward_context.attn_metadata[key].seq_lens
 
-            if _ACL_GRAPH_DIAG_ENABLE:
-                logger.info(
-                    "[DIAG-H2-UPDATE_ATTN] in_parallel=%s key=%s runtime_shape=%s "
-                    "handle=%s stream=%s stream_ptr=%#x "
-                    "graph_params_id=%#x",
-                    in_parallel_streams, key, runtime_shape,
-                    str(handle), str(update_stream), id(update_stream),
-                    id(graph_params),
-                )
+
 
             metadata = forward_context.attn_metadata[key]
             metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
@@ -822,24 +408,6 @@ def _update_attn_pa_params(update_stream, forward_context, runtime_shape,
             if refresh_block_table:
                 block_table_refreshed = _refresh_block_table_in_place(
                     block_table, metadata_block_table)
-            _maybe_log_acl_graph_diag(
-                "acl_graph_attn_update_diag",
-                {
-                    "attn_impl": "pa",
-                    "key": key,
-                    "runtime_shape": runtime_shape,
-                    "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                    "seq_lens_shape": _safe_tensor_shape(seq_lens),
-                    "seq_lens_len": len(seq_lens)
-                    if hasattr(seq_lens, "__len__") else None,
-                    "graph_block_table_shape": _safe_tensor_shape(block_table),
-                    "graph_block_table_ptr": _safe_tensor_ptr(block_table),
-                    "meta_block_table_source": metadata_block_source,
-                    "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
-                    "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
-                    "block_table_refreshed": block_table_refreshed,
-                },
-            )
 
             # When using FULL_DECODE_ONLY, there are some rare bugs for FULL_DECODE_ONLY
             # mode with GQA. This is triggered by getting workspace for _npu_paged_attention
@@ -910,42 +478,6 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                         _diag_aslq_head = [int(actual_seq_lengths_q[i]) for i in range(_n)] if _n > 0 else []
                 except Exception:
                     pass
-                _append_acl_graph_debug(
-                    "acl_graph_fia_seq_lens_values",
-                    {
-                        "key": key,
-                        "runtime_shape": runtime_shape,
-                        "in_parallel_streams": in_parallel_streams,
-                        "ubatch_num": getattr(forward_context, "ubatch_num", None),
-                        "seq_lens_count": len(seq_lens) if hasattr(seq_lens, "__len__") else None,
-                        "seq_lens_head": _diag_sl_head,
-                        "actual_seq_lengths_q_head": _diag_aslq_head,
-                    },
-                )
-            # metadata_block_table, metadata_block_source = _extract_block_table_from_metadata(
-            #     metadata)
-            # block_table_refreshed = False
-            # if refresh_block_table:
-            #     block_table_refreshed = _refresh_block_table_in_place(
-            #         block_tables, metadata_block_table)
-            # _maybe_log_acl_graph_diag(
-            #     "acl_graph_attn_update_diag",
-            #     {
-            #         "attn_impl": "fia",
-            #         "key": key,
-            #         "runtime_shape": runtime_shape,
-            #         "ubatch_num": getattr(forward_context, "ubatch_num", None),
-            #         "seq_lens_shape": _safe_tensor_shape(seq_lens),
-            #         "seq_lens_len": len(seq_lens)
-            #         if hasattr(seq_lens, "__len__") else None,
-            #         "graph_block_table_shape": _safe_tensor_shape(block_tables),
-            #         "graph_block_table_ptr": _safe_tensor_ptr(block_tables),
-            #         "meta_block_table_source": metadata_block_source,
-            #         "meta_block_table_shape": _safe_tensor_shape(metadata_block_table),
-            #         "meta_block_table_ptr": _safe_tensor_ptr(metadata_block_table),
-            #         "block_table_refreshed": block_table_refreshed,
-            #     },
-            # )
             torch.npu.graph_task_update_begin(update_stream, handle)
             torch_npu.npu_fused_infer_attention_score.out(
                 query=query,
@@ -965,7 +497,6 @@ def _update_attn_fia_params(update_stream, forward_context, runtime_shape,
                 out=[attn_output, softmax_lse],
             )
             torch.npu.graph_task_update_end(update_stream)
-
             event.record(update_stream)
 
 

@@ -210,6 +210,32 @@ def create_parser() -> FlexibleArgumentParser:
         ),
     )
     test_group.add_argument(
+        "--prompt-source",
+        type=str,
+        default="default",
+        choices=["default", "longbench-v2"],
+        help=(
+            "Prompt source used when --prompts-file is not set. "
+            "'longbench-v2' reads LongBench-v2 data.json and builds QA prompts."
+        ),
+    )
+    test_group.add_argument(
+        "--longbench-v2-path",
+        type=str,
+        default="/vllm-workspace/LongBench-v2/data.json",
+        help="Path to LongBench-v2 data.json.",
+    )
+    test_group.add_argument(
+        "--prompt-length",
+        type=int,
+        default=0,
+        help=(
+            "Target prompt length in tokenizer tokens for generated prompts. "
+            "0 keeps full prompts. For LongBench-v2, context is truncated first "
+            "so the question and choices are kept when possible."
+        ),
+    )
+    test_group.add_argument(
         "--output-file",
         type=str,
         default=None,
@@ -614,13 +640,165 @@ def _default_prompts() -> list[str]:
 
 
 
-def _generate_prompts(*, batch_size: int, seed: int | None) -> list[str]:
+def _encode_prompt(tokenizer, text: str) -> list[int]:
+    if hasattr(tokenizer, "encode"):
+        return list(tokenizer.encode(text, add_special_tokens=False))
+    raise TypeError(f"Tokenizer {type(tokenizer).__name__} has no encode()")
+
+
+def _decode_prompt(tokenizer, token_ids: list[int]) -> str:
+    if hasattr(tokenizer, "decode"):
+        return str(tokenizer.decode(token_ids, skip_special_tokens=True))
+    raise TypeError(f"Tokenizer {type(tokenizer).__name__} has no decode()")
+
+
+def _fit_prompt_to_token_length(
+    *,
+    tokenizer,
+    prefix: str,
+    context: str,
+    suffix: str,
+    prompt_length: int,
+) -> str:
+    if prompt_length <= 0:
+        return f"{prefix}{context}{suffix}"
+
+    prefix_ids = _encode_prompt(tokenizer, prefix)
+    suffix_ids = _encode_prompt(tokenizer, suffix)
+    budget = prompt_length - len(prefix_ids) - len(suffix_ids)
+    if budget <= 0:
+        prompt_ids = _encode_prompt(tokenizer, f"{prefix}{suffix}")
+        return _decode_prompt(tokenizer, prompt_ids[:prompt_length])
+
+    # LongBench-v2 contexts can exceed tokenizer.model_max_length. Avoid encoding
+    # the full context just to truncate it; grow a character window and then
+    # binary-search within that window so every tokenizer call stays small.
+    hi = min(len(context), max(1, budget * 8))
+    context_ids = _encode_prompt(tokenizer, context[:hi])
+    while len(context_ids) < budget and hi < len(context):
+        next_hi = min(len(context), hi * 2)
+        next_ids = _encode_prompt(tokenizer, context[:next_hi])
+        if len(next_ids) == len(context_ids):
+            hi = next_hi
+            context_ids = next_ids
+            continue
+        if len(next_ids) >= budget:
+            break
+        hi = next_hi
+        context_ids = next_ids
+
+    lo = 0
+    best_ids: list[int] = []
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        mid_ids = _encode_prompt(tokenizer, context[:mid])
+        if len(mid_ids) <= budget:
+            best_ids = mid_ids
+            lo = mid + 1
+        else:
+            hi = mid - 1
+
+    truncated_context = _decode_prompt(tokenizer, best_ids)
+    prompt = f"{prefix}{truncated_context}{suffix}"
+
+    # Tokenizer decode can shift whitespace or byte boundaries slightly. Trim once
+    # more against the final prompt length to keep the user-requested cap strict.
+    prompt_ids = _encode_prompt(tokenizer, prompt)
+    if len(prompt_ids) > prompt_length:
+        prompt = _decode_prompt(tokenizer, prompt_ids[:prompt_length])
+    return prompt
+
+
+def _format_longbench_v2_prompt(row: dict[str, Any]) -> tuple[str, str, str]:
+    choices = []
+    for label in ("A", "B", "C", "D"):
+        value = row.get(f"choice_{label}")
+        if value is not None and str(value):
+            choices.append(f"{label}. {value}")
+
+    prefix = "Context:\n"
+    suffix_parts = [
+        "\n\nQuestion:\n",
+        str(row.get("question") or ""),
+    ]
+    if choices:
+        suffix_parts.extend(["\n\nChoices:\n", "\n".join(choices)])
+    suffix_parts.append("\n\nAnswer:")
+    return prefix, str(row.get("context") or ""), "".join(suffix_parts)
+
+
+def _load_longbench_v2_prompts(
+    *,
+    data_path: str,
+    batch_size: int,
+    seed: int | None,
+    prompt_length: int,
+    tokenizer,
+) -> list[str]:
+    with open(data_path, "r", encoding="utf-8") as f:
+        rows = json.load(f)
+    if not isinstance(rows, list):
+        raise ValueError(f"LongBench-v2 data must be a JSON list: {data_path}")
+
+    indices = list(range(len(rows)))
+    if seed is not None:
+        random.Random(int(seed)).shuffle(indices)
+
+    prompts: list[str] = []
+    for idx in indices:
+        row = rows[idx]
+        if not isinstance(row, dict):
+            continue
+        prefix, context, suffix = _format_longbench_v2_prompt(row)
+        prompts.append(
+            _fit_prompt_to_token_length(
+                tokenizer=tokenizer,
+                prefix=prefix,
+                context=context,
+                suffix=suffix,
+                prompt_length=prompt_length,
+            )
+        )
+        if len(prompts) >= batch_size:
+            break
+
+    if len(prompts) < batch_size:
+        raise ValueError(
+            f"LongBench-v2 data only produced {len(prompts)} prompts, "
+            f"but --batch-size is {batch_size}"
+        )
+    return prompts
+
+
+def _generate_prompts(
+    *,
+    batch_size: int,
+    seed: int | None,
+    prompt_source: str,
+    prompt_length: int,
+    longbench_v2_path: str,
+    tokenizer,
+) -> list[str]:
+    if prompt_source == "longbench-v2":
+        return _load_longbench_v2_prompts(
+            data_path=longbench_v2_path,
+            batch_size=batch_size,
+            seed=seed,
+            prompt_length=prompt_length,
+            tokenizer=tokenizer,
+        )
+
     prompts = _default_prompts()
 
 
     # # Make prompt order deterministic but seed-dependent.
     # rng = random.Random(int(seed or 0))
     # rng.shuffle(prompts)
+    if prompt_length > 0:
+        prompts = [
+            _decode_prompt(tokenizer, _encode_prompt(tokenizer, p)[:prompt_length])
+            for p in prompts
+        ]
     return prompts
 
 
@@ -999,6 +1177,9 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "tokenizer": base_args.get("tokenizer") or base_args.get("model"),
         "seed": base_args.get("seed"),
         "batch_size": ctx["batch_size"],
+        "prompt_source": ctx["prompt_source"],
+        "longbench_v2_path": ctx["longbench_v2_path"],
+        "prompt_length": ctx["prompt_length"],
         "max_tokens": ctx["max_tokens"],
         "max_model_len": base_args.get("max_model_len"),
         "gpu_memory_utilization": base_args.get("gpu_memory_utilization"),
@@ -1025,6 +1206,9 @@ def _coordinator_subprocess(*, base_args: dict[str, Any], prompts: list[str], **
         "--compare-mode",
         "--output-dir",
         "--prompts-file",
+        "--prompt-source",
+        "--longbench-v2-path",
+        "--prompt-length",
         "--output-file",
     }
     profiler_flags_with_value = {
@@ -1207,6 +1391,9 @@ def main() -> int:
     disabled_enforce_eager = bool(args.pop("disabled_enforce_eager"))
     output_dir_base = str(args.pop("output_dir"))
     prompts_file = args.pop("prompts_file")
+    prompt_source = str(args.pop("prompt_source"))
+    longbench_v2_path = str(args.pop("longbench_v2_path"))
+    prompt_length = int(args.pop("prompt_length"))
     output_file = args.pop("output_file")
     dump_logits_debug = bool(args.pop("dump_logits_debug"))
     logits_debug_indices = _parse_csv_ints(args.pop("logits_debug_indices"))
@@ -1262,7 +1449,25 @@ def main() -> int:
     if prompts_file:
         prompts = _load_prompts(str(prompts_file))
     else:
-        prompts = _generate_prompts(batch_size=batch_size, seed=seed)
+        tokenizer = None
+        if prompt_source == "longbench-v2" or prompt_length > 0:
+            try:
+                from vllm.tokenizers import get_tokenizer
+            except ImportError:
+                from vllm.transformers_utils.tokenizer import get_tokenizer
+
+            tokenizer = get_tokenizer(
+                args.get("tokenizer") or args.get("model"),
+                trust_remote_code=bool(args.get("trust_remote_code")),
+            )
+        prompts = _generate_prompts(
+            batch_size=batch_size,
+            seed=seed,
+            prompt_source=prompt_source,
+            prompt_length=prompt_length,
+            longbench_v2_path=longbench_v2_path,
+            tokenizer=tokenizer,
+        )
 
     if len(prompts) != batch_size:
         print(
@@ -1301,6 +1506,9 @@ def main() -> int:
             num_splits=num_splits,
             enable_parallel_streams=enable_parallel_streams,
             min_batch_size_for_split=min_batch_size_for_split,
+            prompt_source=prompt_source,
+            longbench_v2_path=longbench_v2_path,
+            prompt_length=prompt_length,
             profile_enabled=profile_enabled,
             profile_dir=profile_dir,
             profile_target=profile_target,
@@ -1321,6 +1529,9 @@ def main() -> int:
         "tokenizer": args.get("tokenizer") or args.get("model"),
         "seed": seed,
         "batch_size": batch_size,
+        "prompt_source": prompt_source,
+        "longbench_v2_path": longbench_v2_path,
+        "prompt_length": prompt_length,
         "max_tokens": max_tokens,
         "max_model_len": args.get("max_model_len"),
         "gpu_memory_utilization": args.get("gpu_memory_utilization"),
@@ -1330,7 +1541,7 @@ def main() -> int:
         "compilation_config": args.get("compilation_config"),
         "run": run_mode,
         "compare_mode": compare_mode,
-        "disabled_enforce_eager": disabled_enforce_eager,
+        # "disabled_enforce_eager": disabled_enforce_eager,
         "profile_enabled": profile_enabled,
         "profile_dir": profile_dir,
         "profile_target": profile_target,
@@ -1387,6 +1598,9 @@ def main() -> int:
                     "max_model_len": args.get("max_model_len"),
                     "gpu_memory_utilization": args.get("gpu_memory_utilization"),
                     "batch_size": batch_size,
+                    "prompt_source": prompt_source,
+                    "longbench_v2_path": longbench_v2_path,
+                    "prompt_length": prompt_length,
                     "max_tokens": max_tokens,
                     "split_batch_config": split_enabled_cfg["split_batch_config"],
                     "compilation_config": args.get("compilation_config"),
@@ -1409,8 +1623,8 @@ def main() -> int:
         if run_mode in ("both", "disabled"):
             print("\n=== Run: split disabled ===")
             disabled_llm_args = dict(args)
-            if disabled_enforce_eager:
-                disabled_llm_args["enforce_eager"] = True
+            # if disabled_enforce_eager:
+            #     disabled_llm_args["enforce_eager"] = True
             out0, llm0 = _run_single(
                 llm_args=disabled_llm_args,
                 prompts=prompts,
@@ -1432,7 +1646,7 @@ def main() -> int:
             disabled_payload = {
                 "config": "split_disabled",
                 "description": CONFIGS["split_disabled"]["description"],
-                "enforce_eager": disabled_enforce_eager,
+                # "enforce_eager": disabled_enforce_eager,
                 "split_batch_config": split_disabled_cfg["split_batch_config"],
                 "prompts_file": prompts_file,
                 "prompts_path": prompts_path,
