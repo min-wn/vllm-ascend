@@ -108,6 +108,7 @@ from vllm_ascend.utils import (
     setup_ascend_local_comm_res,
 )
 from vllm_ascend.worker.model_runner_v1 import NPUModelRunner
+from vllm_ascend.worker.multi_graph.validation import reserve_graph_memory
 
 torch._dynamo.trace_rules.clear_lru_cache()  # noqa: E402
 from torch._dynamo.variables import TorchInGraphFunctionVariable  # noqa: E402
@@ -339,6 +340,8 @@ class NPUWorker(WorkerBase):
 
     def update_weights(self, update_info: dict) -> None:
         """Receive a chunk of weights from the trainer and load them in place."""
+        if get_ascend_config().multi_graph_config.enabled:
+            raise ValueError("multi-graph does not support hot weight updates")
         self._check_weight_transfer_engine()
         assert self.weight_transfer_engine is not None
 
@@ -626,7 +629,10 @@ class NPUWorker(WorkerBase):
             "To fix this, ensure consistent GPU memory allocation or "
             "isolate vLLM in its own container."
         )
-        self.available_kv_cache_memory_bytes = self.requested_memory - profile_result.non_kv_cache_memory
+        self.available_kv_cache_memory_bytes = reserve_graph_memory(
+            self.requested_memory - profile_result.non_kv_cache_memory,
+            get_ascend_config().multi_graph_config,
+        )
         self.available_kv_cache_memory_bytes = self._scale_kv_cache_memory_for_multi_group(
             self.available_kv_cache_memory_bytes,
         )
@@ -1332,9 +1338,13 @@ class NPUWorker(WorkerBase):
         return self.model_runner.take_draft_token_ids()
 
     def update_config(self, overrides: dict[str, Any]) -> None:
+        if get_ascend_config().multi_graph_config.enabled:
+            raise ValueError("multi-graph requires a new worker for configuration changes")
         self.model_runner.update_config(overrides)
 
     def reload_weights(self, *args, **kwargs) -> None:
+        if get_ascend_config().multi_graph_config.enabled:
+            raise ValueError("multi-graph does not support weight reload")
         self.model_runner.reload_weights(*args, **kwargs)
 
     def check_health(self) -> None:

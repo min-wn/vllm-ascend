@@ -98,6 +98,7 @@ class ACLGraphWrapper:
         use_eagle: bool = False,
         enable_enpu: bool = False,
         update_stream: torch.npu.Stream | None = None,
+        graph_pool: Any = None,
     ):
         self.runnable = runnable
         self.vllm_config = vllm_config
@@ -114,7 +115,7 @@ class ACLGraphWrapper:
         self.is_debugging_mode = envs.VLLM_LOGGING_LEVEL == "DEBUG"
         self._runnable_str = str(runnable) if self.is_debugging_mode else None
 
-        self.graph_pool = current_platform.get_global_graph_pool()
+        self.graph_pool = current_platform.get_global_graph_pool() if graph_pool is None else graph_pool
 
         if cudagraph_options is None:
             cudagraph_options = CUDAGraphOptions()

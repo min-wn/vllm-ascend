@@ -30,6 +30,8 @@ from vllm.utils.math_utils import cdiv
 
 from vllm_ascend.config_utils import config
 from vllm_ascend.device.hardware_profile import DeviceAdaptorFamily, HardwareCapability, get_current_hardware_profile
+from vllm_ascend.worker.multi_graph.config import MultiGraphConfig
+from vllm_ascend.worker.multi_graph.validation import validate_vllm_config
 
 if TYPE_CHECKING:
     from vllm.config import VllmConfig
@@ -612,6 +614,7 @@ class AscendConfig:
     ascend_compilation_config: AscendCompilationConfig = dataclasses.field(default_factory=AscendCompilationConfig)
     ascend_fusion_config: AscendFusionConfig = dataclasses.field(default_factory=AscendFusionConfig)
     ascend_warmup_config: AscendWarmupConfig = dataclasses.field(default_factory=AscendWarmupConfig)
+    multi_graph_config: MultiGraphConfig = dataclasses.field(default_factory=MultiGraphConfig)
     eplb_config: EplbConfig = dataclasses.field(default_factory=EplbConfig)
     rejection_sampler_config: RejectionSamplerConfig = dataclasses.field(default_factory=RejectionSamplerConfig)
     rl_config: RlConfig = dataclasses.field(default_factory=RlConfig)
@@ -670,6 +673,7 @@ class AscendConfig:
     # multi-step downgrades are order-dependent (e.g. profiling_chunk reads
     # the max_num_batched_tokens that sequence-parallel writeback corrected).
     def derive_and_validate(self, vllm_config: VllmConfig) -> AscendConfig:
+        validate_vllm_config(self.multi_graph_config, vllm_config, self)
         vc = vllm_config
         engram_config = getattr(vc, "engram_config", None)
         if (

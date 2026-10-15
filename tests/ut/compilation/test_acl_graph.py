@@ -181,6 +181,20 @@ class TestACLGraphWrapper(TestBase):
 
     @patch("vllm_ascend.compilation.acl_graph.current_platform")
     @patch("vllm_ascend.compilation.acl_graph.envs")
+    def test_initialization_with_private_pool(self, mock_envs, mock_current_platform):
+        mock_envs.VLLM_LOGGING_LEVEL = "INFO"
+        pool = object()
+        wrapper = ACLGraphWrapper(
+            runnable=self.mock_runnable,
+            vllm_config=self.mock_vllm_config,
+            runtime_mode=CUDAGraphMode.FULL,
+            graph_pool=pool,
+        )
+        self.assertIs(wrapper.graph_pool, pool)
+        mock_current_platform.get_global_graph_pool.assert_not_called()
+
+    @patch("vllm_ascend.compilation.acl_graph.current_platform")
+    @patch("vllm_ascend.compilation.acl_graph.envs")
     def test_initialization_with_custom_options(self, mock_envs, mock_current_platform):
         """Test ACLGraphWrapper initialization with custom CUDAGraphOptions"""
         mock_envs.VLLM_LOGGING_LEVEL = "DEBUG"

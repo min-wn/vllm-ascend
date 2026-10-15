@@ -194,6 +194,39 @@ class TestAscendConfig(TestBase):
         self.assertEqual(config.finegrained_tp_config.oproj_tensor_parallel_size, 0)
         self.assertFalse(config.scheduler_config.short_request_first_config.enabled)
         self.assertFalse(config.rl_config.enabled)
+        self.assertFalse(config.multi_graph_config.enabled)
+
+    def test_multi_graph_subconfig_is_typed(self):
+        config = AscendConfig(
+            sparse_kv_offload_config=SimpleNamespace(enabled=False),
+            multi_graph_config={
+                "enabled": True,
+                "capture_sizes_per_lane": [[32, 64], [32, 64]],
+                "graph_memory_budget_bytes": 1 << 30,
+            },
+        )
+        self.assertEqual(config.multi_graph_config.capture_sizes_per_lane, ((32, 64), (32, 64)))
+
+    def test_multi_graph_subconfig_rejects_unknown_fields(self):
+        with self.assertRaises(ValueError):
+            AscendConfig(
+                sparse_kv_offload_config=SimpleNamespace(enabled=False),
+                multi_graph_config={"enable": True},
+            )
+
+    @_clean_up_ascend_config
+    def test_multi_graph_feature_rejected_by_factory(self):
+        config = VllmConfig(
+            additional_config={
+                "multi_graph_config": {
+                    "enabled": True,
+                    "capture_sizes_per_lane": [[32], [32]],
+                    "graph_memory_budget_bytes": 1 << 30,
+                }
+            }
+        )
+        with self.assertRaisesRegex(ValueError, "LlamaForCausalLM or Qwen2ForCausalLM"):
+            init_ascend_config(config)
 
     def test_eplb_load_collection_phase_defaults_to_all(self):
         self.assertEqual(EplbConfig().load_collection_phase, "all")

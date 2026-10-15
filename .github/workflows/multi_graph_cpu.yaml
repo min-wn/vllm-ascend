@@ -1,0 +1,41 @@
+name: Multi-graph CPU contracts
+
+on:
+  pull_request:
+    paths:
+      - "vllm_ascend/worker/multi_graph/**"
+      - "tests/ut/worker/multi_graph/**"
+      - "tools/run_multi_graph_cpu_tests.py"
+      - "tools/multi_graph_gloo_probe.py"
+      - "benchmarks/multi_graph_split.py"
+      - "vllm_ascend/worker/model_runner_v1.py"
+      - "vllm_ascend/worker/worker.py"
+      - "vllm_ascend/ascend_config.py"
+      - "vllm_ascend/compilation/acl_graph.py"
+      - ".github/workflows/multi_graph_cpu.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install pytest==9.1.1 pydantic==2.14.1 numpy ruff==0.14.0
+      - run: ruff check vllm_ascend/worker/multi_graph tests/ut/worker/multi_graph tools/run_multi_graph_cpu_tests.py benchmarks/multi_graph_split.py
+      - run: ruff format --check vllm_ascend/worker/multi_graph tests/ut/worker/multi_graph tools/run_multi_graph_cpu_tests.py benchmarks/multi_graph_split.py
+      - run: python tools/run_multi_graph_cpu_tests.py --junitxml=multi_graph_cpu_tests.xml
+      - run: python tools/multi_graph_gloo_probe.py --output-dir multi_graph_gloo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: multi-graph-cpu-tests
+          path: |
+            multi_graph_cpu_tests.xml
+            multi_graph_gloo/*.json

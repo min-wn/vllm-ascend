@@ -235,6 +235,7 @@ from vllm_ascend.worker.device_metadata import (
     DeviceMetadataTaskProvider,
 )
 from vllm_ascend.worker.kvpp_cache import allocate_kvpp_cache
+from vllm_ascend.worker.multi_graph.runner_v1 import MultiGraphV1Adapter
 from vllm_ascend.worker.npu_input_batch import NPUInputBatch
 from vllm_ascend.worker.utils import (
     AscendKVBlockZeroer,
@@ -645,6 +646,8 @@ class NPUModelRunner(GPUModelRunner):
         self.valid_sampled_token_count_gpu: torch.Tensor | None = None
 
         self.update_stream: torch.npu.Stream | None = None
+        self.multi_graph_adapter: MultiGraphV1Adapter | None = None
+        self._multi_graph_capture_callback = None
 
         # self.cudagraph_batch_sizes sorts in ascending order.
         if (
@@ -2679,7 +2682,8 @@ class NPUModelRunner(GPUModelRunner):
                 if mamba_copy_connector is None:
                     mamba_utils.do_mamba_copy_block(preprocess_bufs)
             hidden_states = self._model_forward(
-                num_tokens_padded, input_ids, positions, intermediate_tensors, inputs_embeds, **model_kwargs
+                num_tokens_padded, input_ids, positions, intermediate_tensors, inputs_embeds,
+                multi_graph_num_actual_tokens=scheduler_output.total_num_scheduled_tokens, **model_kwargs
             )
             self._cpp_execution_time_ms = _finish_profiling_chunk_timing(
                 profiling_chunk_config,
@@ -3281,6 +3285,7 @@ class NPUModelRunner(GPUModelRunner):
         positions: torch.Tensor | None = None,
         intermediate_tensors: IntermediateTensors | None = None,
         inputs_embeds: torch.Tensor | None = None,
+        multi_graph_num_actual_tokens: int | None = None,
         **model_kwargs: dict[str, Any],
     ):
         assert self.model is not None
@@ -3297,6 +3302,17 @@ class NPUModelRunner(GPUModelRunner):
             "inputs_embeds": inputs_embeds,
             **model_kwargs,
         }
+        capture_callback = getattr(self, "_multi_graph_capture_callback", None)
+        if capture_callback is not None:
+            return capture_callback(model_inputs)
+        adapter = getattr(self, "multi_graph_adapter", None)
+        if adapter is not None and multi_graph_num_actual_tokens is not None:
+            split_output = adapter.try_run(
+                forward_context, model_inputs, multi_graph_num_actual_tokens,
+                baseline=lambda: self._model_forward(num_tokens_padded, **model_inputs),
+            )
+            if split_output is not None:
+                return split_output
         # Routing runs before replay on every DP, never inside capture.
         prepare_engram = getattr(self.model, "prepare_engram_inputs", None)
         if prepare_engram is not None:
@@ -6546,6 +6562,10 @@ class NPUModelRunner(GPUModelRunner):
         mgr = self.encoder_cudagraph_manager
         if mgr is not None and self.update_stream is not None:
             mgr.update_stream = self.update_stream
+
+        if self.ascend_config.multi_graph_config.enabled:
+            self.multi_graph_adapter = MultiGraphV1Adapter(self)
+            cuda_graph_size += self.multi_graph_adapter.capture()
 
         return cuda_graph_size
 
