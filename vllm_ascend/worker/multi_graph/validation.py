@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from vllm_ascend.worker.multi_graph.config import MultiGraphConfig
 
 
 def validate_vllm_config(config: MultiGraphConfig, vc: Any, ascend: Any) -> None:
-    if not config.enabled:
+    if not config.enabled and config.kv_cache_layout == "default":
         return
     model = vc.model_config
     architectures = getattr(model, "architectures", ())
@@ -29,11 +30,11 @@ def validate_vllm_config(config: MultiGraphConfig, vc: Any, ascend: Any) -> None
             failures.append(field)
     if parallel.enable_expert_parallel:
         failures.append("expert parallelism")
-    if vc.compilation_config.cudagraph_mode.name != "FULL_DECODE_ONLY":
+    if (config.enabled or not model.enforce_eager) and vc.compilation_config.cudagraph_mode.name != "FULL_DECODE_ONLY":
         failures.append("graph mode must be FULL_DECODE_ONLY")
     if vc.compilation_config.mode != 0:
         failures.append("compilation mode must be NONE (0)")
-    if model.enforce_eager or str(model.dtype) not in ("torch.float16", "torch.bfloat16"):
+    if (model.enforce_eager and config.enabled) or str(model.dtype) not in ("torch.float16", "torch.bfloat16"):
         failures.append("requires graph execution with FP16/BF16")
     for field in ("is_moe", "is_hybrid", "is_encoder_decoder", "enable_sleep_mode", "use_mla", "enable_prompt_embeds"):
         if getattr(model, field, False):
@@ -43,8 +44,16 @@ def validate_vllm_config(config: MultiGraphConfig, vc: Any, ascend: Any) -> None
             failures.append(field)
     text_config = getattr(model, "hf_text_config", None)
     if text_config is not None:
-        rope_parameters = getattr(text_config, "rope_parameters", None) or {}
-        if getattr(text_config, "rope_scaling", None) or rope_parameters.get("rope_type", "default") != "default":
+        parameters = (getattr(text_config, "rope_parameters", None), getattr(text_config, "rope_scaling", None))
+        if any(
+            value
+            and (
+                not isinstance(value, Mapping)
+                or set(value) - {"rope_type", "type", "rope_theta"}
+                or value.get("rope_type", value.get("type", "default")) != "default"
+            )
+            for value in parameters
+        ):
             failures.append("unverified RoPE scaling/state")
     for field in ("speculative_config", "lora_config", "kv_transfer_config", "engram_config"):
         if getattr(vc, field, None) is not None:

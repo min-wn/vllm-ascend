@@ -43,6 +43,14 @@ Set VLLM_USE_V2_MODEL_RUNNER=0. The 1 GiB budget is an explicit example reservat
 
 Use execution=serial for the split correctness control. selection_policy=force is for correctness/benchmark runs. The default measured policy keeps the existing forward path without a matching cost record.
 
+## Contiguous dense KV storage
+
+Set `multi_graph_config.kv_cache_layout="contiguous"` to partition each unused dense allocation into contiguous K and V regions before the first cache write. This avoids FIA's implicit full-cache contiguous conversion for block-interleaved K/V. It allocates no extra KV storage and performs no per-step full-cache copy. The default `"default"` preserves the existing layout. Changing this option requires a new worker and fresh cache; existing cache contents cannot be reinterpreted.
+
+The option is limited to the same single-rank Llama/Qwen2 dense FP16/BF16 configurations as the experimental adapter. Padded pages, hybrid models, KV transfer and offload are excluded. It may also be set with `enabled=false` for eager/single-graph controls; the runtime restrictions still apply. Capture and cost identities include the layout. Use `--kv-cache-layout contiguous` with the benchmark to apply the same storage contract to every mode. This workaround does not provide general compatibility for other operations unsupported by an old driver.
+
+On 2026-10-15, Qwen2.5-0.5B-Instruct passed eager/single/serial/parallel comparisons for FP16 and BF16 with batches 6, 7 and 8 on Ascend 910B3, driver 24.1.rc3, CANN 9.1.0 and torch-npu 2.10.0.post4 using contiguous KV. All six comparisons produced identical tokens and selected-token log probabilities; split modes asserted actual split execution. Each mode ran in a fresh process with one warmup and two measured 16-token generations; correctness compared the last generation. This is bounded correctness evidence, not long-running stability or speedup evidence.
+
 ## Measured routing
 
 Run the benchmark with `--decode-costs --repeats 5` to produce `serial.costs.json` and `parallel.costs.json`. This mode synchronizes before and after each decode model forward and includes input preparation, graph updates and output merge. It runs independently from the optional profiler pass. Generation latency remains a separate metric and cannot be imported as decode cost.

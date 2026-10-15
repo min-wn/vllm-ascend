@@ -27,6 +27,7 @@ class MultiGraphConfig:
     num_lanes: Literal[2] = 2
     workload: Literal["uniform_decode"] = "uniform_decode"
     input_layout: Literal["lane_buffer"] = "lane_buffer"
+    kv_cache_layout: Literal["default", "contiguous"] = "default"
     capture_sizes_per_lane: tuple[tuple[PositiveInt, ...], tuple[PositiveInt, ...]] = ((), ())
     padding_policy: Literal["exact"] = "exact"
     capture_policy: Literal["startup"] = "startup"

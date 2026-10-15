@@ -235,6 +235,7 @@ from vllm_ascend.worker.device_metadata import (
     DeviceMetadataTaskProvider,
 )
 from vllm_ascend.worker.kvpp_cache import allocate_kvpp_cache
+from vllm_ascend.worker.multi_graph.kv_layout import contiguous_dense_kv_views
 from vllm_ascend.worker.multi_graph.runner_v1 import MultiGraphV1Adapter
 from vllm_ascend.worker.npu_input_batch import NPUInputBatch
 from vllm_ascend.worker.utils import (
@@ -5507,6 +5508,9 @@ class NPUModelRunner(GPUModelRunner):
         kv_caches: dict[str, torch.Tensor] = {}
         layer_kv_cache_spec = self._get_layer_kv_cache_specs(kv_cache_config)
         uses_padded_page_layout = requires_padded_page_layout(layer_kv_cache_spec.values())
+        contiguous_kv = self.ascend_config.multi_graph_config.kv_cache_layout == "contiguous"
+        if contiguous_kv and (uses_padded_page_layout or self.hybrid_with_attn_and_mamba):
+            raise ValueError("contiguous KV does not support padded pages or hybrid models")
         layer_tuple_strides = {}
         if is_deepseek_v41_cache(layer_kv_cache_spec):
             layer_tuple_strides = {
@@ -5846,6 +5850,9 @@ class NPUModelRunner(GPUModelRunner):
                     ):
                         raw_typed = raw_k_tensor.view(current_kv_cache_spec.dtype)
                         if raw_typed.numel() == math.prod(kv_cache_shape):
+                            if contiguous_kv:
+                                kv_caches[layer_name] = contiguous_dense_kv_views(raw_typed, kv_cache_shape)
+                                continue
                             hidden_size = math.prod(kv_cache_shape[2:])
                             dense_strides = [
                                 math.prod(kv_cache_shape[dim + 1 :])
@@ -6073,6 +6080,11 @@ class NPUModelRunner(GPUModelRunner):
                 else:
                     raise ValueError("Unknown KV cache spec type.")
 
+        if contiguous_kv:
+            for cache in kv_caches.values():
+                views = cache if isinstance(cache, (list, tuple)) else cache.unbind(0)
+                if len(views) != 2 or any(not view.is_contiguous() for view in views):
+                    raise ValueError("contiguous KV requires two contiguous dense K/V views for every layer")
         return kv_caches
 
     def may_reinitialize_input_batch(

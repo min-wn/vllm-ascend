@@ -9,7 +9,8 @@ import torch
 
 @pytest.mark.parametrize("dtype", ["float16", "bfloat16"])
 @pytest.mark.parametrize("batch_size", [6, 7, 8])
-def test_multi_graph_tokens_and_selected_logprobs(tmp_path, dtype, batch_size):
+@pytest.mark.parametrize("kv_cache_layout", ["default", "contiguous"])
+def test_multi_graph_tokens_and_selected_logprobs(tmp_path, dtype, batch_size, kv_cache_layout):
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires an Ascend NPU and the supported vLLM/torch-npu environment")
     repo = Path(__file__).resolve().parents[4]
@@ -23,6 +24,8 @@ def test_multi_graph_tokens_and_selected_logprobs(tmp_path, dtype, batch_size):
             str(batch_size),
             "--repeats",
             "2",
+            "--kv-cache-layout",
+            kv_cache_layout,
             "--output-dir",
             str(tmp_path),
         ],

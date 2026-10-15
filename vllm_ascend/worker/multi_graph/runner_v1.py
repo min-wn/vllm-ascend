@@ -59,7 +59,7 @@ class MultiGraphV1Adapter:
             dtype=str(runner.dtype).removeprefix("torch."),
             attention_backend="AscendAttentionBackend",
             attention_variant="FIA",
-            kv_layout="standard-dense",
+            kv_layout=f"standard-dense:{self.config.kv_cache_layout}",
             block_size=runner.block_size,
             runtime_identity="|".join(
                 [torch.npu.get_device_name(runner.device)]
@@ -154,8 +154,12 @@ class MultiGraphV1Adapter:
                     )
                     torch.npu.synchronize()
                     used = max(0, before - torch.npu.mem_get_info()[0])
+                    logger.info("Multi-graph capture lane=%d size=%d reserved_usage_bytes=%d", lane, size, used)
                     if used > self.config.graph_memory_budget_bytes:
-                        raise RuntimeError("multi-graph capture exceeded its reserved memory budget")
+                        raise RuntimeError(
+                            "multi-graph capture exceeded its reserved memory budget: "
+                            f"lane={lane}, size={size}, used={used}, budget={self.config.graph_memory_budget_bytes}"
+                        )
             self.manager.ready()
         except Exception:
             self.manager.startup_failed()

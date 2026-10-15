@@ -1338,7 +1338,8 @@ class NPUWorker(WorkerBase):
         return self.model_runner.take_draft_token_ids()
 
     def update_config(self, overrides: dict[str, Any]) -> None:
-        if get_ascend_config().multi_graph_config.enabled:
+        config = get_ascend_config().multi_graph_config
+        if config.enabled or config.kv_cache_layout != "default":
             raise ValueError("multi-graph requires a new worker for configuration changes")
         self.model_runner.update_config(overrides)
 

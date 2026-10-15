@@ -172,7 +172,7 @@ def capture_adapter(adapter, monkeypatch):
     monkeypatch.setitem(runner_globals, "get_forward_context", lambda: context)
     monkeypatch.setitem(runner_globals, "UpdatableGraph", Graph)
     monkeypatch.setitem(runner_globals, "disable_compilation", lambda _: nullcontext())
-    monkeypatch.setitem(runner_globals, "logger", SimpleNamespace(warning=lambda *_: None))
+    monkeypatch.setitem(runner_globals, "logger", SimpleNamespace(warning=lambda *_: None, info=lambda *_: None))
     streams = tuple(SimpleNamespace(wait_stream=lambda _: None, synchronize=lambda: None) for _ in range(2))
     adapter.compute_streams = streams
     adapter.update_streams = (object(), object())

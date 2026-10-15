@@ -80,6 +80,10 @@ def test_entry_limit_counts_equal_size_graphs_in_both_lanes():
         enabled_config(capture_sizes_per_lane=[[32], [32]], max_graph_entries=1)
 
 
+def test_contiguous_layout_changes_capture_identity():
+    assert enabled_config().capture_hash() != enabled_config(kv_cache_layout="contiguous").capture_hash()
+
+
 def test_capture_hash_is_stable_and_covers_all_settings():
     baseline = enabled_config()
     assert baseline.compute_hash() == enabled_config().compute_hash()

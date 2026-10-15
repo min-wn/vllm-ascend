@@ -34,6 +34,28 @@ def test_supported_config(configs):
     validate_vllm_config(*configs)
 
 
+def test_transformers_default_rope_alias_is_unscaled(configs):
+    _, vc, _ = configs
+    parameters = {"rope_theta": 1000000.0, "rope_type": "default"}
+    vc.model_config.hf_text_config = SimpleNamespace(rope_parameters=parameters, rope_scaling=parameters)
+    validate_vllm_config(*configs)
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"rope_type": "default", "factor": 2},
+        {"rope_type": "dynamic"},
+        {"full_attention": {"rope_type": "default"}},
+    ],
+)
+def test_scaled_or_per_layer_rope_still_rejected(configs, parameters):
+    _, vc, _ = configs
+    vc.model_config.hf_text_config = SimpleNamespace(rope_parameters=parameters)
+    with pytest.raises(ValueError, match="RoPE"):
+        validate_vllm_config(*configs)
+
+
 @pytest.mark.parametrize(
     "component,field,value",
     [
@@ -58,6 +80,18 @@ def test_unsupported_startup_combinations(configs, component, field, value):
 
 def test_disabled_config_never_requires_model_runtime():
     validate_vllm_config(MultiGraphConfig(), None, None)
+
+
+def test_contiguous_layout_control_requires_supported_runtime(configs):
+    _, vc, ascend = configs
+    config = MultiGraphConfig(kv_cache_layout="contiguous")
+    validate_vllm_config(config, vc, ascend)
+    vc.model_config.enforce_eager = True
+    vc.compilation_config.cudagraph_mode.name = "NONE"
+    validate_vllm_config(config, vc, ascend)
+    vc.kv_transfer_config = object()
+    with pytest.raises(ValueError, match="kv_transfer_config"):
+        validate_vllm_config(config, vc, ascend)
 
 
 def test_graph_budget_deducted_before_kv_sizing(config):

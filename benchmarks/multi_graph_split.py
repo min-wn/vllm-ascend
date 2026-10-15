@@ -74,14 +74,16 @@ def run_child(args) -> None:
     config = {
         "ascend_compilation_config": {"enable_npugraph_ex": False},
         "pa_shape_list": [],
+        "multi_graph_config": {"kv_cache_layout": args.kv_cache_layout},
     }
     if args.mode in ("serial", "parallel"):
         config["multi_graph_config"] = {
             "enabled": True,
+            "kv_cache_layout": args.kv_cache_layout,
             "execution": args.mode,
             "selection_policy": "force",
-            "capture_sizes_per_lane": [[2, 3, 4], [2, 3, 4]],
-            "max_graph_entries": 6,
+            "capture_sizes_per_lane": [[(args.batch_size + 1) // 2], [args.batch_size // 2]],
+            "max_graph_entries": 2,
             "graph_memory_budget_bytes": args.graph_budget,
         }
     llm = LLM(
@@ -134,6 +136,7 @@ def run_child(args) -> None:
                 "mode": args.mode,
                 "dtype": args.dtype,
                 "batch_size": args.batch_size,
+                "kv_cache_layout": args.kv_cache_layout,
                 "latency_ms": timings,
                 "split_steps": counts["split_steps"],
                 "requests": requests,
@@ -156,7 +159,8 @@ def main() -> None:
     parser.add_argument("--dtype", choices=("float16", "bfloat16"), default="bfloat16")
     parser.add_argument("--batch-size", type=int, choices=(6, 7, 8), default=8)
     parser.add_argument("--repeats", type=int, default=3)
-    parser.add_argument("--graph-budget", type=int, default=1 << 30)
+    parser.add_argument("--graph-budget", type=int, default=12 << 30)
+    parser.add_argument("--kv-cache-layout", choices=("default", "contiguous"), default="default")
     parser.add_argument("--mode", choices=("eager", "single", "serial", "parallel"))
     parser.add_argument("--result")
     parser.add_argument("--trace", action="store_true", help="export a separate NPU profiler run for each mode")
@@ -187,6 +191,8 @@ def main() -> None:
                 str(args.repeats),
                 "--graph-budget",
                 str(args.graph_budget),
+                "--kv-cache-layout",
+                args.kv_cache_layout,
                 "--mode",
                 mode,
                 "--result",

@@ -22,16 +22,19 @@ def load_method(path, name, namespace):
 
 @pytest.mark.parametrize("name", ["update_config", "reload_weights"])
 @pytest.mark.parametrize("enabled", [False, True])
-def test_worker_guards_preserve_disabled_behavior(name, enabled):
+@pytest.mark.parametrize("kv_layout", ["default", "contiguous"])
+def test_worker_guards_preserve_disabled_behavior(name, enabled, kv_layout):
     path = Path(__file__).resolve().parents[4] / "vllm_ascend/worker/worker.py"
     namespace = {
         "Any": object,
-        "get_ascend_config": lambda: SimpleNamespace(multi_graph_config=SimpleNamespace(enabled=enabled)),
+        "get_ascend_config": lambda: SimpleNamespace(
+            multi_graph_config=SimpleNamespace(enabled=enabled, kv_cache_layout=kv_layout)
+        ),
     }
     method = load_method(path, name, namespace)
     runner = SimpleNamespace(update_config=Mock(), reload_weights=Mock())
     worker = SimpleNamespace(model_runner=runner)
-    if enabled:
+    if enabled or (name == "update_config" and kv_layout != "default"):
         with pytest.raises(ValueError, match="multi-graph"):
             method(worker, {})
         assert not runner.update_config.called and not runner.reload_weights.called
