@@ -27,6 +27,20 @@ def test_fixed_slots_preserve_request_offsets(benchmark):
     assert benchmark.fixed_lane_counts(104, (56, 48)) == (56, 48)
 
 
+@pytest.mark.parametrize("pair", [(8, 96), (24, 80), (56, 48)])
+def test_explicit_topology_uses_default_sizes_and_fixed_boundary(benchmark, pair):
+    sizes = [1, 2, 4, *range(8, 257, 8)]
+    for batch in (97, 98, 103, 104):
+        assert benchmark.bucket_topology(batch, sizes, pair) == (104, pair)
+        assert benchmark.fixed_lane_counts(batch, pair) == (pair[0], batch - pair[0])
+
+
+@pytest.mark.parametrize("pair", [(49, 55), (8, 88), (0, 104), (104,), (8, 48, 48)])
+def test_explicit_topology_rejects_special_or_wrong_capacity(benchmark, pair):
+    with pytest.raises(ValueError, match="default sizes"):
+        benchmark.bucket_topology(98, [1, 2, 4, *range(8, 257, 8)], pair)
+
+
 def test_dynamic_sequence_stays_in_default_bucket(benchmark):
     sizes = [1, 2, 4, *range(8, 257, 8)]
     assert benchmark.reuse_cases(98, sizes) == [(98, 0), (97, 1), (103, 0), (98, 0)]
@@ -59,6 +73,14 @@ def test_lane_core_limits_are_explicit(benchmark, common, lanes, expected):
 def test_invalid_lane_limits_are_rejected(benchmark, common, lanes):
     with pytest.raises(ValueError):
         benchmark.lane_core_limits(common, lanes)
+
+
+@pytest.mark.parametrize(
+    "pair,enabled,order",
+    [((8, 96), True, (1, 0)), ((8, 96), False, (0, 1)), ((56, 48), True, (0, 1)), ((104,), True, (0,))],
+)
+def test_submission_priority_preserves_lane_identity(benchmark, pair, enabled, order):
+    assert benchmark.task_submission_order(pair, enabled) == order
 
 
 def test_packed_runtime_values_use_disjoint_fixed_typed_views(benchmark):

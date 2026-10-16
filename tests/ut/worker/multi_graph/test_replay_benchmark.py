@@ -138,6 +138,21 @@ def test_shared_trace_serial_gap_and_host_regions():
     assert row["kernel_inventory"]["aclnnContiguous"]["duration_sum_us"] == 2
 
 
+def test_attention_dense_overlap_is_union_not_double_counted():
+    events = [
+        dict(name="process_name", pid=9, args={"name": "Ascend Hardware"}),
+        dict(name="layer.split_parallel", pid=1, ph="X", ts=0, dur=30),
+        dict(trace_event(2, 12, 1), name="FusedInferAttentionScore", tid=11),
+        dict(trace_event(6, 14, 1), name="FusedInferAttentionScore", tid=12),
+        dict(trace_event(10, 6, 1), name="MatMulV2", tid=13),
+        dict(trace_event(14, 8, 1), name="MatMulV2", tid=14),
+    ]
+    row = inspect_shared_dense_trace(events)[0]
+    assert row["attention_matmul_overlap_us"] == 10
+    assert row["compute_span_us"] == 20
+    assert len(row["matmul_intervals"]) == 2
+
+
 def test_level1_counter_trace_accelerator_labels_exclude_wait_and_dma():
     events = [
         dict(name="process_name", pid=9, args={"name": "Ascend Hardware"}),

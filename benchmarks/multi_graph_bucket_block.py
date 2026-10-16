@@ -15,11 +15,15 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 
-def bucket_topology(batch, sizes):
+def bucket_topology(batch, sizes, requested=None):
     sizes = sorted(set(sizes))
     if batch < 2 or not sizes or min(sizes) < 1:
         raise ValueError("positive default sizes and batch >= 2 required")
     capacity = next((size for size in sizes if size >= batch), None)
+    if requested is not None:
+        if len(requested) != 2 or any(size not in sizes for size in requested) or sum(requested) != capacity:
+            raise ValueError("requested branches must be default sizes summing to the selected bucket")
+        return capacity, tuple(requested)
     pairs = [(a, b) for a in sizes for b in sizes if a >= b and a + b == capacity]
     if not pairs:
         raise ValueError("no fixed topology covering the default bucket; refuse custom sizes")
@@ -42,6 +46,10 @@ def lane_core_limits(common, lanes):
     if common < 0 or (lanes is not None and (common or len(lanes) != 2 or min(lanes) < 0)):
         raise ValueError("specify either a nonnegative common core limit or two nonnegative lane limits")
     return tuple(lanes) if lanes is not None else (common, common)
+
+
+def task_submission_order(pair, largest_first):
+    return tuple(sorted(range(len(pair)), key=lambda lane: -pair[lane])) if largest_first else tuple(range(len(pair)))
 
 
 class PackedStepBuffers:
@@ -282,7 +290,10 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         q, k = attention.rotary_emb(data[1], q, k)
         output = torch.empty_like(q)
         pipeline = args.pipeline_output_projection and mode != "padding" and not reference_phase
+        pipeline_ffn = args.pipeline_ffn and mode != "padding" and not reference_phase
         projected = torch.empty_like(hidden) if pipeline else None
+        final_hidden = torch.empty_like(hidden) if pipeline_ffn else None
+        final_residual = torch.empty_like(hidden) if pipeline_ffn else None
         root = torch.npu.current_stream()
         capturing = get_forward_context().capturing
         if optimized:
@@ -324,11 +335,18 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     # is still running. Keep QKV and both large FFN GEMMs shared.
                     lane_projected, _ = attention.o_proj(output[start:stop])
                     projected[start:stop].copy_(lane_projected)
+                if pipeline_ffn:
+                    lane_projected, _ = attention.o_proj(output[start:stop])
+                    lane_norm, lane_residual = layer.post_attention_layernorm(lane_projected, hidden[start:stop])
+                    final_hidden[start:stop].copy_(layer.mlp(lane_norm))
+                    final_residual[start:stop].copy_(lane_residual)
                 if parallel:
                     entry["joins"][lane].record(stream)
         if parallel:
             for join in entry["joins"]:
                 root.wait_event(join)
+        if pipeline_ffn:
+            return final_hidden, final_residual
         if not pipeline:
             projected, _ = attention.o_proj(output)
         normalized, residual = layer.post_attention_layernorm(projected, hidden)
@@ -430,10 +448,16 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             entry["update_groups"].append(
                 dict(
                     stream=update_stream,
-                    indices=(lane,) if separate else tuple(range(len(graph.tasks))),
+                    indices=(lane,)
+                    if separate
+                    else task_submission_order(
+                        (workload.capacity,) if mode == "padding" else args.pair, args.large_lane_first
+                    ),
                     updated=torch.npu.Event(),
                 )
             )
+        if separate and args.large_lane_first:
+            entry["update_groups"].sort(key=lambda group: -args.pair[group["indices"][0]])
         if native is not None:
             tasks = graph.resolve_tasks(source)
             if any(task.operation != torch_npu.npu_fused_infer_attention_score.out for task in tasks):
@@ -604,7 +628,12 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         profiler.export_chrome_trace(str(trace_path))
         trace_rows = inspect_shared_dense_trace(json.loads(trace_path.read_text()))
         if len(trace_rows) != 3 * len(entries) or any(
-            row["matmul_count"] != (5 if args.pipeline_output_projection and "single_" not in row["marker"] else 4)
+            row["matmul_count"]
+            != (
+                (7 if args.pipeline_ffn else 5)
+                if (args.pipeline_ffn or args.pipeline_output_projection) and "single_" not in row["marker"]
+                else 4
+            )
             for row in trace_rows
         ):
             raise ValueError("unexpected trace marker or MatMul count")
@@ -639,7 +668,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         graphs_per_strategy_per_bucket=1,
         combination_graph_count=0,
         reuse_graph_and_buffer_identity_unchanged=True,
-        explicit_output_merge_copies=0,
+        explicit_output_merge_copies=4 if args.pipeline_ffn else (2 if args.pipeline_output_projection else 0),
         attention_cores=args.attention_cores,
         native_update=args.native_update,
         native_replay=args.native_replay,
@@ -649,6 +678,12 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         phase_diagnostics=phase_diagnostics,
         static_task_plan=args.static_task_plan,
         pipeline_output_projection=args.pipeline_output_projection,
+        pipeline_ffn=args.pipeline_ffn,
+        large_lane_first=args.large_lane_first,
+        update_task_order=[
+            dict(mode=mode, groups=[g["indices"] for g in e["update_groups"]]) for mode, e in entries.items()
+        ],
+        final_assembly_copies_per_split_replay=4 if args.pipeline_ffn else 0,
         projection_assembly_copies_per_split_replay=2 if args.pipeline_output_projection else 0,
         native_source_sha256=native_source_sha256,
         nz=args.nz,
@@ -706,6 +741,9 @@ def main():
     )
     parser.add_argument("--phase-diagnostics", action="store_true", help="separate unprofiled host and event timings")
     parser.add_argument("--serial-control", action="store_true", help="also capture identical split attention serially")
+    parser.add_argument("--branch-capacities", type=int, nargs=2, help="ordered default capacities summing to bucket")
+    parser.add_argument("--pipeline-ffn", action="store_true", help="pipeline complete lane O/Norm/FFN after FIA")
+    parser.add_argument("--large-lane-first", action="store_true", help="submit larger FIA branch update first")
     parser.add_argument("--shared-cache", action="store_true", help="symmetric shared KV write and direct FIA out path")
     parser.add_argument(
         "--pipeline-output-projection", action="store_true", help="pipeline lane O projections with FIA"
@@ -728,6 +766,8 @@ def main():
         parser.error("native replay requires native update")
     if args.pipeline_output_projection and not args.shared_cache:
         parser.error("projection pipeline requires the qualified shared-cache path")
+    if args.pipeline_ffn and (not args.shared_cache or args.pipeline_output_projection):
+        parser.error("FFN pipeline requires shared cache and excludes the O-only pipeline")
     try:
         args.lane_limits = lane_core_limits(args.attention_cores, args.lane_cores)
     except ValueError as error:
@@ -736,7 +776,9 @@ def main():
         parser.error("requires ordinary FIA")
     args.dtype, args.batch_invariant = "bfloat16", False
     args.selection = select_case(args)
-    capacity, args.pair = bucket_topology(args.selection["batch"], args.selection["capture_sizes"])
+    capacity, args.pair = bucket_topology(
+        args.selection["batch"], args.selection["capture_sizes"], args.branch_capacities
+    )
     if capacity != args.selection["selected_requests"]:
         raise ValueError("bucket does not match the default dispatcher")
     args.selection["split_shapes"] = "fixed_default_bucket_internal_attention_branches"

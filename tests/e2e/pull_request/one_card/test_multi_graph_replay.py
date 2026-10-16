@@ -478,7 +478,9 @@ def test_native_fia_binding_guards(monkeypatch):
 @pytest.mark.parametrize(
     "nz,native,shared", [(False, False, False), (True, False, False), (True, True, False), (True, True, True)]
 )
-def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shared, packed=False, native_replay=False):
+def test_default_bucket_internal_block_reuse(
+    tmp_path, request, nz, native, shared, packed=False, native_replay=False, pipeline_ffn=False
+):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
@@ -508,6 +510,7 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shar
             *(["--native-update"] if native else []),
             *(["--packed-metadata", "--phase-diagnostics"] if packed else []),
             *(["--native-replay"] if native_replay else []),
+            *(["--pipeline-ffn", "--branch-capacities", "4", "4"] if pipeline_ffn else []),
             *(
                 ["--shared-cache", "--serial-control", "--independent-updates", "--static-task-plan", "--trace"]
                 if shared
@@ -528,7 +531,9 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shar
     assert report["timed_kv_length"] == 128
     modes = 3 if shared else 2
     assert report["graph_count"] == modes and report["graphs_per_strategy_per_bucket"] == 1
-    assert report["combination_graph_count"] == report["explicit_output_merge_copies"] == 0
+    assert report["combination_graph_count"] == 0
+    assert report["explicit_output_merge_copies"] == (4 if pipeline_ffn else 0)
+    assert report["pipeline_ffn"] == pipeline_ffn
     assert report["reuse_graph_and_buffer_identity_unchanged"]
     assert report["nz"] == nz and report["original_nd_eager_reference"]
     assert report["native_update"] == native
@@ -556,6 +561,13 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shar
         for row in report["trace_analysis"]:
             writes = sum(v["count"] for name, v in row["kernel_inventory"].items() if "ScatterPaKvCache" in name)
             assert writes == 1
+            assert row["matmul_count"] == (7 if pipeline_ffn and "single_" not in row["marker"] else 4)
+
+
+def test_full_ffn_pipeline_reuses_graph_with_required_updates(tmp_path, request):
+    test_default_bucket_internal_block_reuse(
+        tmp_path, request, nz=True, native=True, shared=True, packed=True, native_replay=True, pipeline_ffn=True
+    )
 
 
 @pytest.mark.parametrize("native_replay", [False, True])

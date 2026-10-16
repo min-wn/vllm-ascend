@@ -132,6 +132,18 @@ def inspect_shared_dense_trace(payload):
                 kernel_duration_sum_us=sum(right - left for _, (left, right) in selected),
                 matmul_count=len(matmuls),
                 matmul_duration_sum_us=sum(right - left for _, (left, right) in matmuls),
+                attention_matmul_overlap_us=union_duration(
+                    [
+                        (max(a, c), min(b, d))
+                        for _, (a, b) in attention
+                        for _, (c, d) in matmuls
+                        if max(a, c) < min(b, d)
+                    ]
+                ),
+                compute_span_us=max(right for _, (_, right) in selected) - min(left for _, (left, _) in selected),
+                matmul_intervals=[
+                    dict(stream=kernel["tid"], start_us=left, end_us=right) for kernel, (left, right) in matmuls
+                ],
                 attention_count=len(attention),
                 attention_stream_count=len({kernel["tid"] for kernel, _ in attention}),
                 attention_duration_sum_us=attention_sum,
