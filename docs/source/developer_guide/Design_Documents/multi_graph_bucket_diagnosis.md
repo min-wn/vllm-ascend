@@ -143,3 +143,6 @@ python benchmarks/multi_graph_bucket_trace.py \
 
 本轮改动位于 benchmark、诊断工具和测试中，没有自动修改生产 runner 的默认策略。
 原始报告、trace 与执行脚本保存在工作区 `outputs/multi_graph_bucket_diagnosis/`。
+
+后续的 QKV/MLP 归因、无 FIA 的 Dense 对照和 ND/NZ 对照见
+[逐算子性能归因](multi_graph_projection_diagnosis.md)。

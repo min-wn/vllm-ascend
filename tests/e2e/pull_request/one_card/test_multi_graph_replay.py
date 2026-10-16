@@ -327,3 +327,47 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
     assert report["pinned_inputs"] == optimized
     assert report["update_chunk_size"] == (4 if optimized else 0)
     assert len(report["lane_diagnostics"]) == (2 if optimized else 0)
+
+
+@pytest.mark.parametrize("weight_format", ["loaded", "nz"])
+def test_dense_projection_diagnostic(tmp_path, request, weight_format):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    destination = tmp_path / "dense.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(repo / "benchmarks/multi_graph_dense_probe.py"),
+            "--model",
+            request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
+            "--strategy",
+            "balanced",
+            "--weight-format",
+            weight_format,
+            "--rounds",
+            "1",
+            "--repeats",
+            "2",
+            "--output",
+            str(destination),
+        ],
+        cwd=repo,
+        env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
+        check=True,
+        timeout=300,
+    )
+    report = json.loads(destination.read_text())
+    assert report["status"] == "passed"
+    assert report["selection"]["batch"] == 98
+    assert report["pair"] == [56, 48]
+    assert report["scope"] == "synthetic_input_real_weight_projection_sweep_not_decoder"
+    assert {row["projection"] for row in report["results"]} == {"qkv", "o", "gate_up", "down"}
+    for row in report["results"]:
+        assert row["passed"]
+        assert row["layers"] > 0
+        assert set(row["summary_ms"]) == {"padding", "lane0", "lane1", "split_parallel"}
+        assert all(len(value["samples_us"]) == 2 for value in row["measurements"])
+        if weight_format == "nz":
+            assert row["weight_format"] == 29
