@@ -167,6 +167,72 @@ python benchmarks/multi_graph_replay.py \
 
 本轮校验：314 项 CPU 测试通过；新增普通 FIA same-shape/logits/replay-first/captured 组合与既有 Q=8 batch-invariant 严格检查共 2 项硬件回归通过。普通模式完整性能用例均单独通过同形状 eager 检查。新增检查没有改变原有跨形状测试的默认要求。
 
+### 结构性原型：共享 Dense，只切分 Attention
+
+新增 `benchmarks/multi_graph_shared_dense.py`。这一实验改变切分边界：每层先按真实 B×Q 一次执行 LayerNorm、QKV 投影和 RoPE，再按完整请求分成两路 Attention，写入同一输出张量的互不重叠切片，汇合后一次执行 O 投影、残差归一化和 FFN。目标是保留请求切分，同时避免 Dense 跟随请求一起碎片化。
+
+与整层切分相比，真实 token 的 Dense FLOPs 没有减半；减少的是小矩阵执行、重复 kernel 调度和额外输出合并。相对容量 C×Q 的 padding 图，还省去假 token 的 Dense 计算。Attention 对真实 host seq_len 的依赖保持不变，每层两路 FIA 均保留 task update。
+
+本轮实现八个对照，均使用普通 FIA、相同模型权重和真实 prefill KV：
+
+| 模式 | Dense 执行方式 | Attention 执行方式 | 每次回放提交图数 | FIA update 数 |
+| --- | --- | --- | --- | --- |
+| single_padded | 容量 batch | 单路 | 1 | 1 |
+| single_exact | 真实 batch | 单路 | 1 | 1 |
+| full_serial / full_parallel | 两份子 batch | 整层两图串行 / 并行 | 2 | 2 |
+| shared_serial / shared_parallel | 真实 batch，共享前后段 | 两张 Attention 图串行 / 并行 | 4 | 2 |
+| joined_serial / joined_parallel | 真实 batch，共享前后段 | 同一捕获图内两分支串行 / 跨流 | 1 | 2 |
+
+joined_parallel 将分叉、两路 Attention 和汇合录入同一张外层图，不再逐层由 Python 提交四张图。请求边界切分仍然存在，但它不是“两个独立整模型图”的原执行形式。当前驱动与软件组合已通过普通事件跨流捕获探测，随后通过实际 FIA task update 的单层实验。
+
+最终对照默认 `--merge captured`，整层切分也使用此前已有的图内输出合并，不能只用带外部 `cat` 的较弱基线计算新结构收益。`--merge cat` 保留为显式消融。此处整层双图合并 hidden 和 residual 两个输出；整模型旧路径可以让 residual 留在各 lane 内继续后续层，因此该单层合并成本不能逐层外推。
+
+实现中的必要约束：
+
+- 两路 FIA workspace 按 lane 隔离，并断言两个不同存储地址；不能直接沿用同层共享 workspace key。
+- 同层 provider 会注册两次任务，参数 source 按真实注册顺序和 lane 分别绑定长度、页表，不能将整 batch 的元数据重复用于两路。
+- 图持有输入、元数据和闭包，保留跨图张量、输出、pool 和事件的生命周期。初版遇到设备无效地址；补齐 ownership 后，后续正确性、输入变化与性能测试未复现该错误，不据此归因于驱动。
+- 捕获图的各条路径对照各自同形状 eager，检查 hidden 和 residual 两个输出；单路直接 backend 另与官方 Qwen2DecoderLayer 比较。改变固定存储中的 hidden 值后重新生成 eager 对照并检查全部八种 replay，防止旧中间值被误复用。
+- 保留跨结构的误差诊断，但 `cross_architecture_qualified=false`；不将同形状通过写成跨形状或全模型精度通过。
+
+测量仅覆盖 Qwen2.5-0.5B-Instruct 第一层，输入为 embedding，BF16、910B3/A2。每种模式五轮、每轮三十次，交替正反顺序；表格使用各轮 wall p50 的中位数。时间包含 Python 图提交、必要 FIA update、事件依赖、执行和输出汇合，排除模型加载、prefill、capture、KV 恢复及 profiler。长度与地址固定，尚未包含逐步 metadata 生成和解析。
+
+| B / C / Q / KV | lanes | padding 单图 ms | exact 单图 ms | 整层并行＋图内合并 ms | 共享 Dense 图内跨流 ms | 相对同 lanes 整层并行降幅 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 129 / 256 / 8 / 512 | 65+64 | 1.180 | 0.894 | 1.089 | 0.968 | 11.1% |
+| 同上，独立进程复测 | 65+64 | 1.190 | 0.908 | 1.094 | 0.988 | 9.7% |
+| 129 / 256 / 8 / 512 | 128+1 | 1.179 | 0.898 | 0.966 | 0.921 | 4.7% |
+| 65 / 128 / 4 / 512 | 33+32 | 0.793 | 0.715 | 1.021 | 0.847 | 17.1% |
+| 129 / 256 / 8 / 2048 | 65+64 | 1.544 | 1.114 | 1.226 | 1.123 | 8.5% |
+
+共享 Dense 相对 padding 在两个大 batch 短 KV 均衡试验中减少约 17.0–17.9% 延迟，在长 KV 试验中减少约 27.3%；但 B=65/Q=4 仍比 padding 慢约 6.7%。在已优化的 128+1 对照上，4.7% 的单次进程结果尚不足以认定稳定优势。尤其不能把均衡方案的 9.7–11.1% 改善解释成相对旧方案所有切分点中最好的结果也改善这么多。
+
+四张分段图的 shared_parallel 在第一组大 batch 实验为 1.324 ms，慢于 1.180 ms 的 padding。改为一次图回放后降至 0.968 ms。joined_serial 同组为 0.968 ms、复测为 0.988 ms，几乎与 joined_parallel 相同：当前有证据支持共享 Dense 与减少提交的作用，尚无稳定证据支持两路 FIA 并发本身提速。
+
+短 KV 的初步 trace 表明：整层切分每层 8 次 MatMul，共享 Dense 后是 4 次；两路 FIA 未出现明显 kernel 区间重叠。因此不能把共享结构的收益全部归因于 attention 并行。四张分段图尽管设备计算减少，但 host 提交代价使其 wall time 更差；一次捕获图是此原型的重要组成部分。
+
+最终 trace 的三个 joined_parallel 样本中，KV=512 时每路 FIA kernel 约 73–82 us，两次 host FIA 调用起点相隔约 260–277 us，两路设备 FIA 之间还有约 160–191 us 空档。KV=2048 时 FIA 约 215–254 us，空档缩至约 17–41 us；两个长度下采集到的 FIA overlap 都为 0。该现象与更新供给不及时相符，但 profiler 会放大 host 开销，尚不能排除设备资源约束，更不能将空档全部作为可兑现收益。
+
+下一项性能实验应保持真实 seq_len 更新，尝试把两路 task update 的 begin、FIA 调用、end、event record 放到更紧凑的 host 提交链中，比较非 profiler 的 wall time，并再验证 FIA overlap。仅在这项实验后才能判断 C++ 批量提交是否值得接入。另一个条件方向是共享 QKV、后段按就绪分支执行 O/FFN 的流水：用一部分 Dense 分块代价交换更少的汇合等待，必须以多层 trace 中的等待占比为依据。
+
+复现命令：
+
+```bash
+source /etc/profile.d/ascend-multigraph.sh
+VLLM_BATCH_INVARIANT=0 ASCEND_RT_VISIBLE_DEVICES=0 \
+python benchmarks/multi_graph_shared_dense.py \
+  --model /workspace/models/Qwen2.5-0.5B-Instruct \
+  --batch 129 --capacity 256 --query 8 --kv-length 512 --lanes 65 64 --merge captured \
+  --rounds 5 --repeats 30 --trace --output /workspace/shared-dense.json
+
+ASCEND_RT_VISIBLE_DEVICES=0 python tools/run_multi_graph_replay_tests.py \
+  --replay-model /workspace/models/Qwen2.5-0.5B-Instruct -k shared_dense
+```
+
+边界与下一阶段：单层每次末端同步，不能将延迟乘以层数当作整模型结果，也不能与历史整模型 15–21 ms 的数据直接比较。整层双图能够跨层推进，共享 Dense 则每层需要汇合；该差异可能改变全模型排序。下一阶段需把多个 decoder layer 的残差传递及分叉/汇合放入同一外层图，再比较完整 target replay。动态 seq_len、服务接入、其他模型、TP/V2 均不在本轮通过范围。
+
+本轮验证：318 项隔离 CPU 测试通过；2 项共享 Dense 硬件测试覆盖 Q=1/Q=8、cat/captured 合并、非均衡分支与输入值变化，另有 1 项既有普通 FIA 整模型回归通过。五组最终性能实验的所有同形状检查（hidden 和 residual）最大绝对误差均为 0，所有结果的脚本 SHA256 与提交源码对应。Ruff、Markdown、拼写、修改文件的禁止导入及 diff 检查通过。完整 `format.sh ci` 已执行，但 Windows 缺少 `/bin/bash`、shellcheck、python3 命令，以及已有 `device_length_decode.py` 直接 import Triton 的检查失败仍阻止全套通过；这些失败未作为本次功能通过的依据。
+
 ## 1. 基线与本次交付
 
 - 官方仓库：[vllm-project/vllm-ascend](https://github.com/vllm-project/vllm-ascend)

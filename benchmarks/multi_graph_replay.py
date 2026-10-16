@@ -19,7 +19,7 @@ from vllm_ascend.worker.multi_graph.benchmark import summarize
 from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload, inspect_replay_trace
 
 
-def run(args, workload):
+def run(args, workload, *, experiment=None):
     os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
     os.environ["VLLM_USE_V2_MODEL_RUNNER"] = "0"
     if args.batch_invariant:
@@ -190,6 +190,10 @@ def run(args, workload):
                 cache[request * width : (request + 1) * width].copy_(cache[:width])
             initial.copy_(cache)
         torch.npu.synchronize()
+    if experiment is not None:
+        # Reuse identical model, KV initialization and metadata in structural experiments.
+        with torch.inference_mode(), disable_compilation(model):
+            return experiment(args, workload, runner, model, inputs, context, reset_kv)
     actual = inputs(0, workload.batch)
     reset_kv()
     with torch.inference_mode(), disable_compilation(model):

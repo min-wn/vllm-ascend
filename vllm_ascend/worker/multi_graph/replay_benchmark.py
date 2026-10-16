@@ -63,6 +63,65 @@ def inspect_replay_trace(payload):
     return rows
 
 
+def inspect_shared_dense_trace(payload):
+    """Measure FIA overlap inside one graph as well as between staged graphs."""
+    events = payload if isinstance(payload, list) else payload["traceEvents"]
+    device_pids = {
+        event["pid"]
+        for event in events
+        if event.get("name") == "process_name" and event.get("args", {}).get("name") == "Ascend Hardware"
+    }
+    kernels = [
+        event
+        for event in events
+        if event.get("pid") in device_pids
+        and event.get("ph") == "X"
+        and event.get("args", {}).get("Task Type", "").startswith("KERNEL")
+        and float(event.get("dur", 0)) > 0
+    ]
+    rows = []
+    for marker in events:
+        name = marker.get("name", "")
+        if marker.get("ph") != "X" or not name.startswith("layer."):
+            continue
+        start = float(marker["ts"])
+        end = start + float(marker["dur"])
+        selected = []
+        for kernel in kernels:
+            left = max(start, float(kernel["ts"]))
+            right = min(end, float(kernel["ts"]) + float(kernel["dur"]))
+            if left < right:
+                selected.append((kernel, (left - start, right - start)))
+        attention = [
+            (kernel, interval) for kernel, interval in selected if "FusedInferAttentionScore" in kernel["name"]
+        ]
+        expected = 1 if name.startswith("layer.single_") else 2
+        if len(attention) != expected:
+            raise ValueError(f"{name}: expected {expected} FIA kernels, found {len(attention)}")
+
+        def union_duration(intervals):
+            return sum(right - left for left, right in _merged_intervals(intervals))
+
+        attention_sum = sum(right - left for _, (left, right) in attention)
+        matmuls = [(kernel, interval) for kernel, interval in selected if "matmul" in kernel["name"].lower()]
+        rows.append(
+            dict(
+                marker=name,
+                kernel_union_us=union_duration([interval for _, interval in selected]),
+                kernel_duration_sum_us=sum(right - left for _, (left, right) in selected),
+                matmul_count=len(matmuls),
+                matmul_duration_sum_us=sum(right - left for _, (left, right) in matmuls),
+                attention_count=len(attention),
+                attention_stream_count=len({kernel["tid"] for kernel, _ in attention}),
+                attention_duration_sum_us=attention_sum,
+                attention_overlap_us=max(0.0, attention_sum - union_duration([interval for _, interval in attention])),
+            )
+        )
+    if not rows:
+        raise ValueError("trace contains no layer markers")
+    return rows
+
+
 @dataclass(frozen=True)
 class ReplayWorkload:
     batch: int

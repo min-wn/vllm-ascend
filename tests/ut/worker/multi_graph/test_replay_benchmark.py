@@ -1,6 +1,10 @@
 import pytest
 
-from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload, inspect_replay_trace
+from vllm_ascend.worker.multi_graph.replay_benchmark import (
+    ReplayWorkload,
+    inspect_replay_trace,
+    inspect_shared_dense_trace,
+)
 
 
 @pytest.mark.parametrize("query", [1, 2, 4, 8])
@@ -89,3 +93,30 @@ def test_trace_serial_models_do_not_overlap():
 def test_trace_rejects_missing_device_evidence(events):
     with pytest.raises(ValueError):
         inspect_replay_trace(events)
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_shared_trace_measures_attention_overlap_within_one_model(wrapped):
+    events = [
+        dict(name="process_name", pid=9, args={"name": "Ascend Hardware"}),
+        dict(name="layer.joined_parallel", pid=1, ph="X", ts=0, dur=30),
+        dict(trace_event(2, 10, 1), name="FusedInferAttentionScore", tid=11),
+        dict(trace_event(8, 8, 1), name="FusedInferAttentionScore", tid=12),
+        dict(trace_event(17, 5, 1), name="aclnnMatmul_MatMulV2", tid=11),
+        dict(trace_event(0, 30, 1, "EVENT_WAIT"), name="wait", tid=11),
+        dict(trace_event(40, 10, 1), name="FusedInferAttentionScore", tid=11),
+    ]
+    row = inspect_shared_dense_trace({"traceEvents": events} if wrapped else events)[0]
+    assert row["attention_overlap_us"] == 4
+    assert row["attention_stream_count"] == 2
+    assert row["attention_count"] == 2
+    assert row["matmul_count"] == 1
+    assert row["matmul_duration_sum_us"] == 5
+    assert row["kernel_union_us"] == 19
+    assert row["kernel_duration_sum_us"] == 23
+
+
+@pytest.mark.parametrize("events", [[], [dict(name="layer.joined_parallel", ph="X", ts=0, dur=20)]])
+def test_shared_trace_rejects_missing_attention_evidence(events):
+    with pytest.raises(ValueError):
+        inspect_shared_dense_trace(events)
