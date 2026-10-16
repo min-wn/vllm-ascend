@@ -1,5 +1,11 @@
 # 默认捕获档位下的固定随机 Batch
 
+> 范围更正：本文只有 padding 容量来自默认档位。切分依赖专门捕获的
+> Dense 98 和 Attention 49+49，不符合“从既定档位复用完整模型图”的目标。
+> 文中约 5% 收益仅为结构实验结果，不能作为动态 shape 图切分方案的性能证据。
+> 受档位约束的后续实验见[默认档位完整模型图的切分复用](multi_graph_legal_bucket_replay.md)，
+> 对应脚本为 `benchmarks/multi_graph_bucket_replay.py`。
+
 ## 样本与测量口径
 
 本轮先固定一个随机 batch，再分析与优化；不按收益重新抽样。

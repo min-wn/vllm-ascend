@@ -272,3 +272,53 @@ def test_default_capture_case_selection(tmp_path, request):
     assert selection["selected_tokens"] == min(size for size in selection["capture_sizes"] if size >= 7)
     assert len(selection["benchmark_sha256_at_start"]) == 64
     assert not (destination / "summary.json").exists()
+
+
+@pytest.mark.parametrize("batch,strategy,pair", [(6, "exact", [4, 2]), (7, "balanced", [4, 4])])
+def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strategy, pair):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    destination = tmp_path / "bucket_replay.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(repo / "benchmarks/multi_graph_bucket_replay.py"),
+            "--model",
+            request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
+            "--batch-min",
+            str(batch),
+            "--batch-max",
+            str(batch),
+            "--max-num-seqs",
+            "16",
+            "--strategy",
+            strategy,
+            "--kv-length",
+            "128",
+            "--rounds",
+            "1",
+            "--repeats",
+            "3",
+            "--output",
+            str(destination),
+        ],
+        cwd=repo,
+        env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
+        check=True,
+        timeout=300,
+    )
+    report = json.loads(destination.read_text())
+    assert report["status"] == "passed"
+    assert report["pair"] == pair
+    assert report["graph_count"] == 3
+    assert report["combination_graph_count"] == 0
+    assert report["reuse_graph_and_buffer_identity_unchanged"]
+    assert all(graph["capacity"] in report["selection"]["capture_sizes"] for graph in report["graphs"])
+    assert all(graph["update_tasks"] > 0 for graph in report["graphs"])
+    assert all(check["passed"] for check in report["checks"])
+    assert {check["batch"] for check in report["checks"]} == {batch, batch - 1}
+    assert {check["variant"] for check in report["checks"]} == {0, 1}
+    assert {row["mode"] for row in report["measurements"]} == {"padding", "split_parallel"}
+    assert not report["cross_shape_qualified"]
