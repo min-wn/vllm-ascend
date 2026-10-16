@@ -146,6 +146,22 @@ Captured metadata shared by several layer names is validated and refreshed once 
 
 ## Extension components
 
+### Device-length attention qualification prototype
+
+`vllm_ascend/ops/triton/device_length_decode.py` is an isolated vector-attention prototype, not a selected backend. It accepts contiguous FP16/BF16 query `[B,H,D]`, paged KV `[P,128,Hkv,D]`, device INT32 lengths/page table and an explicit output. `D` is 64 or 128; each request has one query and integral GQA head sharing. It does not implement sliding windows, sinks, quantization, multi-token verification or distributed attention. Callers must guarantee valid device lengths/page IDs and non-overlapping output/workspace; the launcher checks descriptors without reading device values.
+
+The fixed launch grid reads current lengths inside the kernel, computes FP32 online softmax, and writes zero for empty requests. `splits=4` additionally requires preallocated FP32 workspace `[B,H,4,D+2]`; four independent KV partitions store partial maxima, denominators and numerators, followed by a stable softmax merge. Workspace remains at a fixed address during graph replay. Neither path calls graph task update.
+
+On an isolated device, run the hardware qualification and attention microbenchmark:
+
+```bash
+ASCEND_RT_VISIBLE_DEVICES=0 python benchmarks/device_length_decode.py --output device_length.json
+```
+
+The command checks changing lengths/page tables and active/idle/active graph reuse against CPU FP32 attention, for both dtypes, dimensions and split counts. Timing compares ordinary prototype replay, split-four replay, fixed-length FIA replay and FIA replay with host task update. Each timing sample amortizes a block of replays between device synchronization boundaries; five rounds alternate operation order. Fixed-length FIA is an execution lower bound, not a correct replacement for dynamic-length FIA. No model/scheduler, metadata transfer cost or multi-lane speedup is measured. Source hashes and Git state identify the tested prototype. Do not infer a serving improvement from these operator measurements.
+
+### Routing and runtime components
+
 V1 supports opt-in KV bucket routing with `kv_bucket_upper_bounds` and `minimum_bucket_vectors` (at least two). Exact observations take precedence. Ordered bucket vectors preserve lane imbalance; bucket estimates use the fastest measured baseline and slowest split. Unknown buckets fall back. Validate representativeness with hardware data before enabling interpolation.
 
 Online calibration is opt-in with `online_calibration=true`, `selection_policy="measured"`, a `calibration_output_path` in an existing directory, `calibration_sample_interval` and `calibration_maximum_keys`. It alternates baseline/split on separate real steps and never repeats a step to compare KV writers. Matching exact KV vectors must recur to reach `minimum_cost_samples`. Complete records update routing and persist atomically. The dispatch metric is `synchronized_decode_dispatch_us`; synchronization and persistence increase calibration overhead. Device correctness and latency impact remain unverified.
