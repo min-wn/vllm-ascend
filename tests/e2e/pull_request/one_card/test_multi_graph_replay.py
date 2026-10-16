@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import torch
@@ -275,7 +276,7 @@ def test_default_capture_case_selection(tmp_path, request):
 
 
 @pytest.mark.parametrize("batch,strategy,pair", [(6, "exact", [4, 2]), (7, "balanced", [4, 4])])
-@pytest.mark.parametrize("layout", ["baseline", "pinned", "nz_selected", "nz_all"])
+@pytest.mark.parametrize("layout", ["baseline", "pinned", "nz_selected", "nz_all", "native"])
 def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strategy, pair, layout):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
@@ -283,7 +284,11 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
     repo = Path(__file__).resolve().parents[4]
     destination = tmp_path / "bucket_replay.json"
     optimized = layout != "baseline"
-    projections = {"nz_selected": ["qkv", "o", "down"], "nz_all": ["qkv", "o", "gate_up", "down"]}.get(layout, [])
+    projections = {
+        "nz_selected": ["qkv", "o", "down"],
+        "nz_all": ["qkv", "o", "gate_up", "down"],
+        "native": ["qkv", "o", "gate_up", "down"],
+    }.get(layout, [])
     subprocess.run(
         [
             sys.executable,
@@ -308,6 +313,7 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
             str(destination),
             *(["--pinned-inputs", "--update-chunk-size", "4", "--diagnose-lanes"] if optimized else []),
             *(["--nz-projections", *projections] if projections else []),
+            *(["--native-update", "--host-timing"] if layout == "native" else []),
         ],
         cwd=repo,
         env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
@@ -333,14 +339,23 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
     assert report["nz_projections"] == projections
     assert report["original_nd_eager_reference"] == bool(projections)
     assert not report["compiled_requested"]
+    assert report["native_update"] == (layout == "native")
+    assert report["host_timing"] == (layout == "native")
+    for row in report["measurements"]:
+        assert len(row["host_samples_us"]) == (3 if layout == "native" else 0)
+        if layout == "native":
+            assert len(report["native_source_sha256"]) == 64
+            for wall, phases in zip(row["wall_us"], row["host_samples_us"]):
+                assert set(phases) == {"prepare", "submit", "update", "finish", "synchronize"}
+                assert sum(phases.values()) == pytest.approx(wall)
     if projections:
         assert {row["projection"] for row in report["layout_changes"]} == set(projections)
         assert all(row["before"] == 2 and row["after"] == 29 for row in report["layout_changes"])
         assert len(report["layout_changes"]) == len(projections) * report["graphs"][0]["update_tasks"]
 
 
-@pytest.mark.parametrize("weight_format", ["loaded", "nz"])
-def test_dense_projection_diagnostic(tmp_path, request, weight_format):
+@pytest.mark.parametrize("weight_format,shared_input_probe", [("loaded", False), ("nz", False), ("nz", True)])
+def test_dense_projection_diagnostic(tmp_path, request, weight_format, shared_input_probe):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
@@ -362,6 +377,7 @@ def test_dense_projection_diagnostic(tmp_path, request, weight_format):
             "2",
             "--output",
             str(destination),
+            *(["--shared-input-probe"] if shared_input_probe else []),
         ],
         cwd=repo,
         env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
@@ -377,7 +393,69 @@ def test_dense_projection_diagnostic(tmp_path, request, weight_format):
     for row in report["results"]:
         assert row["passed"]
         assert row["layers"] > 0
-        assert set(row["summary_ms"]) == {"padding", "lane0", "lane1", "split_parallel"}
+        assert set(row["summary_ms"]) == {
+            "padding",
+            "lane0",
+            "lane1",
+            "split_parallel",
+            *(("shared_bucket", "shared_staged") if shared_input_probe else ()),
+        }
+        assert row["shared_bucket_reuses_padding_graph"] == shared_input_probe
+        assert row["shared_bucket_includes_input_copies"] == shared_input_probe
+        if shared_input_probe:
+            assert row["shared_bucket_capacity"] == report["selection"]["selected_requests"]
+            assert row["shared_bucket_output_alias_checks"] == 2 * row["layers"]
+            assert row["shared_staged_graph_count"] == row["shared_staged_input_gathers_per_replay"] == row["layers"]
+            assert row["shared_staged_capture_capacity"] == row["shared_bucket_capacity"]
         assert all(len(value["samples_us"]) == 2 for value in row["measurements"])
         if weight_format == "nz":
             assert row["weight_format"] == 29
+
+
+def test_native_fia_binding_guards(monkeypatch):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    monkeypatch.syspath_prepend(str(repo / "benchmarks"))
+    from multi_graph_native_update import load_native_update
+
+    native, _ = load_native_update()
+    stream = torch.npu.Stream()
+    with pytest.raises(RuntimeError, match="nonempty"):
+        native.NativeLane((), stream)
+    with pytest.raises(RuntimeError, match="nonempty"):
+        native.submit([], 1)
+    data = torch.ones((1, 1, 1, 128), device="npu", dtype=torch.bfloat16)
+    output = torch.empty_like(data)
+    stream.wait_stream(torch.npu.current_stream())
+    graph = torch.npu.NPUGraph()
+    # Only a real handle is needed here; these tests never submit a FIA update.
+    with torch.npu.graph(graph, stream=stream):
+        torch.npu.graph_task_group_begin(stream)
+        torch.add(data, data, out=output)
+        handle = torch.npu.graph_task_group_end(stream)
+    kwargs = dict(
+        query=data,
+        key=data,
+        value=data,
+        scale=1.0,
+        actual_seq_lengths=[1],
+        actual_seq_lengths_kv=[1],
+        block_table=None,
+        out=[output, torch.empty(0, device="npu")],
+    )
+    task = SimpleNamespace(kwargs=kwargs, handle=handle, event=torch.npu.ExternalEvent())
+    plan = native.NativeLane([task], stream)
+    with pytest.raises(RuntimeError, match="task count"):
+        plan.bind([])
+    with pytest.raises(RuntimeError, match="fixed FIA argument changed"):
+        plan.bind([SimpleNamespace(kwargs=dict(kwargs, scale=0.5), handle=handle, event=task.event)])
+    with pytest.raises(RuntimeError, match="task event changed"):
+        plan.bind([SimpleNamespace(kwargs=kwargs, handle=handle, event=torch.npu.ExternalEvent())])
+    task.kwargs = dict(kwargs, actual_seq_lengths_kv=[2])
+    plan.bind([task])
+    task.event = torch.npu.ExternalEvent()
+    with pytest.raises(RuntimeError, match="task event changed"):
+        plan.bind([task])
+    stream.synchronize()

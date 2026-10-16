@@ -80,3 +80,15 @@ def test_projection_selection_preserves_shared_weights_and_other_layers(benchmar
 def test_projection_selection_rejects_invalid_names_before_model_access(benchmark, names):
     with pytest.raises(ValueError, match="unique supported"):
         benchmark.projection_modules(None, names)
+
+
+def test_host_phase_intervals_cover_full_replay_including_final_sync(benchmark):
+    phases = benchmark.elapsed_host_phases([1000, 3000, 4000, 10000, 12000, 15000])
+    assert phases == dict(prepare=2, submit=1, update=6, finish=2, synchronize=3)
+    assert sum(phases.values()) == 14
+
+
+@pytest.mark.parametrize("stamps", [[], [0] * 5, [0] * 7, [0, 1, 2, 1, 4, 5]])
+def test_host_phase_intervals_reject_missing_or_nonmonotonic_boundaries(benchmark, stamps):
+    with pytest.raises(ValueError, match="monotonic"):
+        benchmark.elapsed_host_phases(stamps)
