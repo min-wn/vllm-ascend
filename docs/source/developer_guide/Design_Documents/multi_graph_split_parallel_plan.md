@@ -118,6 +118,55 @@ ASCEND_RT_VISIBLE_DEVICES=0 python benchmarks/multi_graph_replay.py \
 
 下一步重点是保留真实长度 update 的前提下，缩短双图的 48 次 host 更新链并优化子图规模；普通模式仍需独立数值验收。此结果不代表动态长度服务、生产推测解码或普通 FIA 已获得同等加速。
 
+### 普通 FIA：执行正确性与跨形状数值诊断分开
+
+此前的跨形状 hidden-state `allclose` 失败不能直接归因于 FIA 错误。普通模式同形状重复执行一致，batch-invariant 又同时改变 MatMul 和 attention 等实现，尚不足以定位唯一算子。后续普通 FIA 实验采用显式 `--qualification same-shape`：每张图严格对照相同形状的 eager，split 对照各 lane eager 输出按原序拼接；跨形状误差仅作描述。默认 `cross-shape` 检查不变，生产准入不变。
+
+报告记录 `qualification`、`cross_shape_qualified`、各模式的最大绝对误差、relative RMS、平均 cosine 和超逐元素容差比例。`same-shape` 下 `status=passed` 只表示执行检查通过，不能解释为模型质量验收完成。可选 `--logit-check` 在计时外比较每请求最后一个 query token 的 top-1 一致率、平均 KL 和最大 logprob 差异；不运行采样或 draft，不预设接受率，也不以诊断结果自动放宽准入。
+
+普通 FIA 的 B=129/C=256/Q=8/KV=512 数据（BF16、同一 Qwen2.5-0.5B、五轮各二十次 replay，全数保留 update）：
+
+| 切分与提交方式 | 单图 padding | 串行双图 | 并行双图 |
+| --- | --- | --- | --- |
+| 65+64，逐 lane 提交 | 20.713 ms | 17.666 ms | 16.528 ms |
+| 65+64，先提交两张 replay 再 update | 20.804 ms | 17.681 ms | 16.460 ms |
+| 96+33 | 20.482 ms | 16.824 ms | 15.707 ms |
+| 128+1 | 20.212 ms | 16.427 ms | 15.217 ms |
+| 128+1，独立进程复测并检查 logits | 20.971 ms | 16.845 ms | 15.599 ms |
+| 128+1，图内输出拷贝 | 20.629 ms | 16.259 ms | 15.041 ms |
+
+128+1 两次相对同轮 padding 的延迟降幅为 24.7% 和 25.6%；均衡切分约 20.2%。不同进程的单图时间也存在波动，必须比较同轮比值；图内 copy 与 replay-first 暂不改为默认策略。每张图与同形状 eager 最大误差为 0。均衡 trace 的并行 kernel 重叠约 4.2 ms；主图尾图约 6.0 ms，串行对照均为 0。
+
+较小的普通 FIA 负载 B=65/C=128/Q=4/KV=512：64+1 的单图/串行/并行分别为 9.620/10.070/9.904 ms；均衡 33+32 分别为 9.424/10.357/10.253 ms。主图尾图减少了切分成本，但仍未超过同轮 padding；不可将大负载的优势外推到该区间。
+
+主图尾图复测的实际 batch eager 对照：padding relative RMS 约 1.324%，切分约 1.321%；最后 query token 的 top-1 一致率分别为 94.6% 和 96.1%，平均 KL 分别约 0.00138 和 0.00134。该输入是重复文本 prefix 加固定 token ID 后缀的合成负载，不能代表真实业务质量。结果表明该样本的切分数值偏移没有明显超过 padding 基线，不等于跨形状精度已经验收。
+
+可复现普通路径命令：
+
+```bash
+VLLM_BATCH_INVARIANT=0 ASCEND_RT_VISIBLE_DEVICES=0 \
+python benchmarks/multi_graph_replay.py \
+  --model /workspace/models/Qwen2.5-0.5B-Instruct \
+  --batch 129 --capacity 256 --query 8 --kv-length 512 --lanes 128 1 \
+  --qualification same-shape --protocols update --logit-check \
+  --rounds 5 --repeats 20 --trace \
+  --output /workspace/multi-graph-results/native-optimization/reproduce.json
+```
+
+### 基于测量的优化空间与优先级
+
+| 优先级 | 方法 | 当前依据与可行性 | 验证边界 |
+| --- | --- | --- | --- |
+| 1 | 用实际子图成本选切分点，保留主图尾图与非均衡候选 | 128+1 在该负载优于 65+64，且串行子图总成本也下降；现有基准可直接控制 lane，落地成本低 | 不将请求数均分当作时间均分；跨 B/Q/KV 搜索，不把 Q=8 结果写入生产 Q=1 成本表 |
+| 2 | 减少两图对计算与带宽的竞争，按关键路径调整提交 | 并行时每图 kernel busy 时间增加；replay-first 初测仅约 0.4% 改善，没有稳定证据 | 必须看每图耗时与 kernel overlap，不以 stream 数或单纯重叠量作目标；资源限额 API 仍需当前驱动验证 |
+| 3 | 缩短必要 update 的 host 提交链 | 两图 48 次 host attention 调用在 profiler 中累计约 3 ms，单图约 1.7 ms；批量 C++ 提交可研究，Python 交错已有负面历史结果 | 这些调用与设备执行重叠，3 ms 不是可直接兑现的收益；不得取消真实 seq_len 更新、ExternalEvent 或缓冲区生命周期约束 |
+| 4 | 图内输出拷贝与中间数据搬运融合 | 图内 copy 已实现并通过精度，收益仍受噪声影响；两图 kernel 中 copy 类累计约 0.8–1.2 ms | 图内 copy 仍有拷贝成本；进一步融合 QKV split/RoPE/KV 写入需独立 kernel、页表/slot、因果性和别名测试，不能直接套用 MLA 专用算子 |
+| 条件项 | 若需要 batch-invariant，优化其带 bias GEMM | 大图 Addmm 从普通约 0.59 ms 变为 Triton invariant 约 6.51 ms，而 attention 约 5.79→5.01 ms；这是该模式的明确热点 | 属于独立算子替换实验，需要验证 bias 累加精度与 batch invariance；普通 FIA 优化不依赖它 |
+
+上述 kernel 分类是独立 profiler 内的累计 duration，包含并发时的重叠，不可相加当作 wall time。当前优先交付普通 FIA 的切分成本证据和可复现实验，不扩大到动态服务、V2 或分布式。
+
+本轮校验：314 项 CPU 测试通过；新增普通 FIA same-shape/logits/replay-first/captured 组合与既有 Q=8 batch-invariant 严格检查共 2 项硬件回归通过。普通模式完整性能用例均单独通过同形状 eager 检查。新增检查没有改变原有跨形状测试的默认要求。
+
 ## 1. 基线与本次交付
 
 - 官方仓库：[vllm-project/vllm-ascend](https://github.com/vllm-project/vllm-ascend)

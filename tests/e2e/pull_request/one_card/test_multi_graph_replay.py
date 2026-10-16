@@ -1,6 +1,7 @@
 """Fixed-query target replay qualification; no drafter or acceptance sampling."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -60,3 +61,58 @@ def test_fixed_query_replay(tmp_path, query, merge, request):
     for graph in result["graphs"]:
         assert (graph["update_tasks"] > 0) == (graph["protocol"] == "update")
         assert (graph["frozen_tasks"] > 0) == (graph["protocol"] == "frozen")
+
+
+def test_native_same_shape_replay_does_not_claim_cross_shape_accuracy(tmp_path, request):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    destination = tmp_path / "native.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(repo / "benchmarks/multi_graph_replay.py"),
+            "--model",
+            request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
+            "--batch",
+            "33",
+            "--capacity",
+            "64",
+            "--query",
+            "4",
+            "--kv-length",
+            "512",
+            "--qualification",
+            "same-shape",
+            "--submission",
+            "replay-first",
+            "--merge",
+            "captured",
+            "--logit-check",
+            "--rounds",
+            "1",
+            "--repeats",
+            "3",
+            "--output",
+            str(destination),
+        ],
+        cwd=repo,
+        env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
+        check=True,
+        timeout=240,
+    )
+    result = json.loads(destination.read_text())
+    assert result["status"] == "passed"
+    assert not result["batch_invariant"]
+    assert not result["cross_shape_qualified"]
+    assert result["qualification"] == "same-shape"
+    padding_control = next(row for row in result["controls"] if row["name"] == "eager_padded")
+    assert not padding_control["required"]
+    assert padding_control["passed"] is None
+    assert len(result["correctness"]) == 3
+    for row in result["correctness"]:
+        assert row["passed"]
+        assert "relative_rms" in row["cross_shape"]
+        assert row["last_query_logit_diagnostics"]["tokens"] == 33
+    assert all(row["update_tasks"] > 0 for row in result["graphs"])

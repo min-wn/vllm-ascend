@@ -196,6 +196,19 @@ def run(args, workload):
         reference = forward(actual).clone()
     torch.npu.synchronize()
     reference_cpu = reference.float().cpu()
+
+    def numerical_difference(observed_cpu, expected_cpu):
+        delta = observed_cpu - expected_cpu
+        return dict(
+            max_abs_error=delta.abs().max().item(),
+            relative_rms=(delta.square().mean() / expected_cpu.square().mean().clamp_min(1e-30)).sqrt().item(),
+            cosine=torch.nn.functional.cosine_similarity(observed_cpu, expected_cpu, dim=-1).mean().item(),
+            outside_elementwise_tolerance=(~torch.isclose(observed_cpu, expected_cpu, rtol=0.02, atol=0.02))
+            .float()
+            .mean()
+            .item(),
+        )
+
     controls = []
     with torch.inference_mode(), disable_compilation(model):
         for label, data, capture_path in (
@@ -206,8 +219,22 @@ def run(args, workload):
             reset_kv()
             control = forward(data, capture_path)[: workload.batch * workload.query].float().cpu()
             print(f"control {label}: max_abs_error={(control - reference_cpu).abs().max().item()}", flush=True)
-            torch.testing.assert_close(control, reference_cpu, rtol=0.02, atol=0.02)
-            controls.append(dict(name=label, max_abs_error=(control - reference_cpu).abs().max().item(), passed=True))
+            required = label != "eager_padded" or args.qualification == "cross-shape"
+            if required:
+                torch.testing.assert_close(control, reference_cpu, rtol=0.02, atol=0.02)
+            controls.append(
+                dict(
+                    name=label,
+                    **numerical_difference(control, reference_cpu),
+                    required=required,
+                    passed=True if required else None,
+                )
+            )
+    reference_log_probs = None
+    if args.logit_check:
+        with torch.inference_mode(), disable_compilation(model), context(actual):
+            logits = model.compute_logits(reference.reshape(workload.batch, workload.query, -1)[:, -1].contiguous())
+            reference_log_probs = logits.float().log_softmax(dim=-1)
     rows, correctness, resources = [], [], []
     trace_analysis = None
     captured = {}
@@ -220,6 +247,7 @@ def run(args, workload):
             ):
                 reset_kv()
                 data = inputs(start, stop)
+                eager_output = forward(data).float().cpu().clone()
                 stream, update_stream = torch.npu.Stream(), torch.npu.Stream()
                 stream.wait_stream(torch.npu.current_stream())
                 with torch.npu.stream(stream):
@@ -248,6 +276,7 @@ def run(args, workload):
                         stream=stream,
                         update=update_stream,
                         output=output,
+                        eager_output=eager_output,
                         tasks=graph.resolve_tasks(ContextSource(data[2])),
                         done=torch.npu.Event(),
                         updated=torch.npu.Event(),
@@ -269,12 +298,19 @@ def run(args, workload):
         def replay(protocol, mode):
             entries = captured[protocol][:1] if mode == "single" else captured[protocol][1:]
             ready.record(main)
+            replay_first = mode == "parallel" and args.submission == "replay-first"
+            if replay_first:
+                for entry in entries:
+                    entry["stream"].wait_event(ready)
+                    with torch.npu.stream(entry["stream"]):
+                        entry["graph"].replay()
             for index, entry in enumerate(entries):
-                entry["stream"].wait_event(ready)
-                if mode == "serial" and index:
-                    entry["stream"].wait_event(entries[index - 1]["done"])
-                with torch.npu.stream(entry["stream"]):
-                    entry["graph"].replay()
+                if not replay_first:
+                    entry["stream"].wait_event(ready)
+                    if mode == "serial" and index:
+                        entry["stream"].wait_event(entries[index - 1]["done"])
+                    with torch.npu.stream(entry["stream"]):
+                        entry["graph"].replay()
                 if protocol == "update":
                     entry["update"].wait_event(ready)
                     entry["graph"].update(entry["update"], entry["tasks"])
@@ -289,6 +325,13 @@ def run(args, workload):
                 torch.cat([entry["output"] for entry in entries], out=merged)
             return merged
 
+        def expected_output(protocol, mode):
+            if args.qualification == "cross-shape":
+                return reference_cpu
+            if mode == "single":
+                return captured[protocol][0]["eager_output"][: workload.batch * workload.query]
+            return torch.cat([entry["eager_output"] for entry in captured[protocol][1:]])
+
         def check(protocol, mode):
             reset_kv()
             result = replay(protocol, mode)
@@ -296,8 +339,35 @@ def run(args, workload):
             observed_cpu = result.float().cpu()
             error = (observed_cpu - reference_cpu).abs().max().item()
             print(f"check {protocol}/{mode}: max_abs_error={error}", flush=True)
-            torch.testing.assert_close(observed_cpu, reference_cpu, rtol=0.02, atol=0.02)
-            correctness.append(dict(protocol=protocol, mode=mode, max_abs_error=error, passed=True))
+            expected_cpu = expected_output(protocol, mode)
+            torch.testing.assert_close(observed_cpu, expected_cpu, rtol=0.02, atol=0.02)
+            # Cross-shape metrics are descriptive, never an implicit accuracy waiver.
+            correctness.append(
+                dict(
+                    protocol=protocol,
+                    mode=mode,
+                    max_abs_error=(observed_cpu - expected_cpu).abs().max().item(),
+                    passed=True,
+                    cross_shape=numerical_difference(observed_cpu, reference_cpu),
+                )
+            )
+            if reference_log_probs is not None:
+                with context(actual):
+                    logits = model.compute_logits(
+                        result.reshape(workload.batch, workload.query, -1)[:, -1].contiguous()
+                    )
+                log_probs = logits.float().log_softmax(dim=-1)
+                delta = reference_log_probs - log_probs
+                # Ignore vocabulary padding where both distributions assign zero probability.
+                finite = torch.isfinite(reference_log_probs) & torch.isfinite(log_probs)
+                safe_delta = torch.where(finite, delta, 0)
+                correctness[-1]["last_query_logit_diagnostics"] = dict(
+                    tokens=workload.batch,
+                    top1_agreement=(log_probs.argmax(-1) == reference_log_probs.argmax(-1)).float().mean().item(),
+                    mean_kl_reference_to_observed=(reference_log_probs.exp() * safe_delta).sum(-1).mean().item(),
+                    max_logprob_error=safe_delta.abs().max().item(),
+                    qualification="descriptive_only_no_acceptance_threshold",
+                )
 
         combinations = [(p, m) for p in args.protocols for m in ("single", "serial", "parallel")]
         for protocol, mode in combinations:
@@ -319,7 +389,7 @@ def run(args, workload):
                     end_event.synchronize()
                     wall.append((time.perf_counter_ns() - began) / 1000)
                     device.append(start_event.elapsed_time(end_event) * 1000)
-                torch.testing.assert_close(result.float().cpu(), reference_cpu, rtol=0.02, atol=0.02)
+                torch.testing.assert_close(result.float().cpu(), expected_output(protocol, mode), rtol=0.02, atol=0.02)
                 rows.append(
                     dict(
                         round=round_id,
@@ -350,6 +420,9 @@ def run(args, workload):
         dtype=args.dtype,
         batch_invariant=bool(vllm_envs.VLLM_BATCH_INVARIANT),
         merge=args.merge,
+        submission=args.submission,
+        qualification=args.qualification,
+        cross_shape_qualified=args.qualification == "cross-shape",
         resolved_tasks="outside_timed_region_fixed_metadata",
         controls=controls,
         trace_analysis=trace_analysis,
@@ -400,6 +473,16 @@ def main():
     parser.add_argument("--repeats", type=int, default=30)
     parser.add_argument("--warmups", type=int, default=5)
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument(
+        "--logit-check", action="store_true", help="report last-query distribution drift outside timing"
+    )
+    parser.add_argument("--submission", choices=("lane", "replay-first"), default="lane")
+    parser.add_argument(
+        "--qualification",
+        choices=("cross-shape", "same-shape"),
+        default="cross-shape",
+        help="same-shape checks every graph against matching eager; cross-shape accuracy remains unqualified",
+    )
     parser.add_argument(
         "--merge",
         choices=("cat", "captured"),
