@@ -1,5 +1,8 @@
 # 默认桶内并行的归因与第二轮优化
 
+后续主机准备与集中提交实测见
+[主机提交瓶颈记录](multi_graph_host_submission_bottlenecks.md)。
+
 ## 比较契约
 
 本轮承接 `multi_graph_bucket_internal_parallel.md`，使用相同的 Qwen3-4B BF16、

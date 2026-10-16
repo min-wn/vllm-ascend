@@ -123,10 +123,80 @@ void submit(const std::vector<std::shared_ptr<NativeLane>>& lanes, size_t chunk)
   }
 }
 
+struct NativeReplay {
+  py::object graph_owner;
+  py::object replay_method;
+  c10_npu::NPUStream main_stream;
+  c10_npu::NPUStream graph_stream;
+  std::vector<std::shared_ptr<NativeLane>> lanes;
+  std::vector<c10_npu::NPUEvent> updated;
+  c10_npu::NPUEvent ready;
+  c10_npu::NPUEvent done;
+  std::vector<py::object> timing_owners;
+  std::vector<c10_npu::NPUEvent*> timing;
+
+  static c10_npu::NPUStream unpack(py::object stream) {
+    return c10_npu::NPUStream::unpack3(stream.attr("stream_id").cast<int64_t>(),
+                                       stream.attr("device_index").cast<int>(),
+                                       static_cast<c10::DeviceType>(stream.attr("device_type").cast<int>()));
+  }
+
+  NativeReplay(py::object graph, py::object main, py::object replay_stream,
+               std::vector<std::shared_ptr<NativeLane>> plans, py::sequence timing_events)
+      : graph_owner(graph),
+        replay_method(graph.attr("replay")),
+        main_stream(unpack(main)),
+        graph_stream(unpack(replay_stream)),
+        lanes(std::move(plans)),
+        updated(lanes.size()) {
+    TORCH_CHECK(py::isinstance(graph, py::module_::import("torch_npu").attr("_C").attr("_NPUGraph")),
+                "expected NPU graph");
+    TORCH_CHECK(!lanes.empty(), "nonempty replay update plans required");
+    TORCH_CHECK(main_stream.device_index() == graph_stream.device_index(), "replay stream device mismatch");
+    for (const auto& lane : lanes)
+      TORCH_CHECK(lane->stream.device_index() == main_stream.device_index(), "update stream device mismatch");
+    TORCH_CHECK(timing_events.size() == 0 || timing_events.size() == 2, "expected zero or two timing events");
+    auto event_type = py::module_::import("torch_npu").attr("_C").attr("_NPUEventBase");
+    for (auto item : timing_events) {
+      auto event = py::reinterpret_borrow<py::object>(item);
+      TORCH_CHECK(py::isinstance(event, event_type), "expected NPU timing event");
+      timing_owners.push_back(event);
+      timing.push_back(&reinterpret_cast<THNPEvent*>(event.ptr())->npu_event);
+    }
+  }
+
+  void replay(bool diagnostic) {
+    TORCH_CHECK(!diagnostic || timing.size() == 2, "diagnostic timing events were not configured");
+    py::gil_scoped_release release;
+    ready.record(main_stream);
+    ready.block(graph_stream);
+    if (diagnostic) timing[0]->record(graph_stream);
+    {
+      c10_npu::NPUStreamGuard guard(graph_stream);
+      // NPUGraph has no public Python-object layout. Invoke its retained public
+      // replay binding, rather than reinterpreting undocumented object memory.
+      py::gil_scoped_acquire acquire;
+      replay_method();
+    }
+    for (const auto& lane : lanes) ready.block(lane->stream);
+    for (const auto& lane : lanes) lane->update(0, lane->handles.size());
+    for (size_t i = 0; i < lanes.size(); ++i) {
+      updated[i].record(lanes[i]->stream);
+      updated[i].block(graph_stream);
+    }
+    done.record(graph_stream);
+    if (diagnostic) timing[1]->record(graph_stream);
+    done.block(main_stream);
+  }
+};
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, module) {
   py::class_<NativeLane, std::shared_ptr<NativeLane>>(module, "NativeLane")
       .def(py::init<py::sequence, py::object>())
       .def("bind", &NativeLane::bind)
       .def("bind_kv_lengths", &NativeLane::bind_kv_lengths);
   module.def("submit", &submit);
+  py::class_<NativeReplay>(module, "NativeReplay")
+      .def(py::init<py::object, py::object, py::object, std::vector<std::shared_ptr<NativeLane>>, py::sequence>())
+      .def("replay", &NativeReplay::replay, py::arg("diagnostic") = false);
 }

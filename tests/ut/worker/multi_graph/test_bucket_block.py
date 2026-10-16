@@ -59,3 +59,53 @@ def test_lane_core_limits_are_explicit(benchmark, common, lanes, expected):
 def test_invalid_lane_limits_are_rejected(benchmark, common, lanes):
     with pytest.raises(ValueError):
         benchmark.lane_core_limits(common, lanes)
+
+
+def test_packed_runtime_values_use_disjoint_fixed_typed_views(benchmark):
+    import torch
+
+    targets = {
+        "ids": torch.empty(3, dtype=torch.int64),
+        "lengths": torch.empty(3, dtype=torch.int32),
+        "pages": torch.empty((3, 2), dtype=torch.int32),
+        "slots": torch.empty(3, dtype=torch.int64),
+    }
+    buffers = benchmark.PackedStepBuffers(targets)
+    pointers = {name: tensor.data_ptr() for name, tensor in buffers.device.items()}
+    previous_end = 0
+    for name, item in buffers.schema.items():
+        assert item["offset"] % 64 == 0 and item["offset"] >= previous_end
+        previous_end = item["offset"] + item["bytes"]
+        assert buffers.device[name].untyped_storage().data_ptr() == buffers.device_buffer.data_ptr()
+    for token in (41, 76, 99):
+        values = dict(
+            ids=[token, token + 1, 0], lengths=[512, 511, 0], pages=[[1, 2], [3, 4], [0, 0]], slots=[127, 383, -1]
+        )
+        for name, value in values.items():
+            buffers.write(name, value)
+        buffers.transfer()
+        for name, value in values.items():
+            assert torch.equal(buffers.device[name], torch.tensor(value, dtype=targets[name].dtype))
+            assert buffers.device[name].data_ptr() == pointers[name]
+
+
+def test_packed_runtime_shapes_cannot_broadcast_or_change(benchmark):
+    import torch
+
+    buffers = benchmark.PackedStepBuffers({"ids": torch.empty(3, dtype=torch.int64)})
+    for values in ([1], [[1, 2, 3]], [1, 2, 3, 4]):
+        with pytest.raises(ValueError, match="runtime shape changed"):
+            buffers.write("ids", values)
+    with pytest.raises(KeyError):
+        buffers.write("unknown", [1, 2, 3])
+
+
+@pytest.mark.parametrize("kind", ["empty", "float", "zero"])
+def test_packed_buffers_reject_invalid_schema(benchmark, kind):
+    import torch
+
+    targets = (
+        {} if kind == "empty" else {"ids": torch.empty(0, dtype=torch.int64) if kind == "zero" else torch.empty(3)}
+    )
+    with pytest.raises(ValueError):
+        benchmark.PackedStepBuffers(targets)

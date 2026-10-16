@@ -11,7 +11,7 @@ import json
 import os
 import statistics
 import time
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 
@@ -42,6 +42,56 @@ def lane_core_limits(common, lanes):
     if common < 0 or (lanes is not None and (common or len(lanes) != 2 or min(lanes) < 0)):
         raise ValueError("specify either a nonnegative common core limit or two nonnegative lane limits")
     return tuple(lanes) if lanes is not None else (common, common)
+
+
+class PackedStepBuffers:
+    """One runtime-filled host/device allocation with fixed aligned integer views."""
+
+    def __init__(self, targets):
+        import numpy as np
+        import torch
+
+        if not targets:
+            raise ValueError("nonempty integer buffer schema required")
+        device = next(iter(targets.values())).device
+        self.schema = {}
+        offset = 0
+        alignment = 64
+        for name, tensor in targets.items():
+            if tensor.device != device or tensor.dtype not in (torch.int32, torch.int64) or tensor.numel() == 0:
+                raise ValueError("requires nonempty int32/int64 tensors on one device")
+            offset = (offset + alignment - 1) // alignment * alignment
+            size = tensor.numel() * tensor.element_size()
+            self.schema[name] = dict(offset=offset, bytes=size, shape=list(tensor.shape))
+            offset += size
+        self.host_buffer = torch.zeros(offset, dtype=torch.uint8, device="cpu", pin_memory=device.type != "cpu")
+        self.device_buffer = torch.empty(offset, dtype=torch.uint8, device=device)
+        self.host, self.device = {}, {}
+        for name, tensor in targets.items():
+            item = self.schema[name]
+            for buffer, views in ((self.host_buffer, self.host), (self.device_buffer, self.device)):
+                views[name] = buffer.narrow(0, item["offset"], item["bytes"]).view(tensor.dtype).view(tensor.shape)
+        self.arrays = {name: view.numpy() for name, view in self.host.items()}
+        self.np = np
+
+    def write(self, name, values):
+        target = self.arrays[name]
+        source = self.np.asarray(values, dtype=target.dtype)
+        if source.shape != target.shape:
+            raise ValueError(f"{name}: runtime shape changed from {target.shape} to {source.shape}")
+        self.np.copyto(target, source)
+
+    def transfer(self):
+        self.device_buffer.copy_(self.host_buffer, non_blocking=True)
+
+
+@contextmanager
+def phase_timer(name, samples):
+    started = time.perf_counter_ns()
+    try:
+        yield
+    finally:
+        samples[name] = (time.perf_counter_ns() - started) / 1000
 
 
 def experiment(args, workload, runner, model, inputs, context, reset_kv):
@@ -112,6 +162,26 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         data = inputs(0, workload.capacity)
         metadata = next(iter(data[2].values()))
         entry = dict(data=data, branches=[], streams=[], fork=torch.npu.Event(), joins=[])
+        if args.packed_metadata:
+            packed = PackedStepBuffers(
+                dict(
+                    ids=data[0],
+                    positions=data[1],
+                    lengths=metadata.seq_lens_gpu,
+                    pages=metadata.block_tables,
+                    slots=metadata.slot_mapping,
+                )
+            )
+            metadata = dataclasses.replace(
+                metadata,
+                seq_lens=packed.host["lengths"],
+                seq_lens_cpu=packed.host["lengths"],
+                seq_lens_gpu=packed.device["lengths"],
+                block_tables=packed.device["pages"],
+                slot_mapping=packed.device["slots"],
+            )
+            data = (packed.device["ids"], packed.device["positions"], {name: metadata for name in data[2]})
+            entry.update(data=data, packed=packed)
         if mode != "padding":
             for start, stop in intervals:
                 count = stop - start
@@ -148,7 +218,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             pages=metadata.block_tables,
             slots=metadata.slot_mapping,
         )
-        entry["host"] = {name: torch.empty_like(t, device="cpu", pin_memory=True) for name, t in targets.items()}
+        entry["host"] = (
+            entry["packed"].host
+            if args.packed_metadata
+            else {name: torch.empty_like(t, device="cpu", pin_memory=True) for name, t in targets.items()}
+        )
         entries[mode] = entry
 
     def prepare(entry, batch, variant):
@@ -159,6 +233,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         lengths = [workload.kv_length - variant] * batch + [0] * count
 
         def copy(name, target, values):
+            if args.packed_metadata:
+                entry["packed"].write(name, values)
+                return
             staging = entry["host"][name]
             staging.copy_(torch.tensor(values, dtype=target.dtype))
             target.copy_(staging, non_blocking=True)
@@ -166,10 +243,13 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         copy("ids", data[0], list(range(100 + variant, 100 + variant + batch)) + [0] * count)
         copy("positions", data[1], [workload.kv_length - variant - 1] * batch + [0] * count)
         copy("lengths", metadata.seq_lens_gpu, lengths)
-        metadata.seq_lens_cpu.copy_(entry["host"]["lengths"])
+        if not args.packed_metadata:
+            metadata.seq_lens_cpu.copy_(entry["host"]["lengths"])
         metadata.seq_lens_list = lengths
         copy("pages", metadata.block_tables, values["pages"] + [[0] * workload.pages_per_request for _ in range(count)])
         copy("slots", metadata.slot_mapping, [slot - variant for slot in values["slots"]] + [-1] * count)
+        if args.packed_metadata:
+            entry["packed"].transfer()
         for branch, (start, stop) in zip(entry["branches"], intervals):
             next(iter(branch[2].values())).seq_lens_list = lengths[start:stop]
         if "graph" in entry:
@@ -367,6 +447,15 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             entry["native"] = True
             for group in entry["update_groups"]:
                 group["native"] = native.NativeLane(tuple(tasks[i] for i in group["indices"]), group["stream"])
+            if args.native_replay:
+                entry["timing_events"] = (
+                    (torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True))
+                    if args.phase_diagnostics
+                    else ()
+                )
+                entry["native_replay"] = native.NativeReplay(
+                    graph, main, stream, [group["native"] for group in entry["update_groups"]], entry["timing_events"]
+                )
         print(f"captured {mode}: Dense={workload.capacity}, tasks={len(graph.tasks)}", flush=True)
 
     def identities():
@@ -401,14 +490,24 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
     captured_identities = identities()
     ready = torch.npu.Event()
 
-    def replay(mode, batch, variant, profile=False):
+    def replay(mode, batch, variant, profile=False, diagnostics=None, graph_events=None):
         entry = entries[mode]
-        region = torch.profiler.record_function if profile else nullcontext
+        region = (
+            (lambda name: phase_timer(name, diagnostics))
+            if diagnostics is not None
+            else (torch.profiler.record_function if profile else nullcontext)
+        )
         with region("host.prepare_h2d_resolve_bind"):
             prepare(entry, batch, variant)
+        if args.native_replay:
+            with region("host.native_replay_update_join"):
+                entry["native_replay"].replay(diagnostics is not None)
+            return entry["output"]
         with region("host.replay_submit"):
             ready.record(main)
             entry["stream"].wait_event(ready)
+            if graph_events is not None:
+                graph_events[0].record(entry["stream"])
             with torch.npu.stream(entry["stream"]):
                 entry["graph"].replay()
         with region("host.update_submit"):
@@ -424,6 +523,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                 group["updated"].record(group["stream"])
                 entry["stream"].wait_event(group["updated"])
             entry["done"].record(entry["stream"])
+            if graph_events is not None:
+                graph_events[1].record(entry["stream"])
             main.wait_event(entry["done"])
         return entry["output"]
 
@@ -466,6 +567,25 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                 print(f"{schedule}/{mode}/{round_id}: {summarize(samples)['p50']:.2f} us", flush=True)
     if captured_identities != identities():
         raise ValueError("timed replay changed graph, workspace or buffer identity")
+    phase_diagnostics = []
+    if args.phase_diagnostics:
+        # Separate, unprofiled diagnostics. Event span includes graph waits and
+        # update readiness; it is not pure kernel time or subtracted from wall.
+        for mode in entries:
+            events = entry_events = entries[mode].get("timing_events")
+            if not entry_events:
+                events = (torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True))
+            for repeat in range(32):
+                batch, variant = args.dynamic_cases[repeat % len(args.dynamic_cases)]
+                row = dict(mode=mode, batch=batch)
+                started = time.perf_counter_ns()
+                output = replay(mode, batch, variant, diagnostics=row, graph_events=events)
+                with phase_timer("host.final_sync", row):
+                    torch.npu.synchronize()
+                row["wall_us"] = (time.perf_counter_ns() - started) / 1000
+                row["graph_plus_update_ready_span_us"] = events[0].elapsed_time(events[1]) * 1000
+                phase_diagnostics.append(row)
+            check(output, references[mode, batch, variant], batch, f"diagnostic/{mode}")
     trace_rows = []
     if args.trace:
         from vllm_ascend.worker.multi_graph.replay_benchmark import inspect_shared_dense_trace
@@ -522,6 +642,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         explicit_output_merge_copies=0,
         attention_cores=args.attention_cores,
         native_update=args.native_update,
+        native_replay=args.native_replay,
+        packed_metadata=args.packed_metadata,
+        h2d_submissions_per_step=1 if args.packed_metadata else 5,
+        packed_buffer_schema=entries["padding"]["packed"].schema if args.packed_metadata else None,
+        phase_diagnostics=phase_diagnostics,
         static_task_plan=args.static_task_plan,
         pipeline_output_projection=args.pipeline_output_projection,
         projection_assembly_copies_per_split_replay=2 if args.pipeline_output_projection else 0,
@@ -574,7 +699,12 @@ def main():
     parser.add_argument("--lane-cores", type=int, nargs=2)
     parser.add_argument("--independent-updates", action="store_true")
     parser.add_argument("--native-update", action="store_true")
+    parser.add_argument("--native-replay", action="store_true", help="native replay/update/event orchestration")
     parser.add_argument("--static-task-plan", action="store_true", help="bind only KV lengths in a fixed native plan")
+    parser.add_argument(
+        "--packed-metadata", action="store_true", help="fill fixed pinned views and upload once per step"
+    )
+    parser.add_argument("--phase-diagnostics", action="store_true", help="separate unprofiled host and event timings")
     parser.add_argument("--serial-control", action="store_true", help="also capture identical split attention serially")
     parser.add_argument("--shared-cache", action="store_true", help="symmetric shared KV write and direct FIA out path")
     parser.add_argument(
@@ -594,6 +724,8 @@ def main():
         parser.error("repeats must be a multiple of four to cover equal dynamic cycles")
     if args.static_task_plan and not args.native_update:
         parser.error("static task plans require native update")
+    if args.native_replay and not args.native_update:
+        parser.error("native replay requires native update")
     if args.pipeline_output_projection and not args.shared_cache:
         parser.error("projection pipeline requires the qualified shared-cache path")
     try:

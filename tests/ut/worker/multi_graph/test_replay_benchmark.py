@@ -138,6 +138,23 @@ def test_shared_trace_serial_gap_and_host_regions():
     assert row["kernel_inventory"]["aclnnContiguous"]["duration_sum_us"] == 2
 
 
+def test_level1_counter_trace_accelerator_labels_exclude_wait_and_dma():
+    events = [
+        dict(name="process_name", pid=9, args={"name": "Ascend Hardware"}),
+        dict(name="layer.single_padded", pid=1, ph="X", ts=0, dur=30),
+        dict(trace_event(5, 10, 1, "MIX_AIC"), name="FusedInferAttentionScore", tid=11),
+        dict(trace_event(1, 3, 1, "AI_CORE"), name="MatMulV2", tid=11),
+        dict(trace_event(16, 2, 1, "AI_VECTOR_CORE"), name="RmsNorm", tid=11),
+        dict(trace_event(0, 30, 1, "MEM_WAIT_VALUE"), name="wait", tid=11),
+        dict(trace_event(0, 3, 1, "PCIE_DMA_SQE"), name="copy", tid=11),
+        dict(trace_event(5, 10, 1, "MIX_AIC"), name="FusedInferAttentionScore", tid=11, pid=1),
+    ]
+    row = inspect_shared_dense_trace(events)[0]
+    assert row["attention_count"] == 1 and row["matmul_count"] == 1
+    assert row["kernel_union_us"] == 15
+    assert set(row["kernel_inventory"]) == {"FusedInferAttentionScore", "MatMulV2", "RmsNorm"}
+
+
 @pytest.mark.parametrize("events", [[], [dict(name="layer.joined_parallel", ph="X", ts=0, dur=20)]])
 def test_shared_trace_rejects_missing_attention_evidence(events):
     with pytest.raises(ValueError):

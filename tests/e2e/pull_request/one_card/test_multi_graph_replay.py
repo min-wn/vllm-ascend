@@ -462,6 +462,13 @@ def test_native_fia_binding_guards(monkeypatch):
         plan.bind_kv_lengths([[3, 4]])
     with pytest.raises(RuntimeError, match="negative KV"):
         plan.bind_kv_lengths([[-1]])
+    with pytest.raises(RuntimeError, match="nonempty replay"):
+        native.NativeReplay(graph, stream, stream, [], [])
+    with pytest.raises(RuntimeError, match="zero or two timing"):
+        native.NativeReplay(graph, stream, stream, [plan], [torch.npu.Event(enable_timing=True)])
+    replay = native.NativeReplay(graph, stream, stream, [plan], [])
+    with pytest.raises(RuntimeError, match="not configured"):
+        replay.replay(True)
     task.event = torch.npu.ExternalEvent()
     with pytest.raises(RuntimeError, match="task event changed"):
         plan.bind([task])
@@ -471,7 +478,7 @@ def test_native_fia_binding_guards(monkeypatch):
 @pytest.mark.parametrize(
     "nz,native,shared", [(False, False, False), (True, False, False), (True, True, False), (True, True, True)]
 )
-def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shared):
+def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shared, packed=False, native_replay=False):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
@@ -499,6 +506,8 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shar
             str(destination),
             *(["--nz"] if nz else []),
             *(["--native-update"] if native else []),
+            *(["--packed-metadata", "--phase-diagnostics"] if packed else []),
+            *(["--native-replay"] if native_replay else []),
             *(
                 ["--shared-cache", "--serial-control", "--independent-updates", "--static-task-plan", "--trace"]
                 if shared
@@ -525,6 +534,12 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shar
     assert report["native_update"] == native
     assert report["shared_cache"] == shared and report["serial_control"] == shared
     assert report["static_task_plan"] == shared
+    assert report["packed_metadata"] == packed
+    assert report["native_replay"] == native_replay
+    assert report["h2d_submissions_per_step"] == (1 if packed else 5)
+    if packed:
+        assert len(report["phase_diagnostics"]) == 32 * modes
+        assert all(row["graph_plus_update_ready_span_us"] > 0 for row in report["phase_diagnostics"])
     if native:
         assert len(report["native_source_sha256"]) == 64
     assert not report["cross_shape_qualified"]
@@ -541,3 +556,41 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shar
         for row in report["trace_analysis"]:
             writes = sum(v["count"] for name, v in row["kernel_inventory"].items() if "ScatterPaKvCache" in name)
             assert writes == 1
+
+
+@pytest.mark.parametrize("native_replay", [False, True])
+def test_packed_bucket_runtime_upload(tmp_path, request, native_replay):
+    test_default_bucket_internal_block_reuse(
+        tmp_path, request, nz=True, native=True, shared=True, packed=True, native_replay=native_replay
+    )
+
+
+def test_packed_metadata_integer_views_on_npu(monkeypatch):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    monkeypatch.syspath_prepend(str(repo / "benchmarks"))
+    from multi_graph_bucket_block import PackedStepBuffers
+
+    targets = dict(
+        ids=torch.empty(7, dtype=torch.int64, device="npu"),
+        lengths=torch.empty(7, dtype=torch.int32, device="npu"),
+        pages=torch.empty((7, 2), dtype=torch.int32, device="npu"),
+        slots=torch.empty(7, dtype=torch.int64, device="npu"),
+    )
+    buffers = PackedStepBuffers(targets)
+    assert buffers.host_buffer.is_pinned()
+    for token in (31, 127, 42):
+        payload = dict(
+            ids=[token + i for i in range(7)],
+            lengths=[token] * 6 + [0],
+            pages=[[i, i + 1] for i in range(7)],
+            slots=list(range(6)) + [-1],
+        )
+        for name, values in payload.items():
+            buffers.write(name, values)
+        buffers.transfer()
+        for name, values in payload.items():
+            torch.testing.assert_close(buffers.device[name].cpu(), torch.tensor(values, dtype=targets[name].dtype))
+            assert buffers.device[name].data_ptr() == buffers.device_buffer.data_ptr() + buffers.schema[name]["offset"]

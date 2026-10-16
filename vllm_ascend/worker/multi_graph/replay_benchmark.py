@@ -13,6 +13,12 @@ def _merged_intervals(intervals):
     return merged
 
 
+def _is_compute_task(event):
+    task = event.get("args", {}).get("Task Type", "")
+    # Level0 uses KERNEL_*; Level1 counter traces use accelerator labels.
+    return task.startswith("KERNEL") or task in ("AI_CORE", "AI_VECTOR_CORE", "MIX_AIC", "MIX_AIV")
+
+
 def inspect_replay_trace(payload):
     """Measure overlap of device kernels from distinct captured models, not wait tasks."""
     events = payload if isinstance(payload, list) else payload["traceEvents"]
@@ -26,7 +32,7 @@ def inspect_replay_trace(payload):
         for event in events
         if event.get("pid") in device_pids
         and event.get("ph") == "X"
-        and event.get("args", {}).get("Task Type", "").startswith("KERNEL")
+        and _is_compute_task(event)
         and float(event.get("dur", 0)) > 0
     ]
     rows = []
@@ -76,7 +82,7 @@ def inspect_shared_dense_trace(payload):
         for event in events
         if event.get("pid") in device_pids
         and event.get("ph") == "X"
-        and event.get("args", {}).get("Task Type", "").startswith("KERNEL")
+        and _is_compute_task(event)
         and float(event.get("dur", 0)) > 0
     ]
     rows = []
