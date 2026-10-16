@@ -235,3 +235,40 @@ def test_full_decoder_padding_vs_split_parallel(tmp_path, request, schedule, kv_
     assert graphs["padding"]["update_tasks"] == result["layers"]
     assert graphs["split_parallel"]["update_tasks"] == 2 * result["layers"]
     assert graphs["split_parallel"]["workspaces"] == 2
+
+
+def test_default_capture_case_selection(tmp_path, request):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    destination = tmp_path / "default_case"
+    subprocess.run(
+        [
+            sys.executable,
+            str(repo / "benchmarks/multi_graph_default_capture.py"),
+            "--model",
+            request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
+            "--batch-min",
+            "7",
+            "--batch-max",
+            "7",
+            "--max-num-seqs",
+            "16",
+            "--select-only",
+            "--output-dir",
+            str(destination),
+        ],
+        cwd=repo,
+        env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
+        check=True,
+        timeout=120,
+    )
+    selection = json.loads((destination / "selection.json").read_text())
+    assert selection["batch"] == 7
+    assert selection["query"] == 1
+    assert selection["selected_mode"] == "FULL"
+    assert selection["selected_tokens"] == selection["selected_requests"] == 8
+    assert selection["selected_tokens"] == min(size for size in selection["capture_sizes"] if size >= 7)
+    assert len(selection["benchmark_sha256_at_start"]) == 64
+    assert not (destination / "summary.json").exists()
