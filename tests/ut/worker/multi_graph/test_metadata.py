@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import pytest
 import torch
@@ -76,11 +76,34 @@ def test_refresh_preserves_every_tensor_address(signature, metadata):
     metadata.seq_lens_list[:] = metadata.seq_lens.tolist()
     metadata.slot_mapping.add_(100)
     values = buffers.preflight(ids + 1, positions + 1, source, part)
+    assert len(values) == 1
     buffers.refresh(ids + 1, positions + 1, part, values)
     assert addresses == tuple(tensor.data_ptr() for tensor in buffers.writable_tensors())
     assert buffers.input_ids.tolist() == [2, 3]
     assert buffers.metadata["layer0"].seq_lens_list == [21, 33]
     assert buffers.metadata["layer0"].slot_mapping.tolist() == [495, 624]
+
+
+def test_shared_metadata_source_divergence_fails_before_mutation(signature, metadata):
+    part = SlicePlan(0, 2, 0, 2, GraphKey(0, 2, 2, signature))
+    ids = torch.arange(4)
+    buffers = LaneBuffers.create(ids, ids, {"a": metadata, "b": metadata}, part)
+    source = {"a": metadata, "b": replace(metadata, seq_lens_list=[99] * 4)}
+    with pytest.raises(ValueError, match="distinct sources"):
+        buffers.preflight(ids + 10, ids, source, part)
+    assert buffers.input_ids.tolist() == [0, 1]
+
+
+def test_distinct_captured_metadata_remains_independently_refreshed(signature, metadata):
+    part = SlicePlan(0, 2, 0, 2, GraphKey(0, 2, 2, signature))
+    ids = torch.arange(4)
+    buffers = LaneBuffers.create(ids, ids, {"a": metadata, "b": replace(metadata)}, part)
+    source = {"a": metadata, "b": replace(metadata, seq_lens_list=[99] * 4)}
+    values = buffers.preflight(ids, ids, source, part)
+    buffers.refresh(ids, ids, part, values)
+    assert len(values) == 2
+    assert buffers.metadata["a"].seq_lens_list == [11, 23]
+    assert buffers.metadata["b"].seq_lens_list == [99, 99]
 
 
 def test_layout_failure_is_detected_before_any_mutation(signature, metadata):

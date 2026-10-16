@@ -43,7 +43,14 @@ class LaneBuffers:
             ):
                 raise ValueError("captured token input layout changed")
         updates = {}
+        sources_by_target: dict[int, int] = {}
         for name, captured in self.metadata.items():
+            target_id, source_id = id(captured), id(metadata[name])
+            if target_id in sources_by_target:
+                if sources_by_target[target_id] != source_id:
+                    raise ValueError("captured shared metadata now has distinct sources")
+                continue
+            sources_by_target[target_id] = source_id
             updates[name] = validate_metadata_refresh(captured, metadata[name], part)
         return updates
 

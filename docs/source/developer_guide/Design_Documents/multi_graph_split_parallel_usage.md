@@ -128,6 +128,20 @@ python tools/run_multi_graph_cpu_tests.py --junitxml=multi_graph_cpu_tests.xml
 
 The launcher isolates parent fixtures that require vLLM/NPU and stubs the package logger. Tensor operations and core modules run on real CPU PyTorch. Tests exercise capture orchestration with mocked device APIs, event ownership/order, cost persistence and rejection, worker guards and failure states. The CPU workflow uploads JUnit results. These tests do not establish NPU API compatibility, correctness or overlap.
 
+## Trace attribution
+
+The separate trace pass adds `mg.decode.*` ranges around eligible decode forwards and nested ranges for metadata preflight/refresh, resource draining, task resolution and graph updates. These annotations are installed only inside the benchmark child; normal generation/decode measurements do not install phase wrappers. Direct child runs also select the inline V1 engine so the observers execute in the model process.
+
+Analyze an exported trace without vLLM or NPU dependencies:
+
+```bash
+python tools/analyze_multi_graph_trace.py parallel.trace.json --output parallel.analysis.json
+```
+
+After identifying the physical graph kernel streams from the trace, add `--lane-streams 37 38` to calculate their kernel interval intersection. Stream IDs vary between runs. The analyzer rejects missing kernel streams and excludes control/wait tasks from device busy intervals. Copy intervals are included in overall device activity, but excluded from lane kernel overlap. Per-step device windows extend between consecutive host decode starts, include sampling/transfers, and omit the final unbounded window. Nested host phase durations overlap; do not add parent and child totals. Profiler latency is diagnostic and must not replace normal generation results.
+
+Captured metadata shared by several layer names is validated and refreshed once per lane. A change from one shared source to distinct per-layer sources is rejected before mutation because the captured aliases can no longer represent it safely.
+
 ## Extension components
 
 V1 supports opt-in KV bucket routing with `kv_bucket_upper_bounds` and `minimum_bucket_vectors` (at least two). Exact observations take precedence. Ordered bucket vectors preserve lane imbalance; bucket estimates use the fastest measured baseline and slowest split. Unknown buckets fall back. Validate representativeness with hardware data before enabling interpolation.

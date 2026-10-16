@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import dataclasses
+import functools
 import hashlib
 import importlib.metadata
 import json
@@ -24,6 +26,8 @@ from vllm_ascend.worker.multi_graph.benchmark import (
 
 
 def run_child(args) -> None:
+    os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
+    os.environ["VLLM_USE_V2_MODEL_RUNNER"] = "0"
     import torch
     import torch_npu
     from vllm import LLM, SamplingParams
@@ -39,6 +43,35 @@ def run_child(args) -> None:
     forward = NPUModelRunner._model_forward
     replay = ACLGraphWrapper._updatable_graph_replay
     try_run = MultiGraphV1Adapter.try_run
+
+    if args.measurement == "trace":
+        from vllm_ascend.compilation.updatable_graph import GraphUpdateTask, UpdatableGraph
+        from vllm_ascend.worker.multi_graph.buffers import LaneBuffers
+        from vllm_ascend.worker.multi_graph.manager import MultiGraphManager
+        from vllm_ascend.worker.multi_graph.npu_backend import NPUExecutionBackend
+
+        def instrument(owner, method, label):
+            original = getattr(owner, method)
+
+            @functools.wraps(original)
+            def measured(self, *values, **options):
+                if state["step"] is None:
+                    return original(self, *values, **options)
+                with torch.profiler.record_function(label):
+                    return original(self, *values, **options)
+
+            setattr(owner, method, measured)
+
+        for owner, methods, prefix in (
+            (MultiGraphV1Adapter, ("current_kv_addresses",), "mg.adapter"),
+            (MultiGraphManager, ("run", "drain"), "mg.manager"),
+            (LaneBuffers, ("preflight", "refresh"), "mg.buffers"),
+            (NPUExecutionBackend, ("resolve", "replay", "update", "finish", "wait", "join"), "mg.backend"),
+            (UpdatableGraph, ("resolve_tasks", "update"), "mg.graph"),
+            (GraphUpdateTask, ("apply",), "mg.task"),
+        ):
+            for method in methods:
+                instrument(owner, method, f"{prefix}.{method}")
 
     def observed_replay(self, context, graph):
         if state["step"] is not None:
@@ -91,7 +124,13 @@ def run_child(args) -> None:
             if args.measurement == "decode":
                 torch.npu.synchronize()
                 start = time.perf_counter_ns()
-            result = forward(self, *positional, **keywords)
+            scope = (
+                torch.profiler.record_function(f"mg.decode.{len(steps)}")
+                if args.measurement == "trace"
+                else contextlib.nullcontext()
+            )
+            with scope:
+                result = forward(self, *positional, **keywords)
             if args.measurement == "decode":
                 torch.npu.synchronize()
                 elapsed = (time.perf_counter_ns() - start) / 1000
