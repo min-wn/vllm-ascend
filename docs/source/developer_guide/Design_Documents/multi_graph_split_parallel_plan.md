@@ -1,5 +1,123 @@
 # 基于官方主线的多图切分并行实现方案
 
+## 当前优化执行方案（2026-10-16）
+
+本节取代下文早期快照中的实施进度和下一步安排。下文保留最初的架构依据，不能将其中“未实现”“未测试”“未推送”等历史描述当作当前状态。
+
+### 目标与测量边界
+
+切分是本项工作的既定目标：优化请求边界切分后的多图执行，使其在明确的负载范围内，相对单图 padding 取得可重复的单次 replay 性能优势。成本选路和 fallback 是服务化保护，不能代替切分优化本身。
+
+当前仅考察 target model 一次 forward/replay，不包含 draft model、接受率、采样、调度和完整生成耗时。推测验证抽象为每请求固定 query 长度 Q；Q=1、2、4、8 分别对应普通 decode 与不同验证 token 数，Q 包含本次所有 target 输入 token。以请求数 B、实际 token 数 B×Q、图容量 C×Q 分别记账，不能把 batch 和 token 数混为一谈。
+
+单次 replay 必须区分两种口径：
+
+1. **replay＋必要 update（默认主对照）**：保留现有 UpdatableGraph 更新协议，使用相同模型、输入和图容量；报告逐层更新数、host 时间与设备完成时间。当前 A2 FIA 路径使用 host 端真实 seq_len，长度变化必须更新；已捕获的 ExternalEvent 依赖也不能直接跳过。单次 replay 的性能结论必须包含这条更新链。
+2. **固定元数据 replay（可选消融）**：输入地址、query 长度、KV 长度、页表和 slot 固定，重新捕获直接记录 FIA 的独立实验图，不建立每层 task update 与 ExternalEvent。只用于估计更新协议的成本；不能将其视为动态长度服务的可用优化，也不能以此宣称实际切分优于 padding。通过 `--protocols update frozen` 显式启用。
+
+当前固定参数基准在计时前 resolve task 参数，计时包含 task update 提交、事件依赖、图执行与切分输出合并；尚不包含动态 metadata 构造和逐步参数解析。不能把该时间等同于完整服务步耗时。
+
+两个口径中单图和切分必须使用同一种 attention 实现。不能用优化后的切分对比未优化的单图并归因于切分。每个样本仅执行一次 forward，末端同步；事件计时报告设备调度区间，wall time 报告 host 提交至完成。并行必须包含两图完成后的输出合并；事件区间包含可能的 host 供给空洞，不能冒充 kernel 时间之和。
+
+### 原方案主线与现有证据
+
+| 原方案环节 | 已完成内容 | 当前仍缺少的证据 |
+| --- | --- | --- |
+| 图与状态隔离 | 独立 pool、输入、metadata、输出、事件，完整请求切分，V1 单卡路径 | 多 token 验证的服务接入与压力测试 |
+| 降低 CPU 准备成本 | 共享 metadata 每 lane 每步只刷新一次 | 大 batch 和 Q>1 下的具体占比 |
+| 双流并行 | 独立 compute/update stream、受控提交顺序实验 | 现有 trace 未证明计算重叠，不能将双 stream 等同加速 |
+| 减少 attention update | A2 设备长度 Triton 原型通过 40 个数值用例 | 大 batch/长 KV kernel 效率不足，尚未接入模型 |
+| 图容量与切分策略 | exact、padding、长度分桶等基础组件 | 有性能优势的容量组合与稳定适用范围 |
+
+已有数据：metadata 去重使 B=7 的完整生成 p50 从约 521 ms 降至 294 ms，但同轮单图约 210 ms。提前 replay 无明确收益，逐 task 交错更慢。设备长度原型的小负载算子收益不能替代全模型 replay 结论。这些均是历史证据，不是本轮单次 replay 的测量值。
+
+### 按顺序执行的优化步骤
+
+| 顺序 | 实施内容 | 要回答的问题与交付标准 |
+| --- | --- | --- |
+| O1 固定验证 replay 基准 | 全模型固定 B/Q/KV；独立图资源；单图、串行切分、双流切分；固定 FIA 与 update FIA 两种协议；对照 eager hidden states | 首先排除接受率与生成链路干扰，准确分离切分计算代价、update 代价和调度代价 |
+| O2 优化必要更新链 | 主对照保留 FIA update，研究参数准备去重、更新提交与计算重叠；免 update 仅作固定参数消融，设备长度算子另行验证；不复用旧长度冒充新长度 | 减少更新开销而保持真实长度与事件协议正确；动态路径需长度变化后的精度与生命周期证据 |
+| O3 调度与输出路径 | 基于 O1 trace 优化 fan-out/fan-in、事件复用、提交批量化；保留跨轮缓冲区保护；再尝试合并输出拷贝或输出地址复用 | 找出造成两图不重叠的依赖，证明实际 kernel overlap，并测量包含 merge 的最终 replay |
+| O4 kernel 与切分粒度 | 平衡切分、不平衡切分、主图＋尾图；保留 FIA 基线，研究 GQA 的 KV 复用、向量/Cube 分工、分段归约成本 | 避免小子图 MatMul 效率下降抵消 padding 节省；同 attention 下串行/并行消融 |
+| O5 固定 Q 的验证图 | Q=2/4/8，按完整请求切分，query 前缀和重基准，正确 causal mask 与 KV 写入位置 | 实验图先通过 eager/单图/双图的所有有效 token 对照；不能直接解除生产 query_len=1 门禁 |
+| O6 动态扩展 | 在有收益区间接入动态长度、请求变动、padding 复用与安全异步 fence；再接服务选路 | 单次 replay 优势已明确后扩展，mixed/V2/分布式另行验收 |
+
+O1 和 O5 的固定形状实验可以同时建立，但不意味着生产推测解码已经接入。若某一步负收益，保留结果并定位原因，继续优化下一处可消除的切分成本；不能用默认退回 padding 作为优化完成的结论。
+
+### 第一轮负载与验收
+
+- B：7/32/33/64/65/128/129；明确 C，既包括 C=B 的无 padding 对照，也包括跨容量边界的受控 padding。指定的 2 的幂容量是实验条件，不能声称为官方所有配置的默认 bucket。
+- Q：1/2/4/8；KV 长度至少覆盖 64/512/2048，并要求 KV≥Q。
+- 切分：先均衡两图，再比较约 3:1、主图＋尾图；每个请求完整保留，所有子图实际 token 总数等于 B×Q。
+- 每组先做精度与执行路径检查，再 warmup，五轮交替模式顺序，分别报告 p50/p95、单图/切分比值、事件时间与 wall time；不在 profiler 内采集性能数字。
+- KV 使用 disjoint 页与 slot；padding 请求有独立 dummy KV。每个模式恢复相同 KV 初态；比较所有有效 token 的 hidden states，固定容差，不因失败而放宽。
+- 独立 trace 判断 kernel overlap，不能从 stream 数或耗时推断。记录图数量、每图 task 数、捕获时间和峰值内存。
+- 至少重复独立进程确认收益超过噪声；5% 是候选收益门槛，不是承诺。结论必须写明 B/Q/KV、模型、硬件和软件版本。
+
+实施记录与结果追加在本节后续条目；早期阶段 P0–P6 继续作为架构与安全合同。
+
+### 阶段检查：基准已建立，性能验收未完成
+
+新增 `benchmarks/multi_graph_replay.py` 与 CPU workload 合同、CPU 测试及硬件测试入口。默认保留 update；免 update 仅显式消融。KV 初态由模型真实 prefill 生成，再复制至各请求独立物理页。当前未改动生产 FIA 的 update 协议。
+
+在 910B3、Qwen2.5-0.5B-Instruct、BF16 上的阶段结果：
+
+| 用例 | 精度与测量状态 |
+| --- | --- |
+| B=7、C=8、Q=1、KV=64 | eager 重跑、FIA out、padding、update 单图/串行双图/并行双图均通过，最大绝对误差均为 0 |
+| 同一 Q=1 用例的初步计时 | 单图 4.396 ms、串行双图 8.379 ms、并行双图 8.373 ms；仅一轮三个样本的 wall p50，是烟测而非正式性能验收 |
+| B=33、C=64、Q=4、KV=512 | eager 重跑与 FIA out 一致，但 eager padding 对照最大绝对误差 2.5，27.4% 元素不满足 rtol=0.02、atol=0.02；在图捕获及双流测量前停止 |
+
+Q=4 的失败在真实 prefill KV 下仍复现，不能仅归因于随机 KV；根因尚未确认，也不能据此认定是双流、驱动或官方 padding 路径的问题。该用例不输出有效性能报告，不放宽容差。下一阶段先定位基准中的容量变化精度问题，再运行完整 B/Q/KV 矩阵与独立 overlap trace。
+
+本地隔离 CPU suite 309 项通过，新增文件 ruff check/format 与 diff whitespace 检查通过。硬件参数化 e2e 尚未整组通过，完整 format.sh 检查此前受缺少 pre-commit 阻塞，不能把此阶段称为全部完成。
+
+### 后续进展：数值控制与大负载验证
+
+普通 BF16 路径的逐层对照显示：第一层 QKV 投影已有小幅差异，之后差异逐层积累。启用官方 batch-invariant 模式后，B=33/C=64/Q=4/KV=512 的 eager、padding 与两种切分 replay 均得到最大绝对误差 0。这支持“batch 形状相关数值行为”的解释，尚不能锁定某一个算子；没有修改精度容差，也没有据此宣称普通模式已通过。
+
+`--batch-invariant` 显式启用这一独立实验条件，JSON 记录实际开关和 attention operator。当前镜像安装了 `batch_invariant_ops`，启用后使用 `FusedInferAttentionScoreBatchInvariant`，并改变部分 MatMul/归一化路径。因此本节结果仅在这一模式内比较单图和切分，不与普通 FIA 的单图耗时混合计算加速比。所有主实验保留每层 update。
+
+在 Qwen2.5-0.5B-Instruct、BF16、910B3、B=129/C=256/Q=8/KV=512、lane=65+64 上，每个模式测量五轮，每轮二十次单次 replay。下表为五个轮次 wall p50 的中位数，精度对照全部通过：
+
+| 输出合并方式 | 单图 padding | 串行双图 | 并行双图 |
+| --- | --- | --- | --- |
+| 完成后 `cat` | 24.957 ms | 20.750 ms | 18.631 ms |
+| 图内独立 slice copy | 24.952 ms | 20.589 ms | 18.533 ms |
+
+第一组切分并行相对同模式单图减少约 25.3% 延迟；串行切分本身已有收益，说明减少 padding 计算是重要组成部分。图内 copy 相比 `cat` 的初步改善仅约 0.5%，不足以宣称稳定优化，仍保留 `cat` 默认值。图内 copy 是基准内的实验实现，没有接入生产 runner。
+
+独立 trace 的三个并行采样中，两张图的设备 kernel 时间区间重叠分别为 6.094/6.134/6.142 ms；三个串行采样均为 0。统计通过 captured Model Id 区分子图，排除 EVENT、MEM_WAIT、NOP 及 host 事件，对每图 kernel 区间取并集后求交集。它证明设备 kernel 区间重叠，不代表同类计算单元都并行，也不将 profiler 内时间当作性能样本。并行时每张图的 kernel busy 时间变长，存在资源竞争。
+
+可复现命令（模型路径按机器实际位置设置）：
+
+```bash
+source /etc/profile.d/ascend-multigraph.sh
+ASCEND_RT_VISIBLE_DEVICES=0 python benchmarks/multi_graph_replay.py \
+  --model /workspace/models/Qwen2.5-0.5B-Instruct --batch-invariant \
+  --batch 129 --capacity 256 --query 8 --kv-length 512 \
+  --protocols update --rounds 5 --repeats 20 --merge cat \
+  --output /workspace/multi-graph-results/fixed-replay/reproduce.json
+```
+
+将 `--merge cat` 改为 `--merge captured --trace` 可验证图内输出拷贝和设备重叠；trace 在正式计时后单独采集。JSON 区分 `running`、`failed`、`passed`，失败报告不包含有效性能样本，避免旧结果文件造成误判。硬件测试可通过 `python tools/run_multi_graph_replay_tests.py --replay-model /workspace/models/Qwen2.5-0.5B-Instruct` 独立运行，覆盖 Q=1/2/4/8、两种输出合并和两种更新协议。
+
+独立进程与边界对照均已补测（五轮、每轮二十个样本，保留 update，以下均为 `cat`）：
+
+| B / C / Q / KV | 单图 | 串行双图 | 并行双图 | 结论 |
+| --- | --- | --- | --- | --- |
+| 129 / 256 / 8 / 512，独立进程复测 | 25.162 ms | 20.902 ms | 18.752 ms | 相对 padding 延迟降低 25.5%，复现收益 |
+| 129 / 129 / 8 / 512，无 padding | 16.289 ms | 20.965 ms | 18.821 ms | 切分慢于无 padding 单图，不能宣称固有并行优势 |
+| 65 / 128 / 4 / 512 | 10.737 ms | 12.387 ms | 11.693 ms | 此负载切分仍慢，padding 浪费不足以覆盖额外成本 |
+
+复测 trace 的三个并行 kernel 重叠为 6.037/6.185/6.092 ms，串行仍为 0。普通非 batch-invariant 模式的 B=129/C=256/Q=8 仍在 eager padding 对照失败，最大绝对误差 4.0，35.7% 元素超出固定容差；失败报告已保存，不能使用它的性能。
+
+本地和容器 CPU suite 均为 314 项通过；A2 硬件参数化测试 8 项通过（Q=1/2/4/8 × cat/captured，每项包含 update/frozen × single/serial/parallel）。新增图捕获校验要求每张图具有与 Qwen2 attention 层数相同的 FIA task，并追加一项 Q=8 硬件回归通过；该模型每图 24 个，单图每步 24 次更新，双图每步共 48 次。
+
+完整 `format.sh ci` 已安装 pre-commit 后重试，但在 actionlint 环境安装阶段遇到 `BadZipFile: File is not a zip file`，未完成全量检查；新增文件的独立 Ruff、Markdown 和 whitespace 检查通过。
+
+下一步重点是保留真实长度 update 的前提下，缩短双图的 48 次 host 更新链并优化子图规模；普通模式仍需独立数值验收。此结果不代表动态长度服务、生产推测解码或普通 FIA 已获得同等加速。
+
 ## 1. 基线与本次交付
 
 - 官方仓库：[vllm-project/vllm-ascend](https://github.com/vllm-project/vllm-ascend)
