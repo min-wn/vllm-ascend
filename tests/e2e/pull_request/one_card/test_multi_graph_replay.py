@@ -459,3 +459,61 @@ def test_native_fia_binding_guards(monkeypatch):
     with pytest.raises(RuntimeError, match="task event changed"):
         plan.bind([task])
     stream.synchronize()
+
+
+@pytest.mark.parametrize("nz,native", [(False, False), (True, False), (True, True)])
+def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    destination = tmp_path / "block.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(repo / "benchmarks/multi_graph_bucket_block.py"),
+            "--model",
+            request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
+            "--batch-min",
+            "7",
+            "--batch-max",
+            "7",
+            "--max-num-seqs",
+            "16",
+            "--kv-length",
+            "128",
+            "--rounds",
+            "1",
+            "--repeats",
+            "4",
+            "--output",
+            str(destination),
+            *(["--nz"] if nz else []),
+            *(["--native-update"] if native else []),
+        ],
+        cwd=repo,
+        env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
+        check=True,
+        timeout=300,
+    )
+    report = json.loads(destination.read_text())
+    assert report["status"] == "passed"
+    assert report["dense_capacity"] == 8 and report["pair"] == [4, 4]
+    assert report["fixed_boundary"] == 4
+    assert report["real_lane_counts"] == [[4, 3], [4, 2], [4, 3], [4, 3]]
+    assert report["timed_dynamic_cases"] == [[7, 0], [6, 0], [7, 0], [7, 0]]
+    assert report["timed_kv_length"] == 128
+    assert report["graph_count"] == 2 and report["graphs_per_strategy_per_bucket"] == 1
+    assert report["combination_graph_count"] == report["explicit_output_merge_copies"] == 0
+    assert report["reuse_graph_and_buffer_identity_unchanged"]
+    assert report["nz"] == nz and report["original_nd_eager_reference"]
+    assert report["native_update"] == native
+    if native:
+        assert len(report["native_source_sha256"]) == 64
+    assert not report["cross_shape_qualified"]
+    assert all(check["passed"] for check in report["checks"])
+    assert len([check for check in report["checks"] if check["name"].startswith("reuse/")]) == 8
+    assert [(g["update_tasks"], g["workspaces"]) for g in report["graphs"]] == [(1, 1), (2, 2)]
+    assert len(report["measurements"]) == 4
+    assert all(len(row["wall_us"]) == 4 for row in report["measurements"])
+    assert set(report["summary_ms"]) == {"fixed", "dynamic"}
