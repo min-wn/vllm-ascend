@@ -275,7 +275,8 @@ def test_default_capture_case_selection(tmp_path, request):
 
 
 @pytest.mark.parametrize("batch,strategy,pair", [(6, "exact", [4, 2]), (7, "balanced", [4, 4])])
-def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strategy, pair):
+@pytest.mark.parametrize("optimized", [False, True])
+def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strategy, pair, optimized):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
@@ -303,6 +304,7 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
             "3",
             "--output",
             str(destination),
+            *(["--pinned-inputs", "--update-chunk-size", "4", "--diagnose-lanes"] if optimized else []),
         ],
         cwd=repo,
         env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
@@ -322,3 +324,6 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
     assert {check["variant"] for check in report["checks"]} == {0, 1}
     assert {row["mode"] for row in report["measurements"]} == {"padding", "split_parallel"}
     assert not report["cross_shape_qualified"]
+    assert report["pinned_inputs"] == optimized
+    assert report["update_chunk_size"] == (4 if optimized else 0)
+    assert len(report["lane_diagnostics"]) == (2 if optimized else 0)

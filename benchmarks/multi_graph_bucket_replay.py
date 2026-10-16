@@ -10,6 +10,7 @@ import json
 import os
 import statistics
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 
@@ -33,6 +34,19 @@ def lane_counts(batch, pair):
     return left, batch - left
 
 
+def update_groups(task_counts, chunk_size):
+    """Preserve each graph's update order while releasing both lanes early."""
+    if chunk_size < 0 or not task_counts or min(task_counts) < 1:
+        raise ValueError("nonnegative chunk size and positive task counts required")
+    width = chunk_size or max(task_counts)
+    return [
+        (lane, start, min(start + width, count))
+        for start in range(0, max(task_counts), width)
+        for lane, count in enumerate(task_counts)
+        if start < count
+    ]
+
+
 def experiment(args, workload, runner, model, inputs, context, reset_kv):
     # Capture fixed buffers once; only their contents and host parameters change.
     import torch
@@ -45,6 +59,16 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
     layer_count = len(model.model.layers)
     entries = []
     checks = []
+    profiling = False
+
+    def phase(name):
+        return torch.profiler.record_function(f"bucket_phase.{name}") if profiling else nullcontext()
+
+    limits = torch.npu.get_device_limit(torch.npu.current_device()) if any(args.lane_cores) else None
+    if limits and any(
+        cores > limits["cube_core_num"] or 2 * cores > limits["vector_core_num"] for cores in args.lane_cores
+    ):
+        raise ValueError("lane core limit exceeds device capacity")
 
     def forward(data, capturing=False):
         with context(data):
@@ -62,13 +86,27 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         positions = [workload.kv_length - variant - 1] * count + [0] * padding
         slots = [slot - variant for slot in values["slots"]] + [-1] * padding
         pages = values["pages"] + [[0] * workload.pages_per_request for _ in range(padding)]
-        data[0].copy_(torch.tensor(list(range(100 + start + variant, 100 + start + count + variant)) + [0] * padding))
-        data[1].copy_(torch.tensor(positions))
+
+        def copy(name, target, values):
+            source = torch.tensor(values, dtype=target.dtype)
+            if args.pinned_inputs:
+                staging = entry["host"][name]
+                staging.copy_(source)
+                target.copy_(staging, non_blocking=True)
+            else:
+                target.copy_(source)
+
+        copy("ids", data[0], list(range(100 + start + variant, 100 + start + count + variant)) + [0] * padding)
+        copy("positions", data[1], positions)
         metadata.seq_lens_list = lengths
         metadata.seq_lens_cpu.copy_(torch.tensor(lengths, dtype=torch.int32))
-        metadata.seq_lens_gpu.copy_(metadata.seq_lens_cpu)
-        metadata.block_tables.copy_(torch.tensor(pages, dtype=torch.int32))
-        metadata.slot_mapping.copy_(torch.tensor(slots, dtype=torch.int64))
+        if args.pinned_inputs:
+            entry["host"]["lengths"].copy_(metadata.seq_lens_cpu)
+            metadata.seq_lens_gpu.copy_(entry["host"]["lengths"], non_blocking=True)
+        else:
+            metadata.seq_lens_gpu.copy_(metadata.seq_lens_cpu)
+        copy("pages", metadata.block_tables, pages)
+        copy("slots", metadata.slot_mapping, slots)
         # Query extents remain at captured capacity; dummy KV lengths are zero.
         if "graph" in entry:
             entry["tasks"] = entry["graph"].resolve_tasks(ContextSource(data[2]))
@@ -77,11 +115,27 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
     first_counts = lane_counts(workload.batch, args.pair)
     for index, capacity in enumerate(capacities):
         entry = dict(capacity=capacity, data=inputs(0, capacity))
+        if args.pinned_inputs:
+            metadata = next(iter(entry["data"][2].values()))
+            targets = dict(
+                ids=entry["data"][0],
+                positions=entry["data"][1],
+                lengths=metadata.seq_lens_gpu,
+                pages=metadata.block_tables,
+                slots=metadata.slot_mapping,
+            )
+            # Storage stays alive until replay's final sync, before the next refill.
+            entry["host"] = {name: torch.empty_like(t, device="cpu", pin_memory=True) for name, t in targets.items()}
         start = 0 if index < 2 else first_counts[0]
         count = workload.batch if index == 0 else first_counts[index - 1]
         prepare(entry, start, count)
         reset_kv()
         stream, update = torch.npu.Stream(), torch.npu.Stream()
+        cores = 0 if index == 0 else args.lane_cores[index - 1]
+        if cores:
+            # Capture and FIA update must use identical tiling resource limits.
+            for limited in (stream, update):
+                torch.npu.set_stream_limit(limited, cube_num=cores, vector_num=2 * cores)
         stream.wait_stream(main)
         with torch.npu.stream(stream):
             for _ in range(3):
@@ -118,28 +172,40 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             prepare(entries[0], 0, batch, variant)
             return [entries[0]], (batch,)
         counts = lane_counts(batch, args.pair)
+        if mode.startswith("lane"):
+            lane = int(mode[-1])
+            entry = entries[lane + 1]
+            prepare(entry, 0 if lane == 0 else counts[0], counts[lane], variant)
+            return [entry], (counts[lane],)
         prepare(entries[1], 0, counts[0], variant)
         prepare(entries[2], counts[0], counts[1], variant)
         return entries[1:], counts
 
     def replay(mode, batch, variant=0):
-        active, counts = prepare_mode(mode, batch, variant)
+        with phase("prepare"):
+            active, counts = prepare_mode(mode, batch, variant)
         ready.record(main)
         # Submit both graphs before their updates; captured external events gate FIA.
-        for entry in active:
-            entry["stream"].wait_event(ready)
-            with torch.npu.stream(entry["stream"]):
-                entry["graph"].replay()
+        with phase("submit"):
+            for entry in active:
+                entry["stream"].wait_event(ready)
+                with torch.npu.stream(entry["stream"]):
+                    entry["graph"].replay()
         for entry in active:
             entry["update"].wait_event(ready)
-            entry["graph"].update(entry["update"], entry["tasks"])
+        for lane, start, stop in update_groups([len(e["tasks"]) for e in active], args.update_chunk_size):
+            entry = active[lane]
+            with phase(f"update_lane{lane}"):
+                entry["graph"].update(entry["update"], entry["tasks"][start:stop])
+        for entry in active:
             entry["updated"].record(entry["update"])
             entry["stream"].wait_event(entry["updated"])
             entry["done"].record(entry["stream"])
             main.wait_event(entry["done"])
-        if mode == "padding":
-            return active[0]["output"][:batch]
-        torch.cat([entry["output"][:count] for entry, count in zip(active, counts)], out=merged[:batch])
+        if len(active) == 1:
+            return active[0]["output"][: counts[0]]
+        with phase("merge"):
+            torch.cat([entry["output"][:count] for entry, count in zip(active, counts)], out=merged[:batch])
         return merged[:batch]
 
     references = {}
@@ -186,18 +252,44 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         mode: statistics.median(r["wall_summary_us"]["p50"] for r in measurements if r["mode"] == mode) / 1000
         for mode in ("padding", "split_parallel")
     }
+    lane_diagnostics = []
+    if args.diagnose_lanes:
+        # Isolated lanes diagnose contention; they are not alternative benchmark modes.
+        for lane in range(2):
+            mode = f"lane{lane}"
+            reset_kv()
+            for _ in range(5):
+                replay(mode, workload.batch)
+                torch.npu.synchronize()
+            wall = []
+            for _ in range(args.repeats):
+                started = time.perf_counter_ns()
+                result = replay(mode, workload.batch)
+                torch.npu.synchronize()
+                wall.append((time.perf_counter_ns() - started) / 1000)
+            offset = 0 if lane == 0 else first_counts[0]
+            expected = references["split_parallel", workload.batch, 0][offset : offset + first_counts[lane]]
+            torch.testing.assert_close(result.float().cpu(), expected, rtol=0.02, atol=0.02)
+            lane_diagnostics.append(dict(lane=lane, wall_summary_us=summarize(wall)))
     if args.trace:
         import torch_npu
 
+        profiling = True
         with torch_npu.profiler.profile(
             activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU],
         ) as profiler:
-            for mode in ("padding", "split_parallel"):
+            for mode in (
+                ("padding", "split_parallel", "lane0", "lane1")
+                if args.diagnose_lanes
+                else ("padding", "split_parallel")
+            ):
                 for _ in range(3):
                     with torch.profiler.record_function(f"buckets.{mode}"):
                         replay(mode, workload.batch)
-                        torch.npu.synchronize()
+                        with phase("synchronize"):
+                            torch.npu.synchronize()
         profiler.export_chrome_trace(str(args.output.with_suffix(".trace.json")))
+        profiling = False
     report = dict(
         status="passed",
         selection=args.selection,
@@ -214,6 +306,10 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         measurements=measurements,
         summary_ms=timing,
         gain_percent=100 * (1 - timing["split_parallel"] / timing["padding"]),
+        lane_cores=args.lane_cores,
+        update_chunk_size=args.update_chunk_size,
+        pinned_inputs=args.pinned_inputs,
+        lane_diagnostics=lane_diagnostics,
         source_sha256=args.source_sha256,
         peak_allocated_bytes=torch.npu.max_memory_allocated(),
     )
@@ -238,12 +334,18 @@ def main():
     parser.add_argument("--rounds", type=int, default=5)
     parser.add_argument("--repeats", type=int, default=30)
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument("--lane-cores", type=int, nargs=2, default=[0, 0])
+    parser.add_argument("--update-chunk-size", type=int, default=0)
+    parser.add_argument("--pinned-inputs", action="store_true")
+    parser.add_argument("--diagnose-lanes", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if not 3 <= args.batch_min <= args.batch_max <= args.max_num_seqs:
         parser.error("require 3 <= batch-min <= batch-max <= max-num-seqs")
     if min(args.rounds, args.repeats) < 1 or args.kv_length < 2:
         parser.error("positive counts and KV length >= 2 required")
+    if min(args.lane_cores) < 0 or args.update_chunk_size < 0:
+        parser.error("core limits and update chunk size must be nonnegative")
     if os.environ.get("VLLM_BATCH_INVARIANT", "0") != "0":
         parser.error("requires ordinary FIA")
     args.dtype, args.batch_invariant = "bfloat16", False
@@ -266,7 +368,18 @@ def main():
         run(args, workload, experiment=experiment)
     except Exception as error:
         args.output.write_text(
-            json.dumps(dict(status="failed", error=str(error), selection=args.selection, pair=args.pair)),
+            json.dumps(
+                dict(
+                    status="failed",
+                    error=str(error),
+                    selection=args.selection,
+                    pair=args.pair,
+                    source_sha256=args.source_sha256,
+                    lane_cores=args.lane_cores,
+                    update_chunk_size=args.update_chunk_size,
+                    pinned_inputs=args.pinned_inputs,
+                )
+            ),
             encoding="utf-8",
         )
         raise

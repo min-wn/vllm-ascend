@@ -105,6 +105,9 @@ MatMul 调用数翻倍也不等于 FLOPs 翻倍，因为每条分支的 batch �
 不能通过新增 49/98 图或 head 切分替代这个问题。
 本轮建立了合法基线和可复用性检查，尚未获得性能优化，也未完成实际 serving 的动态 batch 轨迹验证。
 
+后续的阶段定位、交替 update 与 pinned 输入优化见
+[默认档位切分的性能差距定位](multi_graph_bucket_diagnosis.md)。
+
 ## 复现
 
 ~~~bash

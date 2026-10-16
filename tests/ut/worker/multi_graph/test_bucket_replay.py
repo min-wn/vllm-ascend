@@ -37,3 +37,21 @@ def test_missing_pair_does_not_create_custom_graph(benchmark):
         benchmark.bucket_pair(9, [1, 2, 4, 8], "balanced")
     with pytest.raises(ValueError, match="nonempty"):
         benchmark.lane_counts(9, (4, 4))
+
+
+@pytest.mark.parametrize("chunk", [0, 1, 4, 100])
+def test_update_groups_preserve_every_task_once_in_lane_order(benchmark, chunk):
+    groups = benchmark.update_groups([36, 31], chunk)
+    for lane, count in enumerate((36, 31)):
+        indices = [index for selected, start, stop in groups if selected == lane for index in range(start, stop)]
+        assert indices == list(range(count))
+    if chunk and chunk < 31:
+        assert groups[:2] == [(0, 0, chunk), (1, 0, chunk)]
+    if chunk == 0:
+        assert groups == [(0, 0, 36), (1, 0, 31)]
+
+
+@pytest.mark.parametrize("counts,chunk", [([], 0), ([0], 1), ([36], -1)])
+def test_update_groups_reject_invalid_counts(benchmark, counts, chunk):
+    with pytest.raises(ValueError):
+        benchmark.update_groups(counts, chunk)
