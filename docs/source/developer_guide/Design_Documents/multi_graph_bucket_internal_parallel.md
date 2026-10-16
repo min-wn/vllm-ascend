@@ -1,5 +1,8 @@
 # 默认桶内并行图改造方案
 
+后续串行归因、共享 KV、固定任务计划与 O 投影流水实验见
+[第二轮优化记录](multi_graph_bucket_parallel_optimization.md)。
+
 ## 目标和架构契约
 
 当前两张完整 decoder 图重复执行 Dense，小矩阵成本和并发竞争抵消了少量 padding 节省。

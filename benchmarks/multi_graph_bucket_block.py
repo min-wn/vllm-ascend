@@ -11,6 +11,7 @@ import json
 import os
 import statistics
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 
@@ -37,6 +38,12 @@ def reuse_cases(batch, sizes):
     return [(batch, 0), (max(lower + 1, batch - 1), 1), (max(lower + 1, capacity - 1), 0), (batch, 0)]
 
 
+def lane_core_limits(common, lanes):
+    if common < 0 or (lanes is not None and (common or len(lanes) != 2 or min(lanes) < 0)):
+        raise ValueError("specify either a nonnegative common core limit or two nonnegative lane limits")
+    return tuple(lanes) if lanes is not None else (common, common)
+
+
 def experiment(args, workload, runner, model, inputs, context, reset_kv):
     # One captured block per strategy, independent of live batch and KV lengths.
     import torch
@@ -57,10 +64,20 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
     backend = attention.attn
     if getattr(attention, "dual_chunk_attention_config", None) or getattr(attention, "qk_norm", False):
         raise ValueError("requires standard Qwen2/Qwen3 attention")
+    if args.shared_cache and (
+        type(backend.impl).__name__ != "AscendAttentionBackendImpl"
+        or backend.impl.pcp_enabled
+        or backend.impl.sinks is not None
+        or backend.impl.kv_sharing_target_layer_name is not None
+        or backend.impl.vllm_config.kv_transfer_config is not None
+        or backend._k_scale_float != 1.0
+        or backend._v_scale_float != 1.0
+    ):
+        raise ValueError("shared-cache experiment requires ordinary unquantized local FIA")
     main = torch.npu.current_stream()
-    if args.attention_cores:
+    if any(args.lane_limits):
         limits = torch.npu.get_device_limit(torch.npu.current_device())
-        if args.attention_cores > limits["cube_core_num"] or 2 * args.attention_cores > limits["vector_core_num"]:
+        if max(args.lane_limits) > limits["cube_core_num"] or 2 * max(args.lane_limits) > limits["vector_core_num"]:
             raise ValueError("attention resource limit exceeds device capacity")
 
     class BranchGraph(UpdatableGraph):
@@ -90,11 +107,12 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
 
     entries = {}
     intervals = ((0, args.pair[0]), (args.pair[0], workload.capacity))
-    for mode in ("padding", "split_parallel"):
+    modes = ("padding", "split_serial", "split_parallel") if args.serial_control else ("padding", "split_parallel")
+    for mode in modes:
         data = inputs(0, workload.capacity)
         metadata = next(iter(data[2].values()))
         entry = dict(data=data, branches=[], streams=[], fork=torch.npu.Event(), joins=[])
-        if mode == "split_parallel":
+        if mode != "padding":
             for start, stop in intervals:
                 count = stop - start
                 boundaries = torch.arange(count + 1, dtype=torch.int32)
@@ -118,10 +136,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     (data[0][start:stop], data[1][start:stop], {name: branch_metadata for name in data[2]})
                 )
                 stream = torch.npu.Stream()
-                if args.attention_cores:
-                    torch.npu.set_stream_limit(
-                        stream, cube_num=args.attention_cores, vector_num=2 * args.attention_cores
-                    )
+                cores = args.lane_limits[len(entry["streams"])]
+                if mode == "split_parallel" and cores:
+                    torch.npu.set_stream_limit(stream, cube_num=cores, vector_num=2 * cores)
                 entry["streams"].append(stream)
                 entry["joins"].append(torch.npu.Event())
         targets = dict(
@@ -156,16 +173,26 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         for branch, (start, stop) in zip(entry["branches"], intervals):
             next(iter(branch[2].values())).seq_lens_list = lengths[start:stop]
         if "graph" in entry:
-            entry["tasks"] = entry["graph"].resolve_tasks(entry["source"])
-            if "native" in entry:
-                entry["native"].bind(entry["tasks"])
+            if args.static_task_plan:
+                sources = entry["branches"] or [entry["data"]]
+                kv_lengths = [next(iter(data[2].values())).seq_lens_list for data in sources]
+                for group in entry["update_groups"]:
+                    group["native"].bind_kv_lengths([kv_lengths[i] for i in group["indices"]])
+            else:
+                entry["tasks"] = entry["graph"].resolve_tasks(entry["source"])
+                if "native" in entry:
+                    for group in entry["update_groups"]:
+                        group["native"].bind(tuple(entry["tasks"][i] for i in group["indices"]))
 
     def forward(mode, parallel=True, partition=True):
         entry = entries[mode]
         data = entry["data"]
         hidden = model.model.embed_tokens(data[0])
-        if mode == "padding":
+        optimized = args.shared_cache and not reference_phase
+        if mode == "padding" and not optimized:
             return layer(data[1], hidden, None)
+        partition = partition and mode != "padding"
+        parallel = parallel and mode == "split_parallel"
         normalized = layer.input_layernorm(hidden)
         qkv, _ = attention.qkv_proj(normalized)
         q, k, v = qkv.split([attention.q_size, attention.kv_size, attention.kv_size], dim=-1)
@@ -174,8 +201,22 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             k = attention.k_norm(k.view(-1, attention.num_kv_heads, attention.head_dim)).view(k.shape)
         q, k = attention.rotary_emb(data[1], q, k)
         output = torch.empty_like(q)
+        pipeline = args.pipeline_output_projection and mode != "padding" and not reference_phase
+        projected = torch.empty_like(hidden) if pipeline else None
         root = torch.npu.current_stream()
         capturing = get_forward_context().capturing
+        if optimized:
+            # Write the full bucket's K/V once before forking; all lanes consume
+            # the same physical cache through their original request page tables.
+            backend.impl._layer_name = backend.layer_name
+            backend.impl.reshape_and_cache(
+                q.view(workload.capacity, attention.num_heads, attention.head_dim),
+                k.view(workload.capacity, attention.num_kv_heads, attention.head_dim),
+                v.view(workload.capacity, attention.num_kv_heads, attention.head_dim),
+                backend.kv_cache,
+                next(iter(data[2].values())),
+                output.view(workload.capacity, attention.num_heads, attention.head_dim),
+            )
         active = zip(entry["branches"], intervals) if partition else [(data, (0, workload.capacity))]
         if parallel:
             entry["fork"].record(root)
@@ -187,21 +228,29 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                 stream.wait_event(entry["fork"])
             with torch.npu.stream(stream), context(branch_data):
                 get_forward_context().capturing = capturing
-                backend.impl.forward(
-                    backend,
-                    q[start:stop].view(stop - start, attention.num_heads, attention.head_dim),
-                    k[start:stop].view(stop - start, attention.num_kv_heads, attention.head_dim),
-                    v[start:stop].view(stop - start, attention.num_kv_heads, attention.head_dim),
-                    backend.kv_cache,
-                    next(iter(branch_data[2].values())),
-                    output=output[start:stop].view(stop - start, attention.num_heads, attention.head_dim),
-                )
+                query = q[start:stop].view(stop - start, attention.num_heads, attention.head_dim)
+                key = k[start:stop].view(stop - start, attention.num_kv_heads, attention.head_dim)
+                value = v[start:stop].view(stop - start, attention.num_kv_heads, attention.head_dim)
+                target = output[start:stop].view(stop - start, attention.num_heads, attention.head_dim)
+                metadata = next(iter(branch_data[2].values()))
+                if optimized:
+                    # FIA's out variant already writes target; retain its task
+                    # registration/update, avoiding wrapper self-copy kernels.
+                    backend.impl.full_graph_fia(query, key, value, metadata, target)
+                else:
+                    backend.impl.forward(backend, query, key, value, backend.kv_cache, metadata, output=target)
+                if pipeline:
+                    # A finished request lane can project while the other FIA
+                    # is still running. Keep QKV and both large FFN GEMMs shared.
+                    lane_projected, _ = attention.o_proj(output[start:stop])
+                    projected[start:stop].copy_(lane_projected)
                 if parallel:
                     entry["joins"][lane].record(stream)
         if parallel:
             for join in entry["joins"]:
                 root.wait_event(join)
-        projected, _ = attention.o_proj(output)
+        if not pipeline:
+            projected, _ = attention.o_proj(output)
         normalized, residual = layer.post_attention_layernorm(projected, hidden)
         return layer.mlp(normalized), residual
 
@@ -232,6 +281,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
     # References use original ND weights and no stream limits, for both outputs.
     references = {}
     cross_structure = []
+    reference_phase = True
     for batch, variant in dict.fromkeys([*args.reuse_cases, *args.dynamic_cases]):
         for mode in entries:
             references[mode, batch, variant] = eager(mode, batch, variant)
@@ -245,6 +295,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         cross_structure.append(
             dict(batch=batch, variant=variant, max_abs_errors=[(a - b).abs().max().item() for a, b in zip(left, right)])
         )
+    reference_phase = False
     layout_changes = []
     if args.nz:
         for module in (attention.qkv_proj, attention.o_proj, layer.mlp.gate_up_proj, layer.mlp.down_proj):
@@ -257,9 +308,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         prepare(entry, workload.batch, 0)
         reset_kv()
         stream, update = torch.npu.Stream(), torch.npu.Stream()
-        if mode == "split_parallel" and args.attention_cores:
-            torch.npu.set_stream_limit(update, cube_num=args.attention_cores, vector_num=2 * args.attention_cores)
-        graph = BranchGraph() if mode == "split_parallel" else UpdatableGraph()
+        if mode == "split_parallel" and args.lane_limits[0] and args.lane_limits[0] == args.lane_limits[1]:
+            torch.npu.set_stream_limit(update, cube_num=args.lane_limits[0], vector_num=2 * args.lane_limits[0])
+        graph = UpdatableGraph() if mode == "padding" else BranchGraph()
         stream.wait_stream(main)
         with torch.npu.stream(stream), context(entry["data"]):
             for _ in range(3):
@@ -272,12 +323,12 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             with torch.npu.graph(graph, pool=pool, stream=stream):
                 output = forward(mode)
         stream.synchronize()
-        if len(graph.tasks) != (2 if mode == "split_parallel" else 1):
+        if len(graph.tasks) != (1 if mode == "padding" else 2):
             raise ValueError("unexpected FIA task count")
         pointers = [value.data_ptr() for value in graph.capture_resources.values()]
-        if mode == "split_parallel" and len(set(pointers)) != 2:
+        if mode != "padding" and len(set(pointers)) != 2:
             raise ValueError("attention lanes must own distinct workspaces")
-        source = BranchSource(entry) if mode == "split_parallel" else ContextSource(entry["data"][2])
+        source = ContextSource(entry["data"][2]) if mode == "padding" else BranchSource(entry)
         entry.update(
             source=source,
             pool=pool,
@@ -288,6 +339,21 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             updated=torch.npu.Event(),
             workspaces=len(set(pointers)),
         )
+        separate = mode == "split_parallel" and (args.independent_updates or args.lane_limits[0] != args.lane_limits[1])
+        entry["update_groups"] = []
+        for lane in range(2 if separate else 1):
+            update_stream = torch.npu.Stream() if separate else update
+            if separate and args.lane_limits[lane]:
+                torch.npu.set_stream_limit(
+                    update_stream, cube_num=args.lane_limits[lane], vector_num=2 * args.lane_limits[lane]
+                )
+            entry["update_groups"].append(
+                dict(
+                    stream=update_stream,
+                    indices=(lane,) if separate else tuple(range(len(graph.tasks))),
+                    updated=torch.npu.Event(),
+                )
+            )
         if native is not None:
             tasks = graph.resolve_tasks(source)
             if any(task.operation != torch_npu.npu_fused_infer_attention_score.out for task in tasks):
@@ -298,7 +364,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     for values in source.get(task.provider)
                 ):
                     raise ValueError("unsupported dynamic FIA arguments for native submission")
-            entry["native"] = native.NativeLane(tasks, update)
+            entry["native"] = True
+            for group in entry["update_groups"]:
+                group["native"] = native.NativeLane(tuple(tasks[i] for i in group["indices"]), group["stream"])
         print(f"captured {mode}: Dense={workload.capacity}, tasks={len(graph.tasks)}", flush=True)
 
     def identities():
@@ -311,6 +379,20 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     *(t.data_ptr() for t in entry["data"][:2]),
                     metadata.block_tables.data_ptr(),
                     metadata.slot_mapping.data_ptr(),
+                    metadata.seq_lens_cpu.data_ptr(),
+                    metadata.seq_lens_gpu.data_ptr(),
+                    *(value.data_ptr() for value in entry["graph"].capture_resources.values()),
+                    *(
+                        tensor.data_ptr()
+                        for branch in entry["branches"]
+                        for tensor in (
+                            branch[0],
+                            branch[1],
+                            next(iter(branch[2].values())).seq_lens_gpu,
+                            next(iter(branch[2].values())).block_tables,
+                            next(iter(branch[2].values())).slot_mapping,
+                        )
+                    ),
                     *(t.data_ptr() for t in entry["output"]),
                 )
             )
@@ -319,25 +401,36 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
     captured_identities = identities()
     ready = torch.npu.Event()
 
-    def replay(mode, batch, variant):
+    def replay(mode, batch, variant, profile=False):
         entry = entries[mode]
-        prepare(entry, batch, variant)
-        ready.record(main)
-        entry["stream"].wait_event(ready)
-        with torch.npu.stream(entry["stream"]):
-            entry["graph"].replay()
-        entry["update"].wait_event(ready)
-        if native is None:
-            entry["graph"].update(entry["update"], entry["tasks"])
-        else:
-            native.submit([entry["native"]], 1)
-        entry["updated"].record(entry["update"])
-        entry["stream"].wait_event(entry["updated"])
-        entry["done"].record(entry["stream"])
-        main.wait_event(entry["done"])
+        region = torch.profiler.record_function if profile else nullcontext
+        with region("host.prepare_h2d_resolve_bind"):
+            prepare(entry, batch, variant)
+        with region("host.replay_submit"):
+            ready.record(main)
+            entry["stream"].wait_event(ready)
+            with torch.npu.stream(entry["stream"]):
+                entry["graph"].replay()
+        with region("host.update_submit"):
+            for group in entry["update_groups"]:
+                group["stream"].wait_event(ready)
+            if native is None:
+                for group in entry["update_groups"]:
+                    entry["graph"].update(group["stream"], tuple(entry["tasks"][i] for i in group["indices"]))
+            else:
+                native.submit([group["native"] for group in entry["update_groups"]], 1)
+        with region("host.join_submit"):
+            for group in entry["update_groups"]:
+                group["updated"].record(group["stream"])
+                entry["stream"].wait_event(group["updated"])
+            entry["done"].record(entry["stream"])
+            main.wait_event(entry["done"])
         return entry["output"]
 
-    for index, (batch, variant) in enumerate(args.reuse_cases):
+    qualification_cases = args.reuse_cases + [
+        case for case in dict.fromkeys(args.dynamic_cases) if case not in args.reuse_cases
+    ]
+    for index, (batch, variant) in enumerate(qualification_cases):
         for mode in entries:
             reset_kv()
             check(replay(mode, batch, variant), references[mode, batch, variant], batch, f"reuse/{mode}/{index}")
@@ -371,6 +464,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     )
                 )
                 print(f"{schedule}/{mode}/{round_id}: {summarize(samples)['p50']:.2f} us", flush=True)
+    if captured_identities != identities():
+        raise ValueError("timed replay changed graph, workspace or buffer identity")
     trace_rows = []
     if args.trace:
         from vllm_ascend.worker.multi_graph.replay_benchmark import inspect_shared_dense_trace
@@ -379,16 +474,20 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU]
         ) as profiler:
             for mode in entries:
-                marker = "layer.single_padded" if mode == "padding" else "layer.joined_parallel"
+                marker = "layer.single_padded" if mode == "padding" else "layer." + mode
                 for _ in range(3):
                     with torch.profiler.record_function(marker):
-                        replay(mode, workload.batch, 0)
-                        torch.npu.synchronize()
+                        replay(mode, workload.batch, 0, profile=True)
+                        with torch.profiler.record_function("host.final_sync"):
+                            torch.npu.synchronize()
         trace_path = args.output.with_suffix(".trace.json")
         profiler.export_chrome_trace(str(trace_path))
         trace_rows = inspect_shared_dense_trace(json.loads(trace_path.read_text()))
-        if len(trace_rows) != 6 or any(row["matmul_count"] != 4 for row in trace_rows):
-            raise ValueError("expected six trace markers with four MatMuls per block")
+        if len(trace_rows) != 3 * len(entries) or any(
+            row["matmul_count"] != (5 if args.pipeline_output_projection and "single_" not in row["marker"] else 4)
+            for row in trace_rows
+        ):
+            raise ValueError("unexpected trace marker or MatMul count")
     timings = {
         schedule: {
             mode: statistics.median(
@@ -407,16 +506,25 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         dense_capacity=workload.capacity,
         fixed_boundary=args.pair[0],
         reuse_cases=args.reuse_cases,
+        qualification_cases=qualification_cases,
         timed_dynamic_cases=args.dynamic_cases,
         timed_kv_length=workload.kv_length,
         real_lane_counts=[fixed_lane_counts(batch, args.pair) for batch, _ in args.reuse_cases],
-        graph_count=2,
+        graph_count=len(entries),
+        serial_control=args.serial_control,
+        shared_cache=args.shared_cache,
+        padding_backend="direct_fia_shared_cache" if args.shared_cache else "official_layer",
+        lane_core_limits=args.lane_limits,
+        independent_updates=args.independent_updates,
         graphs_per_strategy_per_bucket=1,
         combination_graph_count=0,
         reuse_graph_and_buffer_identity_unchanged=True,
         explicit_output_merge_copies=0,
         attention_cores=args.attention_cores,
         native_update=args.native_update,
+        static_task_plan=args.static_task_plan,
+        pipeline_output_projection=args.pipeline_output_projection,
+        projection_assembly_copies_per_split_replay=2 if args.pipeline_output_projection else 0,
         native_source_sha256=native_source_sha256,
         nz=args.nz,
         layout_changes=layout_changes,
@@ -424,7 +532,17 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         cross_shape_qualified=False,
         cross_structure=cross_structure,
         graphs=[
-            dict(mode=mode, capacity=workload.capacity, update_tasks=len(e["graph"].tasks), workspaces=e["workspaces"])
+            dict(
+                mode=mode,
+                capacity=workload.capacity,
+                update_tasks=len(e["graph"].tasks),
+                update_streams=len(e["update_groups"]),
+                workspaces=e["workspaces"],
+                query_layouts=[
+                    dict(shape=list(t.kwargs["query"].shape), stride=list(t.kwargs["query"].stride()))
+                    for t in e["graph"].tasks
+                ],
+            )
             for mode, e in entries.items()
         ],
         metric="prepare_h2d_resolve_update_embedding_block_dependencies_sync",
@@ -453,7 +571,15 @@ def main():
     parser.add_argument("--max-num-seqs", type=int, default=256)
     parser.add_argument("--kv-length", type=int, default=512)
     parser.add_argument("--attention-cores", type=int, default=0)
+    parser.add_argument("--lane-cores", type=int, nargs=2)
+    parser.add_argument("--independent-updates", action="store_true")
     parser.add_argument("--native-update", action="store_true")
+    parser.add_argument("--static-task-plan", action="store_true", help="bind only KV lengths in a fixed native plan")
+    parser.add_argument("--serial-control", action="store_true", help="also capture identical split attention serially")
+    parser.add_argument("--shared-cache", action="store_true", help="symmetric shared KV write and direct FIA out path")
+    parser.add_argument(
+        "--pipeline-output-projection", action="store_true", help="pipeline lane O projections with FIA"
+    )
     parser.add_argument("--nz", action="store_true")
     parser.add_argument("--trace", action="store_true")
     parser.add_argument("--rounds", type=int, default=5)
@@ -466,6 +592,14 @@ def main():
         parser.error("invalid length, sample count or core limit")
     if args.repeats % 4:
         parser.error("repeats must be a multiple of four to cover equal dynamic cycles")
+    if args.static_task_plan and not args.native_update:
+        parser.error("static task plans require native update")
+    if args.pipeline_output_projection and not args.shared_cache:
+        parser.error("projection pipeline requires the qualified shared-cache path")
+    try:
+        args.lane_limits = lane_core_limits(args.attention_cores, args.lane_cores)
+    except ValueError as error:
+        parser.error(str(error))
     if os.environ.get("VLLM_BATCH_INVARIANT", "0") != "0":
         parser.error("requires ordinary FIA")
     args.dtype, args.batch_invariant = "bfloat16", False

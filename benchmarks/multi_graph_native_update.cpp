@@ -89,6 +89,25 @@ struct NativeLane {
       events[i]->record(stream);
     }
   }
+
+  void bind_kv_lengths(py::sequence values) {
+    // Only for a validated plan with fixed query boundaries and tensor handles.
+    // Buffer contents may change; replacing tensors requires constructing a plan.
+    TORCH_CHECK(values.size() == handles.size(), "KV length task count changed");
+    auto field = std::find_if(runtime_arguments.begin(), runtime_arguments.end(),
+                              [](const auto& item) { return item.first == "actual_seq_lengths_kv"; });
+    TORCH_CHECK(field != runtime_arguments.end(), "missing KV length argument");
+    std::vector<c10::IValue> converted_values;
+    for (size_t i = 0; i < handles.size(); ++i) {
+      auto converted = torch::jit::argumentToIValue(op.schema(), field->second, values[i]);
+      TORCH_CHECK(converted.toSymIntList().size() == arguments[i][field->second].toSymIntList().size(),
+                  "KV length row count changed");
+      for (const c10::SymInt length : converted.toSymIntList())
+        TORCH_CHECK(length.expect_int() >= 0, "negative KV length");
+      converted_values.push_back(std::move(converted));
+    }
+    for (size_t i = 0; i < handles.size(); ++i) arguments[i][field->second] = std::move(converted_values[i]);
+  }
 };
 
 void submit(const std::vector<std::shared_ptr<NativeLane>>& lanes, size_t chunk) {
@@ -107,6 +126,7 @@ void submit(const std::vector<std::shared_ptr<NativeLane>>& lanes, size_t chunk)
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, module) {
   py::class_<NativeLane, std::shared_ptr<NativeLane>>(module, "NativeLane")
       .def(py::init<py::sequence, py::object>())
-      .def("bind", &NativeLane::bind);
+      .def("bind", &NativeLane::bind)
+      .def("bind_kv_lengths", &NativeLane::bind_kv_lengths);
   module.def("submit", &submit);
 }

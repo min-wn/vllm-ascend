@@ -114,6 +114,28 @@ def test_shared_trace_measures_attention_overlap_within_one_model(wrapped):
     assert row["matmul_duration_sum_us"] == 5
     assert row["kernel_union_us"] == 19
     assert row["kernel_duration_sum_us"] == 23
+    assert row["attention_span_us"] == 14
+    assert row["attention_gap_us"] == 0
+    assert row["kernel_inventory"]["FusedInferAttentionScore"] == dict(count=2, duration_sum_us=18)
+
+
+def test_shared_trace_serial_gap_and_host_regions():
+    events = [
+        dict(name="process_name", pid=9, args={"name": "Ascend Hardware"}),
+        dict(name="layer.split_serial", pid=1, ph="X", ts=10, dur=30),
+        dict(trace_event(12, 5, 1), name="FusedInferAttentionScore", tid=11),
+        dict(trace_event(21, 8, 1), name="FusedInferAttentionScore", tid=11),
+        dict(trace_event(18, 2, 1), name="aclnnContiguous", tid=11),
+        dict(name="host.update_submit", pid=1, ph="X", ts=11, dur=8),
+        dict(name="host.outside", pid=1, ph="X", ts=0, dur=5),
+    ]
+    row = inspect_shared_dense_trace(events)[0]
+    assert row["attention_overlap_us"] == 0
+    assert row["attention_span_us"] == 17
+    assert row["attention_gap_us"] == 4
+    assert row["attention_stream_count"] == 1
+    assert row["host_stages_us"] == {"host.update_submit": 8}
+    assert row["kernel_inventory"]["aclnnContiguous"]["duration_sum_us"] == 2
 
 
 @pytest.mark.parametrize("events", [[], [dict(name="layer.joined_parallel", ph="X", ts=0, dur=20)]])

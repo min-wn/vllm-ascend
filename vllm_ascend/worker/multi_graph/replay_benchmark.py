@@ -104,6 +104,21 @@ def inspect_shared_dense_trace(payload):
 
         attention_sum = sum(right - left for _, (left, right) in attention)
         matmuls = [(kernel, interval) for kernel, interval in selected if "matmul" in kernel["name"].lower()]
+        attention_start = min(left for _, (left, _) in attention)
+        attention_end = max(right for _, (_, right) in attention)
+        inventory = {}
+        for kernel, (left, right) in selected:
+            item = inventory.setdefault(kernel["name"], dict(count=0, duration_sum_us=0.0))
+            item["count"] += 1
+            item["duration_sum_us"] += right - left
+        host_stages = {
+            event["name"]: float(event["dur"])
+            for event in events
+            if event.get("ph") == "X"
+            and event.get("name", "").startswith("host.")
+            and start <= float(event["ts"])
+            and float(event["ts"]) + float(event["dur"]) <= end
+        }
         rows.append(
             dict(
                 marker=name,
@@ -115,6 +130,15 @@ def inspect_shared_dense_trace(payload):
                 attention_stream_count=len({kernel["tid"] for kernel, _ in attention}),
                 attention_duration_sum_us=attention_sum,
                 attention_overlap_us=max(0.0, attention_sum - union_duration([interval for _, interval in attention])),
+                attention_span_us=attention_end - attention_start,
+                attention_gap_us=attention_end
+                - attention_start
+                - union_duration([interval for _, interval in attention]),
+                attention_intervals=[
+                    dict(stream=kernel["tid"], start_us=left, end_us=right) for kernel, (left, right) in attention
+                ],
+                kernel_inventory=inventory,
+                host_stages_us=host_stages,
             )
         )
     if not rows:

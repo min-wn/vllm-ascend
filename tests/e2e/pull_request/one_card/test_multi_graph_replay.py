@@ -455,14 +455,23 @@ def test_native_fia_binding_guards(monkeypatch):
         plan.bind([SimpleNamespace(kwargs=kwargs, handle=handle, event=torch.npu.ExternalEvent())])
     task.kwargs = dict(kwargs, actual_seq_lengths_kv=[2])
     plan.bind([task])
+    plan.bind_kv_lengths([[3]])
+    with pytest.raises(RuntimeError, match="task count"):
+        plan.bind_kv_lengths([])
+    with pytest.raises(RuntimeError, match="row count"):
+        plan.bind_kv_lengths([[3, 4]])
+    with pytest.raises(RuntimeError, match="negative KV"):
+        plan.bind_kv_lengths([[-1]])
     task.event = torch.npu.ExternalEvent()
     with pytest.raises(RuntimeError, match="task event changed"):
         plan.bind([task])
     stream.synchronize()
 
 
-@pytest.mark.parametrize("nz,native", [(False, False), (True, False), (True, True)])
-def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native):
+@pytest.mark.parametrize(
+    "nz,native,shared", [(False, False, False), (True, False, False), (True, True, False), (True, True, True)]
+)
+def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native, shared):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
@@ -490,6 +499,11 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native):
             str(destination),
             *(["--nz"] if nz else []),
             *(["--native-update"] if native else []),
+            *(
+                ["--shared-cache", "--serial-control", "--independent-updates", "--static-task-plan", "--trace"]
+                if shared
+                else []
+            ),
         ],
         cwd=repo,
         env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
@@ -503,17 +517,27 @@ def test_default_bucket_internal_block_reuse(tmp_path, request, nz, native):
     assert report["real_lane_counts"] == [[4, 3], [4, 2], [4, 3], [4, 3]]
     assert report["timed_dynamic_cases"] == [[7, 0], [6, 0], [7, 0], [7, 0]]
     assert report["timed_kv_length"] == 128
-    assert report["graph_count"] == 2 and report["graphs_per_strategy_per_bucket"] == 1
+    modes = 3 if shared else 2
+    assert report["graph_count"] == modes and report["graphs_per_strategy_per_bucket"] == 1
     assert report["combination_graph_count"] == report["explicit_output_merge_copies"] == 0
     assert report["reuse_graph_and_buffer_identity_unchanged"]
     assert report["nz"] == nz and report["original_nd_eager_reference"]
     assert report["native_update"] == native
+    assert report["shared_cache"] == shared and report["serial_control"] == shared
+    assert report["static_task_plan"] == shared
     if native:
         assert len(report["native_source_sha256"]) == 64
     assert not report["cross_shape_qualified"]
     assert all(check["passed"] for check in report["checks"])
-    assert len([check for check in report["checks"] if check["name"].startswith("reuse/")]) == 8
-    assert [(g["update_tasks"], g["workspaces"]) for g in report["graphs"]] == [(1, 1), (2, 2)]
-    assert len(report["measurements"]) == 4
+    assert len([check for check in report["checks"] if check["name"].startswith("reuse/")]) == 5 * modes
+    assert report["qualification_cases"][-1] == [6, 0]
+    assert [(g["update_tasks"], g["workspaces"]) for g in report["graphs"]] == [(1, 1)] + [(2, 2)] * (modes - 1)
+    assert len(report["measurements"]) == 2 * modes
     assert all(len(row["wall_us"]) == 4 for row in report["measurements"])
     assert set(report["summary_ms"]) == {"fixed", "dynamic"}
+    if shared:
+        assert [g["update_streams"] for g in report["graphs"]] == [1, 1, 2]
+        assert len(report["trace_analysis"]) == 9
+        for row in report["trace_analysis"]:
+            writes = sum(v["count"] for name, v in row["kernel_inventory"].items() if "ScatterPaKvCache" in name)
+            assert writes == 1

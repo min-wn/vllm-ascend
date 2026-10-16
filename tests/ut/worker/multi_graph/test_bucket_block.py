@@ -48,3 +48,14 @@ def test_invalid_topology_does_not_create_special_shapes(benchmark, batch, sizes
 def test_invalid_fixed_slots_are_rejected(benchmark, batch, pair):
     with pytest.raises(ValueError):
         benchmark.fixed_lane_counts(batch, pair)
+
+
+@pytest.mark.parametrize("common,lanes,expected", [(0, None, (0, 0)), (16, None, (16, 16)), (0, [16, 12], (16, 12))])
+def test_lane_core_limits_are_explicit(benchmark, common, lanes, expected):
+    assert benchmark.lane_core_limits(common, lanes) == expected
+
+
+@pytest.mark.parametrize("common,lanes", [(-1, None), (10, [16, 12]), (0, [16]), (0, [-1, 12])])
+def test_invalid_lane_limits_are_rejected(benchmark, common, lanes):
+    with pytest.raises(ValueError):
+        benchmark.lane_core_limits(common, lanes)
