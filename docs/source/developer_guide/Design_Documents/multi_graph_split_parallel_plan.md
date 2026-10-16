@@ -169,6 +169,9 @@ python benchmarks/multi_graph_replay.py \
 
 ### 结构性原型：共享 Dense，只切分 Attention
 
+后续完整 decoder、Qwen3 模型规模、TP2/TP4 及 Qwen3.5 实机资格测试见
+[模型规模与多卡实验](multi_graph_model_scaling.md)。下文保留此前单层实验的范围与证据。
+
 新增 `benchmarks/multi_graph_shared_dense.py`。这一实验改变切分边界：每层先按真实 B×Q 一次执行 LayerNorm、QKV 投影和 RoPE，再按完整请求分成两路 Attention，写入同一输出张量的互不重叠切片，汇合后一次执行 O 投影、残差归一化和 FFN。目标是保留请求切分，同时避免 Dense 跟随请求一起碎片化。
 
 与整层切分相比，真实 token 的 Dense FLOPs 没有减半；减少的是小矩阵执行、重复 kernel 调度和额外输出合并。相对容量 C×Q 的 padding 图，还省去假 token 的 Dense 计算。Attention 对真实 host seq_len 的依赖保持不变，每层两路 FIA 均保留 task update。

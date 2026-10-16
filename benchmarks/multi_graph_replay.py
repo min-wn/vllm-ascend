@@ -59,6 +59,10 @@ def run(args, workload, *, experiment=None):
     try:
         llm = LLM(
             model=args.model,
+            tensor_parallel_size=getattr(args, "tensor_parallel_size", 1),
+            distributed_executor_backend=(
+                "external_launcher" if getattr(args, "tensor_parallel_size", 1) > 1 else "uni"
+            ),
             dtype=args.dtype,
             enforce_eager=True,
             max_model_len=max(512, workload.kv_length + workload.query),
@@ -80,8 +84,12 @@ def run(args, workload, *, experiment=None):
     runner = observed[0]
     model = runner.get_model()
     layers = runner.compilation_config.static_forward_context
-    if runner.model_config.hf_config.model_type != "qwen2" or len(runner.kv_cache_config.kv_cache_groups) != 1:
-        raise ValueError("this qualification is limited to dense Qwen2 with one KV group")
+    supported_models = ("qwen2", "qwen3") if experiment is not None else ("qwen2",)
+    if (
+        runner.model_config.hf_config.model_type not in supported_models
+        or len(runner.kv_cache_config.kv_cache_groups) != 1
+    ):
+        raise ValueError(f"this qualification requires {supported_models} with one KV group")
     torch.manual_seed(42)
     caches = []
     pointers = set()

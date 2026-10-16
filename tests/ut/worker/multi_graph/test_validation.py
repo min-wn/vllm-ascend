@@ -100,3 +100,27 @@ def test_graph_budget_deducted_before_kv_sizing(config):
     assert reserve_graph_memory(1024, replace(config, enabled=False)) == 1024
     with pytest.raises(ValueError, match="no KV cache budget"):
         reserve_graph_memory(budget, config)
+
+
+def test_qwen3_tp_layout_control_does_not_enable_split_admission(configs):
+    config, vc, ascend = configs
+    vc.model_config.architectures = ["Qwen3ForCausalLM"]
+    vc.model_config.enforce_eager = True
+    vc.parallel_config.tensor_parallel_size = 2
+    vc.compilation_config.cudagraph_mode.name = "NONE"
+    validate_vllm_config(MultiGraphConfig(kv_cache_layout="contiguous"), vc, ascend)
+    with pytest.raises(ValueError, match="requires one of"):
+        validate_vllm_config(config, vc, ascend)
+    vc.model_config.enforce_eager = False
+    with pytest.raises(ValueError, match="requires one of"):
+        validate_vllm_config(MultiGraphConfig(kv_cache_layout="contiguous"), vc, ascend)
+
+
+@pytest.mark.parametrize("field,value", [("is_hybrid", True), ("is_moe", True), ("quantization", "int8")])
+def test_qwen3_layout_control_rejects_unsupported_variants(configs, field, value):
+    _, vc, ascend = configs
+    vc.model_config.architectures = ["Qwen3ForCausalLM"]
+    vc.model_config.enforce_eager = True
+    setattr(vc.model_config, field, value)
+    with pytest.raises(ValueError, match=field):
+        validate_vllm_config(MultiGraphConfig(kv_cache_layout="contiguous"), vc, ascend)

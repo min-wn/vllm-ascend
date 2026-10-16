@@ -10,11 +10,11 @@ def validate_vllm_config(config: MultiGraphConfig, vc: Any, ascend: Any) -> None
     if not config.enabled and config.kv_cache_layout == "default":
         return
     model = vc.model_config
+    layout_only = not config.enabled and model.enforce_eager
     architectures = getattr(model, "architectures", ())
-    if not architectures or any(name not in ("LlamaForCausalLM", "Qwen2ForCausalLM") for name in architectures):
-        raise ValueError(
-            "multi_graph_config requires LlamaForCausalLM or Qwen2ForCausalLM for the experimental V1 path"
-        )
+    supported = ("LlamaForCausalLM", "Qwen2ForCausalLM") + (("Qwen3ForCausalLM",) if layout_only else ())
+    if not architectures or any(name not in supported for name in architectures):
+        raise ValueError(f"multi_graph_config requires one of {supported} for the experimental V1 path")
     failures: list[str] = []
     if vc.use_v2_model_runner:
         failures.append("V2 model runner")
@@ -26,6 +26,9 @@ def validate_vllm_config(config: MultiGraphConfig, vc: Any, ascend: Any) -> None
         "prefill_context_parallel_size",
         "decode_context_parallel_size",
     ):
+        # Eager layout qualification does not enable distributed split admission.
+        if field == "tensor_parallel_size" and layout_only:
+            continue
         if getattr(parallel, field, 1) != 1:
             failures.append(field)
     if parallel.enable_expert_parallel:

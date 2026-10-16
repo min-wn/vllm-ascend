@@ -174,3 +174,51 @@ def test_shared_dense_attention_branches(tmp_path, request, query, lanes, merge)
     for name in ("joined_shared_serial", "joined_shared_parallel"):
         assert graphs[name]["update_tasks"] == 2
         assert graphs[name]["distinct_workspaces"] == 2
+
+
+def test_full_decoder_padding_vs_split_parallel(tmp_path, request):
+    pytest.importorskip("torch_npu")
+    if not hasattr(torch, "npu") or not torch.npu.is_available():
+        pytest.skip("requires Ascend NPU")
+    repo = Path(__file__).resolve().parents[4]
+    destination = tmp_path / "model_scaling.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(repo / "benchmarks/multi_graph_model_scaling.py"),
+            "--model",
+            request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
+            "--batch",
+            "7",
+            "--capacity",
+            "8",
+            "--query",
+            "8",
+            "--kv-length",
+            "128",
+            "--rounds",
+            "1",
+            "--repeats",
+            "3",
+            "--output",
+            str(destination),
+        ],
+        cwd=repo,
+        env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
+        check=True,
+        timeout=300,
+    )
+    result = json.loads(destination.read_text())
+    assert result["status"] == "passed"
+    assert result["update_included"]
+    assert not result["cross_architecture_qualified"]
+    assert {row["mode"] for row in result["measurements"]} == {"padding", "split_parallel"}
+    assert len(result["measurements"]) == 2
+    assert result["tensor_parallel_size"] == 1
+    for rank in result["ranks"]:
+        assert all(check["passed"] for check in rank["checks"])
+        assert len([check for check in rank["checks"] if check["name"].endswith("/changed_input")]) == 2
+    graphs = {graph["mode"]: graph for graph in result["graphs"]}
+    assert graphs["padding"]["update_tasks"] == result["layers"]
+    assert graphs["split_parallel"]["update_tasks"] == 2 * result["layers"]
+    assert graphs["split_parallel"]["workspaces"] == 2
