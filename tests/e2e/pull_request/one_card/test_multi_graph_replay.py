@@ -176,7 +176,11 @@ def test_shared_dense_attention_branches(tmp_path, request, query, lanes, merge)
         assert graphs[name]["distinct_workspaces"] == 2
 
 
-def test_full_decoder_padding_vs_split_parallel(tmp_path, request):
+@pytest.mark.parametrize(
+    "schedule,kv_write,cores",
+    [("joined", "branches", 0), ("post-overlap", "branches", 0), ("joined", "shared", 0), ("joined", "branches", 10)],
+)
+def test_full_decoder_padding_vs_split_parallel(tmp_path, request, schedule, kv_write, cores):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
@@ -186,6 +190,12 @@ def test_full_decoder_padding_vs_split_parallel(tmp_path, request):
         [
             sys.executable,
             str(repo / "benchmarks/multi_graph_model_scaling.py"),
+            "--split-schedule",
+            schedule,
+            "--kv-write",
+            kv_write,
+            "--attention-cores",
+            str(cores),
             "--model",
             request.config.getoption("--replay-model", default="Qwen/Qwen2.5-0.5B-Instruct"),
             "--batch",
@@ -211,6 +221,9 @@ def test_full_decoder_padding_vs_split_parallel(tmp_path, request):
     result = json.loads(destination.read_text())
     assert result["status"] == "passed"
     assert result["update_included"]
+    assert result["split_schedule"] == schedule
+    assert result["kv_write"] == kv_write
+    assert result["attention_cores"] == cores
     assert not result["cross_architecture_qualified"]
     assert {row["mode"] for row in result["measurements"]} == {"padding", "split_parallel"}
     assert len(result["measurements"]) == 2

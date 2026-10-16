@@ -1,5 +1,8 @@
 # 完整 Decoder 的模型规模与多卡实验
 
+较小 padding 比例的后续边界测试与结构实验见
+[小 Padding 比例下的切分边界](multi_graph_padding_frontier.md)。
+
 ## 测量范围
 
 `benchmarks/multi_graph_model_scaling.py` 只计时 padding 和切分并行。

@@ -37,14 +37,26 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             raise ValueError("unsupported Qwen attention variant")
     rank = dist.get_rank()
     world = dist.get_world_size()
+    if args.split_schedule == "post-overlap" and world != 1:
+        raise ValueError("post-overlap requires TP1: concurrent branch collectives are not qualified")
     cpu_group = get_world_group().cpu_group
     main = torch.npu.current_stream()
+    if args.attention_cores:
+        available = torch.npu.get_device_limit(torch.npu.current_device())
+        if args.attention_cores > available["cube_core_num"] or 2 * args.attention_cores > available["vector_core_num"]:
+            raise ValueError("attention stream limit exceeds the device")
+        if args.split_schedule != "joined":
+            raise ValueError("attention core limits require shared Dense after the join")
     tokens = workload.batch * workload.query
     padded_data, actual_data = inputs(0, workload.capacity), inputs(0, workload.batch)
     intervals = ((0, workload.lanes[0]), (workload.lanes[0], workload.batch))
     branch_data = [inputs(start, stop) for start, stop in intervals]
     branch_stream = torch.npu.Stream()
     events = [(torch.npu.Event(), torch.npu.Event()) for _ in layers]
+    limited_streams = [torch.npu.Stream(), torch.npu.Stream()] if args.attention_cores else []
+    limited_joins = [(torch.npu.Event(), torch.npu.Event()) for _ in layers]
+    for stream in limited_streams:
+        torch.npu.set_stream_limit(stream, cube_num=args.attention_cores, vector_num=2 * args.attention_cores)
     checks = []
 
     class BranchGraph(UpdatableGraph):
@@ -93,8 +105,37 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                 k = attention.k_norm(k.view(-1, attention.num_kv_heads, attention.head_dim)).view(k.shape)
             q, k = attention.rotary_emb(actual_data[1], q, k)
             output = torch.empty_like(q)
+            shared_kv = partition and args.kv_write == "shared"
+            if shared_kv:
+                # Both branches read the same cache after one full-batch write.
+                backend.impl.reshape_and_cache(
+                    q.view(-1, attention.num_heads, attention.head_dim),
+                    k.view(-1, attention.num_kv_heads, attention.head_dim),
+                    v.view(-1, attention.num_kv_heads, attention.head_dim),
+                    backend.kv_cache,
+                    next(iter(actual_data[2].values())),
+                    output.view(-1, attention.num_heads, attention.head_dim),
+                )
+            overlap_post = partition and args.split_schedule == "post-overlap"
+            if overlap_post:
+                next_hidden = torch.empty_like(hidden)
+                next_residual = torch.empty_like(residual)
 
-            def branch(lane, backend=backend, attention=attention, q=q, k=k, v=v, output=output):
+            def branch(
+                lane,
+                backend=backend,
+                attention=attention,
+                q=q,
+                k=k,
+                v=v,
+                output=output,
+                layer=layer,
+                residual=residual,
+                overlap_post=overlap_post,
+                shared_kv=shared_kv,
+                next_hidden=next_hidden if overlap_post else None,
+                next_residual=next_residual if overlap_post else None,
+            ):
                 start, stop = active_intervals[lane]
                 left, right = start * workload.query, stop * workload.query
                 count = right - left
@@ -104,14 +145,30 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     backend.impl.forward(
                         backend,
                         q[left:right].view(count, attention.num_heads, attention.head_dim),
-                        k[left:right].view(count, attention.num_kv_heads, attention.head_dim),
-                        v[left:right].view(count, attention.num_kv_heads, attention.head_dim),
+                        None if shared_kv else k[left:right].view(count, attention.num_kv_heads, attention.head_dim),
+                        None if shared_kv else v[left:right].view(count, attention.num_kv_heads, attention.head_dim),
                         backend.kv_cache,
                         next(iter(active_data[lane][2].values())),
                         output=output[left:right].view(count, attention.num_heads, attention.head_dim),
                     )
+                    if overlap_post:
+                        # Let a ready branch consume Dense compute while its peer runs Attention.
+                        projected, _ = attention.o_proj(output[left:right])
+                        normalized, branch_residual = layer.post_attention_layernorm(projected, residual[left:right])
+                        next_hidden[left:right].copy_(layer.mlp(normalized))
+                        next_residual[left:right].copy_(branch_residual)
 
-            if parallel:
+            if parallel and limited_streams:
+                fork = events[index][0]
+                fork.record(root)
+                for lane, stream in enumerate(limited_streams):
+                    stream.wait_event(fork)
+                    with torch.npu.stream(stream):
+                        branch(lane)
+                        limited_joins[index][lane].record(stream)
+                for join in limited_joins[index]:
+                    root.wait_event(join)
+            elif parallel:
                 fork, join = events[index]
                 fork.record(root)
                 branch_stream.wait_event(fork)
@@ -123,9 +180,12 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             else:
                 for lane in range(len(active_intervals)):
                     branch(lane)
-            hidden, _ = attention.o_proj(output)
-            hidden, residual = layer.post_attention_layernorm(hidden, residual)
-            hidden = layer.mlp(hidden)
+            if overlap_post:
+                hidden, residual = next_hidden, next_residual
+            else:
+                hidden, _ = attention.o_proj(output)
+                hidden, residual = layer.post_attention_layernorm(hidden, residual)
+                hidden = layer.mlp(hidden)
         hidden, _ = model.model.norm(hidden, residual)
         return hidden
 
@@ -165,6 +225,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         print(f"rank={rank} capturing {name}, layers={len(layers)}", flush=True)
         reset_kv()
         stream, update = torch.npu.Stream(), torch.npu.Stream()
+        if name == "split_parallel" and args.attention_cores:
+            # FIA update must use the same tiling resource limit as capture.
+            torch.npu.set_stream_limit(update, cube_num=args.attention_cores, vector_num=2 * args.attention_cores)
         stream.wait_stream(main)
         with torch.npu.stream(stream), context(data):
             for _ in range(3):
@@ -263,6 +326,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             model=args.model,
             dtype=args.dtype,
             tensor_parallel_size=world,
+            split_schedule=args.split_schedule,
+            kv_write=args.kv_write,
+            attention_cores=args.attention_cores,
             workload=dataclasses.asdict(workload),
             layers=len(layers),
             model_geometry={
@@ -297,6 +363,9 @@ def main():
     parser.add_argument("--model", required=True)
     parser.add_argument("--dtype", choices=("float16", "bfloat16"), default="bfloat16")
     parser.add_argument("--tensor-parallel-size", type=int, default=1)
+    parser.add_argument("--split-schedule", choices=("joined", "post-overlap"), default="joined")
+    parser.add_argument("--kv-write", choices=("branches", "shared"), default="branches")
+    parser.add_argument("--attention-cores", type=int, default=0)
     parser.add_argument("--batch", type=int, default=129)
     parser.add_argument("--capacity", type=int, default=256)
     parser.add_argument("--query", type=int, default=8)
@@ -318,6 +387,8 @@ def main():
         )
         if min(args.rounds, args.repeats, args.warmups, args.tensor_parallel_size) < 1:
             raise ValueError("counts must be positive")
+        if args.attention_cores < 0:
+            raise ValueError("attention core limit must be nonnegative")
         if int(os.environ.get("WORLD_SIZE", "1")) != args.tensor_parallel_size:
             raise ValueError("torchrun WORLD_SIZE must equal --tensor-parallel-size")
     except ValueError as error:
