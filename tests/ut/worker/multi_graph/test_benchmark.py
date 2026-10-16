@@ -216,3 +216,14 @@ def test_parent_separates_generation_and_profiler_processes(monkeypatch, tmp_pat
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["measurements"]["generation"]["correctness"]["all_repeats_checked"]
     assert summary["measurements"]["trace"]["results"]["parallel"]["generation_speedup_vs_single"] is None
+
+
+def test_experimental_order_cannot_export_default_runtime_costs(monkeypatch):
+    path = Path(__file__).resolve().parents[4] / "benchmarks/multi_graph_split.py"
+    spec = importlib.util.spec_from_file_location("submission_benchmark", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(sys, "argv", [str(path), "--submission-order", "interleaved", "--decode-costs"])
+    with pytest.raises(SystemExit) as error:
+        module.main()
+    assert error.value.code == 2

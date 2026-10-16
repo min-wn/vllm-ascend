@@ -40,6 +40,10 @@ class FakeBackend:
         self.call("finish", entry.key.lane_id)
         return entry.key.lane_id
 
+    def update_interleaved(self, entries, tasks, prepared):
+        for entry, resolved in zip(entries, tasks):
+            self.update(entry, resolved, prepared)
+
     def wait(self, event):
         self.call("wait", event)
 
@@ -98,6 +102,36 @@ def test_resolve_failure_never_launches_any_graph(execution):
         manager.run(plan, inputs, inputs, metadata)
     assert not any(name == "replay" for name, _ in backend.calls)
     assert manager.state == ManagerState.READY
+
+
+@pytest.mark.parametrize("order", ["replay_first", "interleaved"])
+def test_experimental_orders_replay_both_before_updates(execution, order):
+    manager, backend, plan, inputs, metadata = execution
+    manager.submission_order = order
+    manager.run(plan, inputs, inputs, metadata)
+    assert backend.calls.index(("replay", 1)) < backend.calls.index(("update", 0))
+    assert backend.calls.index(("update", 1)) < backend.calls.index(("consumed", None))
+
+
+@pytest.mark.parametrize("order", ["replay_first", "interleaved"])
+@pytest.mark.parametrize("failure", [("replay", 1), ("update", 0), ("update", 1)])
+def test_experimental_failure_poisoning(execution, order, failure):
+    manager, backend, plan, inputs, metadata = execution
+    manager.submission_order = order
+    backend.fail_at = failure
+    with pytest.raises(RuntimeError, match="injected"):
+        manager.run(plan, inputs, inputs, metadata)
+    assert manager.state == ManagerState.FAILED
+    assert not any(name == "wait" for name, _ in backend.calls)
+
+
+@pytest.mark.parametrize("order", ["unknown", "replay_first", "interleaved"])
+def test_invalid_submission_order_rejected_before_launch(execution, order):
+    manager, backend, plan, inputs, metadata = execution
+    manager.submission_order = order
+    with pytest.raises(ValueError, match="submission order"):
+        manager.run(replace(plan, execution="serial"), inputs, inputs, metadata)
+    assert backend.calls == []
 
 
 @pytest.mark.parametrize("failure", [("replay", 0), ("update", 0), ("replay", 1), ("update", 1), ("join", 1)])

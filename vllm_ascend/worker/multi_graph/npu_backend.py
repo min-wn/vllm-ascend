@@ -41,6 +41,12 @@ class NPUExecutionBackend:
         event.record(entry.compute_stream)
         return LaneCompletion(update_done, event)
 
+    def update_interleaved(self, entries, tasks, prepared: Any) -> None:
+        for index in range(max(map(len, tasks))):
+            for entry, resolved in zip(entries, tasks):
+                if index < len(resolved):
+                    self.update(entry, (resolved[index],), prepared)
+
     def wait(self, event: Any) -> None:
         (event.compute_done if isinstance(event, LaneCompletion) else event).synchronize()
 

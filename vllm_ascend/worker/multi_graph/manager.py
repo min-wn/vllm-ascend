@@ -24,6 +24,7 @@ class ExecutionBackend(Protocol):
     def preparation_complete(self) -> Any: ...
     def replay(self, entry: MultiGraphEntry, prepared: Any) -> None: ...
     def update(self, entry: MultiGraphEntry, tasks: Any, prepared: Any) -> None: ...
+    def update_interleaved(self, entries: Any, tasks: Any, prepared: Any) -> None: ...
     def finish(self, entry: MultiGraphEntry) -> Any: ...
     def wait(self, event: Any) -> None: ...
     def join(self, event: Any) -> None: ...
@@ -57,6 +58,7 @@ class MultiGraphManager:
         self.state = ManagerState.NEW
         self.completion = None
         self.pending_resources = None
+        self.submission_order = "lane"
 
     def add_entry(self, entry: MultiGraphEntry) -> None:
         if self.state != ManagerState.NEW:
@@ -115,6 +117,10 @@ class MultiGraphManager:
         return True
 
     def run(self, plan: ExecutionPlan, input_ids: torch.Tensor, positions: torch.Tensor, metadata: dict[str, Any]):
+        if self.submission_order not in ("lane", "replay_first", "interleaved"):
+            raise ValueError("unknown graph submission order")
+        if plan.execution != "parallel" and self.submission_order != "lane":
+            raise ValueError("experimental submission order requires parallel execution")
         self.drain()
         entries = tuple(self.entries[part.graph_key] for part in plan.slices)
         updates = tuple(
@@ -128,9 +134,16 @@ class MultiGraphManager:
         self.pending_resources = (updates, tasks, prepared, events)
         self.state = ManagerState.IN_FLIGHT
         try:
+            if self.submission_order != "lane":
+                for entry in entries:
+                    self.backend.replay(entry, prepared)
+                if self.submission_order == "interleaved":
+                    self.backend.update_interleaved(entries, tasks, prepared)
             for entry, resolved in zip(entries, tasks):
-                self.backend.replay(entry, prepared)
-                self.backend.update(entry, resolved, prepared)
+                if self.submission_order == "lane":
+                    self.backend.replay(entry, prepared)
+                if self.submission_order != "interleaved":
+                    self.backend.update(entry, resolved, prepared)
                 event = self.backend.finish(entry)
                 events.append(event)
                 if plan.execution == "serial":

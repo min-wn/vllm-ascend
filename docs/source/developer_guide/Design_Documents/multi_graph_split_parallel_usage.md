@@ -130,6 +130,8 @@ The launcher isolates parent fixtures that require vLLM/NPU and stubs the packag
 
 ## Trace attribution
 
+The benchmark also accepts `--submission-order lane|replay_first|interleaved`. This is a benchmark-only parallel execution experiment, not a serving configuration. `lane` preserves the default replay/update/finish sequence per lane. `replay_first` submits both replays before updating either graph. `interleaved` submits both replays, then alternates one registered update task from each graph while preserving each graph's task order. Every task retains its existing ExternalEvent protocol. Interleaving invokes the graph update wrapper per task and may add host overhead; it is not a batch-update API. Non-parallel modes retain `lane` order. Run each case in a fresh process with an external timeout and compare all output tokens/logprobs before interpreting performance.
+
 The separate trace pass adds `mg.decode.*` ranges around eligible decode forwards and nested ranges for metadata preflight/refresh, resource draining, task resolution and graph updates. These annotations are installed only inside the benchmark child; normal generation/decode measurements do not install phase wrappers. Direct child runs also select the inline V1 engine so the observers execute in the model process.
 
 Analyze an exported trace without vLLM or NPU dependencies:

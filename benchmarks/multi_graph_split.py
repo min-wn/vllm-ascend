@@ -79,6 +79,7 @@ def run_child(args) -> None:
         return replay(self, context, graph)
 
     def observed_split(self, *positional, **keywords):
+        self.manager.submission_order = args.submission_order if args.mode == "parallel" else "lane"
         before = dict(self.fallback_counts) if state["step"] is not None else {}
         result = try_run(self, *positional, **keywords)
         if state["recording"] and result is not None:
@@ -264,6 +265,7 @@ def run_child(args) -> None:
         "schema_version": 2,
         "mode": args.mode,
         "measurement": args.measurement,
+        "submission_order": args.submission_order if args.mode == "parallel" else "lane",
         "dtype": args.dtype,
         "batch_size": args.batch_size,
         "single_capacity": args.single_capacity,
@@ -340,6 +342,7 @@ def main() -> None:
         default=["eager", "single", "serial", "parallel"],
     )
     parser.add_argument("--measurement", choices=("generation", "decode", "trace"), default="generation")
+    parser.add_argument("--submission-order", choices=("lane", "replay_first", "interleaved"), default="lane")
     parser.add_argument("--result")
     parser.add_argument("--trace", action="store_true", help="run a separate profiler process per mode")
     parser.add_argument("--decode-costs", action="store_true", help="run separate synchronized decode processes")
@@ -349,6 +352,8 @@ def main() -> None:
         resolve_workload(args)
         if len(set(args.mode_order)) != 4:
             raise ValueError("mode-order must contain each mode exactly once")
+        if args.submission_order != "lane" and (args.decode_costs or args.measurement == "decode"):
+            raise ValueError("experimental submission orders cannot export costs for the default runtime order")
     except ValueError as error:
         parser.error(str(error))
     if args.mode:
@@ -397,6 +402,8 @@ def main() -> None:
         str(args.graph_budget),
         "--kv-cache-layout",
         args.kv_cache_layout,
+        "--submission-order",
+        args.submission_order,
     ]
     summary = {"workload": vars(args).copy(), "measurements": {}}
     summary["workload"]["output_dir"] = str(args.output_dir)

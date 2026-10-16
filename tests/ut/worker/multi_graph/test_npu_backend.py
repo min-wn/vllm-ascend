@@ -77,3 +77,11 @@ def test_stream_dependencies_and_event_ownership(monkeypatch):
         ("parent", "record", consumed),
         ("host", "wait", consumed),
     ]
+    calls.clear()
+    second = SimpleNamespace(graph=graph, update_stream=Stream("update1"))
+    backend.update_interleaved((entry, second), (("a0", "a1"), ("b0",)), prepared)
+    assert [call for call in calls if call[1] == "update"] == [
+        ("update", "update", ("a0",)),
+        ("update1", "update", ("b0",)),
+        ("update", "update", ("a1",)),
+    ]
