@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -55,3 +56,27 @@ def test_update_groups_preserve_every_task_once_in_lane_order(benchmark, chunk):
 def test_update_groups_reject_invalid_counts(benchmark, counts, chunk):
     with pytest.raises(ValueError):
         benchmark.update_groups(counts, chunk)
+
+
+def test_projection_selection_preserves_shared_weights_and_other_layers(benchmark):
+    layers = [
+        SimpleNamespace(
+            self_attn=SimpleNamespace(qkv_proj=object(), o_proj=object()),
+            mlp=SimpleNamespace(gate_up_proj=object(), down_proj=object()),
+        )
+        for _ in range(2)
+    ]
+    model = SimpleNamespace(model=SimpleNamespace(layers=layers))
+    selected = benchmark.projection_modules(model, ["qkv", "down"])
+    assert selected == [
+        (i, name, module)
+        for i, layer in enumerate(layers)
+        for name, module in (("qkv", layer.self_attn.qkv_proj), ("down", layer.mlp.down_proj))
+    ]
+    assert benchmark.projection_modules(model, []) == []
+
+
+@pytest.mark.parametrize("names", [["unknown"], ["qkv", "qkv"]])
+def test_projection_selection_rejects_invalid_names_before_model_access(benchmark, names):
+    with pytest.raises(ValueError, match="unique supported"):
+        benchmark.projection_modules(None, names)

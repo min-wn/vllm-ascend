@@ -129,6 +129,8 @@ chunk4 trace 同样出现该现象，且更明显。
 布局会影响结果，但效果因投影而异。gate/up 的 NZ padding 反而变慢，
 其相对差距缩小不能全部归为 split 本身的提升。
 本轮没有把 NZ 用于完整 decoder，因此不声称其已缩短完整推理时间或解决切分劣势。
+后续完整 decoder 布局与编译验证见
+[默认桶完整 Decoder 的编译与权重布局验证](multi_graph_compiled_layout.md)。
 独立 NZ 复测的 padding / split 分别为 QKV 1.668 / 1.982 ms、
 输出投影 0.934 / 1.161 ms、gate/up 4.556 / 4.761 ms、down 1.720 / 2.258 ms，
 与首轮方向一致，四项 split 仍慢于各自的 NZ padding。

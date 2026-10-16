@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 from vllm_ascend.worker.multi_graph.benchmark import summarize
@@ -48,6 +49,18 @@ def run(args, workload, *, experiment=None):
             operation(**kwargs)
 
     observed = []
+    compiled_experiment = experiment is not None and getattr(args, "compiled", False)
+    compile_options = (
+        {
+            "compilation_config": {
+                "mode": 3,
+                "cudagraph_mode": "FULL_AND_PIECEWISE",
+                "cudagraph_capture_sizes": sorted({workload.capacity, *args.pair}),
+            }
+        }
+        if compiled_experiment
+        else {}
+    )
     original = NPUModelRunner._model_forward
 
     def observe(self, *values, **options):
@@ -64,7 +77,7 @@ def run(args, workload, *, experiment=None):
                 "external_launcher" if getattr(args, "tensor_parallel_size", 1) > 1 else "uni"
             ),
             dtype=args.dtype,
-            enforce_eager=True,
+            enforce_eager=not compiled_experiment,
             max_model_len=max(512, workload.kv_length + workload.query),
             max_num_seqs=workload.capacity,
             max_num_batched_tokens=max(512, workload.capacity * workload.query),
@@ -73,15 +86,20 @@ def run(args, workload, *, experiment=None):
             enable_prefix_caching=False,
             gpu_memory_utilization=0.8,
             seed=42,
+            **compile_options,
             additional_config={
                 "ascend_compilation_config": {"enable_npugraph_ex": False},
                 "pa_shape_list": [],
-                "multi_graph_config": {"kv_cache_layout": "contiguous"},
+                # Official compilation uses its supported default KV layout.
+                # The contiguous workaround is restricted to eager qualification.
+                "multi_graph_config": {"kv_cache_layout": "default" if compiled_experiment else "contiguous"},
             },
         )
     finally:
         NPUModelRunner._model_forward = original
     runner = observed[0]
+    if compiled_experiment and int(runner.compilation_config.mode) != 3:
+        raise ValueError("compiled experiment requires VLLM_COMPILE; refusing an eager fallback")
     model = runner.get_model()
     layers = runner.compilation_config.static_forward_context
     supported_models = ("qwen2", "qwen3") if experiment is not None else ("qwen2",)
@@ -149,7 +167,7 @@ def run(args, workload, *, experiment=None):
                 uniform=True,
             ),
             model_instance=model,
-            skip_compiled=True,
+            skip_compiled=not compiled_experiment,
         )
 
     def forward(data, capturing=False):
@@ -200,7 +218,7 @@ def run(args, workload, *, experiment=None):
         torch.npu.synchronize()
     if experiment is not None:
         # Reuse identical model, KV initialization and metadata in structural experiments.
-        with torch.inference_mode(), disable_compilation(model):
+        with torch.inference_mode(), nullcontext() if compiled_experiment else disable_compilation(model):
             return experiment(args, workload, runner, model, inputs, context, reset_kv)
     actual = inputs(0, workload.batch)
     reset_kv()

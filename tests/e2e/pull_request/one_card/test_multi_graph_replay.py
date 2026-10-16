@@ -275,13 +275,15 @@ def test_default_capture_case_selection(tmp_path, request):
 
 
 @pytest.mark.parametrize("batch,strategy,pair", [(6, "exact", [4, 2]), (7, "balanced", [4, 4])])
-@pytest.mark.parametrize("optimized", [False, True])
-def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strategy, pair, optimized):
+@pytest.mark.parametrize("layout", ["baseline", "pinned", "nz_selected", "nz_all"])
+def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strategy, pair, layout):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
         pytest.skip("requires Ascend NPU")
     repo = Path(__file__).resolve().parents[4]
     destination = tmp_path / "bucket_replay.json"
+    optimized = layout != "baseline"
+    projections = {"nz_selected": ["qkv", "o", "down"], "nz_all": ["qkv", "o", "gate_up", "down"]}.get(layout, [])
     subprocess.run(
         [
             sys.executable,
@@ -305,6 +307,7 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
             "--output",
             str(destination),
             *(["--pinned-inputs", "--update-chunk-size", "4", "--diagnose-lanes"] if optimized else []),
+            *(["--nz-projections", *projections] if projections else []),
         ],
         cwd=repo,
         env=dict(os.environ, VLLM_BATCH_INVARIANT="0"),
@@ -327,6 +330,13 @@ def test_complete_decoder_default_bucket_reuse(tmp_path, request, batch, strateg
     assert report["pinned_inputs"] == optimized
     assert report["update_chunk_size"] == (4 if optimized else 0)
     assert len(report["lane_diagnostics"]) == (2 if optimized else 0)
+    assert report["nz_projections"] == projections
+    assert report["original_nd_eager_reference"] == bool(projections)
+    assert not report["compiled_requested"]
+    if projections:
+        assert {row["projection"] for row in report["layout_changes"]} == set(projections)
+        assert all(row["before"] == 2 and row["after"] == 29 for row in report["layout_changes"])
+        assert len(report["layout_changes"]) == len(projections) * report["graphs"][0]["update_tasks"]
 
 
 @pytest.mark.parametrize("weight_format", ["loaded", "nz"])

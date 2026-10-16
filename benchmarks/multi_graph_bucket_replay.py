@@ -1,7 +1,7 @@
 """Two complete decoder graphs restricted to default capture buckets.
 
 Measures host preparation, buffer copies, FIA updates, parallel replay and merge.
-This controlled decoder benchmark does not reproduce the compiled serving engine.
+Optional compilation/layout probes remain controlled decoder experiments, not serving.
 """
 
 import argparse
@@ -47,13 +47,32 @@ def update_groups(task_counts, chunk_size):
     ]
 
 
+def projection_modules(model, names):
+    """Validate the complete selection before changing any weight storage."""
+    paths = dict(
+        qkv=("self_attn", "qkv_proj"),
+        o=("self_attn", "o_proj"),
+        gate_up=("mlp", "gate_up_proj"),
+        down=("mlp", "down_proj"),
+    )
+    if len(set(names)) != len(names) or set(names) - paths.keys():
+        raise ValueError("NZ projections must be unique supported projection names")
+    return [
+        (index, name, getattr(getattr(layer, paths[name][0]), paths[name][1]))
+        for index, layer in enumerate(model.model.layers)
+        for name in names
+    ]
+
+
 def experiment(args, workload, runner, model, inputs, context, reset_kv):
     # Capture fixed buffers once; only their contents and host parameters change.
     import torch
     from vllm.forward_context import get_forward_context
 
     from vllm_ascend.compilation.updatable_graph import ContextSource, UpdatableGraph
+    from vllm_ascend.utils import ACL_FORMAT_FRACTAL_NZ
     from vllm_ascend.worker.multi_graph.benchmark import summarize
+    from vllm_ascend.worker.utils import disable_compilation
 
     main = torch.npu.current_stream()
     layer_count = len(model.model.layers)
@@ -129,6 +148,38 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         start = 0 if index < 2 else first_counts[0]
         count = workload.batch if index == 0 else first_counts[index - 1]
         prepare(entry, start, count)
+        entries.append(entry)
+
+    original_references = {}
+    selected_modules = projection_modules(model, args.nz_projections)
+    if args.nz_projections or args.compiled:
+        # Qualify against the original loaded ND eager path before layout changes.
+        with disable_compilation(model):
+            for batch, variant in ((workload.batch, 0), (workload.batch - 1, 1)):
+                counts = lane_counts(batch, args.pair)
+                for index, entry in enumerate(entries):
+                    count = batch if index == 0 else counts[index - 1]
+                    prepare(entry, 0 if index < 2 else counts[0], count, variant)
+                    reset_kv()
+                    original_references[index, batch, variant] = forward(entry["data"])[:count].float().cpu()
+
+    layout_changes = []
+    if args.nz_projections:
+        import torch_npu
+
+        for index, name, module in selected_modules:
+            before = torch_npu.get_npu_format(module.weight)
+            module.weight.data = torch_npu.npu_format_cast(module.weight.data, ACL_FORMAT_FRACTAL_NZ)
+            layout_changes.append(
+                dict(layer=index, projection=name, before=before, after=torch_npu.get_npu_format(module.weight))
+            )
+        torch.npu.synchronize()
+
+    for index, entry in enumerate(entries):
+        capacity = entry["capacity"]
+        start = 0 if index < 2 else first_counts[0]
+        count = workload.batch if index == 0 else first_counts[index - 1]
+        prepare(entry, start, count)
         reset_kv()
         stream, update = torch.npu.Stream(), torch.npu.Stream()
         cores = 0 if index == 0 else args.lane_cores[index - 1]
@@ -158,7 +209,6 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             done=torch.npu.Event(),
             updated=torch.npu.Event(),
         )
-        entries.append(entry)
         print(f"captured complete decoder capacity={capacity}", flush=True)
 
     merged = torch.empty(
@@ -213,7 +263,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         for mode in ("padding", "split_parallel"):
             active, counts = prepare_mode(mode, batch, variant)
             reset_kv()
-            expected = torch.cat([forward(e["data"])[:count].float().cpu() for e, count in zip(active, counts)])
+            if original_references:
+                indices = (0,) if mode == "padding" else (1, 2)
+                expected = torch.cat([original_references[index, batch, variant] for index in indices])
+            else:
+                expected = torch.cat([forward(e["data"])[:count].float().cpu() for e, count in zip(active, counts)])
             reset_kv()
             actual = replay(mode, batch, variant).float().cpu()
             torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.02)
@@ -297,9 +351,18 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         real_lane_counts=first_counts,
         metric="host_prepare_copy_resolve_update_full_decoder_replay_merge_sync",
         compiled_serving_qualified=False,
+        compiled_requested=args.compiled,
+        compilation_mode=str(runner.compilation_config.mode),
+        compilation_config=str(runner.compilation_config),
+        kv_cache_layout=runner.ascend_config.multi_graph_config.kv_cache_layout,
+        original_nd_eager_reference=bool(original_references),
+        nz_projections=args.nz_projections,
+        layout_changes=layout_changes,
+        loader_source_sha256=hashlib.sha256(Path(__file__).with_name("multi_graph_replay.py").read_bytes()).hexdigest(),
         cross_shape_qualified=False,
         graphs=[dict(capacity=e["capacity"], update_tasks=len(e["graph"].tasks)) for e in entries],
         graph_count=3,
+        graph_count_scope="benchmark_owned_excludes_engine_startup_graphs",
         combination_graph_count=0,
         reuse_graph_and_buffer_identity_unchanged=True,
         checks=checks,
@@ -338,6 +401,8 @@ def main():
     parser.add_argument("--update-chunk-size", type=int, default=0)
     parser.add_argument("--pinned-inputs", action="store_true")
     parser.add_argument("--diagnose-lanes", action="store_true")
+    parser.add_argument("--compiled", action="store_true")
+    parser.add_argument("--nz-projections", nargs="+", choices=("qkv", "o", "gate_up", "down"), default=[])
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if not 3 <= args.batch_min <= args.batch_max <= args.max_num_seqs:
@@ -346,6 +411,8 @@ def main():
         parser.error("positive counts and KV length >= 2 required")
     if min(args.lane_cores) < 0 or args.update_chunk_size < 0:
         parser.error("core limits and update chunk size must be nonnegative")
+    if len(args.nz_projections) != len(set(args.nz_projections)):
+        parser.error("NZ projection names must be unique")
     if os.environ.get("VLLM_BATCH_INVARIANT", "0") != "0":
         parser.error("requires ordinary FIA")
     args.dtype, args.batch_invariant = "bfloat16", False
@@ -378,6 +445,8 @@ def main():
                     lane_cores=args.lane_cores,
                     update_chunk_size=args.update_chunk_size,
                     pinned_inputs=args.pinned_inputs,
+                    compiled_requested=args.compiled,
+                    nz_projections=args.nz_projections,
                 )
             ),
             encoding="utf-8",
