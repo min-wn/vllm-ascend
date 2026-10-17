@@ -193,6 +193,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     intervals = ((0, workload.capacity), (0, split_request), (split_request, workload.capacity))
     main = torch.npu.current_stream()
     checks, entries = [], {}
+    probe_inputs = {}
     torch.npu.config.allow_internal_format = True
     weight_nd = torch_npu.npu_format_cast(module.weight, 2)
     weight_nz = torch_npu.npu_format_cast(weight_nd, 29)
@@ -516,6 +517,14 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     hidden_states=reduced.clone(), residual=residual.clone(), positions=input_data[0].positions
                 )
             assert_result(result, official_layer, f"{label}/decomposed_vs_official_layer", batch * workload.query)
+            if args.contention_probe:
+                with input_data[0].forward_context():
+                    probe_inputs["normalized"], _ = layer.post_attention_layernorm(
+                        projected_result_nd.clone(), attention_residual.clone()
+                    )
+                    probe_inputs["local_down"], _ = local_mlp(
+                        projected_result_nd.clone(), attention_residual.clone(), gate_up_weight_nd, down_weight_nd
+                    )
         return result
 
     class BranchGraph(UpdatableGraph):
@@ -750,6 +759,45 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             if entry.identity() != identities[mode]:
                 raise ValueError("graph, output or workspace address changed during metadata refresh")
 
+    if args.gdn_probe:
+        from multi_graph_tp_gdn import qualify_gdn
+
+        report = qualify_gdn(args, workload, runner, model, expected, cpu_group)
+        report.update(
+            selection=args.selection,
+            loader=args.loader_metadata,
+            decoder_checks_rank0=checks,
+            attention_source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        )
+        if rank == 0:
+            args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+        return
+
+    if args.contention_probe:
+        from multi_graph_tp_contention import measure_contention
+
+        report = measure_contention(
+            probe_inputs["normalized"],
+            gate_up_weight_nz,
+            probe_inputs["local_down"],
+            boundary,
+            group,
+            cpu_group,
+            trace_path=args.output.with_suffix(f".rank{rank}.trace.json") if args.trace else None,
+        )
+        report.update(
+            selection=args.selection,
+            loader=args.loader_metadata,
+            decoder_checks_rank0=checks,
+            source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            probe_source_sha256=hashlib.sha256(
+                Path(__file__).with_name("multi_graph_tp_contention.py").read_bytes()
+            ).hexdigest(),
+        )
+        if rank == 0:
+            args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+        return
+
     samples = []
     begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
     for round_id in range(args.rounds):
@@ -872,6 +920,10 @@ def main():
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--repeats", type=int, default=8)
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument("--gdn-probe", action="store_true", help="qualify actual adjacent GDN layer and state capture")
+    parser.add_argument(
+        "--contention-probe", action="store_true", help="qualify decoder, then run only causal GateUp/HCCL probes"
+    )
     parser.add_argument("--shared-rope", action="store_true", help="one full-bucket text-position lookup for all lanes")
     parser.add_argument(
         "--shared-qkv", action="store_true", help="with --include-mlp, share full-bucket input reduction, Norm and QKV"
@@ -903,12 +955,18 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     args.split_output_overlap_requested = args.split_output_overlap
+    if args.gdn_probe and (not args.include_mlp or not args.shared_qkv or args.query != 4 or args.contention_probe):
+        parser.error("--gdn-probe requires Q4 --include-mlp --shared-qkv without --contention-probe")
     if args.include_mlp:
         args.split_output_overlap = True
     if args.shared_qkv and not args.include_mlp:
         parser.error("--shared-qkv requires the three same-endpoint --include-mlp controls")
     if (args.gate_up_format != "NZ" or args.gate_up_partitions != 1) and not args.include_mlp:
         parser.error("GateUp variants require --include-mlp")
+    if args.contention_probe and (
+        not args.include_mlp or not args.shared_qkv or args.gate_up_format != "NZ" or args.gate_up_partitions != 1
+    ):
+        parser.error("--contention-probe requires --include-mlp --shared-qkv and default GateUp controls")
     if args.output.exists() or min(args.rounds, args.repeats) < 1:
         parser.error("positive sample counts and a new output path are required")
     if int(os.environ.get("WORLD_SIZE", "1")) != args.tensor_parallel_size or args.tensor_parallel_size < 2:
@@ -942,6 +1000,7 @@ def main():
             loader=getattr(args, "loader_metadata", None),
             error_type=type(error).__name__,
             error=str(error),
+            requested_probe="gdn" if args.gdn_probe else "contention" if args.contention_probe else None,
             source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         )
         content = json.dumps(report, indent=2, allow_nan=False)

@@ -31,6 +31,52 @@ def benchmark(monkeypatch):
     return module
 
 
+def test_contention_probe_pairs_identical_shapes_and_payload(benchmark):
+    from multi_graph_tp_contention import probe_cases
+
+    cases = {name: (start, stop, comm) for name, start, stop, comm in probe_cases(400, 200)}
+    for shape in ("full", "left", "right"):
+        assert cases[f"{shape}_alone"][:2] == cases[f"{shape}_with_comm"][:2]
+        assert not cases[f"{shape}_alone"][2] and cases[f"{shape}_with_comm"][2]
+    assert cases["comm_alone"] == (0, 0, True)
+    for boundary in (0, 400, 401):
+        with pytest.raises(ValueError, match="nonempty"):
+            probe_cases(400, boundary)
+
+
+@pytest.mark.parametrize("live", [97, 98, 99, 100])
+def test_gdn_padding_and_split_preserve_global_state_identity(benchmark, live):
+    from multi_graph_tp_gdn import request_state_values
+
+    whole = request_state_values(0, 100, live)
+    left, right = request_state_values(0, 50, live), request_state_values(50, 100, live)
+    for key in ("blocks", "drafts", "lengths"):
+        assert left[key] + right[key] == whole[key]
+    assert whole["boundaries"][-1] == 4 * live
+    assert whole["boundaries"][live:] == [4 * live] * (101 - live)
+    assert whole["drafts"][live:] == [-1] * (100 - live)
+    assert whole["blocks"][live:] == [[0] * 4] * (100 - live)
+    ids = [block for blocks in whole["blocks"][:live] for block in blocks]
+    assert len(set(ids)) == live * 4 and min(ids) == 1
+    assert right["blocks"][0] == [201, 202, 203, 204]
+
+
+@pytest.mark.parametrize(
+    "flags",
+    [
+        ["--contention-probe"],
+        ["--gdn-probe"],
+        ["--gdn-probe", "--include-mlp", "--shared-qkv", "--query", "1"],
+        ["--gdn-probe", "--contention-probe", "--include-mlp", "--shared-qkv"],
+    ],
+)
+def test_probe_cli_rejects_incompatible_modes(benchmark, monkeypatch, tmp_path, flags):
+    monkeypatch.setattr("sys.argv", ["benchmark", *flags, "--output", str(tmp_path / "out.json")])
+    with pytest.raises(SystemExit) as error:
+        benchmark.main()
+    assert error.value.code == 2
+
+
 @pytest.mark.parametrize("query", [1, 4])
 @pytest.mark.parametrize("batch,variant", [(98, 0), (97, 1), (99, 2), (98, 3)])
 def test_split_metadata_preserves_request_identity_and_physical_kv(benchmark, query, batch, variant):

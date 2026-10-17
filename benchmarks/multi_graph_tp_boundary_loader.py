@@ -41,7 +41,10 @@ def run_qwen35(args, workload, *, experiment):
         dtype="bfloat16",
         enforce_eager=True,
         max_model_len=512,
-        max_num_seqs=8,
+        max_num_seqs=workload.capacity if getattr(args, "gdn_probe", False) else 8,
+        speculative_config=(
+            {"method": "ngram", "num_speculative_tokens": 3} if getattr(args, "gdn_probe", False) else None
+        ),
         max_num_batched_tokens=512,
         gpu_memory_utilization=0.6,
         enable_prefix_caching=False,

@@ -541,15 +541,17 @@ unbounded savings once the early partition's work is fully hidden.
 
 ## Future adjacent GDN boundary
 
-This extension is not implemented. Layer 4 is a real GDN layer, so repeating
+The complete cross-layer pipeline is not implemented. The qualification probe
+described below now exercises actual layer 4. Layer 4 is a real GDN layer, so repeating
 the selected full-attention layer would not qualify the adjacent model
 boundary. A later experiment must satisfy these additional requirements:
 
 - Construct the actual loader with Q4 speculative metadata support and at
-  least 100 request slots. The present weight-only loader has no speculative
+  least 100 request slots. The default weight-only loader has no speculative
   configuration; capacity selection alone does not set the loaded GDN's
   `num_spec`. Assert layer 4 is `linear_attention` with `num_spec=3`, while
-  retaining explicit control over capture and state allocation.
+  retaining explicit control over capture and state allocation. `--gdn-probe`
+  now enables this loader configuration; other callers retain their defaults.
 - Obtain state shapes, dtypes, and cache spec through official GDN methods.
   For the inspected 27B TP2 Q4 SD layout, expected per-block Conv shape is
   `[6, 5120]` and SSM shape is `[24, 128, 128]`; DS changes the Conv orientation.
@@ -574,3 +576,99 @@ Any adjacent-boundary comparison must include real layer 3 MLP, real layer 4
 GDN and MLP, every reduction, residual output, and the final drain for padding
 and split. Moving an exposed tail to a later unmeasured endpoint does not
 demonstrate an improvement.
+
+## GateUp and HCCL causal probe
+
+`--contention-probe --include-mlp --shared-qkv --shared-rope --pair 200 200`
+first qualifies the selected decoder, then isolates its real post-Norm inputs,
+NZ GateUp weight, and a real BF16 `[200, 5120]` Down all-reduce payload. Seven
+cases compare full/left/right GEMM alone and with the same collective, plus
+the collective alone. Three rounds of 12 samples alternate case order; each
+sample uses the slower rank before taking medians. Restoration and final
+communication completion remain inside the external replay timer. `--trace`
+records a separate two-replay-per-case device trace, outside latency samples.
+
+The initial `tp2-27b-gateup-contention.json` is **invalid for internal timing**:
+events recorded inside capture returned constant timestamps across replays,
+including collective durations greater than complete replay duration. Those
+internal timing fields must not be used for attribution. The corrected
+`tp2-27b-gateup-contention-v2.json` removes captured timing events and uses
+external complete-replay events, with profiler kernel durations as a separate
+diagnostic. Its complete replay medians are:
+
+| Case | Complete replay, us |
+| --- | ---: |
+| Full GateUp alone | 330.01 |
+| Left GateUp alone | 229.56 |
+| Right GateUp alone | 227.72 |
+| Full GateUp with HCCL | 355.81 |
+| Left GateUp with HCCL | 256.14 |
+| Right GateUp with HCCL | 256.10 |
+| HCCL alone | 179.12 |
+
+Separate device-trace medians (two observations per entry, not formal kernel
+latency estimates) distinguish shape overhead from overlap effects:
+
+| GateUp case | Rank 0, us | Rank 1, us |
+| --- | ---: | ---: |
+| Full alone | 296.81 | 294.24 |
+| Left alone | 199.08 | 190.85 |
+| Right alone | 197.14 | 188.04 |
+| Full with HCCL | 305.97 | 320.71 |
+| Left with HCCL | 204.32 | 220.26 |
+| Right with HCCL | 201.30 | 217.07 |
+
+The two standalone half GEMMs already cost about 379-396 us, versus 294-297 us
+for the full GEMM. Communication overlap adds a rank-dependent penalty; it
+does not explain all fragmentation overhead. Do not add individual probe
+replay times to predict decoder latency: they include separate graph launch,
+restoration, and synchronization costs. These probes do not reproduce the
+decoder's exact producer release times or all concurrent operators.
+
+The actionable next target remains cross-layer tail coverage, with a strict
+budget for added GEMM fragmentation. Simply adding streams cannot recover
+the standalone shape cost. No new decoder speedup is claimed by this probe.
+
+## Actual adjacent GDN qualification
+
+`--gdn-probe --include-mlp --shared-qkv --shared-rope --pair 200 200` loads
+ngram Q4 configuration and the actual adjacent `linear_attention` layer 4.
+`multi_graph_tp_gdn.py` uses its official full decoder forward, including
+GDN output projection, both Norms, MLP and their TP collectives. Inputs come
+from the selected layer 3 ND reference; preceding model layers remain
+synthetic. Official cache binding creates 401 state blocks per rank with
+Conv `[401, 6, 5120]` and SSM `[401, 24, 128, 128]` shapes.
+
+`tp2-27b-adjacent-gdn-qualify.json` passed whole-bucket eager versus capture
+checks for B98 -> B97 -> B99 -> B98 on both ranks. Hidden, residual and both
+state tensors matched exactly, and inactive/null states remained unchanged.
+`tp2-27b-adjacent-gdn-split.json` also passed whole and 200+200 captured paths
+against the full eager reference with changing input values: 32 field checks
+per rank, using the unchanged `rtol=0.02, atol=0.02`. Split results are not
+bitwise equal; the largest absolute field differences were 0.03125 and
+0.0625 on ranks 0 and 1, respectively, within the combined relative/absolute
+tolerance. This is a qualification result, not a performance measurement.
+
+The probe additionally checks fixed metadata buffer pointers and independent
+three-step eager/full/split state trajectories with accepted counts 1, 2, 1.
+`tp2-27b-adjacent-gdn-continuity.json` passed these checks on both ranks,
+recording 41 check groups per rank, including the dynamic-batch comparisons.
+Its tested GDN source SHA256 is
+`f0a666309a8772e643c23877c6c308a9ef7a47e4d86d535caa3f0aebf7974969`.
+Both state tensors demonstrably changed from their initial values, excluding
+a metadata-free no-op. All state
+restores used for comparison are outside any performance scope; no latency
+is reported by this probe. The actual layer-3-to-layer-4 overlapping schedule,
+complete two-layer timing and full-model integration remain separate work.
+
+Raw JSON, logs and traces are retained under
+`outputs/multi_graph_tp_attention_mlp/` locally and
+`/workspace/multi-graph-results/tp-boundary/` remotely. Reported source hashes
+identify the exact tested probe revisions; later qualification additions do
+not retroactively change earlier results.
+
+Focused CPU validation passed 36 tests (391 deselected). Scoped Ruff checks
+passed. `bash format.sh ci` was attempted: repository Ruff and Markdown
+checks passed, while unrelated existing codespell/forbidden-import findings
+and Windows shellcheck, `/bin/bash`, and python3 launcher gaps prevent a
+clean full CI result. See `contention-gdn-format-ci.log` with the raw artifacts.
