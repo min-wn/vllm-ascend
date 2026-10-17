@@ -133,6 +133,7 @@ def qualify_gdn(args, workload, runner, model, previous_output, cpu_group, *, se
         from types import SimpleNamespace
 
         import torch.nn.functional as functional
+        from multi_graph_tp_gdn_phases import make_gdn_phases
 
         if layer.layer_scale or layer.use_attn_reduce_scatter_for_moe:
             raise ValueError("adjacent pipeline requires an unscaled dense GDN layer")
@@ -191,20 +192,41 @@ def qualify_gdn(args, workload, runner, model, previous_output, cpu_group, *, se
                         projection_hook.remove()
                 return projected, next_residual
 
-        def local_mlp(value, prior):
+        def prepare_mlp(value, prior):
             normalized, next_residual = layer.post_attention_layernorm(value, prior)
             packed, _ = layer.mlp.gate_up_proj(normalized)
-            projected = functional.linear(layer.mlp.act_fn(packed), layer.mlp.down_proj.weight)
-            return projected, next_residual
+            return layer.mlp.act_fn(packed), next_residual
+
+        def project_down(intermediate):
+            return functional.linear(intermediate, layer.mlp.down_proj.weight)
+
+        def local_mlp(value, prior):
+            intermediate, next_residual = prepare_mlp(value, prior)
+            return project_down(intermediate), next_residual
+
+        def phase_context(name):
+            start, stop = (request * 4 for request in intervals[name])
+            return set_ascend_forward_context(
+                {gdn.prefix: data_by_name[name]},
+                config,
+                num_tokens=stop - start,
+                num_actual_tokens=stop - start,
+                aclgraph_runtime_mode=CUDAGraphMode.NONE,
+                model_instance=model,
+                skip_compiled=True,
+            )
 
         return SimpleNamespace(
             refresh=refresh,
             reset=reset,
             run=run,
             local_mlp=local_mlp,
+            prepare_mlp=prepare_mlp,
+            project_down=project_down,
             states=gdn.kv_cache,
             initial=initial,
             layer_index=index,
+            phases=make_gdn_phases(layer, phase_context),
         )
 
     checks = []

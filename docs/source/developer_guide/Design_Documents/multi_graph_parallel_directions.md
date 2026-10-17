@@ -264,3 +264,9 @@ resource-probe spelling findings, direct Triton imports in `device_length_decode
 and Windows shell/tool gaps remain. See `parallel-directions-format-ci-final.log`.
 This stage adds opt-in benchmark experiments, not a production scheduling
 change or a demonstrated full-model speedup.
+
+The subsequent [phase and work-balance experiments](multi_graph_parallel_phases.md)
+test activation-safe cross-layer scheduling, intra-GDN branch interleaving,
+shared dense GDN with split state/output work, concurrent state cores with
+Vector budgets, and capacity-constrained KV work balancing. They record both
+the real overlap recovered and the costs that prevent a substantial padding win.

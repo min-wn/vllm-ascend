@@ -31,6 +31,174 @@ def benchmark(monkeypatch):
     return module
 
 
+@pytest.mark.parametrize("serial, parallel", [(False, False), (True, False), (False, True)])
+@pytest.mark.parametrize("inplace_residual", [False, True])
+def test_gdn_core_pipeline_keeps_dense_shapes_and_joins_returned_reductions(
+    benchmark, serial, parallel, inplace_residual
+):
+    syntax = ast.parse(inspect.getsource(benchmark.experiment))
+    definition = next(
+        node for node in syntax.body[0].body if isinstance(node, ast.ClassDef) and node.name == "CapturedAttention"
+    )
+    active, log, reductions = "root", [], []
+
+    class Stream:
+        def __init__(self, name):
+            self.name = name
+
+        def wait_event(self, event):
+            assert event.recorded, f"{self.name} consumes unrecorded {event.name}"
+            log.append(("wait", event.name, self.name))
+
+    class Event:
+        def __init__(self, name):
+            self.name, self.recorded = name, False
+
+        def record(self, selected):
+            assert selected.name == active
+            self.recorded = True
+            log.append(("record", self.name, active))
+
+    @contextmanager
+    def stream(selected):
+        nonlocal active
+        previous, active = active, selected.name
+        try:
+            yield
+        finally:
+            active = previous
+
+    torch.manual_seed(881)
+    rows, boundary, hidden, width = 7, 3, 4, 6
+    value, prior = (torch.randn(rows, hidden, dtype=torch.float64) for _ in range(2))
+    gate_up = torch.randn(width * 2, hidden, dtype=torch.float64)
+    down = torch.randn(hidden, width, dtype=torch.float64)
+    expected_residual = (value + 9) * 2 + prior + 2
+    normalized = expected_residual * torch.rsqrt(expected_residual.square().mean(-1, keepdim=True) + 1e-6)
+    gate, up = functional.linear(normalized, gate_up).chunk(2, dim=-1)
+    expected = functional.linear(functional.silu(gate) * up, down) * 2
+    global_ids = torch.arange(1, rows + 1)
+    metadata = tuple(
+        SimpleNamespace(global_ids=global_ids[start:stop]) for start, stop in ((0, boundary), (boundary, rows))
+    )
+    metadata_before = tuple(item.global_ids.clone() for item in metadata)
+    state = torch.arange(rows + 3, dtype=torch.float64)
+    expected_state = state.clone()
+    expected_state[global_ids] += (value + 1).sum(-1)
+
+    def project(selected, residual, name):
+        assert active == "root" and name == "full"
+        assert selected is value and residual is prior
+        log.append(("project", rows, active))
+        return SimpleNamespace(value=selected + 1, residual=residual + 2, name=name)
+
+    def partition(projected, boundaries):
+        assert active == "root" and boundaries == (0, boundary, rows)
+        assert projected.name == "full"
+        log.append(("partition", boundaries, active))
+        return tuple(
+            SimpleNamespace(value=projected.value[start:stop], metadata=metadata[lane], lane=lane, normalized=None)
+            for lane, (start, stop) in enumerate(zip(boundaries, boundaries[1:]))
+        )
+
+    def core(phase):
+        assert active == (f"core_{phase.lane}" if parallel else "root")
+        assert phase.metadata is metadata[phase.lane]
+        assert phase.normalized is None
+        state.index_add_(0, phase.metadata.global_ids, phase.value.sum(-1))
+        phase.normalized = phase.value + 3
+        log.append(("core", phase.lane, active))
+
+    def output(phase):
+        assert active == "root" and phase.normalized is not None
+        log.append(("output", phase.lane, active))
+        return phase.normalized + 5, None
+
+    def all_reduce(selected):
+        assert active == "comm"
+        index = len(reductions)
+        result = selected * 2
+        assert result.data_ptr() != selected.data_ptr()
+        reductions.append(result)
+        log.append(("reduce", index, active))
+        return result
+
+    def prepare_mlp(selected, residual):
+        assert active == "root" and selected.shape == (rows, hidden)
+        torch.testing.assert_close(selected, (value + 9) * 2)
+        log.append(("GateUp", rows, active))
+        updated = residual.add_(selected) if inplace_residual else residual + selected
+        normalized = updated * torch.rsqrt(updated.square().mean(-1, keepdim=True) + 1e-6)
+        gate, up = functional.linear(normalized, gate_up).chunk(2, dim=-1)
+        return functional.silu(gate) * up, updated
+
+    def project_down(selected):
+        assert active == "root"
+        lane = int(selected.shape[0] != boundary)
+        log.append(("Down", lane, active))
+        return functional.linear(selected, down)
+
+    namespace = dict(
+        torch=SimpleNamespace(npu=SimpleNamespace(stream=stream)),
+        adjacent=SimpleNamespace(
+            phases=SimpleNamespace(project=project, partition=partition, core=core, output=output),
+            prepare_mlp=prepare_mlp,
+            project_down=project_down,
+        ),
+        group=SimpleNamespace(all_reduce=all_reduce),
+        boundary=boundary,
+        rows=rows,
+    )
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), benchmark.__file__, "exec"), namespace)
+    entry = namespace["CapturedAttention"].__new__(namespace["CapturedAttention"])
+    entry.root, entry.comm = Stream("root"), Stream("comm")
+    entry.gdn_core_mode = "split_gdn_core_serial" if serial else "split_gdn_core_pipeline"
+    if parallel:
+        entry.gdn_parallel_core = True
+        entry.gdn_core_streams = [Stream(f"core_{lane}") for lane in range(2)]
+        entry.gdn_core_events = [Event(f"core_event_{index}") for index in range(3)]
+    entry.gdn_events = [Event(f"gdn_{index}") for index in range(8)]
+    entry.gdn_joined = torch.empty_like(value)
+    entry.joined_output, entry.joined_residual = torch.empty_like(value), torch.empty_like(prior)
+    actual, residual = entry.finish_core_pipeline(value, prior)
+    torch.testing.assert_close(actual, expected)
+    torch.testing.assert_close(residual, expected_residual)
+    torch.testing.assert_close(state, expected_state, rtol=0, atol=0)
+    for item, before in zip(metadata, metadata_before):
+        torch.testing.assert_close(item.global_ids, before, rtol=0, atol=0)
+    assert actual is entry.joined_output and residual is entry.joined_residual
+    assert len(reductions) == 4 and all(event.recorded for event in entry.gdn_events)
+    assert all(entry.gdn_partitions[index] is reductions[index] for index in range(2))
+    assert all(entry.gdn_partitions[index + 4] is reductions[index + 2] for index in range(2))
+    assert [item for item in log if item[0] == "project"] == [("project", rows, "root")]
+    assert [item for item in log if item[0] == "GateUp"] == [("GateUp", rows, "root")]
+    assert [item[1] for item in log if item[0] == "reduce"] == [0, 1, 2, 3]
+    assert [item[1] for item in log if item[0] == "Down"] == [0, 1]
+    for reduction, next_work in (
+        (0, ("core", 1, "core_1" if parallel else "root")),
+        (2, ("Down", 1, "root")),
+    ):
+        first_wait = log.index(("wait", f"gdn_{2 * reduction + 1}", "root"))
+        assert (first_wait < log.index(next_work)) == serial
+    assert log.index(("wait", "gdn_3", "root")) < log.index(("GateUp", rows, "root"))
+    assert log[-1] == ("wait", "gdn_7", "root")
+    if parallel:
+        assert all(event.recorded for event in entry.gdn_core_events)
+        assert log.index(("record", "core_event_0", "root")) < log.index(("core", 0, "core_0"))
+        for lane in range(2):
+            order = [
+                ("wait", "core_event_0", f"core_{lane}"),
+                ("core", lane, f"core_{lane}"),
+                ("record", f"core_event_{lane + 1}", f"core_{lane}"),
+                ("wait", f"core_event_{lane + 1}", "root"),
+                ("output", lane, "root"),
+                ("reduce", lane, "comm"),
+            ]
+            assert [log.index(item) for item in order] == sorted(log.index(item) for item in order)
+        assert log.index(("core", 1, "core_1")) < log.index(("output", 0, "root"))
+        assert log.index(("reduce", 0, "comm")) < log.index(("wait", "core_event_2", "root"))
+
+
 def test_contention_probe_pairs_identical_shapes_and_payload(benchmark):
     from multi_graph_tp_contention import probe_cases
 
@@ -74,6 +242,30 @@ def test_gdn_padding_and_split_preserve_global_state_identity(benchmark, live):
         ["--gdn-shared-dense"],
         ["--gdn-wavefront"],
         ["--gdn-wavefront", "--gdn-pipeline", "--gdn-shared", "--include-mlp", "--shared-qkv"],
+        ["--gdn-phases"],
+        ["--gdn-phases", "--gdn-pipeline", "--gdn-shared", "--include-mlp", "--shared-qkv"],
+        ["--gdn-phases", "--gdn-pipeline", "--gdn-wavefront", "--include-mlp", "--shared-qkv"],
+        ["--gdn-core-pipeline"],
+        ["--gdn-core-concurrency"],
+        ["--gdn-core-pipeline", "--gdn-pipeline", "--include-mlp", "--shared-qkv"],
+        ["--gdn-core-pipeline", "--gdn-shared", "--include-mlp", "--shared-qkv"],
+        [
+            "--gdn-core-pipeline",
+            "--gdn-pipeline",
+            "--gdn-shared",
+            "--gdn-shared-mlp",
+            "--include-mlp",
+            "--shared-qkv",
+        ],
+        [
+            "--gdn-core-pipeline",
+            "--gdn-pipeline",
+            "--gdn-shared",
+            "--gate-up-partitions",
+            "2",
+            "--include-mlp",
+            "--shared-qkv",
+        ],
         ["--down-pipeline"],
         ["--down-pipeline", "--gdn-pipeline", "--include-mlp", "--shared-qkv"],
         ["--down-pipeline", "--gdn-pipeline", "--gdn-shared", "--gdn-shared-mlp", "--include-mlp", "--shared-qkv"],
@@ -809,6 +1001,352 @@ def test_gdn_projection_hook_precedes_core_and_preserves_existing_hooks(benchmar
     assert gdn.out_proj.reduce_results
     assert {name: dict(module._forward_hooks) for name, module in gdn.named_modules()} == original_hooks
     assert last_projection._forward_hooks[original_handle.id] is existing_hook
+
+
+@pytest.mark.parametrize("zipper", [False, True])
+def test_phased_gdn_overlaps_only_core_with_down_and_drains_all_collectives(benchmark, zipper):
+    syntax = ast.parse(inspect.getsource(benchmark.experiment))
+    definition = next(
+        node for node in syntax.body[0].body if isinstance(node, ast.ClassDef) and node.name == "CapturedAttention"
+    )
+    log, reductions = [], []
+    active = "root"
+    names = iter(("down_A", "down_B", "gdn_output_A", "gdn_output_B", "gdn_down_A", "gdn_down_B"))
+
+    class Stream:
+        def __init__(self, name):
+            self.name = name
+
+        def wait_event(self, event):
+            assert event.recorded, f"{self.name} consumes unrecorded {event.name}"
+            log.append(("wait", event.name, self.name))
+
+    class Event:
+        def __init__(self, name, recorded=False):
+            self.name, self.recorded = name, recorded
+
+        def record(self, selected):
+            assert selected.name == active
+            self.recorded = True
+            log.append(("record", self.name, active))
+
+    @contextmanager
+    def stream(selected):
+        nonlocal active
+        previous, active = active, selected.name
+        try:
+            yield
+        finally:
+            active = previous
+
+    torch.manual_seed(149)
+    rows, boundary, hidden, intermediate = 5, 2, 4, 3
+    source, prior = (torch.randn(rows, hidden, dtype=torch.float64) for _ in range(2))
+    gate_up = torch.randn(intermediate * 2, hidden, dtype=torch.float64)
+    down = torch.randn(hidden, intermediate, dtype=torch.float64)
+
+    def norm(value, residual):
+        assert active == "root"
+        log.append(("norm", value.shape[0], active))
+        updated = value + residual
+        return updated * torch.rsqrt(updated.square().mean(-1, keepdim=True) + 1e-6), updated
+
+    def linear(value, weight):
+        assert active == "root"
+        label = "GateUp" if weight is gate_up else "Down"
+        log.append((label, value.shape[0], active))
+        return functional.linear(value, weight)
+
+    def activation(value):
+        assert active == "root"
+        log.append(("SwiGLU", value.shape[0], active))
+        gate, up = value.chunk(2, dim=-1)
+        return functional.silu(gate) * up
+
+    def local_mlp(value, residual, selected_gate, selected_down):
+        normalized, updated = norm(value, residual)
+        return linear(activation(linear(normalized, selected_gate)), selected_down), updated
+
+    def all_reduce(value):
+        assert active == "comm"
+        label = next(names)
+        result = value * 2
+        reductions.append((label, result))
+        log.append(("reduce", label, active))
+        return result
+
+    def project(value, residual, name):
+        assert name == "left" and active == "root"
+        log.append(("project", name, active))
+        return SimpleNamespace(value=value + 1, residual=residual + 2, name=name, normalized=None)
+
+    def core(phase, name):
+        assert name == phase.name == "left"
+        assert active == ("gdn_compute" if zipper else "root")
+        assert phase.normalized is None
+        phase.normalized = phase.value + 3
+        log.append(("core", name, active))
+
+    def output(phase, name):
+        assert name == phase.name == "left" and active == "root"
+        assert phase.normalized is not None
+        log.append(("output", name, active))
+        return phase.normalized + 5, phase.residual
+
+    def prefix(value, residual, name, local):
+        assert name == "right" and local and active == "root"
+        log.append(("prefix", name, active))
+        return value + 9, residual + 2
+
+    def next_mlp(value, residual):
+        assert active == "root"
+        log.append(("next_mlp", value.shape[0], active))
+        return value + 7, residual + 11
+
+    namespace = dict(
+        torch=SimpleNamespace(npu=SimpleNamespace(stream=stream)),
+        functional=SimpleNamespace(linear=linear),
+        adjacent=SimpleNamespace(
+            phases=SimpleNamespace(project=project, core=core, output=output), run=prefix, local_mlp=next_mlp
+        ),
+        layer=SimpleNamespace(post_attention_layernorm=norm),
+        mlp=SimpleNamespace(act_fn=activation),
+        args=SimpleNamespace(gdn_shared=False),
+        group=SimpleNamespace(all_reduce=all_reduce),
+        local_mlp=local_mlp,
+        gate_up_weight_timed=gate_up,
+        down_weight_nz=down,
+        boundary=boundary,
+        rows=rows,
+    )
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), benchmark.__file__, "exec"), namespace)
+    cls = namespace["CapturedAttention"]
+    entry = cls.__new__(cls)
+    entry.gdn_phase_mode = "split_gdn_zipper" if zipper else "split_gdn_phased_barrier"
+    entry.gdn_overlap = True
+    entry.root, entry.comm = Stream("root"), Stream("comm")
+    entry.gdn_compute = Stream("gdn_compute") if zipper else None
+    entry.gdn_phase_ready, entry.gdn_core_done = Event("phase_ready"), Event("core_done")
+    entry.gdn_prefix_done, entry.early_gdn = None, None
+    entry.output_events = [Event(name, True) for name in ("OA_ready", "OA_done", "OB_ready", "OB_done")]
+    entry.mlp_events = [Event(name) for name in ("DA_ready", "DA_done", "DB_ready", "DB_done")]
+    entry.gdn_events = [Event(f"gdn_{index}") for index in range(8)]
+    entry.attention_residual = prior.clone()
+    entry.joined_output, entry.joined_residual = torch.empty_like(source), torch.empty_like(prior)
+    first, second = (None, source[:boundary]), (None, source[boundary:])
+    actual, actual_residual = entry.finish_split_mlp(first, second)
+    expected_residual = source + prior
+    normalized = expected_residual * torch.rsqrt(expected_residual.square().mean(-1, keepdim=True) + 1e-6)
+    gate, up = functional.linear(normalized, gate_up).chunk(2, dim=-1)
+    expected_down = functional.linear(functional.silu(gate) * up, down)
+    torch.testing.assert_close(actual, expected_down * 8 + 50)
+    torch.testing.assert_close(actual_residual, expected_residual + 13)
+    assert [label for label, _ in reductions] == [
+        "down_A",
+        "down_B",
+        "gdn_output_A",
+        "gdn_output_B",
+        "gdn_down_A",
+        "gdn_down_B",
+    ]
+    assert entry.mlp_partitions[0][1] is reductions[0][1]
+    assert entry.mlp_partitions[1][1] is reductions[1][1]
+    assert entry.gdn_partitions[2] is reductions[2][1] and entry.gdn_partitions[3] is reductions[3][1]
+    assert entry.gdn_partitions[6] is reductions[4][1] and entry.gdn_partitions[7] is reductions[5][1]
+    core_event = ("core", "left", "gdn_compute" if zipper else "root")
+    order = [
+        ("wait", "OB_done", "root"),
+        ("norm", rows - boundary, "root"),
+        ("GateUp", rows - boundary, "root"),
+        ("SwiGLU", rows - boundary, "root"),
+        ("wait", "DA_done", "root"),
+        ("project", "left", "root"),
+    ]
+    if zipper:
+        order += [
+            ("record", "phase_ready", "root"),
+            ("wait", "phase_ready", "gdn_compute"),
+            core_event,
+            ("record", "core_done", "gdn_compute"),
+        ]
+    order += [("Down", rows - boundary, "root"), ("reduce", "down_B", "comm")]
+    order += [("wait", "core_done", "root")] if zipper else [core_event]
+    order += [("output", "left", "root")]
+    if not zipper:
+        order += [("record", "core_done", "root")]
+    order += [
+        ("wait", "core_done", "root"),
+        ("wait", "DB_done", "root"),
+        ("reduce", "gdn_output_A", "comm"),
+        ("prefix", "right", "root"),
+    ]
+    # Sequential lookup handles repeated root waits on the same core event.
+    last = -1
+    for item in order:
+        last = log.index(item, last + 1)
+    assert log[-2:] == [("wait", "gdn_5", "root"), ("wait", "gdn_7", "root")]
+
+
+@pytest.mark.parametrize("inplace_residual", [False, True])
+def test_second_gdn_phase_overlaps_b_core_with_a_down_and_reorders_collectives(benchmark, inplace_residual):
+    syntax = ast.parse(inspect.getsource(benchmark.experiment))
+    definition = next(
+        node for node in syntax.body[0].body if isinstance(node, ast.ClassDef) and node.name == "CapturedAttention"
+    )
+    active, log, returns = "root", [], []
+    collective_names = iter(("output_A", "down_A", "output_B", "down_B"))
+
+    class Stream:
+        def __init__(self, name):
+            self.name = name
+
+        def wait_event(self, event):
+            assert event.recorded, f"{self.name} consumes unrecorded {event.name}"
+            log.append(("wait", event.name, self.name))
+
+    class Event:
+        def __init__(self, name, recorded=False):
+            self.name, self.recorded = name, recorded
+
+        def record(self, selected):
+            assert active == selected.name
+            self.recorded = True
+            log.append(("record", self.name, active))
+
+    @contextmanager
+    def stream(selected):
+        nonlocal active
+        previous, active = active, selected.name
+        try:
+            yield
+        finally:
+            active = previous
+
+    torch.manual_seed(317)
+    rows, boundary, hidden, intermediate = 5, 2, 4, 3
+    first_value, first_prior = (torch.randn(boundary, hidden, dtype=torch.float64) for _ in range(2))
+    second_value, second_prior = (torch.randn(rows - boundary, hidden, dtype=torch.float64) for _ in range(2))
+    first_prefix, first_residual = first_value + 9, first_prior + 2
+    gate_up = torch.randn(intermediate * 2, hidden, dtype=torch.float64)
+    down = torch.randn(hidden, intermediate, dtype=torch.float64)
+    expected_prefix = torch.cat((first_prefix, second_value + 9)) * 2
+    expected_residual = expected_prefix + torch.cat((first_residual, second_prior + 2))
+    normalized = expected_residual * torch.rsqrt(expected_residual.square().mean(-1, keepdim=True) + 1e-6)
+    gate, up = functional.linear(normalized, gate_up).chunk(2, dim=-1)
+    expected = functional.linear(functional.silu(gate) * up, down) * 2
+
+    def project(value, residual, name):
+        assert active == "root" and name == "right"
+        assert value is second_value and residual is second_prior
+        log.append(("project", name, active))
+        return SimpleNamespace(value=value + 1, residual=residual + 2, normalized=None, name=name)
+
+    def core(phase, name):
+        assert active == "gdn_compute" and name == phase.name == "right"
+        assert phase.normalized is None
+        phase.normalized = phase.value + 3
+        log.append(("core", name, active))
+
+    def output(phase, name):
+        assert active == "root" and name == phase.name == "right"
+        assert phase.normalized is not None
+        log.append(("output", name, active))
+        return phase.normalized + 5, phase.residual
+
+    def prepare_mlp(value, residual):
+        assert active == "root"
+        size = value.shape[0]
+        log.append(("norm", size, active))
+        updated = residual.add_(value) if inplace_residual else residual + value
+        normalized = updated * torch.rsqrt(updated.square().mean(-1, keepdim=True) + 1e-6)
+        log.append(("GateUp", size, active))
+        gate, up = functional.linear(normalized, gate_up).chunk(2, dim=-1)
+        log.append(("SwiGLU", size, active))
+        return functional.silu(gate) * up, updated
+
+    def project_down(value):
+        assert active == "root"
+        log.append(("Down", value.shape[0], active))
+        return functional.linear(value, down)
+
+    def local_mlp(value, residual):
+        prepared, updated = prepare_mlp(value, residual)
+        return project_down(prepared), updated
+
+    def all_reduce(value):
+        assert active == "comm"
+        name = next(collective_names)
+        reduced = value * 2
+        returns.append(reduced)
+        log.append(("reduce", name, active))
+        return reduced
+
+    def unexpected_prefix(*args, **kwargs):
+        raise AssertionError("zipper2 must consume the early left prefix and phased right prefix")
+
+    namespace = dict(
+        torch=SimpleNamespace(npu=SimpleNamespace(stream=stream)),
+        adjacent=SimpleNamespace(
+            phases=SimpleNamespace(project=project, core=core, output=output),
+            prepare_mlp=prepare_mlp,
+            project_down=project_down,
+            local_mlp=local_mlp,
+            run=unexpected_prefix,
+        ),
+        group=SimpleNamespace(all_reduce=all_reduce),
+        boundary=boundary,
+        rows=rows,
+    )
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), benchmark.__file__, "exec"), namespace)
+    cls = namespace["CapturedAttention"]
+    entry = cls.__new__(cls)
+    entry.gdn_phase_mode, entry.gdn_overlap = "split_gdn_zipper2", True
+    entry.root, entry.comm, entry.gdn_compute = (Stream(name) for name in ("root", "comm", "gdn_compute"))
+    entry.gdn_phase_ready, entry.gdn_core_done = Event("phase_ready"), Event("core_done")
+    entry.gdn_prefix_done = Event("prefix_done", True)
+    entry.mlp_events = [Event(name, True) for name in ("DA_ready", "DA_done", "DB_ready", "DB_done")]
+    entry.gdn_events = [Event(f"gdn_{index}") for index in range(8)]
+    entry.early_gdn = first_prefix, first_residual
+    entry.joined_output, entry.joined_residual = torch.empty(rows, hidden), torch.empty(rows, hidden)
+    entry.joined_output, entry.joined_residual = entry.joined_output.double(), entry.joined_residual.double()
+    first_mlp, second_mlp = (None, first_value, first_prior), (None, second_value, second_prior)
+    actual, actual_residual = entry.finish_adjacent(first_mlp, second_mlp)
+    torch.testing.assert_close(actual, expected)
+    torch.testing.assert_close(actual_residual, expected_residual)
+    assert entry.mlp_partitions == (first_mlp, second_mlp)
+    assert [item[1] for item in log if item[0] == "reduce"] == ["output_A", "down_A", "output_B", "down_B"]
+    assert entry.gdn_partitions[0] is returns[0]
+    assert entry.gdn_partitions[2] is returns[2]
+    assert entry.gdn_partitions[5] is returns[1] and entry.gdn_partitions[6] is returns[3]
+    order = [
+        ("wait", "prefix_done", "root"),
+        ("wait", "DB_done", "root"),
+        ("reduce", "output_A", "comm"),
+        ("project", "right", "root"),
+        ("wait", "gdn_1", "root"),
+        ("norm", boundary, "root"),
+        ("GateUp", boundary, "root"),
+        ("SwiGLU", boundary, "root"),
+        ("record", "phase_ready", "root"),
+        ("wait", "phase_ready", "gdn_compute"),
+        ("core", "right", "gdn_compute"),
+        ("record", "core_done", "gdn_compute"),
+        ("Down", boundary, "root"),
+        ("reduce", "down_A", "comm"),
+        ("wait", "core_done", "root"),
+        ("output", "right", "root"),
+        ("reduce", "output_B", "comm"),
+        ("wait", "gdn_3", "root"),
+        ("norm", rows - boundary, "root"),
+        ("GateUp", rows - boundary, "root"),
+        ("SwiGLU", rows - boundary, "root"),
+        ("Down", rows - boundary, "root"),
+        ("reduce", "down_B", "comm"),
+        ("wait", "gdn_5", "root"),
+        ("wait", "gdn_7", "root"),
+    ]
+    assert [log.index(item) for item in order] == sorted(log.index(item) for item in order)
+    assert log[-2:] == order[-2:]
 
 
 @pytest.mark.parametrize("inplace_residual", [False, True])
