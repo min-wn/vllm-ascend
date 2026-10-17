@@ -142,9 +142,9 @@ def qualify_gdn(args, workload, runner, model, previous_output, cpu_group, *, se
         data_by_name = {name: metadata(count, name) for name in intervals}
         addresses = {name: identity(data) for name, data in data_by_name.items()}
 
-        def refresh(live):
+        def refresh(live, accepted=1):
             for name in intervals:
-                data_by_name[name] = metadata(live, name)
+                data_by_name[name] = metadata(live, name, accepted)
                 # Python slicing is captured once. Keep the full lane extent;
                 # zero query intervals and null state IDs mask inactive rows.
                 start, stop = intervals[name]

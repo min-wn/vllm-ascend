@@ -408,17 +408,22 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         projected_down, next_residual = local_mlp(value, residual_value, gate_up_weight, down_weight)
         return group.all_reduce(projected_down), next_residual
 
-    def assert_close(actual, expected, label, live_rows=None):
+    def assert_close(actual, expected, label, live_rows=None, diagnostic=False):
         actual, expected = actual.float().cpu(), expected.float().cpu()
         if live_rows is not None:
             actual, expected = actual[:live_rows], expected[:live_rows]
+        if diagnostic and args.numerical_assessment:
+            from multi_graph_numerical_assessment import error_metrics
+
+            checks.append(dict(label=label, numerical_diagnostic=True, **error_metrics(actual, expected)))
+            return
         torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.02, msg=lambda msg: f"{label}: {msg}")
         checks.append(dict(label=label, max_abs=(actual - expected).abs().max().item(), elements=actual.numel()))
 
-    def assert_result(actual, expected, label, live_rows):
+    def assert_result(actual, expected, label, live_rows, diagnostic=False):
         if args.include_mlp:
             for field, value, wanted in zip(("hidden", "residual"), actual, expected, strict=True):
-                assert_close(value, wanted, f"{label}/{field}", live_rows)
+                assert_close(value, wanted, f"{label}/{field}", live_rows, diagnostic=diagnostic)
         else:
             assert_close(actual, expected, label, live_rows)
 
@@ -552,7 +557,31 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     def check_adjacent(label):
         if adjacent is not None:
             for name, actual, expected in zip(("conv", "ssm"), adjacent.states, adjacent_expected_states, strict=True):
-                assert_close(actual, expected, f"{label}/gdn_{name}")
+                assert_close(actual, expected, f"{label}/gdn_{name}", diagnostic=True)
+
+    def check_execution(entry, label, batch):
+        import copy
+
+        # Execute the identical schedule eagerly from identical inputs/state.
+        # This gate stays bitwise strict even when cross-shape errors are logged.
+        restore_cache()
+        eager = copy.copy(entry)
+        with torch.npu.stream(entry.root), input_data[0].forward_context():
+            wanted = tuple(value.clone() for value in eager.operation())
+        torch.npu.synchronize()
+        wanted_states = tuple(state.clone() for state in adjacent.states)
+        restore_cache()
+        entry.replay()
+        torch.npu.synchronize()
+        for actual, expected_value in zip(entry.output, wanted, strict=True):
+            torch.testing.assert_close(
+                actual[: batch * workload.query], expected_value[: batch * workload.query], rtol=0, atol=0
+            )
+        for actual, expected_value, initial in zip(adjacent.states, wanted_states, adjacent.initial, strict=True):
+            torch.testing.assert_close(actual, expected_value, rtol=0, atol=0)
+            torch.testing.assert_close(actual[0], initial[0], rtol=0, atol=0)
+            torch.testing.assert_close(actual[1 + batch * 4 :], initial[1 + batch * 4 :], rtol=0, atol=0)
+        checks.append(dict(label=label, same_schedule_eager_replay_bitwise=True, inactive_and_null_unchanged=True))
 
     class BranchGraph(UpdatableGraph):
         def __init__(self):
@@ -868,8 +897,10 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     )
                     print(f"rank={rank} GDN shape diagnostic: {error}", flush=True)
             adjacent.reset(captured_states)
-        assert_result(entry.output, expected, f"{mode}/initial", workload.batch * workload.query)
+        assert_result(entry.output, expected, f"{mode}/initial", workload.batch * workload.query, diagnostic=True)
         check_adjacent(f"{mode}/initial")
+        if args.numerical_assessment:
+            check_execution(entry, f"{mode}/initial", workload.batch)
         entries[mode] = entry
     identities = {mode: entry.identity() for mode, entry in entries.items()}
     for batch, variant in ((workload.batch - 1, 1), (workload.capacity - 1, 2), (workload.batch, 3)):
@@ -879,10 +910,74 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             restore_cache()
             entry.replay()
             torch.npu.synchronize()
-            assert_result(entry.output, expected, f"{mode}/b{batch}-v{variant}", batch * workload.query)
+            assert_result(
+                entry.output, expected, f"{mode}/b{batch}-v{variant}", batch * workload.query, diagnostic=True
+            )
             check_adjacent(f"{mode}/b{batch}-v{variant}")
+            if args.numerical_assessment:
+                check_execution(entry, f"{mode}/b{batch}-v{variant}", batch)
             if entry.identity() != identities[mode]:
                 raise ValueError("graph, output or workspace address changed during metadata refresh")
+
+    if args.numerical_assessment:
+        import copy
+
+        trajectory_names = (*modes, "eager_split")
+        split_mode = modes[-1]
+        trajectories = {name: tuple(state.clone() for state in adjacent.initial) for name in trajectory_names}
+        for step in range(8):
+            batch = (workload.batch, workload.batch - 1, workload.capacity - 1, workload.batch)[step % 4]
+            accepted = (1, 2, 1, 3)[step % 4]
+            prepare(batch, 10 + step)
+            adjacent.refresh(batch, accepted)
+            outputs = {}
+            for mode in trajectory_names:
+                restore_cache()
+                prior = trajectories[mode]
+                adjacent.reset(prior)
+                if mode == "eager_split":
+                    entry = copy.copy(entries[split_mode])
+                    with torch.npu.stream(entry.root), input_data[0].forward_context():
+                        output = entry.operation()
+                else:
+                    entry = entries[mode]
+                    entry.replay()
+                    output = entry.output
+                torch.npu.synchronize()
+                outputs[mode] = tuple(value.clone() for value in output)
+                trajectories[mode] = tuple(state.clone() for state in adjacent.states)
+                for actual, previous in zip(trajectories[mode], prior, strict=True):
+                    torch.testing.assert_close(actual[0], previous[0], rtol=0, atol=0)
+                    torch.testing.assert_close(actual[1 + batch * 4 :], previous[1 + batch * 4 :], rtol=0, atol=0)
+            controls = ("split_gdn_barrier", "eager_split") if "split_gdn_barrier" in entries else ("eager_split",)
+            for control in controls:
+                for actual, wanted in zip(outputs[split_mode], outputs[control], strict=True):
+                    torch.testing.assert_close(actual[: batch * 4], wanted[: batch * 4], rtol=0, atol=0)
+                for actual, wanted in zip(trajectories[split_mode], trajectories[control], strict=True):
+                    torch.testing.assert_close(actual, wanted, rtol=0, atol=0)
+            assert_result(
+                outputs[split_mode],
+                outputs["joined"],
+                f"continuity/{step}/padding",
+                batch * 4,
+                diagnostic=True,
+            )
+            for field, actual, wanted in zip(
+                ("conv", "ssm"), trajectories[split_mode], trajectories["joined"], strict=True
+            ):
+                assert_close(actual, wanted, f"continuity/{step}/padding/{field}", diagnostic=True)
+            checks.append(
+                dict(
+                    label=f"continuity/{step}",
+                    batch=batch,
+                    accepted=accepted,
+                    matched_controls_bitwise=list(controls),
+                    inactive_and_null_unchanged=True,
+                )
+            )
+            print(f"rank={rank} continuity step={step} passed strict schedule/state checks", flush=True)
+        prepare(workload.batch, 3)
+        expected = reference(workload.batch, "assessment_restore")
 
     if args.gdn_probe:
         from multi_graph_tp_gdn import qualify_gdn
@@ -944,7 +1039,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 end.synchronize()
                 wall.append((time.perf_counter_ns() - started) / 1000)
                 device.append(begin.elapsed_time(end) * 1000)
-            assert_result(entry.output, expected, f"{mode}/round{round_id}", workload.batch * workload.query)
+            assert_result(
+                entry.output, expected, f"{mode}/round{round_id}", workload.batch * workload.query, diagnostic=True
+            )
             check_adjacent(f"{mode}/round{round_id}")
             samples.append(dict(mode=mode, round=round_id, wall_us=wall, device_us=device))
             print(f"rank={rank} {mode} round={round_id}: wall={statistics.median(wall):.3f} us", flush=True)
@@ -979,7 +1076,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 summary[metric], summary[f"rounds_{metric}"] = statistics.median(rounds), rounds
             summaries[mode] = summary
         report = dict(
-            status="passed",
+            status="completed_with_numerical_diagnostics" if args.numerical_assessment else "passed",
+            numerical_assessment=args.numerical_assessment,
             scope="two_adjacent_decoder_layers_not_full_model"
             if adjacent is not None
             else experiment_scope(args.include_mlp),
@@ -1086,6 +1184,11 @@ def main():
     parser.add_argument("--gdn-probe", action="store_true", help="qualify actual adjacent GDN layer and state capture")
     parser.add_argument("--gdn-pipeline", action="store_true", help="time complete layer 3 to layer 4 GDN pipeline")
     parser.add_argument(
+        "--numerical-assessment",
+        action="store_true",
+        help="record cross-shape errors; require strict same-schedule and state checks",
+    )
+    parser.add_argument(
         "--gdn-shared", action="store_true", help="with --gdn-pipeline keep the adjacent GDN layer whole"
     )
     parser.add_argument("--gdn-shared-mlp", action="store_true", help="with --gdn-shared keep layer 3 MLP whole too")
@@ -1126,6 +1229,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     args.split_output_overlap_requested = args.split_output_overlap
+    if args.numerical_assessment and not args.gdn_pipeline:
+        parser.error("--numerical-assessment requires --gdn-pipeline")
     if args.gdn_shared and not args.gdn_pipeline:
         parser.error("--gdn-shared requires --gdn-pipeline")
     if args.gdn_shared_mlp and not args.gdn_shared:

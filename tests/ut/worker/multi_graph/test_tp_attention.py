@@ -72,6 +72,7 @@ def test_gdn_padding_and_split_preserve_global_state_identity(benchmark, live):
         ["--gdn-shared"],
         ["--gdn-shared-mlp"],
         ["--gdn-shared-dense"],
+        ["--numerical-assessment"],
         ["--gdn-pipeline", "--gdn-probe", "--include-mlp", "--shared-qkv"],
     ],
 )
@@ -104,7 +105,7 @@ def test_gdn_runtime_refresh_keeps_capture_extent_when_live_batch_grows(benchmar
     intervals = dict(full=(0, 100), left=(0, 50), right=(50, 100))
     data = {}
 
-    def metadata(live, name):
+    def metadata(live, name, accepted=1):
         start, stop = intervals[name]
         return SimpleNamespace(num_actual_tokens=max(0, min(live, stop) - start) * 4, live=live, pointer=name)
 
@@ -120,6 +121,25 @@ def test_gdn_runtime_refresh_keeps_capture_extent_when_live_batch_grows(benchmar
         namespace["refresh"](live)
         assert {name: value.num_actual_tokens for name, value in data.items()} == dict(full=400, left=200, right=200)
         assert all(value.live == live for value in data.values())
+
+
+def test_numerical_assessment_reports_original_failures_without_hiding_them(benchmark):
+    from multi_graph_numerical_assessment import error_metrics
+
+    expected = torch.ones(128)
+    actual = expected.clone()
+    actual[7] += 0.125
+    result = error_metrics(actual, expected)
+    assert result["original_tolerance_failures"] == 1
+    assert result["original_tolerance_failure_fraction"] == 1 / 128
+    assert result["max_abs"] == 0.125
+    assert result["normalized_rmse"] == pytest.approx(0.125 / 128**0.5)
+    assert error_metrics(expected, expected)["normalized_rmse"] == 0
+    for value in (float("nan"), float("inf")):
+        with pytest.raises(ValueError, match="nonfinite"):
+            error_metrics(torch.tensor([value]), torch.ones(1))
+    with pytest.raises(ValueError, match="matching shapes"):
+        error_metrics(torch.ones(2), torch.ones(1))
 
 
 @pytest.mark.parametrize("query", [1, 4])

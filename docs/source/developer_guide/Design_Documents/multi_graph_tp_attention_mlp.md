@@ -542,7 +542,7 @@ unbounded savings once the early partition's work is fully hidden.
 ## Future adjacent GDN boundary
 
 The complete cross-layer pipeline is implemented as an experimental benchmark,
-but has not passed its two-layer numerical gate. The qualification probe
+but has not passed its original elementwise two-layer numerical gate. The qualification probe
 described below now exercises actual layer 4. Layer 4 is a real GDN layer, so repeating
 the selected full-attention layer would not qualify the adjacent model
 boundary. A later experiment must satisfy these additional requirements:
@@ -745,7 +745,7 @@ benchmark SHA256 is
 the exact attention and GDN sources are saved with the raw artifacts as
 `two_layer_attention_tested.py` and `two_layer_gdn_tested.py`.
 
-Current status: selected single-layer split-MLP gains do not yet extend to a
+Under the original strict comparison policy, selected single-layer split-MLP gains did not extend to a
 qualified two-layer speedup. The more aggressive cross-layer schedule is
 implemented but blocked by its non-overlapping control's numerical failure;
 the shape-preserving control qualifies but loses performance. No full-model
@@ -760,3 +760,125 @@ extent regression. Scoped Ruff, codespell and Markdown checks passed. Full
 `bash format.sh ci` was attempted; existing unrelated findings and Windows
 tool availability still prevent a clean repository-wide result. The log is
 `two-layer-format-ci.log` with the local experiment artifacts.
+
+## Separate numerical assessment from execution correctness
+
+`--numerical-assessment` is an explicit opt-in for the complete split
+`--gdn-pipeline`. It retains the original 0.02 relative/absolute comparison
+as a diagnostic, recording every failing element count, failing fraction,
+maximum absolute error, RMSE, reference RMS and normalized RMSE. It does not
+silently raise the tolerance or claim model-quality equivalence. Nonfinite
+values and mismatched shapes remain errors. The ordinary benchmark retains
+its original strict behavior.
+
+The assessment requires additional execution checks before timing: identical
+schedule eager and captured replay must match bitwise in live hidden/residual
+outputs and complete Conv/SSM state, from identical inputs and initial states.
+Null and inactive request states must remain exactly unchanged. The existing
+graph/workspace/metadata identity checks remain in force, as do real FIA
+updates and all communication dependencies.
+
+Eight additional steps maintain independent joined, barrier-split,
+overlapped-split and eager-split GDN state trajectories. Batch repeats
+98, 97, 99, 98 with new input seeds and accepted counts 1, 2, 1, 3. The split
+barrier, overlapped graph and identical eager schedule must remain bitwise
+equal, while errors against the joined trajectory are recorded. Previously
+active requests becoming inactive must retain their prior state rather than
+be compared with initial state. FIA prefix caches are restored between these
+synthetic steps: this is GDN state-continuity qualification, not an actual
+full-model generation rollout or a logit-quality test.
+
+Reports use `completed_with_numerical_diagnostics`, explicitly distinct from
+the strict benchmark's `passed`. This permits studying performance while
+preserving the evidence needed to decide whether numerical differences are
+acceptable. It does not certify absence of arbitrary memory errors outside
+the checked state tensors or replace model-level quality evaluation.
+
+The first assessment (`tp2-27b-two-layer-assessment.json`, before adding the
+eight-step trajectory test) completed all four input variants. Each rank
+passed 12 identical-schedule eager/replay checks (three schedules times four
+variants), including exact whole-state comparisons and inactive/null checks.
+The split candidates had only 1-3 original-tolerance failures per roughly
+two-million-element residual. Hidden, Conv and SSM had no original-tolerance
+failures. Maximum normalized RMSE across both ranks and reset-state variants:
+
+| Field | Normalized RMSE |
+| --- | ---: |
+| Hidden | 0.4797% |
+| Residual | 0.2000% |
+| Conv | 0.08284% |
+| SSM | 0.06630% |
+
+The complete two-layer wall replay medians were 4827.38 us for padding,
+5248.51 us for the barrier split, and 5119.64 us for the overlapped split.
+Overlap saved 2.46% against the identical split control but remained 6.05%
+slower than padding. Thus permitting the sparse numerical differences does
+not by itself produce a performance win. This preliminary result is followed
+by the continued-state assessment, rather than being treated as proof of
+arbitrary-length model quality.
+
+`tp2-27b-two-layer-assessment-continuity.json` then completed all eight
+continued-state steps and recorded 175 checks per rank. Barrier split,
+overlapped split and eager split remained bitwise equal in live outputs and
+complete state at every step. All inactive/null state invariants passed.
+Normalized RMSE ranges against the independent joined trajectory, across
+both ranks and all eight steps, were:
+
+| Field | Minimum | Maximum | Maximum original-tolerance failing elements per comparison |
+| --- | ---: | ---: | ---: |
+| Hidden | 0.4466% | 0.4830% | 0 |
+| Residual | 0.1773% | 0.1873% | 2 |
+| Conv | 0.06955% | 0.08495% | 6 |
+| SSM | 0.04591% | 0.08788% | 0 |
+
+Hidden/residual errors did not grow steadily over this short sequence. SSM
+error increased modestly while remaining below 0.09%; eight synthetic steps
+do not establish an arbitrary-length bound. The evidence supports continuing
+performance work with these differences treated as numerical diagnostics,
+not as demonstrated execution bugs. Full-model logits and generation quality
+have not been evaluated by this benchmark.
+
+The continued-state run's three-by-eight timing reproduced the earlier
+ordering: padding 4816.83 us, barrier split 5218.44 us, overlapped split
+5109.06 us. Overlap saved 109.39 us (2.10%) against barrier split, but remained
+292.23 us (6.07%) slower than padding. These are complete selected-two-layer
+replay measurements, not serving throughput. The attention benchmark SHA256
+was `7526199965dd5f0be3c1fb88415ac3c58674c8553532ed40662c5a791ec2cde5`;
+the GDN helper SHA256 was
+`15c334c4c12cd4d8d8441e92192acc3c163a07a8a5383601cae60d47cd2a5b6f`.
+
+The assessment also supports `--gdn-shared`. That candidate retains a complete
+GDN layer after the split first layer; its continued-state control compares
+captured split with the identical eager schedule, without inventing a
+cross-layer barrier/overlap comparison that it does not execute.
+
+`tp2-27b-two-layer-assessment-shared-gdn.json` completed 139 checks per rank,
+including four reset-state variants and eight independently continued-state
+steps with exact eager/replay and inactive/null-state checks. Its numerical
+error envelope was similar: continued-step normalized RMSE maxima were
+hidden 0.4829%, residual 0.1872%, Conv 0.08494%, and SSM 0.08788%.
+
+| Same-run shared-GDN comparison | Wall replay, us | Device replay, us |
+| --- | ---: | ---: |
+| Padding | 4802.04 | 4734.61 |
+| Split layer 3, complete GDN layer 4 | 4779.04 | 4713.43 |
+
+The measured wall improvement is 23.00 us (0.479%); device improvement is
+0.447%. All three round medians favor this candidate, but this small result
+is from one qualified run and is not a demonstrated full-model speedup or a
+large robust gain. It favors preserving whole GDN computation over splitting
+both layers in the current workload.
+
+The resulting policy is to continue performance experiments with these small
+cross-shape differences recorded, while retaining strict same-schedule,
+state-integrity and finite-value gates. No execution correctness issue was
+observed in the assessed configurations. Longer model-level quality checks
+remain distinct from this decision; a handful of original-tolerance failures
+alone no longer blocks the explicitly requested numerical-assessment mode.
+
+Validation for this change: 47 focused CPU tests passed (391 deselected),
+including metrics, nonfinite rejection and unchanged capture extents. Scoped
+Ruff/codespell/Markdown checks passed. Full CI was attempted with the same
+unrelated repository findings and Windows tool gaps; see
+`numerical-assessment-format-ci.log`. Raw reports and exact tested sources are
+saved with the preceding experiment artifacts.
