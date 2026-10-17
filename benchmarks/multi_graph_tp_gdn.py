@@ -152,7 +152,7 @@ def qualify_gdn(args, workload, runner, model, previous_output, cpu_group, *, se
                 if identity(data_by_name[name]) != addresses[name]:
                     raise ValueError("GDN metadata buffer address changed")
 
-        def run(value, prior, name="full", local=False):
+        def run(value, prior, name="full", local=False, projection_done=None):
             start, stop = (request * 4 for request in intervals[name])
             with set_ascend_forward_context(
                 {gdn.prefix: data_by_name[name]},
@@ -167,10 +167,28 @@ def qualify_gdn(args, workload, runner, model, previous_output, cpu_group, *, se
                     return layer(hidden_states=value, residual=prior, positions=positions[start:stop])
                 normalized, next_residual = layer.input_layernorm(value, prior)
                 gdn.out_proj.reduce_results = False
+                projection_signalled = False
+                projection_hook = None
+                if projection_done is not None:
+                    # Record outside the opaque state-core custom op. The
+                    # last input projection is Z for the unpacked path, BA
+                    # otherwise; following reshapes/layout work is vector.
+                    last_projection = gdn.in_proj_z if hasattr(gdn, "in_proj_qkv") else gdn.in_proj_ba
+
+                    def signal_projection(module, inputs, output):
+                        nonlocal projection_signalled
+                        projection_signalled = True
+                        projection_done.record(torch.npu.current_stream())
+
+                    projection_hook = last_projection.register_forward_hook(signal_projection)
                 try:
                     projected = gdn(hidden_states=normalized)
+                    if projection_done is not None and not projection_signalled:
+                        raise ValueError("the GDN input projection did not publish its completion event")
                 finally:
                     gdn.out_proj.reduce_results = True
+                    if projection_hook is not None:
+                        projection_hook.remove()
                 return projected, next_residual
 
         def local_mlp(value, prior):

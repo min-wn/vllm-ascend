@@ -876,6 +876,19 @@ observed in the assessed configurations. Longer model-level quality checks
 remain distinct from this decision; a handful of original-tolerance failures
 alone no longer blocks the explicitly requested numerical-assessment mode.
 
+## Subsequent branch-specific scheduling experiments
+
+[Causal parallel-direction experiments](multi_graph_parallel_directions.md)
+record the subsequent whole-GateUp/branch-Down, asymmetric branch order,
+early-Norm, collective-priority and real cross-layer resource-pairing tests.
+The Down pipeline improves its isolated boundary by 8.20% device, but its
+complete two-layer implementation only saves 0.53% wall against padding and
+does not improve on the prior split candidate. New GDN compute streams and
+projection-gated Cube/vector pairing lose against the original split schedule.
+Profiler evidence identifies activation and projection interference. These
+findings qualify optimization hypotheses; they do not establish a large
+split-over-padding or full-model gain.
+
 Validation for this change: 47 focused CPU tests passed (391 deselected),
 including metrics, nonfinite rejection and unchanged capture extents. Scoped
 Ruff/codespell/Markdown checks passed. Full CI was attempted with the same

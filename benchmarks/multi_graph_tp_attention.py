@@ -41,10 +41,13 @@ def execution_layout(mode, rows, pair, include_mlp, shared_qkv=False):
         layout = execution_layout("joined", rows, pair, include_mlp, shared_qkv)
         layout.update(attention_tokens=list(pair), attention_streams=["root", "comm"])
         return layout
-    if mode not in experiment_modes(include_mlp, True):
+    if mode == "split_down_overlap" and (not include_mlp or not shared_qkv):
+        raise ValueError("Down pipeline requires shared QKV and full MLP scope")
+    if mode not in (*experiment_modes(include_mlp, True), "split_down_overlap"):
         raise ValueError("mode is not supported in the requested timing scope")
-    split_output = mode in ("split_output_overlap", "split_mlp_overlap")
+    split_output = mode in ("split_output_overlap", "split_mlp_overlap", "split_down_overlap")
     split_mlp = mode == "split_mlp_overlap"
+    split_down = split_mlp or mode == "split_down_overlap"
     collectives = (
         ["input_A", "input_B", "output_A", "output_B"]
         if split_output
@@ -53,7 +56,7 @@ def execution_layout(mode, rows, pair, include_mlp, shared_qkv=False):
         else ["input_A", "input_B", "output"]
     )
     if include_mlp:
-        collectives += ["down_A", "down_B"] if split_mlp else ["down"]
+        collectives += ["down_A", "down_B"] if split_down else ["down"]
     if shared_qkv and mode != "joined":
         collectives = ["input"] + collectives[2:]
     return dict(
@@ -68,11 +71,12 @@ def execution_layout(mode, rows, pair, include_mlp, shared_qkv=False):
         mlp=(
             dict(
                 projection_tokens=list(pair) if split_mlp else [rows],
-                reduction_tokens=list(pair) if split_mlp else [rows],
-                reduction_stream="comm" if split_mlp else "root",
-                shared_full_bucket=not split_mlp,
-                real_down_all_reduces_per_replay=2 if split_mlp else 1,
-                hidden_and_residual_join_timed=split_mlp,
+                down_projection_tokens=list(pair) if split_down else [rows],
+                reduction_tokens=list(pair) if split_down else [rows],
+                reduction_stream="comm" if split_down else "root",
+                shared_full_bucket=not split_down,
+                real_down_all_reduces_per_replay=2 if split_down else 1,
+                hidden_and_residual_join_timed=split_down,
             )
             if include_mlp
             else None
@@ -547,6 +551,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     probe_inputs["local_down"], _ = local_mlp(
                         projected_result_nd.clone(), attention_residual.clone(), gate_up_weight_nd, down_weight_nd
                     )
+            if args.parallel_probe:
+                with input_data[0].forward_context():
+                    probe_inputs["local_output"] = functional.linear(attended, output_weight_nz).clone()
+                    probe_inputs["source_reduced"] = group.all_reduce(probe_inputs["local_output"].clone())
+                    probe_inputs["residual"] = attention_residual.clone()
         if adjacent is not None:
             adjacent.reset()
             result = tuple(value.clone() for value in adjacent.run(*result))
@@ -599,9 +608,19 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     class CapturedAttention:
         def __init__(self, mode):
             self.gdn_overlap = mode != "split_gdn_barrier"
-            mode = "split_mlp_overlap" if mode == "split_gdn_barrier" else mode
+            wavefront = mode in ("split_gdn_wavefront", "split_gdn_resource")
+            resource_aware = mode == "split_gdn_resource"
+            mode = (
+                "split_mlp_overlap"
+                if mode in ("split_gdn_barrier", "split_gdn_wavefront", "split_gdn_resource")
+                else mode
+            )
             self.mode = mode
             self.root, self.comm, self.update_stream = torch.npu.Stream(), torch.npu.Stream(), torch.npu.Stream()
+            self.gdn_compute = torch.npu.Stream() if wavefront else None
+            self.gdn_prefix_done = torch.npu.Event() if wavefront else None
+            self.gdn_projection_done = torch.npu.Event() if resource_aware else None
+            self.early_gdn = None
             self.events = [torch.npu.Event() for _ in range(3)]
             self.prepared, self.updated = torch.npu.Event(), torch.npu.Event()
             self.graph, self.pool = BranchGraph(), torch.npu.graph_pool_handle()
@@ -612,27 +631,35 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             self.shared_qkv_output = None
             if args.include_mlp:
                 self.attention_residual = torch.empty_like(residual)
-            if mode in ("split_output_overlap", "split_mlp_overlap"):
+            if mode in ("split_output_overlap", "split_mlp_overlap", "split_down_overlap"):
                 self.output_events = [torch.npu.Event() for _ in range(4)]
                 self.joined_output = torch.empty(
                     (rows, output_weight_nz.shape[0]), dtype=down.dtype, device=down.device
                 )
-            if mode == "split_mlp_overlap":
+            if mode in ("split_mlp_overlap", "split_down_overlap"):
                 self.mlp_events = [torch.npu.Event() for _ in range(4)]
                 self.joined_residual = torch.empty_like(residual)
                 if adjacent is not None:
                     self.gdn_events = [torch.npu.Event() for _ in range(8)]
             self.root.wait_stream(main)
+            if self.gdn_compute is not None:
+                self.gdn_compute.wait_stream(main)
             restore_cache()
             with torch.npu.stream(self.root), input_data[0].forward_context():
                 for _ in range(3):
                     self.operation()
+            if resource_aware:
+                print(f"rank={rank} resource warmup submitted", flush=True)
             torch.npu.synchronize()
+            if resource_aware:
+                print(f"rank={rank} resource warmup synchronized", flush=True)
             dist.barrier(group=cpu_group)
             with input_data[0].forward_context():
                 get_forward_context().capturing = True
                 with torch.npu.graph(self.graph, pool=self.pool, stream=self.root):
                     self.output = self.operation()
+            if resource_aware:
+                print(f"rank={rank} resource graph captured", flush=True)
             torch.npu.synchronize()
             expected = 1 if mode == "joined" else 2
             if len(self.graph.tasks) != expected or any(
@@ -693,6 +720,22 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             # ranks keep output_A, output_B, down_A, down_B after the input sum.
             self.root.wait_event(self.output_events[1])
             first_mlp = self.mlp_lane(0, first_output[1])
+            if self.gdn_compute is not None and self.gdn_overlap:
+                # A depends only on Down_A. Issue its local next-layer prefix
+                # before root queues MLP_B; preserve the original HCCL order.
+                with torch.npu.stream(self.gdn_compute):
+                    self.gdn_compute.wait_event(self.mlp_events[1])
+                    if self.gdn_projection_done is None:
+                        self.early_gdn = adjacent.run(first_mlp[1], first_mlp[2], "left", local=True)
+                    else:
+                        self.early_gdn = adjacent.run(
+                            first_mlp[1], first_mlp[2], "left", local=True, projection_done=self.gdn_projection_done
+                        )
+                    self.gdn_prefix_done.record(self.gdn_compute)
+                if self.gdn_projection_done is not None:
+                    # Pair the vector core with B's Cube MLP; avoid concurrent
+                    # Cube input projections, which regressed in the trace.
+                    self.root.wait_event(self.gdn_projection_done)
             self.root.wait_event(self.output_events[3])
             second_mlp = self.mlp_lane(1, second_output[1])
             self.root.wait_event(self.mlp_events[1])
@@ -721,7 +764,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             # submitting new collectives so every rank has identical HCCL order.
             if not self.gdn_overlap:
                 self.root.wait_event(self.mlp_events[3])
-            first, first_residual = adjacent.run(first_mlp[1], first_mlp[2], "left", local=True)
+            if getattr(self, "early_gdn", None) is not None:
+                self.root.wait_event(self.gdn_prefix_done)
+                first, first_residual = self.early_gdn
+            else:
+                first, first_residual = adjacent.run(first_mlp[1], first_mlp[2], "left", local=True)
             self.root.wait_event(self.mlp_events[3])
             first_reduced = self.gdn_reduce(first, 0)
             second, second_residual = adjacent.run(second_mlp[1], second_mlp[2], "right", local=True)
@@ -759,6 +806,30 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             result = shared_mlp(value, self.attention_residual, gate_up_weight_timed, down_weight_nz)
             return adjacent.run(*result) if adjacent is not None else result
 
+        def finish_shared_gate_up(self):
+            # Join only before the expensive shared GateUp, then release
+            # Down_A's reduction while root computes Down_B. Unlike a full
+            # MLP split this does not duplicate small GateUp projections.
+            normalized, next_residual = layer.post_attention_layernorm(self.joined_output, self.attention_residual)
+            intermediate = mlp.act_fn(functional.linear(normalized, gate_up_weight_timed))
+            partitions = []
+            for lane, (start, stop) in enumerate(((0, boundary), (boundary, rows))):
+                projected = functional.linear(intermediate[start:stop], down_weight_nz)
+                ready, done = self.mlp_events[lane * 2 : lane * 2 + 2]
+                ready.record(self.root)
+                with torch.npu.stream(self.comm):
+                    self.comm.wait_event(ready)
+                    reduced = group.all_reduce(projected)
+                    done.record(self.comm)
+                partitions.append((projected, reduced, next_residual[start:stop]))
+            for lane, (start, stop) in enumerate(((0, boundary), (boundary, rows))):
+                self.root.wait_event(self.mlp_events[lane * 2 + 1])
+                self.joined_output[start:stop].copy_(partitions[lane][1])
+            self.joined_residual.copy_(next_residual)
+            self.mlp_partitions = tuple(partitions)
+            result = self.joined_output, self.joined_residual
+            return adjacent.run(*result) if adjacent is not None else result
+
         def finish_output_lanes(self, first_output, second_output):
             self.output_partitions = (first_output, second_output)
             if self.mode == "split_mlp_overlap":
@@ -768,6 +839,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             # Retain and copy actual collective returns, which may use new storage.
             self.joined_output[:boundary].copy_(first_output[1])
             self.joined_output[boundary:].copy_(second_output[1])
+            if self.mode == "split_down_overlap":
+                return self.finish_shared_gate_up()
             return self.finish_shared_mlp(self.joined_output)
 
         def operation(self):
@@ -822,11 +895,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     second_ready.record(self.comm)
                 self.root.wait_event(first_ready)
                 self.branch(1, first)
-                if self.mode in ("split_output_overlap", "split_mlp_overlap"):
+                if self.mode in ("split_output_overlap", "split_mlp_overlap", "split_down_overlap"):
                     first_output = self.output_lane(0)
                 self.root.wait_event(second_ready)
                 self.branch(2, second)
-                if self.mode in ("split_output_overlap", "split_mlp_overlap"):
+                if self.mode in ("split_output_overlap", "split_mlp_overlap", "split_down_overlap"):
                     second_output = self.output_lane(1)
                     return self.finish_output_lanes(first_output, second_output)
             # Both lanes finish before the same full-bucket O and TP reduction.
@@ -857,6 +930,66 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
 
     prepare(workload.batch, 0)
     expected = reference(workload.batch, "initial")
+    if args.parallel_probe:
+        from multi_graph_tp_parallel_probe import measure_parallel_probe
+        from multi_graph_tp_priority_probe import measure_priority_probe
+
+        # These causal probes reuse real selected-layer inputs and weights.
+        # They do not need captured attention or FIA update tasks because FIA
+        # is outside their timed endpoints. The official eager decoder above
+        # still qualifies the input-producing decomposition.
+        layer_path = args.boundary_module_path.rsplit(".", 2)[0]
+        layer_prefix, layer_index = layer_path.rsplit(".", 1)
+        next_layer_path = f"{layer_prefix}.{int(layer_index) + 1}"
+        next_norm = model.get_submodule(next_layer_path).input_layernorm
+        with input_data[0].forward_context():
+            parallel = measure_parallel_probe(
+                probe_inputs["source_reduced"],
+                probe_inputs["residual"],
+                probe_inputs["local_output"],
+                layer.post_attention_layernorm,
+                mlp.act_fn,
+                gate_up_weight_nz,
+                down_weight_nz,
+                group,
+                cpu_group,
+                rounds=args.rounds,
+                repeats=args.repeats,
+            )
+            priority = measure_priority_probe(
+                probe_inputs["local_output"],
+                probe_inputs["residual"],
+                layer.post_attention_layernorm,
+                mlp.act_fn,
+                gate_up_weight_nz,
+                down_weight_nz,
+                next_norm,
+                group,
+                cpu_group,
+                pair=tuple(args.pair),
+                rounds=args.rounds,
+                repeats=args.repeats,
+            )
+        report = dict(
+            status="completed_with_numerical_diagnostics",
+            scope="causal_parallel_schedules_not_decoder_or_two_layer_replay",
+            selection=args.selection,
+            loader=args.loader_metadata,
+            decoder_checks_rank0=checks,
+            next_norm_module=f"{next_layer_path}.input_layernorm",
+            gate_up_shape=list(gate_up_weight_nd.shape),
+            down_shape=list(down_weight_nd.shape),
+            parallel=parallel,
+            priority=priority,
+            source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            helper_sha256={
+                name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+                for name in ("multi_graph_tp_parallel_probe.py", "multi_graph_tp_priority_probe.py")
+            },
+        )
+        if rank == 0:
+            args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+        return
     modes = experiment_modes(args.include_mlp, args.split_output_overlap)
     if adjacent is not None:
         modes = (
@@ -864,8 +997,12 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             if args.gdn_shared_dense
             else ("joined", "split_output_overlap")
             if args.gdn_shared_mlp
+            else ("joined", "split_mlp_overlap", "split_down_overlap")
+            if args.down_pipeline
             else ("joined", "split_mlp_overlap")
             if args.gdn_shared
+            else ("joined", "split_gdn_barrier", "split_mlp_overlap", "split_gdn_wavefront", "split_gdn_resource")
+            if args.gdn_wavefront
             else ("joined", "split_gdn_barrier", "split_mlp_overlap")
         )
     for mode in modes:
@@ -949,7 +1086,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 for actual, previous in zip(trajectories[mode], prior, strict=True):
                     torch.testing.assert_close(actual[0], previous[0], rtol=0, atol=0)
                     torch.testing.assert_close(actual[1 + batch * 4 :], previous[1 + batch * 4 :], rtol=0, atol=0)
-            controls = ("split_gdn_barrier", "eager_split") if "split_gdn_barrier" in entries else ("eager_split",)
+            controls = (
+                ("eager_split",) if args.down_pipeline else tuple(name for name in modes[1:-1]) + ("eager_split",)
+            )
             for control in controls:
                 for actual, wanted in zip(outputs[split_mode], outputs[control], strict=True):
                     torch.testing.assert_close(actual[: batch * 4], wanted[: batch * 4], rtol=0, atol=0)
@@ -1095,7 +1234,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             o_and_all_reduce_timed=True,
             output_layouts={
                 mode: execution_layout(
-                    "split_mlp_overlap" if mode == "split_gdn_barrier" else mode,
+                    "split_mlp_overlap"
+                    if mode in ("split_gdn_barrier", "split_gdn_wavefront", "split_gdn_resource")
+                    else mode,
                     rows,
                     args.pair,
                     args.include_mlp,
@@ -1110,6 +1251,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             if adjacent is not None
             else None,
             adjacent_gdn_shared=args.gdn_shared,
+            adjacent_gdn_wavefront=args.gdn_wavefront,
+            shared_gate_up_down_pipeline=args.down_pipeline,
             first_layer_shared_mlp=args.gdn_shared_mlp,
             first_layer_shared_dense=args.gdn_shared_dense,
             adjacent_gdn_collectives_per_replay={
@@ -1126,7 +1269,20 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             post_norm_mlp_and_down_all_reduce_timed=bool(args.include_mlp),
             hidden_and_residual_qualified=bool(args.include_mlp),
             real_down_all_reduces_per_replay={
-                mode: (2 if mode in ("split_mlp_overlap", "split_gdn_barrier") else 1) if args.include_mlp else 0
+                mode: (
+                    2
+                    if mode
+                    in (
+                        "split_mlp_overlap",
+                        "split_gdn_barrier",
+                        "split_gdn_wavefront",
+                        "split_gdn_resource",
+                        "split_down_overlap",
+                    )
+                    else 1
+                )
+                if args.include_mlp
+                else 0
                 for mode in modes
             },
             shared_rope_lookup=bool(args.shared_rope),
@@ -1184,6 +1340,14 @@ def main():
     parser.add_argument("--gdn-probe", action="store_true", help="qualify actual adjacent GDN layer and state capture")
     parser.add_argument("--gdn-pipeline", action="store_true", help="time complete layer 3 to layer 4 GDN pipeline")
     parser.add_argument(
+        "--gdn-wavefront",
+        action="store_true",
+        help="compare independent-stream and phase-aware GDN_A overlap with MLP_B",
+    )
+    parser.add_argument(
+        "--down-pipeline", action="store_true", help="with shared GDN, keep whole GateUp and pipeline branch Down"
+    )
+    parser.add_argument(
         "--numerical-assessment",
         action="store_true",
         help="record cross-shape errors; require strict same-schedule and state checks",
@@ -1197,6 +1361,9 @@ def main():
     )
     parser.add_argument(
         "--contention-probe", action="store_true", help="qualify decoder, then run only causal GateUp/HCCL probes"
+    )
+    parser.add_argument(
+        "--parallel-probe", action="store_true", help="qualify decoder, then measure causal branch scheduling probes"
     )
     parser.add_argument("--shared-rope", action="store_true", help="one full-bucket text-position lookup for all lanes")
     parser.add_argument(
@@ -1233,6 +1400,12 @@ def main():
         parser.error("--numerical-assessment requires --gdn-pipeline")
     if args.gdn_shared and not args.gdn_pipeline:
         parser.error("--gdn-shared requires --gdn-pipeline")
+    if args.gdn_wavefront and (not args.gdn_pipeline or args.gdn_shared):
+        parser.error("--gdn-wavefront requires --gdn-pipeline without --gdn-shared")
+    if args.down_pipeline and (
+        not args.gdn_pipeline or not args.gdn_shared or args.gdn_shared_mlp or args.gate_up_partitions != 1
+    ):
+        parser.error("--down-pipeline requires --gdn-pipeline --gdn-shared without --gdn-shared-mlp")
     if args.gdn_shared_mlp and not args.gdn_shared:
         parser.error("--gdn-shared-mlp requires --gdn-shared")
     if args.gdn_shared_dense and not args.gdn_shared_mlp:
@@ -1253,6 +1426,18 @@ def main():
         not args.include_mlp or not args.shared_qkv or args.gate_up_format != "NZ" or args.gate_up_partitions != 1
     ):
         parser.error("--contention-probe requires --include-mlp --shared-qkv and default GateUp controls")
+    if args.parallel_probe and (
+        not args.include_mlp
+        or not args.shared_qkv
+        or args.gate_up_format != "NZ"
+        or args.gate_up_partitions != 1
+        or args.contention_probe
+        or args.gdn_probe
+        or args.gdn_pipeline
+        or args.trace
+        or args.query != 4
+    ):
+        parser.error("--parallel-probe requires Q4 --include-mlp --shared-qkv and no other probes or trace")
     if args.output.exists() or min(args.rounds, args.repeats) < 1:
         parser.error("positive sample counts and a new output path are required")
     if int(os.environ.get("WORLD_SIZE", "1")) != args.tensor_parallel_size or args.tensor_parallel_size < 2:
@@ -1264,6 +1449,8 @@ def main():
         args.pair = (272, 128)
     args.selection = select_workload(args)
     args.pair = args.selection["pair_tokens"]
+    if args.parallel_probe and sum(args.pair) != 400:
+        parser.error("--parallel-probe requires the default 400-token bucket")
     capacity, batch = args.selection["capacity_requests"], args.selection["batch"]
     left = min(batch - 1, args.selection["pair_requests"][0])
     workload = ReplayWorkload(batch, capacity, args.query, args.kv_length, (left, batch - left))
@@ -1294,9 +1481,13 @@ def main():
             if args.gdn_probe
             else "contention"
             if args.contention_probe
+            else "parallel"
+            if args.parallel_probe
             else None,
             pipeline_diagnostics=getattr(args, "pipeline_diagnostics", None),
             adjacent_gdn_shared=args.gdn_shared,
+            adjacent_gdn_wavefront=args.gdn_wavefront,
+            shared_gate_up_down_pipeline=args.down_pipeline,
             first_layer_shared_mlp=args.gdn_shared_mlp,
             first_layer_shared_dense=args.gdn_shared_dense,
             source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
