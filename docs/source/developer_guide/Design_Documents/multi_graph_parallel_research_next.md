@@ -520,6 +520,11 @@ and ACL runtime.
 
 ## Document validation
 
+The following [hardware qualification](multi_graph_gdn_ownership_qualification.md)
+tests real dense shapes, the official state core and complete owner boundaries.
+It confirms state correctness but finds that GateUp consumes most of the
+communication budget; it does not establish a three-layer speedup.
+
 Scoped Markdown and codespell checks pass. Full `bash format.sh ci` was
 attempted; it retains the previously known resource-probe spelling findings,
 direct Triton imports in `device_length_decode.py`, and Windows bash/shellcheck/
