@@ -467,6 +467,8 @@ def test_native_fia_binding_guards(monkeypatch):
     with pytest.raises(RuntimeError, match="zero or two timing"):
         native.NativeReplay(graph, stream, stream, [plan], [torch.npu.Event(enable_timing=True)])
     replay = native.NativeReplay(graph, stream, stream, [plan], [])
+    with pytest.raises(RuntimeError, match="two independent lane plans"):
+        replay.enable_parallel_updates()
     with pytest.raises(RuntimeError, match="not configured"):
         replay.replay(True)
     task.event = torch.npu.ExternalEvent()
@@ -479,7 +481,16 @@ def test_native_fia_binding_guards(monkeypatch):
     "nz,native,shared", [(False, False, False), (True, False, False), (True, True, False), (True, True, True)]
 )
 def test_default_bucket_internal_block_reuse(
-    tmp_path, request, nz, native, shared, packed=False, native_replay=False, pipeline_ffn=False, mixed=False
+    tmp_path,
+    request,
+    nz,
+    native,
+    shared,
+    packed=False,
+    native_replay=False,
+    pipeline_ffn=False,
+    mixed=False,
+    parallel_host=False,
 ):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
@@ -510,6 +521,7 @@ def test_default_bucket_internal_block_reuse(
             *(["--native-update"] if native else []),
             *(["--packed-metadata", "--phase-diagnostics"] if packed else []),
             *(["--native-replay"] if native_replay else []),
+            *(["--parallel-host-update"] if parallel_host else []),
             *(["--pipeline-ffn", "--branch-capacities", "4", "4"] if pipeline_ffn else []),
             *(
                 ["--short-kv-length", "32", "--request-order", "length_asc", "--snapshot-first-block-only"]
@@ -556,6 +568,7 @@ def test_default_bucket_internal_block_reuse(
     assert report["static_task_plan"] == shared
     assert report["packed_metadata"] == packed
     assert report["native_replay"] == native_replay
+    assert report["parallel_host_update"] == parallel_host
     assert report["h2d_submissions_per_step"] == (1 if packed else 5)
     if packed:
         assert len(report["phase_diagnostics"]) == 32 * modes
@@ -588,6 +601,12 @@ def test_full_ffn_pipeline_reuses_graph_with_required_updates(tmp_path, request)
 def test_mixed_lengths_restore_original_request_order(tmp_path, request):
     test_default_bucket_internal_block_reuse(
         tmp_path, request, nz=True, native=True, shared=True, packed=True, native_replay=True, mixed=True
+    )
+
+
+def test_parallel_host_updates_reuse_graph(tmp_path, request):
+    test_default_bucket_internal_block_reuse(
+        tmp_path, request, nz=True, native=True, shared=True, packed=True, native_replay=True, parallel_host=True
     )
 
 

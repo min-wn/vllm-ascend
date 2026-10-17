@@ -555,6 +555,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                 entry["native_replay"] = native.NativeReplay(
                     graph, main, stream, [group["native"] for group in entry["update_groups"]], entry["timing_events"]
                 )
+                if args.parallel_host_update and mode == "split_parallel":
+                    entry["native_replay"].enable_parallel_updates()
         print(f"captured {mode}: Dense={workload.capacity}, tasks={len(graph.tasks)}", flush=True)
 
     def identities():
@@ -763,6 +765,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         attention_cores=args.attention_cores,
         native_update=args.native_update,
         native_replay=args.native_replay,
+        parallel_host_update=args.parallel_host_update,
         packed_metadata=args.packed_metadata,
         h2d_submissions_per_step=1 if args.packed_metadata else (6 if args.request_order != "original" else 5),
         packed_buffer_schema=entries["padding"]["packed"].schema if args.packed_metadata else None,
@@ -829,6 +832,9 @@ def main():
     parser.add_argument("--independent-updates", action="store_true")
     parser.add_argument("--native-update", action="store_true")
     parser.add_argument("--native-replay", action="store_true", help="native replay/update/event orchestration")
+    parser.add_argument(
+        "--parallel-host-update", action="store_true", help="persistent C++ workers submit lane updates"
+    )
     parser.add_argument("--static-task-plan", action="store_true", help="bind only KV lengths in a fixed native plan")
     parser.add_argument(
         "--packed-metadata", action="store_true", help="fill fixed pinned views and upload once per step"
@@ -858,6 +864,8 @@ def main():
         parser.error("static task plans require native update")
     if args.native_replay and not args.native_update:
         parser.error("native replay requires native update")
+    if args.parallel_host_update and (not args.native_replay or not args.independent_updates):
+        parser.error("parallel host updates require native replay and independent update streams")
     if args.pipeline_output_projection and not args.shared_cache:
         parser.error("projection pipeline requires the qualified shared-cache path")
     if args.pipeline_ffn and (not args.shared_cache or args.pipeline_output_projection):

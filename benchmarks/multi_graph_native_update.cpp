@@ -1,5 +1,10 @@
 // Benchmark-only adapter built against the installed torch_npu headers and ABI.
 #include <ATen/core/dispatch/Dispatcher.h>
+#include <c10/core/InferenceMode.h>
+#include <condition_variable>
+#include <exception>
+#include <mutex>
+#include <thread>
 #include <torch/csrc/jit/python/pybind_utils.h>
 #include <torch_npu/csrc/core/npu/NPUGraph.h>
 #include <torch_npu/csrc/core/npu/NPUGuard.h>
@@ -123,6 +128,61 @@ void submit(const std::vector<std::shared_ptr<NativeLane>>& lanes, size_t chunk)
   }
 }
 
+struct UpdateWorker {
+  NativeLane* lane;
+  std::mutex mutex;
+  std::condition_variable condition;
+  bool stopping = false;
+  bool pending = false;
+  std::exception_ptr failure;
+  std::thread thread;
+
+  explicit UpdateWorker(NativeLane* plan) : lane(plan), thread([this] { run(); }) {}
+
+  ~UpdateWorker() {
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      stopping = true;
+    }
+    condition.notify_one();
+    thread.join();
+  }
+
+  void run() {
+    c10::InferenceMode inference;
+    std::unique_lock<std::mutex> lock(mutex);
+    for (;;) {
+      condition.wait(lock, [this] { return stopping || pending; });
+      if (stopping) return;
+      lock.unlock();
+      std::exception_ptr error;
+      try {
+        lane->update(0, lane->handles.size());
+      } catch (...) {
+        error = std::current_exception();
+      }
+      lock.lock();
+      failure = error;
+      pending = false;
+      condition.notify_one();
+    }
+  }
+
+  void start() {
+    std::lock_guard<std::mutex> lock(mutex);
+    TORCH_CHECK(!pending, "previous update submission still active");
+    failure = nullptr;
+    pending = true;
+    condition.notify_one();
+  }
+
+  std::exception_ptr finish() {
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [this] { return !pending; });
+    return failure;
+  }
+};
+
 struct NativeReplay {
   py::object graph_owner;
   py::object replay_method;
@@ -134,6 +194,17 @@ struct NativeReplay {
   c10_npu::NPUEvent done;
   std::vector<py::object> timing_owners;
   std::vector<c10_npu::NPUEvent*> timing;
+  // Workers only access C++ lane arguments. Join them before destroying plans
+  // and their Python owners; a completed submission does not imply device completion.
+  std::vector<std::unique_ptr<UpdateWorker>> workers;
+
+  void enable_parallel_updates() {
+    TORCH_CHECK(workers.empty(), "parallel updates already enabled");
+    TORCH_CHECK(lanes.size() == 2, "parallel updates require two independent lane plans");
+    TORCH_CHECK(lanes[0]->stream != lanes[1]->stream, "parallel updates require distinct streams");
+    TORCH_CHECK(c10::InferenceMode::is_enabled(), "parallel updates require inference mode");
+    for (const auto& lane : lanes) workers.push_back(std::make_unique<UpdateWorker>(lane.get()));
+  }
 
   static c10_npu::NPUStream unpack(py::object stream) {
     return c10_npu::NPUStream::unpack3(stream.attr("stream_id").cast<int64_t>(),
@@ -179,7 +250,17 @@ struct NativeReplay {
       replay_method();
     }
     for (const auto& lane : lanes) ready.block(lane->stream);
-    for (const auto& lane : lanes) lane->update(0, lane->handles.size());
+    if (workers.empty()) {
+      for (const auto& lane : lanes) lane->update(0, lane->handles.size());
+    } else {
+      for (const auto& worker : workers) worker->start();
+      std::exception_ptr failure;
+      for (const auto& worker : workers) {
+        auto error = worker->finish();
+        if (error && !failure) failure = error;
+      }
+      if (failure) std::rethrow_exception(failure);
+    }
     for (size_t i = 0; i < lanes.size(); ++i) {
       updated[i].record(lanes[i]->stream);
       updated[i].block(graph_stream);
@@ -198,5 +279,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, module) {
   module.def("submit", &submit);
   py::class_<NativeReplay>(module, "NativeReplay")
       .def(py::init<py::object, py::object, py::object, std::vector<std::shared_ptr<NativeLane>>, py::sequence>())
+      .def("enable_parallel_updates", &NativeReplay::enable_parallel_updates)
       .def("replay", &NativeReplay::replay, py::arg("diagnostic") = false);
 }
