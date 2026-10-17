@@ -24,7 +24,13 @@ from vllm_ascend.ops.triton.triton_utils import extract_slice, get_vectorcore_nu
 
 
 @triton.jit(
-    do_not_specialize=["num_tokens", "front_core_num", "num_tokens_each_front_core", "num_tokens_each_tail_core"]
+    do_not_specialize=[
+        "cos_sin_plane_stride",
+        "num_tokens",
+        "front_core_num",
+        "num_tokens_each_front_core",
+        "num_tokens_each_tail_core",
+    ]
 )
 def split_qkv_rmsnorm_mrope_kernel(
     in_qkv_ptr: torch.Tensor,
@@ -33,6 +39,7 @@ def split_qkv_rmsnorm_mrope_kernel(
     k_weight_ptr: torch.Tensor,
     k_bias_ptr: torch.Tensor,
     cos_sin_ptr: torch.Tensor,
+    cos_sin_plane_stride,
     out_q_ptr: torch.Tensor,
     out_k_ptr: torch.Tensor,
     out_v_ptr: torch.Tensor,
@@ -122,12 +129,12 @@ def split_qkv_rmsnorm_mrope_kernel(
             )
 
         t_cos_offset = cos_sin_ptr + (block_offset + index) * rope_dim
-        h_cos_offset = t_cos_offset + num_tokens * rope_dim
-        w_cos_offset = h_cos_offset + num_tokens * rope_dim
+        h_cos_offset = t_cos_offset + cos_sin_plane_stride
+        w_cos_offset = h_cos_offset + cos_sin_plane_stride
 
         t_sin_offset = cos_sin_ptr + (block_offset + index) * rope_dim + half_rope_dim
-        h_sin_offset = t_sin_offset + num_tokens * rope_dim
-        w_sin_offset = h_sin_offset + num_tokens * rope_dim
+        h_sin_offset = t_sin_offset + cos_sin_plane_stride
+        w_sin_offset = h_sin_offset + cos_sin_plane_stride
 
         t_cos_tensor = tl.load(t_cos_offset + cos_offsets, mask=t_mask, other=0)
         h_cos_tensor = tl.load(h_cos_offset + cos_offsets, mask=h_mask, other=0)
@@ -295,8 +302,6 @@ def triton_split_qkv_rmsnorm_mrope(
     k_bias: torch.Tensor | None = None,
     has_gate: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    core_num = get_vectorcore_num()
-
     q_size = num_q_heads * head_size
     kv_size = num_kv_heads * head_size
     num_tokens = qkv.shape[0]
@@ -305,7 +310,23 @@ def triton_split_qkv_rmsnorm_mrope(
 
     if rope_dim is None:
         rope_dim = head_size
+    if not 0 < rope_dim <= head_size or rope_dim % 2:
+        raise ValueError("rope_dim must be positive, even, and no larger than head_size")
+    if cos_sin.shape != (3, num_tokens, rope_dim):
+        raise ValueError("cos_sin must have shape (3, num_tokens, rope_dim)")
+    if cos_sin.device != qkv.device:
+        raise ValueError("cos_sin and qkv must be on the same device")
+    # The kernel supports shared bucket slices and broadcast text planes, while
+    # token and feature addressing still requires dense rows within each plane.
+    if (
+        cos_sin.layout != torch.strided
+        or cos_sin.stride(0) < 0
+        or cos_sin.stride(1) != rope_dim
+        or cos_sin.stride(2) != 1
+    ):
+        raise ValueError("cos_sin requires nonnegative plane stride and dense token/feature strides")
     IS_PARTIAL_ROPE = rope_dim != head_size
+    core_num = get_vectorcore_num()
 
     front_core_num = core_num
     if num_tokens % core_num != 0:
@@ -338,6 +359,7 @@ def triton_split_qkv_rmsnorm_mrope(
         k_weight,
         k_bias,
         cos_sin,
+        cos_sin.stride(0),
         q_output,
         k_output,
         v_output,

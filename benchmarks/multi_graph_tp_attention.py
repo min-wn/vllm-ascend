@@ -1,0 +1,673 @@
+"""Isolated Qwen3.5 TP communication-to-attention graph prototype.
+
+The selected checkpoint layer supplies real Norm, QKV, QK-Norm, RoPE, FIA and O
+operations. Rank-local Down outputs, residuals and prefix hidden states are
+synthetic. Every replay retains FIA host-parameter updates. This does not run
+the hybrid decoder, its GDN layers or FFN inside timed graphs.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import statistics
+import time
+from pathlib import Path
+
+from multi_graph_tp_boundary import select_workload
+from multi_graph_tp_boundary_loader import run_qwen35
+
+from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload
+
+
+class BranchSource:
+    def __init__(self, graph, input_data):
+        self.graph = graph
+        self.input_data = input_data
+
+    def get(self, provider):
+        return tuple(
+            provider.resolve(self.input_data[lane].mapping)
+            for task, lane in zip(self.graph.tasks, self.graph.task_lanes, strict=True)
+            if task.provider == provider
+        )
+
+
+def request_values(workload, start, stop, batch, variant):
+    """Keep capacity fixed while changing live requests and host KV lengths."""
+    if not 0 <= start < stop <= workload.capacity or not 1 <= batch <= workload.capacity:
+        raise ValueError("request interval or live batch exceeds captured capacity")
+    if workload.kv_length < workload.query + 64:
+        raise ValueError("the dynamic-length qualification requires 64 prefix tokens")
+    lengths = [
+        workload.kv_length - ((index * 7 + variant * 13) % 64) if index < batch else 0 for index in range(start, stop)
+    ]
+    width = workload.pages_per_request
+    positions = [
+        position
+        for length in lengths
+        for position in (range(length - workload.query, length) if length else [0] * workload.query)
+    ]
+    slots = [
+        request * width * workload.block_size + position if length else -1
+        for request, length in zip(range(start, stop), lengths, strict=True)
+        for position in (range(length - workload.query, length) if length else [0] * workload.query)
+    ]
+    return dict(
+        lengths=lengths,
+        boundaries=[index * workload.query for index in range(stop - start + 1)],
+        pages=[
+            list(range(request * width, (request + 1) * width)) if length else [0] * width
+            for request, length in zip(range(start, stop), lengths, strict=True)
+        ],
+        positions=positions,
+        slots=slots,
+    )
+
+
+def experiment(args, workload, runner, model, inputs, context, reset_kv, *, module):
+    # The weight-only loader's callbacks intentionally carry no attention state.
+    # This experiment owns and qualifies only the selected full-attention layer.
+    import torch
+    import torch.distributed as dist
+    import torch.nn.functional as functional
+    import torch_npu
+    from vllm.config import CUDAGraphMode
+    from vllm.distributed.parallel_state import get_tp_group, get_world_group
+    from vllm.forward_context import BatchDescriptor, get_forward_context
+
+    from vllm_ascend.ascend_forward_context import set_ascend_forward_context
+    from vllm_ascend.attention.attention_v1 import AscendAttentionBackendImpl, AscendAttentionState, AscendMetadata
+    from vllm_ascend.compilation.updatable_graph import UpdatableGraph
+    from vllm_ascend.ops.linear import AscendRowParallelLinear, AscendUnquantizedLinearMethod
+    from vllm_ascend.patch.worker.patch_qwen3_5 import _uses_multimodal_rope
+
+    group, cpu_group = get_tp_group(), get_world_group().cpu_group
+    rank, world = dist.get_rank(), dist.get_world_size()
+    if world != args.tensor_parallel_size or group.world_size != world:
+        raise ValueError("loaded TP world disagrees with requested parallelism")
+    attention = model.get_submodule(args.boundary_module_path.rsplit(".", 1)[0])
+    layer = model.get_submodule(args.boundary_module_path.rsplit(".", 2)[0])
+    backend, impl = attention.attn, attention.attn.impl
+    if (
+        type(impl) is not AscendAttentionBackendImpl
+        or impl.sinks is not None
+        or impl.sliding_window is not None
+        or impl.use_bnsd_kv_cache
+        or impl.pcp_enabled
+        or impl.kv_sharing_target_layer_name is not None
+        or impl.enable_c8_quant
+    ):
+        raise ValueError("this experiment requires standard dense BF16 TND FIA")
+    if not attention.attn_output_gate or module is not attention.qkv_proj:
+        raise ValueError("expected the loaded Qwen3.5 gated-Q full-attention projection")
+    rows, boundary = workload.capacity * workload.query, args.pair[0]
+    split_request = boundary // workload.query
+    intervals = ((0, workload.capacity), (0, split_request), (split_request, workload.capacity))
+    main = torch.npu.current_stream()
+    checks, entries = [], {}
+    torch.npu.config.allow_internal_format = True
+    weight_nd = torch_npu.npu_format_cast(module.weight, 2)
+    weight_nz = torch_npu.npu_format_cast(weight_nd, 29)
+    if torch_npu.get_npu_format(weight_nz) != 29:
+        raise ValueError("NZ projection conversion did not take effect")
+    output_module = attention.o_proj
+    if (
+        type(output_module) is not AscendRowParallelLinear
+        or type(output_module.quant_method) is not AscendUnquantizedLinearMethod
+        or output_module.custom_op is not None
+        or output_module.bias is not None
+        or not output_module.input_is_parallel
+        or not output_module.reduce_results
+        or output_module.weight.dtype != torch.bfloat16
+    ):
+        raise ValueError("requires a local BF16 O projection with the ordinary TP all-reduce")
+    output_weight_nd = torch_npu.npu_format_cast(output_module.weight, 2)
+    output_weight_nz = torch_npu.npu_format_cast(output_weight_nd, 29)
+    if torch_npu.get_npu_format(output_weight_nz) != 29:
+        raise ValueError("NZ O projection conversion did not take effect")
+    down = torch.empty((rows, weight_nd.shape[1]), dtype=torch.bfloat16, device="npu")
+    residual = torch.empty_like(down)
+    cache_shape = (workload.kv_blocks, workload.block_size, attention.num_kv_heads, attention.head_dim)
+    caches = tuple(
+        torch_npu.npu_format_cast(torch.zeros(cache_shape, dtype=down.dtype, device=down.device), 2) for _ in range(2)
+    )
+    if not all(value.is_contiguous() and torch_npu.get_npu_format(value) == 2 for value in caches):
+        raise ValueError("the old-driver qualification requires contiguous ND paged KV")
+    backend.kv_cache = caches
+    impl.key_cache, impl.value_cache = caches
+    mask = torch.ones((2048, 2048), dtype=torch.bool, device="npu").triu_(1)
+    layer_name = backend.layer_name
+
+    class InputData:
+        def __init__(self, start, stop):
+            self.start, self.stop = start, stop
+            values = request_values(workload, start, stop, workload.batch, 0)
+            lengths = torch.tensor(values["lengths"], dtype=torch.int32)
+            boundaries = torch.tensor(values["boundaries"], dtype=torch.int32)
+            self.positions = torch.tensor(values["positions"], dtype=torch.int64, device="npu")
+            self.metadata = AscendMetadata(
+                attn_mask=mask,
+                attn_state=(
+                    AscendAttentionState.DecodeOnly if workload.query == 1 else AscendAttentionState.ChunkedPrefill
+                ),
+                # Captured extents include dummy rows; zero KV lengths and -1
+                # slots exclude their attention reads/writes at each replay.
+                num_actual_tokens=(stop - start) * workload.query,
+                num_decode_tokens=(stop - start) * workload.query,
+                num_decodes=stop - start,
+                seq_lens=lengths,
+                seq_lens_cpu=lengths,
+                seq_lens_list=values["lengths"],
+                seq_lens_gpu=lengths.npu(),
+                query_start_loc=boundaries,
+                query_start_loc_gpu=boundaries.npu(),
+                actual_seq_lengths_q=values["boundaries"][1:],
+                max_query_len=workload.query,
+                block_tables=torch.tensor(values["pages"], dtype=torch.int32, device="npu"),
+                slot_mapping=torch.tensor(values["slots"], dtype=torch.int64, device="npu"),
+                model_runner_type="generate",
+            )
+            self.mapping = {layer_name: self.metadata}
+
+        def refresh(self, batch, variant):
+            values = request_values(workload, self.start, self.stop, batch, variant)
+            self.metadata.seq_lens_list[:] = values["lengths"]
+            self.metadata.seq_lens.copy_(torch.tensor(values["lengths"], dtype=torch.int32))
+            self.metadata.seq_lens_gpu.copy_(self.metadata.seq_lens)
+            self.metadata.block_tables.copy_(torch.tensor(values["pages"], dtype=torch.int32))
+            self.metadata.slot_mapping.copy_(torch.tensor(values["slots"], dtype=torch.int64))
+            self.positions.copy_(torch.tensor(values["positions"], dtype=torch.int64))
+
+        def forward_context(self):
+            count = (self.stop - self.start) * workload.query
+            return set_ascend_forward_context(
+                self.mapping,
+                runner.vllm_config,
+                num_tokens=count,
+                num_actual_tokens=count,
+                aclgraph_runtime_mode=CUDAGraphMode.NONE,
+                batch_descriptor=BatchDescriptor(num_tokens=count, num_reqs=self.stop - self.start, uniform=True),
+                model_instance=model,
+                skip_compiled=True,
+            )
+
+        def identity(self):
+            return tuple(
+                value.data_ptr()
+                for value in (
+                    self.positions,
+                    self.metadata.block_tables,
+                    self.metadata.slot_mapping,
+                    self.metadata.seq_lens_gpu,
+                    self.metadata.query_start_loc_gpu,
+                )
+            )
+
+    input_data = [InputData(start, stop) for start, stop in intervals]
+    metadata_identities = tuple(data.identity() for data in input_data)
+    cache_addresses = tuple(value.data_ptr() for value in caches)
+
+    def projected(normalized, positions, weight, cos_sin=None):
+        qkv = functional.linear(normalized, weight)
+        if _uses_multimodal_rope(attention):
+            if cos_sin is None:
+                planes = positions.unsqueeze(0).expand(3, -1)
+                cos_sin = attention.rotary_emb.cos_sin_cache[planes].to(device=qkv.device, dtype=qkv.dtype)
+            q, k, v, gate = torch.ops.vllm.triton_split_qkv_rmsnorm_mrope(
+                qkv=qkv,
+                q_weight=1.0 + attention.q_norm.weight,
+                k_weight=1.0 + attention.k_norm.weight,
+                cos_sin=cos_sin,
+                num_q_heads=attention.num_heads,
+                num_kv_heads=attention.num_kv_heads,
+                head_size=attention.head_dim,
+                eps=attention.config.rms_norm_eps,
+                mrope_section=attention.rotary_emb.mrope_section,
+                is_interleaved=attention.rotary_emb.mrope_interleaved,
+                rope_dim=attention.rotary_emb.rotary_dim,
+                has_gate=True,
+            )
+        else:
+            q_gate, k, v = qkv.split([attention.q_size * 2, attention.kv_size, attention.kv_size], dim=-1)
+            q, gate = q_gate.view(-1, attention.num_heads, attention.head_dim * 2).chunk(2, dim=-1)
+            q = attention.q_norm(q).reshape(-1, attention.q_size)
+            k = attention.k_norm(k.reshape(-1, attention.num_kv_heads, attention.head_dim)).reshape(
+                -1, attention.kv_size
+            )
+            q, k = attention.rotary_emb(positions, q, k)
+        # Perform all layout materialization before the FIA update task group.
+        return (
+            q.reshape(-1, attention.num_heads, attention.head_dim).contiguous(),
+            k.reshape(-1, attention.num_kv_heads, attention.head_dim).contiguous(),
+            v.reshape(-1, attention.num_kv_heads, attention.head_dim).contiguous(),
+            gate.reshape(-1, attention.q_size),
+        )
+
+    def attend(value, residual_value, data, weight, cos_sin=None):
+        normalized, _ = layer.input_layernorm(value, residual_value)
+        q, k, v, gate = projected(normalized, data.positions, weight, cos_sin)
+        output = torch.empty_like(q)
+        impl.forward(backend, q, k, v, caches, data.metadata, output=output)
+        return output.reshape(-1, attention.q_size) * torch.sigmoid(gate)
+
+    def shared_output(value, weight):
+        return group.all_reduce(functional.linear(value, weight))
+
+    def assert_close(actual, expected, label, live_rows=None):
+        actual, expected = actual.float().cpu(), expected.float().cpu()
+        if live_rows is not None:
+            actual, expected = actual[:live_rows], expected[:live_rows]
+        torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.02, msg=lambda msg: f"{label}: {msg}")
+        checks.append(dict(label=label, max_abs=(actual - expected).abs().max().item(), elements=actual.numel()))
+
+    if args.shared_rope:
+        if not _uses_multimodal_rope(attention):
+            raise ValueError("shared lookup requires the selected MRoPE kernel")
+        positions = input_data[0].positions
+        table = attention.rotary_emb.cos_sin_cache
+        gathered = table.index_select(0, positions).to(dtype=down.dtype)
+        expanded = gathered.unsqueeze(0).expand(3, -1, -1)
+        varied_positions = torch.stack((positions, positions + 1, positions + 2))
+        varied = table[varied_positions].to(dtype=down.dtype)
+        torch.manual_seed(900)
+        normalized = torch.randn(down.shape, dtype=down.dtype, device=down.device) * 0.1
+        for label, full_cos in (("expanded", expanded), ("different_planes", varied)):
+            for start, stop in ((0, boundary), (boundary, rows)):
+                view = full_cos[:, start:stop]
+                observed = projected(normalized[start:stop], positions[start:stop], weight_nd, view)
+                expected = projected(normalized[start:stop], positions[start:stop], weight_nd, view.contiguous())
+                for index, (actual, wanted) in enumerate(zip(observed, expected, strict=True)):
+                    torch.testing.assert_close(actual, wanted, rtol=0, atol=0)
+                    checks.append(dict(label=f"rope_view/{label}/{start}/{index}", bitwise_equal=True))
+
+    # A coherent prefix for this layer's synthetic hidden states, not a model
+    # prefill. The same projected prefix is copied into each request's pages.
+    torch.manual_seed(901)
+    prefix_hidden = torch.randn((workload.kv_length, down.shape[1]), dtype=down.dtype, device=down.device) * 0.1
+    with input_data[0].forward_context():
+        normalized = layer.input_layernorm(prefix_hidden)
+        _, prefix_k, prefix_v, _ = projected(normalized, torch.arange(workload.kv_length, device="npu"), weight_nd)
+    page_rows = workload.pages_per_request * workload.block_size
+    for cache, prefix in zip(caches, (prefix_k, prefix_v), strict=True):
+        view = cache.view(workload.capacity, page_rows, attention.num_kv_heads, attention.head_dim)
+        view[:, : workload.kv_length].copy_(prefix.unsqueeze(0).expand(workload.capacity, -1, -1, -1))
+    initial_caches = tuple(value.clone() for value in caches)
+
+    def restore_cache():
+        torch.npu.synchronize()
+        for value, initial in zip(caches, initial_caches, strict=True):
+            value.copy_(initial)
+        torch.npu.synchronize()
+
+    def prepare(batch, variant):
+        torch.manual_seed(42 + variant)
+        down.copy_(torch.randn(down.shape, dtype=down.dtype, device=down.device) * (0.1 * (rank + 1)))
+        residual.copy_(torch.randn(residual.shape, dtype=residual.dtype, device=residual.device) * 0.1)
+        down[batch * workload.query :].zero_()
+        residual[batch * workload.query :].zero_()
+        for data in input_data:
+            data.refresh(batch, variant)
+        if tuple(data.identity() for data in input_data) != metadata_identities:
+            raise ValueError("captured metadata tensor addresses changed")
+        if tuple(value.data_ptr() for value in caches) != cache_addresses:
+            raise ValueError("selected-layer KV addresses changed")
+        torch.npu.synchronize()
+
+    def reference(batch, label):
+        independent_sum = down.float().cpu()
+        dist.all_reduce(independent_sum, group=cpu_group)
+        reduced = group.all_reduce(down.clone())
+        assert_close(reduced, independent_sum, f"{label}/collective_vs_cpu")
+        restore_cache()
+        with input_data[0].forward_context():
+            attended = attend(reduced.clone(), residual.clone(), input_data[0], weight_nd)
+            result = shared_output(attended, output_weight_nd).clone()
+        torch.npu.synchronize()
+        if label == "initial":
+            # Qualify the gated-Q decomposition against the official complete
+            # attention module, including its real O projection and collective.
+            with input_data[0].forward_context():
+                projected_result, _ = attention.o_proj(attended)
+            assert_close(result, projected_result, "shared_o_vs_official", batch * workload.query)
+            restore_cache()
+            with input_data[0].forward_context():
+                normalized, _ = layer.input_layernorm(reduced.clone(), residual.clone())
+                official = attention(positions=input_data[0].positions, hidden_states=normalized)
+            assert_close(projected_result, official, "decomposed_vs_official_attention", batch * workload.query)
+        return result
+
+    class BranchGraph(UpdatableGraph):
+        def __init__(self):
+            super().__init__()
+            self.lane = 0
+            self.task_lanes = []
+
+        def get_capture_resource(self, key, factory, use_max_workspace=False):
+            return super().get_capture_resource((self.lane, key), factory, use_max_workspace)
+
+        def register_task(self, operation, kwargs, provider):
+            super().register_task(operation, kwargs, provider)
+            self.task_lanes.append(self.lane)
+
+    class CapturedAttention:
+        def __init__(self, mode):
+            self.mode = mode
+            self.root, self.comm, self.update_stream = torch.npu.Stream(), torch.npu.Stream(), torch.npu.Stream()
+            self.events = [torch.npu.Event() for _ in range(3)]
+            self.prepared, self.updated = torch.npu.Event(), torch.npu.Event()
+            self.graph, self.pool = BranchGraph(), torch.npu.graph_pool_handle()
+            self.working, self.residual_working = torch.empty_like(down), torch.empty_like(residual)
+            self.attention_output = torch.empty((rows, attention.q_size), dtype=down.dtype, device=down.device)
+            self.output_partitions = ()
+            if mode == "split_output_overlap":
+                self.output_events = [torch.npu.Event() for _ in range(4)]
+                self.joined_output = torch.empty(
+                    (rows, output_weight_nz.shape[0]), dtype=down.dtype, device=down.device
+                )
+            self.root.wait_stream(main)
+            restore_cache()
+            with torch.npu.stream(self.root), input_data[0].forward_context():
+                for _ in range(3):
+                    self.operation()
+            torch.npu.synchronize()
+            dist.barrier(group=cpu_group)
+            with input_data[0].forward_context():
+                get_forward_context().capturing = True
+                with torch.npu.graph(self.graph, pool=self.pool, stream=self.root):
+                    self.output = self.operation()
+            torch.npu.synchronize()
+            expected = 1 if mode == "joined" else 2
+            if len(self.graph.tasks) != expected or any(
+                task.operation != torch_npu.npu_fused_infer_attention_score.out for task in self.graph.tasks
+            ):
+                raise ValueError(f"{mode}: expected {expected} real FIA update tasks")
+            self.workspaces = tuple(value.data_ptr() for value in self.graph.capture_resources.values())
+            if len(set(self.workspaces)) != expected:
+                raise ValueError(f"{mode}: each FIA branch must own its workspace")
+            self.source = BranchSource(self.graph, input_data)
+
+        def branch(self, lane, value):
+            data = input_data[lane]
+            start, stop = data.start * workload.query, data.stop * workload.query
+            capturing = get_forward_context().capturing
+            self.graph.lane = lane
+            with data.forward_context():
+                get_forward_context().capturing = capturing
+                self.attention_output[start:stop].copy_(
+                    attend(
+                        value,
+                        self.residual_working[start:stop],
+                        data,
+                        weight_nz,
+                        self.cos_sin[:, start:stop] if args.shared_rope else None,
+                    )
+                )
+
+        def output_lane(self, lane):
+            start, stop = (0, boundary) if lane == 0 else (boundary, rows)
+            projected_output = functional.linear(self.attention_output[start:stop], output_weight_nz)
+            ready, done = self.output_events[lane * 2 : lane * 2 + 2]
+            ready.record(self.root)
+            with torch.npu.stream(self.comm):
+                self.comm.wait_event(ready)
+                reduced_output = group.all_reduce(projected_output)
+                done.record(self.comm)
+            return projected_output, reduced_output
+
+        def operation(self):
+            # The communicator reduces in place. Every schedule pays the same
+            # source/restore copies; a real producer would supply these buffers.
+            self.working.copy_(down)
+            self.residual_working.copy_(residual)
+            if args.shared_rope:
+                # Text positions share all three MRoPE planes. Gather once at
+                # full capacity; each branch consumes a stride-aware view.
+                gathered = attention.rotary_emb.cos_sin_cache.index_select(0, input_data[0].positions)
+                self.cos_sin = gathered.to(dtype=down.dtype).unsqueeze(0).expand(3, -1, -1)
+            if self.mode == "joined":
+                self.branch(0, group.all_reduce(self.working))
+            elif self.mode == "split_serial":
+                left, right = self.working[:boundary], self.working[boundary:]
+                first, second = group.all_reduce(left), group.all_reduce(right)
+                self.branch(1, first)
+                self.branch(2, second)
+            else:
+                left, right = self.working[:boundary], self.working[boundary:]
+                fork, first_ready, second_ready = self.events
+                fork.record(self.root)
+                self.comm.wait_event(fork)
+                with torch.npu.stream(self.comm):
+                    first = group.all_reduce(left)
+                    first_ready.record(self.comm)
+                    second = group.all_reduce(right)
+                    second_ready.record(self.comm)
+                self.root.wait_event(first_ready)
+                self.branch(1, first)
+                if self.mode == "split_output_overlap":
+                    first_output = self.output_lane(0)
+                self.root.wait_event(second_ready)
+                self.branch(2, second)
+                if self.mode == "split_output_overlap":
+                    second_output = self.output_lane(1)
+                    self.root.wait_event(self.output_events[1])
+                    self.root.wait_event(self.output_events[3])
+                    # The collective may return new storage. Retain both sets
+                    # of tensors and time the copies from its actual results.
+                    self.output_partitions = (first_output, second_output)
+                    self.joined_output[:boundary].copy_(first_output[1])
+                    self.joined_output[boundary:].copy_(second_output[1])
+                    return self.joined_output
+            # Both lanes finish before the same full-bucket O and TP reduction.
+            return shared_output(self.attention_output, output_weight_nz)
+
+        def replay(self):
+            tasks = self.graph.resolve_tasks(self.source)
+            self.prepared.record(main)
+            self.root.wait_event(self.prepared)
+            self.update_stream.wait_event(self.prepared)
+            with torch.npu.stream(self.root):
+                self.graph.replay()
+            self.graph.update(self.update_stream, tasks)
+            self.updated.record(self.update_stream)
+            self.root.wait_event(self.updated)
+
+        def identity(self):
+            return (
+                id(self.graph),
+                self.output.data_ptr(),
+                self.attention_output.data_ptr(),
+                self.workspaces,
+                tuple(value.data_ptr() for partition in self.output_partitions for value in partition),
+            )
+
+    prepare(workload.batch, 0)
+    expected = reference(workload.batch, "initial")
+    modes = ("joined", "split_serial", "split_overlap")
+    if args.split_output_overlap:
+        modes += ("split_output_overlap",)
+    for mode in modes:
+        print(f"rank={rank} capture {mode}", flush=True)
+        entry = CapturedAttention(mode)
+        restore_cache()
+        entry.replay()
+        torch.npu.synchronize()
+        assert_close(entry.output, expected, f"{mode}/initial", workload.batch * workload.query)
+        entries[mode] = entry
+    identities = {mode: entry.identity() for mode, entry in entries.items()}
+    for batch, variant in ((workload.batch - 1, 1), (workload.capacity - 1, 2), (workload.batch, 3)):
+        prepare(batch, variant)
+        expected = reference(batch, f"b{batch}-v{variant}")
+        for mode, entry in entries.items():
+            restore_cache()
+            entry.replay()
+            torch.npu.synchronize()
+            assert_close(entry.output, expected, f"{mode}/b{batch}-v{variant}", batch * workload.query)
+            if entry.identity() != identities[mode]:
+                raise ValueError("graph, output or workspace address changed during metadata refresh")
+
+    samples = []
+    begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
+    for round_id in range(args.rounds):
+        for mode in modes if round_id % 2 == 0 else reversed(modes):
+            entry = entries[mode]
+            restore_cache()
+            for _ in range(3):
+                entry.replay()
+                torch.npu.synchronize()
+            wall, device = [], []
+            for _ in range(args.repeats):
+                dist.barrier(group=cpu_group)
+                begin.record(entry.root)
+                started = time.perf_counter_ns()
+                entry.replay()
+                end.record(entry.root)
+                end.synchronize()
+                wall.append((time.perf_counter_ns() - started) / 1000)
+                device.append(begin.elapsed_time(end) * 1000)
+            assert_close(entry.output, expected, f"{mode}/round{round_id}", workload.batch * workload.query)
+            samples.append(dict(mode=mode, round=round_id, wall_us=wall, device_us=device))
+            print(f"rank={rank} {mode} round={round_id}: wall={statistics.median(wall):.3f} us", flush=True)
+    if args.trace:
+        with torch_npu.profiler.profile(
+            activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU]
+        ) as profiler:
+            for mode in modes:
+                for _ in range(2):
+                    dist.barrier(group=cpu_group)
+                    with torch.profiler.record_function(f"tp_attention.{mode}"):
+                        entries[mode].replay()
+                        torch.npu.synchronize()
+        profiler.export_chrome_trace(str(args.output.with_suffix(f".rank{rank}.trace.json")))
+    local = dict(rank=rank, checks=checks, samples=samples)
+    results = [None] * world
+    dist.all_gather_object(results, local, group=cpu_group)
+    if rank == 0:
+        summaries = {}
+        for mode in modes:
+            summary = {}
+            for metric in ("wall_us", "device_us"):
+                rounds = []
+                for round_id in range(args.rounds):
+                    rank_rows = [
+                        next(row for row in result["samples"] if row["mode"] == mode and row["round"] == round_id)
+                        for result in results
+                    ]
+                    rounds.append(
+                        statistics.median(max(row[metric][i] for row in rank_rows) for i in range(args.repeats))
+                    )
+                summary[metric], summary[f"rounds_{metric}"] = statistics.median(rounds), rounds
+            summaries[mode] = summary
+        report = dict(
+            status="passed",
+            scope="selected_layer_communication_norm_qkv_rope_fia_gate_o_not_full_decoder",
+            model=args.model,
+            tensor_parallel_size=world,
+            selection=args.selection,
+            loader=args.loader_metadata,
+            layer_name=layer_name,
+            query=workload.query,
+            kv_length_maximum=workload.kv_length,
+            local_qkv_shape=list(weight_nd.shape),
+            local_o_shape=list(output_weight_nd.shape),
+            o_and_all_reduce_timed=True,
+            output_layouts={
+                mode: dict(
+                    projection_tokens=list(args.pair) if mode == "split_output_overlap" else [rows],
+                    reduction_tokens=list(args.pair) if mode == "split_output_overlap" else [rows],
+                    reduction_stream="comm" if mode == "split_output_overlap" else "root",
+                    shared_full_bucket=mode != "split_output_overlap",
+                    join_copy_timed=mode == "split_output_overlap",
+                    collective_order=(
+                        ["input_A", "input_B", "output_A", "output_B"]
+                        if mode == "split_output_overlap"
+                        else ["input", "output"]
+                        if mode == "joined"
+                        else ["input_A", "input_B", "output"]
+                    ),
+                )
+                for mode in modes
+            },
+            split_output_overlap=bool(args.split_output_overlap),
+            shared_rope_lookup=bool(args.shared_rope),
+            rope_source_sha256=hashlib.sha256(
+                (
+                    Path(__file__).parents[1] / "vllm_ascend/ops/triton/linearnorm/split_qkv_rmsnorm_mrope.py"
+                ).read_bytes()
+            ).hexdigest(),
+            kv_cache_shape=list(cache_shape),
+            cache_layout="benchmark_owned_contiguous_ND",
+            real_fia_updates_per_replay={mode: len(entry.graph.tasks) for mode, entry in entries.items()},
+            summaries=summaries,
+            ranks=results,
+            source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            limitations=(
+                "Synthetic rank-local Down outputs/residuals and a projected synthetic single-layer prefix. "
+                "Official attention is an untimed eager oracle. Timed graphs include O and all output reductions; "
+                "output_layouts identifies shared output work or split output work with timed result-join copies. "
+                "No complete hybrid model forward, GDN state, draft execution, serving or real scheduler. "
+                "Both schedules pay identical source restoration; true producer cost is absent. "
+                "Single replay times include all FIA updates and host submission gaps."
+            ),
+        )
+        args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+        print(json.dumps(summaries, indent=2), flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model", default="/models/Qwen3.5-27B-original")
+    parser.add_argument("--tensor-parallel-size", type=int, default=2)
+    parser.add_argument("--query", type=int, choices=(1, 4), default=4)
+    parser.add_argument("--pair", type=int, nargs=2, help="default Q4 pair is 272 + 128; Q1 uses the balanced pair")
+    parser.add_argument("--kv-length", type=int, default=512)
+    parser.add_argument("--rounds", type=int, default=3)
+    parser.add_argument("--repeats", type=int, default=8)
+    parser.add_argument("--trace", action="store_true")
+    parser.add_argument("--shared-rope", action="store_true", help="one full-bucket text-position lookup for all lanes")
+    parser.add_argument(
+        "--split-output-overlap",
+        action="store_true",
+        help="also time split O projections with output reduction A overlapping attention branch B",
+    )
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    if args.output.exists() or min(args.rounds, args.repeats) < 1:
+        parser.error("positive sample counts and a new output path are required")
+    if int(os.environ.get("WORLD_SIZE", "1")) != args.tensor_parallel_size or args.tensor_parallel_size < 2:
+        parser.error("launch with torchrun and matching multi-rank tensor parallelism")
+    if not args.query + 64 <= args.kv_length <= 2048:
+        parser.error("KV length must leave 64 prefix tokens and not exceed the causal mask")
+    args.dtype, args.batch_invariant, args.compiled = "bfloat16", False, False
+    if args.pair is None and args.query == 4:
+        args.pair = (272, 128)
+    args.selection = select_workload(args)
+    args.pair = args.selection["pair_tokens"]
+    capacity, batch = args.selection["capacity_requests"], args.selection["batch"]
+    left = min(batch - 1, args.selection["pair_requests"][0])
+    workload = ReplayWorkload(batch, capacity, args.query, args.kv_length, (left, batch - left))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        run_qwen35(args, workload, experiment=experiment)
+    except Exception as error:
+        rank = int(os.environ.get("RANK", "0"))
+        report = dict(
+            status="failed",
+            rank=rank,
+            scope="selected_layer_communication_norm_qkv_rope_fia_gate_o_not_full_decoder",
+            selection=args.selection,
+            model=args.model,
+            loader=getattr(args, "loader_metadata", None),
+            error_type=type(error).__name__,
+            error=str(error),
+            source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        )
+        content = json.dumps(report, indent=2, allow_nan=False)
+        args.output.with_suffix(f".rank{rank}.failure.json").write_text(content, encoding="utf-8")
+        if rank == 0:
+            args.output.write_text(content, encoding="utf-8")
+        raise
+
+
+if __name__ == "__main__":
+    main()
