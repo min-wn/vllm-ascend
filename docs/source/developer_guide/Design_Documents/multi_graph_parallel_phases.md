@@ -270,3 +270,8 @@ concurrent-core report's main source SHA256 is
 The committed source additionally records the stream-budget helper hash in
 future reports; this reporting-only addition was made locally after deployment
 and does not alter the measured schedule. The tested snapshot is preserved.
+
+The subsequent [larger-opportunity investigation](multi_graph_parallel_research_next.md)
+separates compute-phase pipelines, short request-owned GDN blocks and bounded
+device-side communication prototypes. It records measured opportunity budgets,
+API restrictions and stopping criteria; it does not add a new NPU result.
