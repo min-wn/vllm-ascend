@@ -1,9 +1,14 @@
+import ast
 import importlib.util
+import inspect
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import torch
+import torch.nn.functional as functional
 
 from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload
 
@@ -122,3 +127,242 @@ def test_branch_source_binds_right_lane_local_query_lengths_and_current_kv(bench
         assert right["block_table"] == full["block_table"][68:]
         assert right["actual_seq_lengths_kv"][batch - 68 :] == [0] * (100 - batch)
         assert right["block_table"][0] == list(range(272, 276))
+
+
+@pytest.mark.parametrize("inplace_residual", [False, True])
+def test_local_mlp_preserves_returned_residual_and_matches_dense_tp_sum(benchmark, inplace_residual):
+    torch.manual_seed(19)
+    hidden, intermediate, tokens = 8, 6, 7
+    value, residual = (torch.randn(tokens, hidden, dtype=torch.float64) for _ in range(2))
+    gate, up = (torch.randn(intermediate, hidden, dtype=torch.float64) for _ in range(2))
+    down = torch.randn(hidden, intermediate, dtype=torch.float64)
+    norm_weight = torch.randn(hidden, dtype=torch.float64)
+    expected_residual = value + residual
+    normalized = expected_residual * torch.rsqrt(expected_residual.square().mean(-1, keepdim=True) + 1e-6)
+    normalized *= norm_weight
+    expected = (functional.silu(normalized @ gate.T) * (normalized @ up.T)) @ down.T
+    returned_residuals = []
+
+    def post_norm(part, prior):
+        returned = prior.add_(part) if inplace_residual else prior + part
+        returned_residuals.append(returned)
+        normed = returned * torch.rsqrt(returned.square().mean(-1, keepdim=True) + 1e-6)
+        return normed * norm_weight, returned
+
+    def act(packed):
+        gate_part, up_part = packed.chunk(2, dim=-1)
+        return functional.silu(gate_part) * up_part
+
+    # Independent row and TP partitions must compose into the same dense MLP.
+    rank_outputs = []
+    for rank_start in (0, 3):
+        rank_outputs.append([])
+        gate_up = torch.cat((gate[rank_start : rank_start + 3], up[rank_start : rank_start + 3]))
+        for start, stop in ((0, 4), (4, tokens)):
+            result, next_residual = benchmark.project_mlp(
+                value[start:stop],
+                residual[start:stop].clone(),
+                post_norm,
+                act,
+                gate_up,
+                down[:, rank_start : rank_start + 3],
+            )
+            assert next_residual is returned_residuals[-1]
+            torch.testing.assert_close(next_residual, expected_residual[start:stop])
+            rank_outputs[-1].append(result)
+    observed = torch.cat(rank_outputs[0]) + torch.cat(rank_outputs[1])
+    torch.testing.assert_close(observed, expected)
+    assert benchmark.experiment_modes(True, False) == ("joined", "split_output_overlap", "split_mlp_overlap")
+    assert benchmark.experiment_modes(False, False) == ("joined", "split_serial", "split_overlap")
+
+
+@pytest.mark.parametrize("shared_qkv", [False, True])
+def test_actual_split_mlp_schedule_waits_for_and_joins_returned_collective_storage(benchmark, shared_qkv):
+    # Execute the production scheduling methods with CPU tensors and streams
+    # that log dependencies. This checks ordering, not asynchronous NPU math.
+    syntax = ast.parse(inspect.getsource(benchmark.experiment))
+    definition = next(
+        node for node in syntax.body[0].body if isinstance(node, ast.ClassDef) and node.name == "CapturedAttention"
+    )
+    log, returned = [], []
+    current_stream = "root"
+    input_names = ("input",) if shared_qkv else ("input_A", "input_B")
+    collective_names = iter(input_names + ("output_A", "output_B", "down_A", "down_B"))
+
+    class Stream:
+        def __init__(self, name):
+            self.name = name
+
+        def wait_event(self, event):
+            assert event.recorded
+            log.append(("wait", event.name, self.name))
+
+    class Event:
+        def __init__(self, name):
+            self.name, self.recorded = name, False
+
+        def record(self, stream):
+            self.recorded = True
+            log.append(("record", self.name, stream.name))
+
+    @contextmanager
+    def stream(selected):
+        nonlocal current_stream
+        previous, current_stream = current_stream, selected.name
+        try:
+            yield
+        finally:
+            current_stream = previous
+
+    def all_reduce(value):
+        name = next(collective_names)
+        log.append(("reduce", name, current_stream))
+        result = value * 2
+        assert result.data_ptr() != value.data_ptr()
+        returned.append(result)
+        return result
+
+    torch.manual_seed(29)
+    rows, boundary, hidden, intermediate = 7, 4, 8, 6
+    down, residual = (torch.randn(rows, hidden, dtype=torch.float64) for _ in range(2))
+    o_weight = torch.randn(hidden, hidden, dtype=torch.float64)
+    gate_up_weight = torch.randn(intermediate * 2, hidden, dtype=torch.float64)
+    down_weight = torch.randn(hidden, intermediate, dtype=torch.float64)
+    qkv_weight = torch.randn(hidden, hidden, dtype=torch.float64)
+    norm_results, transformed_slices = [], []
+    forward_context = SimpleNamespace(capturing=True)
+    intervals = ((0, rows), (0, boundary), (boundary, rows))
+    input_data = [
+        SimpleNamespace(start=start, stop=stop, positions=torch.arange(start, stop), forward_context=nullcontext)
+        for start, stop in intervals
+    ]
+
+    def post_norm(value, prior):
+        updated = prior + value
+        return updated * torch.rsqrt(updated.square().mean(-1, keepdim=True) + 1e-6), updated
+
+    def activation(packed):
+        gate, up = packed.chunk(2, -1)
+        return functional.silu(gate) * up
+
+    def local_mlp(value, prior, gate_up, projection):
+        log.append(("mlp", value.shape[0], current_stream))
+        return benchmark.project_mlp(value, prior, post_norm, activation, gate_up, projection)
+
+    def input_norm(value, prior):
+        log.append(("input_norm", value.shape[0], current_stream))
+        result = post_norm(value, prior)
+        norm_results.append(result)
+        return result
+
+    def transform_qkv(projection, positions, cos_sin):
+        assert cos_sin is None
+        transformed_slices.append((projection, positions))
+        return projection + positions[:, None] * 0.125
+
+    def attend_projected(projection, data):
+        assert forward_context.capturing
+        assert projection.shape[0] == data.stop - data.start
+        return projection
+
+    namespace = dict(
+        torch=SimpleNamespace(npu=SimpleNamespace(stream=stream)),
+        functional=functional,
+        args=SimpleNamespace(include_mlp=True, shared_rope=False, shared_qkv=shared_qkv),
+        group=SimpleNamespace(all_reduce=all_reduce),
+        rows=rows,
+        boundary=boundary,
+        down=down,
+        residual=residual,
+        output_weight_nz=o_weight,
+        gate_up_weight_nz=gate_up_weight,
+        down_weight_nz=down_weight,
+        local_mlp=local_mlp,
+        weight_nz=qkv_weight,
+        layer=SimpleNamespace(input_layernorm=input_norm),
+        input_data=input_data,
+        workload=SimpleNamespace(query=1),
+        get_forward_context=lambda: forward_context,
+        transform_qkv=transform_qkv,
+        attend_projected=attend_projected,
+    )
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), benchmark.__file__, "exec"), namespace)
+    cls = namespace["CapturedAttention"]
+    entry = cls.__new__(cls)
+    entry.mode = "split_mlp_overlap"
+    entry.graph, entry.workspaces = SimpleNamespace(lane=0), ()
+    entry.root, entry.comm = Stream("root"), Stream("comm")
+    entry.events = [Event(name) for name in ("fork", "input_A", "input_B")]
+    entry.output_events = [Event(name) for name in ("OA_ready", "OA_done", "OB_ready", "OB_done")]
+    entry.mlp_events = [Event(name) for name in ("DA_ready", "DA_done", "DB_ready", "DB_done")]
+    for field in (
+        "working",
+        "residual_working",
+        "attention_output",
+        "attention_residual",
+        "joined_output",
+        "joined_residual",
+    ):
+        setattr(entry, field, torch.empty_like(down))
+
+    def branch(lane, value):
+        start, stop = (0, boundary) if lane == 1 else (boundary, rows)
+        entry.attention_output[start:stop].copy_(value + 5)
+        entry.attention_residual[start:stop].copy_(value + entry.residual_working[start:stop])
+
+    if not shared_qkv:
+        entry.branch = branch
+    result, final_residual = entry.operation()
+    if shared_qkv:
+        expected_input_residual = 2 * down + residual
+        normalized_input = expected_input_residual * torch.rsqrt(
+            expected_input_residual.square().mean(-1, keepdim=True) + 1e-6
+        )
+        expected_qkv = normalized_input @ qkv_weight.T
+        torch.testing.assert_close(entry.shared_qkv_output, expected_qkv)
+        assert len(norm_results) == 1
+        torch.testing.assert_close(norm_results[0][1], expected_input_residual)
+        assert entry.attention_residual.data_ptr() != norm_results[0][1].data_ptr()
+        torch.testing.assert_close(entry.attention_residual, expected_input_residual)
+        assert len(transformed_slices) == 2
+        for (projection, positions), (start, stop) in zip(transformed_slices, intervals[1:], strict=True):
+            assert (
+                projection.data_ptr() == entry.shared_qkv_output.data_ptr() + start * hidden * projection.element_size()
+            )
+            torch.testing.assert_close(projection, expected_qkv[start:stop])
+            torch.testing.assert_close(positions, torch.arange(start, stop))
+        attended = expected_qkv + torch.arange(rows)[:, None] * 0.125
+        assert ("input_norm", rows, "root") in log
+        entry.output = result, final_residual
+        assert entry.identity()[-1] == entry.shared_qkv_output.data_ptr()
+    else:
+        attended = 2 * down + 5
+    attention_output = functional.linear(attended, o_weight) * 2
+    expected_residual = 2 * down + residual + attention_output
+    normalized = expected_residual * torch.rsqrt(expected_residual.square().mean(-1, keepdim=True) + 1e-6)
+    packed = normalized @ gate_up_weight.T
+    gate, up = packed.chunk(2, -1)
+    expected = ((functional.silu(gate) * up) @ down_weight.T) * 2
+    torch.testing.assert_close(result, expected)
+    torch.testing.assert_close(final_residual, expected_residual)
+    assert result is entry.joined_output and final_residual is entry.joined_residual
+    assert entry.output_partitions[0][1] is returned[-4]
+    assert entry.output_partitions[1][1] is returned[-3]
+    assert entry.mlp_partitions[0][1] is returned[-2]
+    assert entry.mlp_partitions[1][1] is returned[-1]
+    expected_collectives = [("reduce", name, "root" if shared_qkv else "comm") for name in input_names]
+    expected_collectives += [("reduce", name, "comm") for name in ("output_A", "output_B", "down_A", "down_B")]
+    assert [item for item in log if item[0] == "reduce"] == expected_collectives
+    expected_order = [
+        ("reduce", "output_B", "comm"),
+        ("wait", "OA_done", "root"),
+        ("mlp", boundary, "root"),
+        ("reduce", "down_A", "comm"),
+        ("wait", "OB_done", "root"),
+        ("mlp", rows - boundary, "root"),
+        ("reduce", "down_B", "comm"),
+        ("wait", "DA_done", "root"),
+        ("wait", "DB_done", "root"),
+    ]
+    indices = [log.index(item) for item in expected_order]
+    assert indices == sorted(indices)

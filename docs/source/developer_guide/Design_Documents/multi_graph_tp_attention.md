@@ -535,8 +535,19 @@ The next structural experiment is to preserve the request partitions beyond
 O, allowing A's post-attention normalization and real MLP to start when its
 output reduction completes, while B's final output reduction is still running.
 This targets the observed roughly 100-135 us exposed communication tail without
-requiring advance knowledge of the next replay's inputs. The current prototype
-does not implement that continuation.
+requiring advance knowledge of the next replay's inputs. The selected-layer
+continuation is implemented behind `--include-mlp`; its separate qualification
+and results are recorded in
+[Tensor-parallel attention and MLP continuation](multi_graph_tp_attention_mlp.md).
+The original split-QKV MLP pilot fails the unchanged numerical gate. The new
+explicit `--shared-qkv` candidate retains request splitting after full-bucket
+input reduction, input norm, and QKV. It gives up the earlier input-reduction
+overlap and changes the work available under output communication; the
+attention-only gains above cannot be assigned to that new schedule.
+The shared-QKV 272 + 128 full-layer result has no repeatable padding win.
+The legal 200 + 200 pair passes unchanged numerical checks and saves 2.81%
+and 2.55% wall time against same-run padding in two independent runs. The MLP
+document records the full endpoint, controls, traces, and remaining scope limits.
 
 The comparison must include the same real post-attention work for padding,
 retain a shared full-bucket dense baseline, and measure all partitioned GEMMs,

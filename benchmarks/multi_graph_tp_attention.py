@@ -2,8 +2,9 @@
 
 The selected checkpoint layer supplies real Norm, QKV, QK-Norm, RoPE, FIA and O
 operations. Rank-local Down outputs, residuals and prefix hidden states are
-synthetic. Every replay retains FIA host-parameter updates. This does not run
-the hybrid decoder, its GDN layers or FFN inside timed graphs.
+synthetic. Every replay retains FIA host-parameter updates. --include-mlp adds
+the selected layer's post-Norm, MLP and final TP reduction, returning both
+hidden states and residual. Neither scope runs the complete hybrid model.
 """
 
 import argparse
@@ -18,6 +19,68 @@ from multi_graph_tp_boundary import select_workload
 from multi_graph_tp_boundary_loader import run_qwen35
 
 from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload
+
+
+def experiment_modes(include_mlp, split_output_overlap):
+    if include_mlp:
+        return ("joined", "split_output_overlap", "split_mlp_overlap")
+    modes = ("joined", "split_serial", "split_overlap")
+    return modes + ("split_output_overlap",) if split_output_overlap else modes
+
+
+def experiment_scope(include_mlp):
+    if include_mlp:
+        return "selected_decoder_layer_and_input_communication_not_full_model"
+    return "selected_layer_communication_norm_qkv_rope_fia_gate_o_not_full_decoder"
+
+
+def execution_layout(mode, rows, pair, include_mlp, shared_qkv=False):
+    if mode not in experiment_modes(include_mlp, True):
+        raise ValueError("mode is not supported in the requested timing scope")
+    split_output = mode in ("split_output_overlap", "split_mlp_overlap")
+    split_mlp = mode == "split_mlp_overlap"
+    collectives = (
+        ["input_A", "input_B", "output_A", "output_B"]
+        if split_output
+        else ["input", "output"]
+        if mode == "joined"
+        else ["input_A", "input_B", "output"]
+    )
+    if include_mlp:
+        collectives += ["down_A", "down_B"] if split_mlp else ["down"]
+    if shared_qkv and mode != "joined":
+        collectives = ["input"] + collectives[2:]
+    return dict(
+        input_and_qkv_tokens=[rows] if shared_qkv or mode == "joined" else list(pair),
+        shared_input_norm_qkv=shared_qkv,
+        projection_tokens=list(pair) if split_output else [rows],
+        reduction_tokens=list(pair) if split_output else [rows],
+        reduction_stream="comm" if split_output else "root",
+        shared_full_bucket=not split_output,
+        join_copy_timed=split_output and not split_mlp,
+        collective_order=collectives,
+        mlp=(
+            dict(
+                projection_tokens=list(pair) if split_mlp else [rows],
+                reduction_tokens=list(pair) if split_mlp else [rows],
+                reduction_stream="comm" if split_mlp else "root",
+                shared_full_bucket=not split_mlp,
+                real_down_all_reduces_per_replay=2 if split_mlp else 1,
+                hidden_and_residual_join_timed=split_mlp,
+            )
+            if include_mlp
+            else None
+        ),
+    )
+
+
+def project_mlp(value, residual, post_norm, act_fn, gate_up_weight, down_weight):
+    """Return local Down and the real post-Norm residual, before any TP sum."""
+    import torch.nn.functional as functional
+
+    normalized, next_residual = post_norm(value, residual)
+    intermediate = act_fn(functional.linear(normalized, gate_up_weight))
+    return functional.linear(intermediate, down_weight), next_residual
 
 
 class BranchSource:
@@ -79,7 +142,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     from vllm_ascend.ascend_forward_context import set_ascend_forward_context
     from vllm_ascend.attention.attention_v1 import AscendAttentionBackendImpl, AscendAttentionState, AscendMetadata
     from vllm_ascend.compilation.updatable_graph import UpdatableGraph
-    from vllm_ascend.ops.linear import AscendRowParallelLinear, AscendUnquantizedLinearMethod
+    from vllm_ascend.ops.linear import (
+        AscendMergedColumnParallelLinear,
+        AscendRowParallelLinear,
+        AscendUnquantizedLinearMethod,
+    )
     from vllm_ascend.patch.worker.patch_qwen3_5 import _uses_multimodal_rope
 
     group, cpu_group = get_tp_group(), get_world_group().cpu_group
@@ -126,6 +193,42 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     output_weight_nz = torch_npu.npu_format_cast(output_weight_nd, 29)
     if torch_npu.get_npu_format(output_weight_nz) != 29:
         raise ValueError("NZ O projection conversion did not take effect")
+    if args.include_mlp:
+        if layer.layer_scale or layer.layer_type != "full_attention" or layer.use_attn_reduce_scatter_for_moe:
+            raise ValueError("the MLP scope requires an unscaled dense full-attention decoder layer")
+        mlp = layer.mlp
+        if getattr(mlp, "expert_gate", None) is not None:
+            raise ValueError("the MLP scope does not support expert-specific gating")
+        gate_up_module, down_module = mlp.gate_up_proj, mlp.down_proj
+        if (
+            type(gate_up_module) is not AscendMergedColumnParallelLinear
+            or type(down_module) is not AscendRowParallelLinear
+            or gate_up_module.gather_output
+            or not down_module.input_is_parallel
+            or not down_module.reduce_results
+            or any(
+                type(projection.quant_method) is not AscendUnquantizedLinearMethod
+                or projection.custom_op is not None
+                or projection.bias is not None
+                or not projection.return_bias
+                or projection.weight.dtype != torch.bfloat16
+                or projection.tp_size != world
+                or projection.tp_rank != group.rank_in_group
+                for projection in (gate_up_module, down_module)
+            )
+        ):
+            raise ValueError("MLP requires local BF16 GateUp and Down shards with the ordinary TP all-reduce")
+        if (
+            tuple(gate_up_module.weight.shape) != (2 * down_module.weight.shape[1], weight_nd.shape[1])
+            or down_module.weight.shape[0] != weight_nd.shape[1]
+        ):
+            raise ValueError("loaded MLP shards disagree with the gated intermediate and hidden dimensions")
+        gate_up_weight_nd = torch_npu.npu_format_cast(gate_up_module.weight, 2)
+        down_weight_nd = torch_npu.npu_format_cast(down_module.weight, 2)
+        gate_up_weight_nz = torch_npu.npu_format_cast(gate_up_weight_nd, 29)
+        down_weight_nz = torch_npu.npu_format_cast(down_weight_nd, 29)
+        if any(torch_npu.get_npu_format(weight) != 29 for weight in (gate_up_weight_nz, down_weight_nz)):
+            raise ValueError("NZ MLP projection conversion did not take effect")
     down = torch.empty((rows, weight_nd.shape[1]), dtype=torch.bfloat16, device="npu")
     residual = torch.empty_like(down)
     cache_shape = (workload.kv_blocks, workload.block_size, attention.num_kv_heads, attention.head_dim)
@@ -208,8 +311,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     metadata_identities = tuple(data.identity() for data in input_data)
     cache_addresses = tuple(value.data_ptr() for value in caches)
 
-    def projected(normalized, positions, weight, cos_sin=None):
-        qkv = functional.linear(normalized, weight)
+    def transform_qkv(qkv, positions, cos_sin=None):
         if _uses_multimodal_rope(attention):
             if cos_sin is None:
                 planes = positions.unsqueeze(0).expand(3, -1)
@@ -244,15 +346,31 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             gate.reshape(-1, attention.q_size),
         )
 
-    def attend(value, residual_value, data, weight, cos_sin=None):
-        normalized, _ = layer.input_layernorm(value, residual_value)
-        q, k, v, gate = projected(normalized, data.positions, weight, cos_sin)
+    def projected(normalized, positions, weight, cos_sin=None):
+        return transform_qkv(functional.linear(normalized, weight), positions, cos_sin)
+
+    def attend_projected(projection, data):
+        q, k, v, gate = projection
         output = torch.empty_like(q)
         impl.forward(backend, q, k, v, caches, data.metadata, output=output)
         return output.reshape(-1, attention.q_size) * torch.sigmoid(gate)
 
+    def attend(value, residual_value, data, weight, cos_sin=None):
+        normalized, next_residual = layer.input_layernorm(value, residual_value)
+        attended = attend_projected(projected(normalized, data.positions, weight, cos_sin), data)
+        return (attended, next_residual) if args.include_mlp else attended
+
     def shared_output(value, weight):
         return group.all_reduce(functional.linear(value, weight))
+
+    def local_mlp(value, residual_value, gate_up_weight, down_weight):
+        return project_mlp(
+            value, residual_value, layer.post_attention_layernorm, mlp.act_fn, gate_up_weight, down_weight
+        )
+
+    def shared_mlp(value, residual_value, gate_up_weight, down_weight):
+        projected_down, next_residual = local_mlp(value, residual_value, gate_up_weight, down_weight)
+        return group.all_reduce(projected_down), next_residual
 
     def assert_close(actual, expected, label, live_rows=None):
         actual, expected = actual.float().cpu(), expected.float().cpu()
@@ -260,6 +378,13 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             actual, expected = actual[:live_rows], expected[:live_rows]
         torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.02, msg=lambda msg: f"{label}: {msg}")
         checks.append(dict(label=label, max_abs=(actual - expected).abs().max().item(), elements=actual.numel()))
+
+    def assert_result(actual, expected, label, live_rows):
+        if args.include_mlp:
+            for field, value, wanted in zip(("hidden", "residual"), actual, expected, strict=True):
+                assert_close(value, wanted, f"{label}/{field}", live_rows)
+        else:
+            assert_close(actual, expected, label, live_rows)
 
     if args.shared_rope:
         if not _uses_multimodal_rope(attention):
@@ -322,19 +447,46 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         restore_cache()
         with input_data[0].forward_context():
             attended = attend(reduced.clone(), residual.clone(), input_data[0], weight_nd)
-            result = shared_output(attended, output_weight_nd).clone()
+            if args.include_mlp:
+                attended, attention_residual = attended
+            projected_result_nd = shared_output(attended, output_weight_nd).clone()
+            if args.include_mlp:
+                result = tuple(
+                    value.clone()
+                    for value in shared_mlp(
+                        projected_result_nd.clone(), attention_residual.clone(), gate_up_weight_nd, down_weight_nd
+                    )
+                )
+            else:
+                result = projected_result_nd
         torch.npu.synchronize()
         if label == "initial":
             # Qualify the gated-Q decomposition against the official complete
             # attention module, including its real O projection and collective.
             with input_data[0].forward_context():
                 projected_result, _ = attention.o_proj(attended)
-            assert_close(result, projected_result, "shared_o_vs_official", batch * workload.query)
+            assert_close(projected_result_nd, projected_result, "shared_o_vs_official", batch * workload.query)
             restore_cache()
             with input_data[0].forward_context():
                 normalized, _ = layer.input_layernorm(reduced.clone(), residual.clone())
                 official = attention(positions=input_data[0].positions, hidden_states=normalized)
             assert_close(projected_result, official, "decomposed_vs_official_attention", batch * workload.query)
+            if args.include_mlp:
+                with input_data[0].forward_context():
+                    normalized, official_residual = layer.post_attention_layernorm(
+                        projected_result_nd.clone(), attention_residual.clone()
+                    )
+                    official_mlp = mlp(normalized)
+                assert_result(
+                    result, (official_mlp, official_residual), "decomposed_vs_official_mlp", batch * workload.query
+                )
+        if args.include_mlp:
+            restore_cache()
+            with input_data[0].forward_context():
+                official_layer = layer(
+                    hidden_states=reduced.clone(), residual=residual.clone(), positions=input_data[0].positions
+                )
+            assert_result(result, official_layer, f"{label}/decomposed_vs_official_layer", batch * workload.query)
         return result
 
     class BranchGraph(UpdatableGraph):
@@ -360,11 +512,18 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             self.working, self.residual_working = torch.empty_like(down), torch.empty_like(residual)
             self.attention_output = torch.empty((rows, attention.q_size), dtype=down.dtype, device=down.device)
             self.output_partitions = ()
-            if mode == "split_output_overlap":
+            self.mlp_partitions = ()
+            self.shared_qkv_output = None
+            if args.include_mlp:
+                self.attention_residual = torch.empty_like(residual)
+            if mode in ("split_output_overlap", "split_mlp_overlap"):
                 self.output_events = [torch.npu.Event() for _ in range(4)]
                 self.joined_output = torch.empty(
                     (rows, output_weight_nz.shape[0]), dtype=down.dtype, device=down.device
                 )
+            if mode == "split_mlp_overlap":
+                self.mlp_events = [torch.npu.Event() for _ in range(4)]
+                self.joined_residual = torch.empty_like(residual)
             self.root.wait_stream(main)
             restore_cache()
             with torch.npu.stream(self.root), input_data[0].forward_context():
@@ -394,15 +553,18 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             self.graph.lane = lane
             with data.forward_context():
                 get_forward_context().capturing = capturing
-                self.attention_output[start:stop].copy_(
-                    attend(
-                        value,
-                        self.residual_working[start:stop],
-                        data,
-                        weight_nz,
-                        self.cos_sin[:, start:stop] if args.shared_rope else None,
+                cos_sin = self.cos_sin[:, start:stop] if args.shared_rope else None
+                if args.shared_qkv:
+                    result = attend_projected(
+                        transform_qkv(self.shared_qkv_output[start:stop], data.positions, cos_sin), data
                     )
-                )
+                else:
+                    result = attend(value, self.residual_working[start:stop], data, weight_nz, cos_sin)
+                    if args.include_mlp:
+                        result, next_residual = result
+                        # Norm may return new storage instead of mutating its input.
+                        self.attention_residual[start:stop].copy_(next_residual)
+                self.attention_output[start:stop].copy_(result)
 
         def output_lane(self, lane):
             start, stop = (0, boundary) if lane == 0 else (boundary, rows)
@@ -415,6 +577,51 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 done.record(self.comm)
             return projected_output, reduced_output
 
+        def mlp_lane(self, lane, value):
+            start, stop = (0, boundary) if lane == 0 else (boundary, rows)
+            projected_down, next_residual = local_mlp(
+                value, self.attention_residual[start:stop], gate_up_weight_nz, down_weight_nz
+            )
+            ready, done = self.mlp_events[lane * 2 : lane * 2 + 2]
+            ready.record(self.root)
+            with torch.npu.stream(self.comm):
+                self.comm.wait_event(ready)
+                reduced_down = group.all_reduce(projected_down)
+                done.record(self.comm)
+            return projected_down, reduced_down, next_residual
+
+        def finish_split_mlp(self, first_output, second_output):
+            # Both O reductions have been submitted before either Down. All
+            # ranks keep output_A, output_B, down_A, down_B after the input sum.
+            self.root.wait_event(self.output_events[1])
+            first_mlp = self.mlp_lane(0, first_output[1])
+            self.root.wait_event(self.output_events[3])
+            second_mlp = self.mlp_lane(1, second_output[1])
+            self.root.wait_event(self.mlp_events[1])
+            self.root.wait_event(self.mlp_events[3])
+            self.mlp_partitions = (first_mlp, second_mlp)
+            self.joined_output[:boundary].copy_(first_mlp[1])
+            self.joined_output[boundary:].copy_(second_mlp[1])
+            self.joined_residual[:boundary].copy_(first_mlp[2])
+            self.joined_residual[boundary:].copy_(second_mlp[2])
+            return self.joined_output, self.joined_residual
+
+        def finish_shared_mlp(self, value):
+            if not args.include_mlp:
+                return value
+            return shared_mlp(value, self.attention_residual, gate_up_weight_nz, down_weight_nz)
+
+        def finish_output_lanes(self, first_output, second_output):
+            self.output_partitions = (first_output, second_output)
+            if self.mode == "split_mlp_overlap":
+                return self.finish_split_mlp(first_output, second_output)
+            self.root.wait_event(self.output_events[1])
+            self.root.wait_event(self.output_events[3])
+            # Retain and copy actual collective returns, which may use new storage.
+            self.joined_output[:boundary].copy_(first_output[1])
+            self.joined_output[boundary:].copy_(second_output[1])
+            return self.finish_shared_mlp(self.joined_output)
+
         def operation(self):
             # The communicator reduces in place. Every schedule pays the same
             # source/restore copies; a real producer would supply these buffers.
@@ -425,7 +632,21 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 # full capacity; each branch consumes a stride-aware view.
                 gathered = attention.rotary_emb.cos_sin_cache.index_select(0, input_data[0].positions)
                 self.cos_sin = gathered.to(dtype=down.dtype).unsqueeze(0).expand(3, -1, -1)
-            if self.mode == "joined":
+            if args.shared_qkv:
+                # Keep QKV GEMM's row shape identical to padding. Only the
+                # downstream attention and output/MLP communication are split.
+                reduced = group.all_reduce(self.working)
+                normalized, next_residual = layer.input_layernorm(reduced, self.residual_working)
+                self.shared_qkv_output = functional.linear(normalized, weight_nz)
+                self.attention_residual.copy_(next_residual)
+                if self.mode == "joined":
+                    self.branch(0, reduced)
+                else:
+                    self.branch(1, reduced[:boundary])
+                    first_output = self.output_lane(0)
+                    self.branch(2, reduced[boundary:])
+                    return self.finish_output_lanes(first_output, self.output_lane(1))
+            elif self.mode == "joined":
                 self.branch(0, group.all_reduce(self.working))
             elif self.mode == "split_serial":
                 left, right = self.working[:boundary], self.working[boundary:]
@@ -444,22 +665,15 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     second_ready.record(self.comm)
                 self.root.wait_event(first_ready)
                 self.branch(1, first)
-                if self.mode == "split_output_overlap":
+                if self.mode in ("split_output_overlap", "split_mlp_overlap"):
                     first_output = self.output_lane(0)
                 self.root.wait_event(second_ready)
                 self.branch(2, second)
-                if self.mode == "split_output_overlap":
+                if self.mode in ("split_output_overlap", "split_mlp_overlap"):
                     second_output = self.output_lane(1)
-                    self.root.wait_event(self.output_events[1])
-                    self.root.wait_event(self.output_events[3])
-                    # The collective may return new storage. Retain both sets
-                    # of tensors and time the copies from its actual results.
-                    self.output_partitions = (first_output, second_output)
-                    self.joined_output[:boundary].copy_(first_output[1])
-                    self.joined_output[boundary:].copy_(second_output[1])
-                    return self.joined_output
+                    return self.finish_output_lanes(first_output, second_output)
             # Both lanes finish before the same full-bucket O and TP reduction.
-            return shared_output(self.attention_output, output_weight_nz)
+            return self.finish_shared_mlp(shared_output(self.attention_output, output_weight_nz))
 
         def replay(self):
             tasks = self.graph.resolve_tasks(self.source)
@@ -475,24 +689,25 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         def identity(self):
             return (
                 id(self.graph),
-                self.output.data_ptr(),
+                tuple(value.data_ptr() for value in self.output) if args.include_mlp else self.output.data_ptr(),
                 self.attention_output.data_ptr(),
                 self.workspaces,
                 tuple(value.data_ptr() for partition in self.output_partitions for value in partition),
+                tuple(value.data_ptr() for partition in self.mlp_partitions for value in partition),
+                self.attention_residual.data_ptr() if args.include_mlp else None,
+                self.shared_qkv_output.data_ptr() if args.shared_qkv else None,
             )
 
     prepare(workload.batch, 0)
     expected = reference(workload.batch, "initial")
-    modes = ("joined", "split_serial", "split_overlap")
-    if args.split_output_overlap:
-        modes += ("split_output_overlap",)
+    modes = experiment_modes(args.include_mlp, args.split_output_overlap)
     for mode in modes:
         print(f"rank={rank} capture {mode}", flush=True)
         entry = CapturedAttention(mode)
         restore_cache()
         entry.replay()
         torch.npu.synchronize()
-        assert_close(entry.output, expected, f"{mode}/initial", workload.batch * workload.query)
+        assert_result(entry.output, expected, f"{mode}/initial", workload.batch * workload.query)
         entries[mode] = entry
     identities = {mode: entry.identity() for mode, entry in entries.items()}
     for batch, variant in ((workload.batch - 1, 1), (workload.capacity - 1, 2), (workload.batch, 3)):
@@ -502,7 +717,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             restore_cache()
             entry.replay()
             torch.npu.synchronize()
-            assert_close(entry.output, expected, f"{mode}/b{batch}-v{variant}", batch * workload.query)
+            assert_result(entry.output, expected, f"{mode}/b{batch}-v{variant}", batch * workload.query)
             if entry.identity() != identities[mode]:
                 raise ValueError("graph, output or workspace address changed during metadata refresh")
 
@@ -525,7 +740,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 end.synchronize()
                 wall.append((time.perf_counter_ns() - started) / 1000)
                 device.append(begin.elapsed_time(end) * 1000)
-            assert_close(entry.output, expected, f"{mode}/round{round_id}", workload.batch * workload.query)
+            assert_result(entry.output, expected, f"{mode}/round{round_id}", workload.batch * workload.query)
             samples.append(dict(mode=mode, round=round_id, wall_us=wall, device_us=device))
             print(f"rank={rank} {mode} round={round_id}: wall={statistics.median(wall):.3f} us", flush=True)
     if args.trace:
@@ -560,7 +775,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             summaries[mode] = summary
         report = dict(
             status="passed",
-            scope="selected_layer_communication_norm_qkv_rope_fia_gate_o_not_full_decoder",
+            scope=experiment_scope(args.include_mlp),
             model=args.model,
             tensor_parallel_size=world,
             selection=args.selection,
@@ -570,25 +785,21 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             kv_length_maximum=workload.kv_length,
             local_qkv_shape=list(weight_nd.shape),
             local_o_shape=list(output_weight_nd.shape),
+            local_gate_up_shape=list(gate_up_weight_nd.shape) if args.include_mlp else None,
+            local_down_shape=list(down_weight_nd.shape) if args.include_mlp else None,
             o_and_all_reduce_timed=True,
             output_layouts={
-                mode: dict(
-                    projection_tokens=list(args.pair) if mode == "split_output_overlap" else [rows],
-                    reduction_tokens=list(args.pair) if mode == "split_output_overlap" else [rows],
-                    reduction_stream="comm" if mode == "split_output_overlap" else "root",
-                    shared_full_bucket=mode != "split_output_overlap",
-                    join_copy_timed=mode == "split_output_overlap",
-                    collective_order=(
-                        ["input_A", "input_B", "output_A", "output_B"]
-                        if mode == "split_output_overlap"
-                        else ["input", "output"]
-                        if mode == "joined"
-                        else ["input_A", "input_B", "output"]
-                    ),
-                )
-                for mode in modes
+                mode: execution_layout(mode, rows, args.pair, args.include_mlp, args.shared_qkv) for mode in modes
             },
+            shared_input_norm_qkv=bool(args.shared_qkv),
             split_output_overlap=bool(args.split_output_overlap),
+            split_output_overlap_requested=args.split_output_overlap_requested,
+            include_mlp=bool(args.include_mlp),
+            post_norm_mlp_and_down_all_reduce_timed=bool(args.include_mlp),
+            hidden_and_residual_qualified=bool(args.include_mlp),
+            real_down_all_reduces_per_replay={
+                mode: (2 if mode == "split_mlp_overlap" else 1) if args.include_mlp else 0 for mode in modes
+            },
             shared_rope_lookup=bool(args.shared_rope),
             rope_source_sha256=hashlib.sha256(
                 (
@@ -605,7 +816,13 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 "Synthetic rank-local Down outputs/residuals and a projected synthetic single-layer prefix. "
                 "Official attention is an untimed eager oracle. Timed graphs include O and all output reductions; "
                 "output_layouts identifies shared output work or split output work with timed result-join copies. "
-                "No complete hybrid model forward, GDN state, draft execution, serving or real scheduler. "
+                + (
+                    "This scope also times post-Norm, real MLP weights/activation and final Down reductions. "
+                    "Both returned hidden and residual are checked against the official selected decoder layer. "
+                    if args.include_mlp
+                    else "Post-Norm, MLP and Down reduction are outside this attention-only scope. "
+                )
+                + "No complete hybrid model forward, GDN state, draft execution, serving or real scheduler. "
                 "Both schedules pay identical source restoration; true producer cost is absent. "
                 "Single replay times include all FIA updates and host submission gaps."
             ),
@@ -626,12 +843,25 @@ def main():
     parser.add_argument("--trace", action="store_true")
     parser.add_argument("--shared-rope", action="store_true", help="one full-bucket text-position lookup for all lanes")
     parser.add_argument(
+        "--shared-qkv", action="store_true", help="with --include-mlp, share full-bucket input reduction, Norm and QKV"
+    )
+    parser.add_argument(
         "--split-output-overlap",
         action="store_true",
         help="also time split O projections with output reduction A overlapping attention branch B",
     )
+    parser.add_argument(
+        "--include-mlp",
+        action="store_true",
+        help="time the selected decoder layer; enable shared-MLP and split-MLP output pipeline controls",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    args.split_output_overlap_requested = args.split_output_overlap
+    if args.include_mlp:
+        args.split_output_overlap = True
+    if args.shared_qkv and not args.include_mlp:
+        parser.error("--shared-qkv requires the three same-endpoint --include-mlp controls")
     if args.output.exists() or min(args.rounds, args.repeats) < 1:
         parser.error("positive sample counts and a new output path are required")
     if int(os.environ.get("WORLD_SIZE", "1")) != args.tensor_parallel_size or args.tensor_parallel_size < 2:
@@ -654,7 +884,10 @@ def main():
         report = dict(
             status="failed",
             rank=rank,
-            scope="selected_layer_communication_norm_qkv_rope_fia_gate_o_not_full_decoder",
+            scope=experiment_scope(args.include_mlp),
+            include_mlp=bool(args.include_mlp),
+            shared_input_norm_qkv=bool(args.shared_qkv),
+            split_output_overlap=bool(args.split_output_overlap),
             selection=args.selection,
             model=args.model,
             loader=getattr(args, "loader_metadata", None),

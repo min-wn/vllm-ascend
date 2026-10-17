@@ -1,0 +1,490 @@
+# Tensor-parallel attention and MLP continuation
+
+## Question and current status
+
+Can a request group's real post-attention normalization and MLP hide the other
+group's output-reduction tail, after paying for fragmented MLP projections and
+the final Down reductions?
+
+`benchmarks/multi_graph_tp_attention.py --include-mlp` extends the
+[attention boundary experiment](multi_graph_tp_attention.md) to the selected
+Qwen3.5-27B decoder layer's returned hidden states and residual. The attention
+experiment demonstrated a repeatable gain for 272 + 128 on its narrower
+endpoint. That result does not establish a gain after adding MLP.
+
+The original split-QKV MLP pilot failed the unchanged numerical gate. Untimed
+diagnostics isolate a shape-dependent QKV projection difference on the failing
+inputs. A new explicit `--shared-qkv` schedule is implemented to keep input
+reduction, input norm, and QKV at full-bucket shape while retaining request
+splits downstream. Its captured pilot and four formal runs pass the unchanged
+numerical checks. The 272 + 128 pair has no repeatable padding win; the legal
+200 + 200 pair reduces full selected-layer replay wall latency by 2.81% and
+2.55% in two independent runs. These are selected-layer results with synthetic
+entry states, rather than full-model or serving qualification.
+
+## Fixed workload and scope
+
+The initial comparison keeps batch 98, Q4, TP2, maximum KV length 512, and the
+default 400-token capture bucket. The existing default split is 272 + 128
+tokens, or 68 + 32 request capacity, with 68 + 30 live requests. Both split
+capacities already exist in the default capture list. Padding and split pay
+for the same total capacity; no bespoke capacity or attention-head split is
+introduced.
+
+The first full-attention layer is layer 3. The experiment now uses its actual
+input normalization, QKV, Q/K normalization, RoPE, FIA, output gate, O,
+post-attention normalization, merged GateUp, activation, Down, and ordinary TP
+reductions. Timed projections use NZ weights; eager decomposition uses ND
+weights as a reference. The loaded MLP's activation is used directly.
+
+The entry rank-local preceding Down outputs and residuals remain synthetic.
+The preceding Down GEMM, earlier decoder layers, GDN state, full-model prefill,
+sampling, draft execution, acceptance, serving, and engine scheduling remain
+outside this experiment. The synthetic projected KV prefix and benchmark-owned
+contiguous ND cache retain the attention experiment's scope limitations.
+
+Q4 uses the ngram configuration only to derive default capture sizes. This
+does not execute a drafter or measure acceptance-dependent throughput.
+
+## Decoder semantics and returned residual
+
+Let `D0` be the synthetic local preceding Down output and `R0` the input
+residual. The selected layer follows this chain:
+
+```text
+H0 = AR_input(D0)
+(X1, R1) = input_norm(H0, R0)           # R1 = H0 + R0
+A = attention_and_gate(X1)
+H1 = AR_O(O(A))
+(X2, R2) = post_attention_norm(H1, R1)  # R2 = H1 + R1
+L = Down(activation(GateUp(X2)))
+H2 = AR_Down(L)
+return H2, R2
+```
+
+The decoder returns the reduced Down output and `R2` separately. It does not
+return `H2 + R2`. Both input and post-attention normalization return their
+updated residual explicitly. Captured execution retains these returned values
+without assuming that normalization mutates the input residual in place.
+All schedules restore the original source inputs and write the input norm's
+returned residual to stable storage before subsequent work.
+
+Only unscaled dense full-attention layers are accepted. GateUp and Down must
+be ordinary bias-free BF16 TP shards with compatible shapes and no custom
+projection operator. GateUp does not gather its output; Down receives parallel
+input and reduces its result. Explicit local Down is followed by exactly one
+real reduction: the official MLP return is not reduced a second time.
+
+The ordinary O and Down constraints leave fused MC2 or
+`npu_mm_all_reduce_base` paths outside this qualification. All candidates and
+padding use the same loaded communicator and generic optimizations.
+
+## Three schedules with the same endpoint
+
+`--include-mlp` selects exactly these three modes and enables the required
+output-overlap path. `--shared-rope` remains an explicit common optimization.
+
+| Mode | Attention/O schedule | MLP schedule | Purpose |
+| --- | --- | --- | --- |
+| `joined` | Full bucket | Full bucket | Padding baseline |
+| `split_output_overlap` | Request-split O pipeline; input/QKV placement depends on the explicit flag below | Join, then full bucket | Isolate the attention scheduling change |
+| `split_mlp_overlap` | Same attention/O pipeline | Partitioned post-norm, GateUp, activation, Down and reduction | Test the incremental MLP continuation |
+
+All modes end only after complete reduced hidden states and the returned
+residual are available. Comparing only the third mode with padding could
+mistake the existing attention improvement for a new MLP scheduling benefit.
+The second mode is therefore a required control.
+
+Let `P_X` contain input norm through gated attention for group X, and let
+`F_X` contain post-norm, GateUp, activation, and local Down. The MLP itself
+does not add FIA tasks. The following original schedules remain selected when
+`--shared-qkv` is absent; their MLP pilot failed as recorded below.
+
+```text
+joined
+root: restore -> AR_input400 -> P400 -> O400 -> AR_O400
+      -> F400 -> AR_Down400 -> complete(hidden, residual)
+
+split_output_overlap
+root: restore -> wait input_A -> P_A -> O_A
+      -> wait input_B -> P_B -> O_B
+      -> wait output_A and output_B -> join O results
+      -> F400 -> AR_Down400 -> complete(hidden, residual)
+comm: AR_inputA -> AR_inputB -> wait O_A -> AR_OA
+      -> wait O_B -> AR_OB
+
+split_mlp_overlap
+root: restore -> wait input_A -> P_A -> O_A
+      -> wait input_B -> P_B -> O_B
+      -> wait output_A -> F_A -> wait output_B -> F_B
+      -> wait Down_A and Down_B -> join hidden and residual -> complete
+comm: AR_inputA -> AR_inputB -> wait O_A -> AR_OA
+      -> wait O_B -> AR_OB -> wait local Down_A -> AR_DownA
+      -> wait local Down_B -> AR_DownB
+```
+
+Captured events supply the omitted projection-ready and reduction-done edges.
+Both O reductions are submitted before either Down reduction. Every rank
+uses the same collective order:
+
+| Mode | Collective order |
+| --- | --- |
+| `joined` | input, output, down |
+| `split_output_overlap` | input_A, input_B, output_A, output_B, down |
+| `split_mlp_overlap` | input_A, input_B, output_A, output_B, down_A, down_B |
+
+The root stream runs all computation sequentially. This does not launch two
+FIA kernels concurrently or run an MLP against an unfinished attention result.
+The intended additional windows are `F_A` against `AR_OB`, followed by `F_B`
+against `AR_DownA`. Starting `F_A` still depends on the root finishing `O_B`
+and the first output reduction completing.
+
+Collectives may return different storage from their input. The implementation
+retains local projection buffers, actual reduced buffers, and post-norm
+residuals. The shared-MLP control copies both actual O reduction outputs into
+the full bucket before running MLP. The split-MLP mode directly consumes each
+reduced O output and eventually copies the actual reduced Down results and
+returned residuals into full-capacity outputs. All these joins are timed.
+
+## Shared input reduction, normalization, and QKV
+
+`--shared-qkv` requires `--include-mlp` and changes the front of all three
+same-endpoint controls. Each replay computes the current full-bucket input
+reduction, input norm, and QKV once on the root stream. Padding consumes the
+whole QKV result. Split schedules consume its existing 272- and 128-token
+views for Q/K norm, RoPE, KV writes, FIA, gate, O, and the selected MLP schedule.
+The flag is opt-in; it does not silently replace earlier split-QKV results.
+
+Let `T_X` be Q/K norm through gated attention, after raw QKV projection. With
+the selected common `--shared-rope` option, the new shared prefix and
+split-MLP candidate are:
+
+```text
+common root prefix:
+  restore400 -> shared lookup400 -> AR_input400 -> input_norm400 -> QKV400
+
+joined continuation:
+root: T400 -> O400 -> AR_O400 -> F400 -> AR_Down400 -> complete
+
+split_mlp_overlap continuation:
+root: T_A -> O_A -> T_B -> O_B
+      -> wait output_A -> F_A -> wait output_B -> F_B
+      -> wait Down_A and Down_B -> join hidden and residual -> complete
+comm: wait O_A -> AR_OA -> wait O_B -> AR_OB
+      -> wait local Down_A -> AR_DownA
+      -> wait local Down_B -> AR_DownB
+```
+
+The shared-MLP control has the same split attention/O continuation but waits
+for both O reductions, joins their actual results, and runs `F400` plus one
+`AR_Down400`. With the flag enabled, collective orders become:
+
+| Mode | Collective order |
+| --- | --- |
+| `joined` | input, output, down |
+| `split_output_overlap` | input, output_A, output_B, down |
+| `split_mlp_overlap` | input, output_A, output_B, down_A, down_B |
+
+All prefix operations remain inside the timed replay and read current inputs.
+This shares dense computation, not values cached from a previous step, and
+does not require knowing future inputs. The full bucket still comes from
+ordinary default capture sizes, and the downstream split remains by requests.
+
+The tradeoff is substantial: input reduction B can no longer overlap work for
+A, and QKV for B is no longer available as work under A's output reduction.
+The earlier 3.56-4.55% attention-only improvement used a different DAG and
+cannot be carried forward as a prediction. Any benefit from preserving QKV
+shape and dense efficiency must be measured against equally shared padding
+through the complete MLP endpoint.
+
+## Correctness and timing contract
+
+Joined registers one real FIA update task per replay; both split schedules
+register two, with separate workspaces and lane metadata. Every replay resolves
+current host sequence lengths and executes real graph updates. Root completion
+also waits for update completion. None of these costs is omitted.
+
+Initial eager checks compare the explicit attention/O and MLP decomposition
+with the loaded official modules. The complete selected decoder layer serves
+as an additional eager reference for each dynamic input case, checking both
+returned hidden states and residual. Every captured mode checks both outputs
+initially, after B98 -> B97 -> B99 -> B98 changes, and after each timing round.
+Input values, positions, lengths, and slots change at stable captured addresses.
+Graph, output, workspace, metadata, and cache identities are checked for reuse.
+
+The tolerance remains `rtol=0.02, atol=0.02`; the shared-RoPE view preflight
+retains its exact `rtol=0, atol=0` comparisons. A failed numerical or runtime
+check invalidates the performance result.
+
+Each sample times one replay through every O and Down projection, all actual
+reductions, result copies, and completion. Wall timing includes task resolution,
+host submission, and FIA updates. Device events include dependency waits and
+may include submission gaps; they are not sums of pure kernel durations.
+
+CPU rank barriers, reference generation, input preparation, and cache restore
+are outside timing. All schedules pay the same captured source-restore copies.
+The formal comparison uses three rounds with alternating mode order and eight
+samples per mode and rank. Reports take the slowest rank per sample, median
+across samples, then median across rounds. Separate profiler replays identify
+the actual overlap without being substituted for formal latency results.
+
+## Run and advancement gate
+
+Use a fresh output path. This short run qualifies the runtime before a formal
+comparison:
+
+```bash
+source /etc/profile.d/ascend-multigraph.sh
+ASCEND_RT_VISIBLE_DEVICES=0,1 VLLM_BATCH_INVARIANT=0 \
+HCCL_DETERMINISTIC=true \
+python -m torch.distributed.run --standalone --nproc-per-node=2 \
+  benchmarks/multi_graph_tp_attention.py \
+  --model /models/Qwen3.5-27B-original --tensor-parallel-size 2 \
+  --query 4 --pair 272 128 --kv-length 512 \
+  --shared-rope --include-mlp --shared-qkv --rounds 1 --repeats 2 \
+  --output /workspace/multi-graph-results/tp-boundary/attention-mlp-pilot.json
+```
+
+After qualification, use `--rounds 3 --repeats 8 --trace`. A positive result
+requires an independent repeat using identical source hashes and settings.
+Reports include `include_mlp`, the expanded scope, actual local MLP shapes,
+collective order, output-join layout, Down reduction counts, and per-rank checks.
+
+Record two separate same-run differences:
+
+```text
+total_gain = joined_time - split_mlp_overlap_time
+incremental_gain = split_output_overlap_time - split_mlp_overlap_time
+```
+
+Both differences must be positive and repeatable to attribute a net padding
+win to the MLP continuation. Trace evidence must show work overlapping the
+real reduction tail without moving the final wait outside the timer. If the
+second difference is not positive, retain the shared-MLP control as the better
+schedule for this workload, even if both split modes beat padding.
+
+The completed attention-only results remain in the linked attention document
+and are not reused as measurements for this longer endpoint.
+
+## Original pilot failure and causal diagnostics
+
+The original split-QKV pilot stopped at
+`split_output_overlap/b99-v2/hidden` on both ranks, before a usable performance
+result. One of 2,027,520 compared elements failed: index `[123, 3994]` was
+0.15625 versus 0.125, an absolute error of 0.03125. The permitted combined error
+there is `0.02 + 0.02 * 0.125 = 0.0225`. The test remains failed even though
+most elements pass.
+
+The numeric diagnostic records errors without stopping so their source can
+be examined. It reproduces the same failing element in both split modes and
+also finds `[99, 3994]` on B98 variant 3: -1.59375 versus -1.65625, an error of
+0.0625 against a permitted 0.053125. Joined matches the reference on these
+cases. Using the split attention/O result as the input to a shared MLP
+reproduces each failure with either ND or NZ MLP weights. Switching only the
+MLP weight layout therefore does not resolve the discrepancy.
+
+The completed causal v2 diagnostic compares captured outputs with eager
+execution of the same shapes. Hidden and residual outputs agree exactly in
+the tested failing variants, including the split schedules. This supports a
+numerical difference between shapes rather than a captured scheduling error
+for those cases. Supplying full-bucket QKV to split FIA removes the observed
+attention difference; splitting O afterward still passes the final tolerance.
+
+Causal v3 then changes the QKV projection shape while retaining the original
+inputs and downstream checks. It covers both failing variants on both ranks:
+
+| Controlled change | Observation |
+| --- | --- |
+| Split input norm and residual only | Exact match with full-bucket results |
+| Full-bucket QKV, ND or NZ weight | Exact raw QKV match; final hidden checks pass |
+| QKV at 272 + 128, ND or NZ weight | Raw QKV differs; the same final hidden failures reappear |
+| Full-bucket raw QKV, split Q/K norm and RoPE | Exact transformed Q/K/V/gate and attention match; final hidden checks pass |
+
+The split raw-QKV maximum difference is 0.015625 on both ranks for B99 variant
+2. For B98 variant 3 it is 0.03125 on rank 0 and 0.015625 on rank 1. These
+intermediate comparisons pass their elementwise tolerance, but the downstream
+layer can amplify the difference until a final hidden value fails. ND QKV
+weights retain the same failure as NZ, so an ND-only conversion is not a fix.
+
+This establishes a QKV GEMM shape-dependent numerical path as the source of
+the reproduced discrepancy under these controls. It does not prove a specific
+internal CANN tiling, accumulation scheme, or kernel-selection mechanism, or
+that all future inputs will be qualified by shared QKV. The shared-QKV captured
+graph is separately checked against the unchanged gate. Original inputs,
+tolerance `rtol=0.02, atol=0.02`, and exact RoPE preflight remain unchanged.
+
+### Diagnostic artifacts and exact sources
+
+Artifacts are in `outputs/multi_graph_tp_attention_mlp/`, outside the checkout.
+The diagnostic JSON files are explicitly marked
+`diagnostic_only_not_performance_qualified`; their recorded checks include
+failures and must not be counted as a passed numerical qualification.
+
+| Artifact | Source snapshot | SHA-256 |
+| --- | --- | --- |
+| `tp2-27b-mlp-272-128-pilot.json` | `pilot_benchmark.py` | `d6747bbfef978a16754dcd71b66c9539184a1ce027fdba34d244f6d568eae761` |
+| `tp2-27b-mlp-numeric-diagnostic.json` | `numeric_diagnostic.py` | `e916d998ef12b55078e279e409dd4fec193f0eeb75b4e311d2bb7a2363ff5ae1` |
+| `tp2-27b-mlp-causal-diagnostic-v2.json` | `causal_diagnostic_v2.py` | `07aafa529990a79fa3112386896346acf379aac30cef5ff5da9009d18feb7a5d` |
+| `tp2-27b-mlp-causal-diagnostic-v3.json` | `causal_diagnostic_v3.py` | `f4f766776abbe1831184a71cd05625f8d823458f347ec816889fc36f652e0c70` |
+
+The numeric, causal v2, and causal v3 reports contain 92, 157, and 118 recorded
+checks per rank respectively. The earlier `tp2-27b-mlp-causal-diagnostic.json`
+attempt failed its graph/output identity check and is not used as successful
+causal evidence. Its snapshot is `causal_diagnostic.py`, SHA-256
+`424a1e459f0d172ba20e732f9c1b9be4d857bd74f7a3af169bb8bad4f8a59093`.
+
+## Shared-QKV qualification and repeated formal results
+
+The shared-QKV pilot passes 62 checks per rank with one round of two samples.
+The first formal 272 + 128 run passes 74 checks per rank, including both hidden
+and residual, real FIA updates, dynamic variants, and three timing-round
+checks for each mode. Both runs use unchanged inputs and numerical thresholds.
+The additional 12 checks in the formal run come from its two extra rounds,
+three modes, and two returned tensors. Pilot latency is not used as a formal
+comparison.
+
+The actual local GateUp weight shape is `[17408, 5120]`, and local Down is
+`[5120, 8704]`. The formal run uses three alternating-order rounds and eight
+single-replay samples per mode and rank. Times are microseconds; percentages
+are `100 * (mode / joined - 1)` within the same run, so positive means slower.
+
+| Run | Mode | Wall us | Wall vs joined | Device us | Device vs joined |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Initial 272 + 128 | joined | 2068.94 | 0.00% | 1989.92 | 0.00% |
+| Initial 272 + 128 | split_output_overlap | 2078.00 | +0.44% | 2001.20 | +0.57% |
+| Initial 272 + 128 | split_mlp_overlap | 2062.43 | -0.31% | 1987.35 | -0.13% |
+| Repeat 272 + 128 | joined | 2052.32 | 0.00% | 1989.69 | 0.00% |
+| Repeat 272 + 128 | split_output_overlap | 2059.33 | +0.34% | 1996.33 | +0.33% |
+| Repeat 272 + 128 | split_mlp_overlap | 2054.12 | +0.09% | 1992.81 | +0.16% |
+| Initial 200 + 200 | joined | 2059.03 | 0.00% | 1994.20 | 0.00% |
+| Initial 200 + 200 | split_output_overlap | 2064.50 | +0.27% | 2001.88 | +0.39% |
+| Initial 200 + 200 | split_mlp_overlap | 2001.18 | -2.81% | 1941.24 | -2.66% |
+| Repeat 200 + 200 | joined | 2055.98 | 0.00% | 1993.08 | 0.00% |
+| Repeat 200 + 200 | split_output_overlap | 2064.84 | +0.43% | 2003.50 | +0.52% |
+| Repeat 200 + 200 | split_mlp_overlap | 2003.50 | -2.55% | 1937.73 | -2.78% |
+
+The 272 + 128 result does not establish a repeatable padding win: its first
+run saves 6.51 us, but the independent repeat is 1.80 us slower. Its incremental
+gain against the shared-MLP control also shrinks from 15.58 to 5.21 us.
+
+The legal 200 + 200 split passes the same 74 checks per rank in both independent
+runs. It saves 57.86 and 52.48 us against same-run padding, or 2.81% and 2.55%.
+Against the same-run shared-MLP control it saves 63.33 and 61.34 us, or 3.07%
+and 2.97%. Thus this selected-layer workload has a repeatable gain attributable
+to extending the pipeline through MLP. The magnitude remains modest; these
+measurements do not establish whole-model or serving throughput gains.
+
+The separate first-run trace confirms the intended dependency overlap. In a
+representative rank-1 replay, the 103.68 us B output reduction overlaps A's
+post-norm/GateUp, and the 181.24 us A Down reduction overlaps B's
+post-norm/GateUp. The final B Down reduction remains exposed for 99.00 us.
+Four final hidden/residual copies cost 22.34 us and remain inside the graph.
+
+The dominant countervailing cost in this sample is GateUp. The shared-MLP
+control's full 400-row projection takes 325.12 us; the split projections take
+349.92 + 161.88 = 511.80 us, an increase of 186.68 us. Down, normalization,
+and activation also add about 9.76, 14.38, and 10.64 us respectively. These
+separate profiler observations show fragmentation and concurrent resource use
+offsetting most of the hidden communication; they do not isolate a specific
+kernel implementation or form an additive prediction of wall time.
+
+With 200 + 200, the corresponding rank-1 second profiler replay shows
+GateUp taking 228.46 + 216.58 = 445.04 us, compared with 314.84 us in its
+shared-MLP control. The 130.20 us excess is smaller than the 186.68 us excess
+observed for 272 + 128. Down takes 109.22 + 108.60 = 217.82 us versus 205.22 us.
+The second O reduction overlaps the first partition's post-norm/GateUp; the
+first Down reduction overlaps the second partition's post-norm/GateUp. The
+final Down reduction and all four output/residual copies remain exposed and
+fully timed. These profiler samples explain the direction of the result,
+without substituting kernel sums for the formal replay measurements.
+
+The next optimization target is the local GateUp projection under concurrent
+communication. A useful follow-up must reduce its fragmentation penalty while
+preserving request partitioning, the real final Down drain, and unchanged
+accuracy. Partition selection must consider the complete downstream GEMMs and
+communication windows, because the pair preferred by attention alone changes
+after sharing QKV. Dynamic batch coverage beyond the tested B98/97/99/98 and
+adjacent GDN integration remain open; no additional capacity has been introduced.
+
+### Formal artifacts and source identity
+
+The pilot and formal report are
+`tp2-27b-mlp-sharedqkv-pilot.json` and
+`tp2-27b-mlp-sharedqkv-formal.json` in
+`outputs/multi_graph_tp_attention_mlp/`. Matching formal
+`.rank0.trace.json` and `.rank1.trace.json` files contain separate profiler
+replays. The independent repeats are `tp2-27b-mlp-sharedqkv-repeat.json`,
+`tp2-27b-mlp-sharedqkv-200-200.json`, and
+`tp2-27b-mlp-sharedqkv-200-200-repeat.json`, each with matching logs and two
+rank traces in that directory. `qualification_audit.json` verifies status,
+74 checks per rank, source identity, and same-run gain calculations.
+`analyze_mlp_traces.py` and `mlp_trace_analysis.json` retain the separate
+profiler GEMM extraction. All runs record the following exact sources:
+
+| Source | SHA-256 |
+| --- | --- |
+| Benchmark, snapshot `shared_qkv_benchmark.py` | `661c6ee88b870aa3f67cb539aca4070522a442d7eda26dd3134ecc076179285e` |
+| Runtime-stride RoPE kernel | `43111c26ca71e85f76c1f854a464af030214681bdb29feedbb1cfef15ad058cf` |
+
+The focused CPU suite has 21 passing tests. Full `format.sh ci` was attempted;
+Ruff and Markdown checks pass, while existing codespell `nd` findings, the
+existing forbidden direct Triton import, and Windows shell/Python launcher
+limits leave the full check unresolved. These local limitations do not change
+the NPU numerical results or replace further hardware qualification.
+
+## Alternative if full MLP fragmentation loses
+
+A smaller follow-up can partition only post-norm, GateUp, and activation,
+then assemble the full intermediate activation for one shared Down and one
+full-bucket Down reduction. With shared QKV, its order would be
+`input, output_A, output_B, down400`, with the same final hidden and residual
+endpoint as the three schedules above.
+
+This removes a fragmented Down and an extra reduction startup, but requires
+joining intermediate activations, which can be wider than hidden states.
+Their copies and the final shared reduction must remain timed. This alternative
+is not implemented or assumed to win. Its value depends on actual MLP shape
+efficiency, the real release window, and communication contention.
+
+The [earlier FFN readiness experiment](multi_graph_ffn_readiness.md) rejected a
+large kernel rewrite for its single-card Qwen3-4B, B98/default104 scenario.
+Its estimated 8-10 us shared-Down benefit was a release model, not a measured
+decoder gain. Neither that estimate nor the old FIA completion gap can be
+transferred to this TP27B workload. A larger release gap also cannot yield
+unbounded savings once the early partition's work is fully hidden.
+
+## Future adjacent GDN boundary
+
+This extension is not implemented. Layer 4 is a real GDN layer, so repeating
+the selected full-attention layer would not qualify the adjacent model
+boundary. A later experiment must satisfy these additional requirements:
+
+- Construct the actual loader with Q4 speculative metadata support and at
+  least 100 request slots. The present weight-only loader has no speculative
+  configuration; capacity selection alone does not set the loaded GDN's
+  `num_spec`. Assert layer 4 is `linear_attention` with `num_spec=3`, while
+  retaining explicit control over capture and state allocation.
+- Obtain state shapes, dtypes, and cache spec through official GDN methods.
+  For the inspected 27B TP2 Q4 SD layout, expected per-block Conv shape is
+  `[6, 5120]` and SSM shape is `[24, 128, 128]`; DS changes the Conv orientation.
+  Use the reported dtype rather than assuming FP32 recurrent state. Verify the
+  loader-created packed convolution weight.
+- Reserve null block 0 and assign four unique physical state blocks per
+  request, retaining global request identities in both lanes. One hundred
+  request slots require 401 blocks including null. GDN state tables are
+  separate from the FIA token-page table.
+- Use an independent official Ascend GDN metadata builder for each graph or
+  lane, the real layer prefix, and graph-stable buffers. Live Q4 intervals have
+  length four; inactive intervals have length zero, null state IDs, and false
+  masks. FIA's full-width dummy query intervals cannot be copied unchanged.
+  Reject missing metadata, because the GDN profile path can otherwise skip
+  recurrent work.
+- Restore identical Conv and SSM state outside every independent timed replay.
+  Check hidden, residual, updated live state, inactive state, and null-block
+  invariants. Separately qualify a short sequence that intentionally continues
+  state and accepted-token mappings across steps instead of resetting them.
+
+Any adjacent-boundary comparison must include real layer 3 MLP, real layer 4
+GDN and MLP, every reduction, residual output, and the final drain for padding
+and split. Moving an exposed tail to a later unmeasured endpoint does not
+demonstrate an improvement.
