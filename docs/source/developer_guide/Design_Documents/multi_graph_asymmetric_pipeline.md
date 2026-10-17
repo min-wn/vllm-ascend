@@ -105,7 +105,8 @@ MatMul 时长总和从 padding 189.5 us 增至切分串行 318.5 us、切分并�
 
 第一阶段结论：停止把完整 FFN 请求流水扩展到全部层或生产 runner。
 保留显式 benchmark 开关与失败证据，不将其设为默认路径。
-后续转向第二阶段的混合 KV 长度损失检验；该阶段尚未实现，尚无收益结论。
+后续转向第二阶段的混合 KV 长度损失检验，进度与结果见
+[混合 KV 长度与请求分组实验](multi_graph_mixed_length_partition.md)。
 也尚未实现统一 attention 任务调度或独立的预备输入资源互补 microbenchmark；
 本阶段使用真实依赖完整 block 结果直接否定当前流水实现的净收益。
 

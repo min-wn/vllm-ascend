@@ -20,7 +20,9 @@ from vllm_ascend.worker.multi_graph.benchmark import summarize
 from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload, inspect_replay_trace
 
 
-def run(args, workload, *, experiment=None):
+def run(args, workload, *, experiment=None, snapshot_first_block=False):
+    if snapshot_first_block and (experiment is None or getattr(args, "compiled", False)):
+        raise ValueError("first-block KV snapshots require an explicit uncompiled block experiment")
     os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
     os.environ["VLLM_USE_V2_MODEL_RUNNER"] = "0"
     if args.batch_invariant:
@@ -111,14 +113,22 @@ def run(args, workload, *, experiment=None):
     torch.manual_seed(42)
     caches = []
     pointers = set()
+    snapshot_pointers = (
+        {cache.data_ptr() for cache in model.model.layers[0].self_attn.attn.kv_cache} if snapshot_first_block else None
+    )
     for layer in layers.values():
         for cache in getattr(layer, "kv_cache", ()):
             if cache.data_ptr() not in pointers:
                 pointers.add(cache.data_ptr())
                 cache.zero_()
-                caches.append((cache, cache.clone()))
+                # Full-model prefill still initializes all layers. A first-block
+                # experiment only replays and restores this explicit KV subset.
+                if snapshot_pointers is None or cache.data_ptr() in snapshot_pointers:
+                    caches.append((cache, cache.clone()))
     if not caches:
         raise ValueError("no KV storage found")
+    if snapshot_pointers is not None and {cache.data_ptr() for cache, _ in caches} != snapshot_pointers:
+        raise ValueError("first-block KV cache is not fully covered by the snapshot")
 
     def reset_kv():
         torch.npu.synchronize()

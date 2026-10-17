@@ -1,7 +1,10 @@
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+
+from vllm_ascend.worker.multi_graph.replay_benchmark import ReplayWorkload
 
 
 @pytest.fixture
@@ -25,6 +28,50 @@ def test_fixed_slots_preserve_request_offsets(benchmark):
     assert benchmark.fixed_lane_counts(97, (56, 48)) == (56, 41)
     assert benchmark.fixed_lane_counts(103, (56, 48)) == (56, 47)
     assert benchmark.fixed_lane_counts(104, (56, 48)) == (56, 48)
+
+
+@pytest.mark.parametrize("order", ["original", "length_asc", "length_desc"])
+def test_mixed_request_mapping_preserves_physical_kv_and_output_order(benchmark, order):
+    workload = ReplayWorkload(7, 8, 1, 512, (4, 3))
+    lengths = benchmark.request_lengths(8, 512, 128, 42)
+    for batch, variant in ((7, 0), (6, 1), (7, 0)):
+        payload = benchmark.ordered_request_metadata(workload, lengths, batch, variant, order)
+        assert sum(payload["lengths"]) == sum(lengths[:batch]) - variant * batch
+        assert sorted(payload["restore"]) == list(range(8))
+        for request in range(batch):
+            row = payload["restore"][request]
+            position = lengths[request] - variant - 1
+            assert payload["ids"][row] == 100 + variant + request
+            assert payload["positions"][row] == position
+            assert payload["pages"][row] == workload.metadata_values(request, request + 1)["pages"][0]
+            page = payload["pages"][row][position // workload.block_size]
+            assert payload["slots"][row] == page * workload.block_size + position % workload.block_size
+        assert payload["slots"][batch:] == [-1] * (8 - batch)
+        assert payload["lengths"][batch:] == [0] * (8 - batch)
+        if order != "original":
+            assert payload["lengths"][:batch] == sorted(payload["lengths"][:batch], reverse=order == "length_desc")
+
+
+def test_mixed_lengths_reject_invalid_bounds_and_order(benchmark):
+    workload = ReplayWorkload(7, 8, 1, 512, (4, 3))
+    for short in (0, 1, 513):
+        with pytest.raises(ValueError):
+            benchmark.request_lengths(8, 512, short, 42)
+    assert benchmark.request_lengths(8, 512, 128, 42) == benchmark.request_lengths(8, 512, 128, 42)
+    with pytest.raises(ValueError):
+        benchmark.ordered_request_metadata(workload, [128] * 8, 7, 0, "invalid")
+    with pytest.raises(ValueError):
+        benchmark.ordered_request_metadata(workload, [128] * 8, 7, 128, "original")
+
+
+@pytest.mark.parametrize("compiled,experiment", [(False, None), (True, lambda: None)])
+def test_scoped_snapshot_rejects_full_or_compiled_model(compiled, experiment):
+    path = Path(__file__).resolve().parents[4] / "benchmarks/multi_graph_replay.py"
+    spec = importlib.util.spec_from_file_location("replay_loader", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    with pytest.raises(ValueError, match="explicit uncompiled block"):
+        module.run(SimpleNamespace(compiled=compiled), None, experiment=experiment, snapshot_first_block=True)
 
 
 @pytest.mark.parametrize("pair", [(8, 96), (24, 80), (56, 48)])

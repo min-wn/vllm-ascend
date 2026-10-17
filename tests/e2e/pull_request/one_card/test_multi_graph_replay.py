@@ -479,7 +479,7 @@ def test_native_fia_binding_guards(monkeypatch):
     "nz,native,shared", [(False, False, False), (True, False, False), (True, True, False), (True, True, True)]
 )
 def test_default_bucket_internal_block_reuse(
-    tmp_path, request, nz, native, shared, packed=False, native_replay=False, pipeline_ffn=False
+    tmp_path, request, nz, native, shared, packed=False, native_replay=False, pipeline_ffn=False, mixed=False
 ):
     pytest.importorskip("torch_npu")
     if not hasattr(torch, "npu") or not torch.npu.is_available():
@@ -512,6 +512,11 @@ def test_default_bucket_internal_block_reuse(
             *(["--native-replay"] if native_replay else []),
             *(["--pipeline-ffn", "--branch-capacities", "4", "4"] if pipeline_ffn else []),
             *(
+                ["--short-kv-length", "32", "--request-order", "length_asc", "--snapshot-first-block-only"]
+                if mixed
+                else []
+            ),
+            *(
                 ["--shared-cache", "--serial-control", "--independent-updates", "--static-task-plan", "--trace"]
                 if shared
                 else []
@@ -534,6 +539,16 @@ def test_default_bucket_internal_block_reuse(
     assert report["combination_graph_count"] == 0
     assert report["explicit_output_merge_copies"] == (4 if pipeline_ffn else 0)
     assert report["pipeline_ffn"] == pipeline_ffn
+    assert report["canonical_original_order_reference"]
+    assert report["output_restore_gathers"] == (2 if mixed else 0)
+    assert report["snapshot_first_block_only"] == mixed
+    if mixed:
+        assert report["request_order"] == "length_asc"
+        assert set(report["request_lengths"]) == {32, 128}
+        for payload in report["timed_request_metadata"]:
+            batch = payload["batch"]
+            assert sum(payload["lengths"]) == sum(report["request_lengths"][:batch])
+            assert sorted(payload["restore"]) == list(range(8))
     assert report["reuse_graph_and_buffer_identity_unchanged"]
     assert report["nz"] == nz and report["original_nd_eager_reference"]
     assert report["native_update"] == native
@@ -567,6 +582,12 @@ def test_default_bucket_internal_block_reuse(
 def test_full_ffn_pipeline_reuses_graph_with_required_updates(tmp_path, request):
     test_default_bucket_internal_block_reuse(
         tmp_path, request, nz=True, native=True, shared=True, packed=True, native_replay=True, pipeline_ffn=True
+    )
+
+
+def test_mixed_lengths_restore_original_request_order(tmp_path, request):
+    test_default_bucket_internal_block_reuse(
+        tmp_path, request, nz=True, native=True, shared=True, packed=True, native_replay=True, mixed=True
     )
 
 

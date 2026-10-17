@@ -9,6 +9,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import random
 import statistics
 import time
 from contextlib import contextmanager, nullcontext
@@ -50,6 +51,43 @@ def lane_core_limits(common, lanes):
 
 def task_submission_order(pair, largest_first):
     return tuple(sorted(range(len(pair)), key=lambda lane: -pair[lane])) if largest_first else tuple(range(len(pair)))
+
+
+def request_lengths(capacity, maximum, short, seed):
+    if capacity < 1 or not 2 <= short <= maximum:
+        raise ValueError("requires positive capacity and 2 <= short <= maximum")
+    lengths = [short] * (capacity // 2) + [maximum] * (capacity - capacity // 2)
+    random.Random(seed).shuffle(lengths)
+    return lengths
+
+
+def ordered_request_metadata(workload, lengths, batch, variant, order):
+    if order not in ("original", "length_asc", "length_desc"):
+        raise ValueError("unknown request order")
+    if len(lengths) != workload.capacity or not 1 <= batch <= workload.capacity:
+        raise ValueError("request lengths must match capacity and batch must fit")
+    live_lengths = [length - variant for length in lengths[:batch]]
+    if min(live_lengths) < 1 or max(live_lengths) > workload.kv_length:
+        raise ValueError("runtime lengths must fit allocated KV")
+    permutation = list(range(batch))
+    if order != "original":
+        permutation.sort(key=lambda index: live_lengths[index], reverse=order == "length_desc")
+    inverse = [0] * workload.capacity
+    for position, request in enumerate(permutation):
+        inverse[request] = position
+    inverse[batch:] = range(batch, workload.capacity)
+    values = workload.metadata_values(0, batch)
+    dummy = workload.capacity - batch
+    return dict(
+        ids=[100 + variant + request for request in permutation] + [0] * dummy,
+        positions=[live_lengths[request] - 1 for request in permutation] + [0] * dummy,
+        lengths=[live_lengths[request] for request in permutation] + [0] * dummy,
+        pages=[values["pages"][request] for request in permutation]
+        + [[0] * workload.pages_per_request for _ in range(dummy)],
+        slots=[values["slots"][request] - workload.kv_length + live_lengths[request] for request in permutation]
+        + [-1] * dummy,
+        restore=inverse,
+    )
 
 
 class PackedStepBuffers:
@@ -170,6 +208,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         data = inputs(0, workload.capacity)
         metadata = next(iter(data[2].values()))
         entry = dict(data=data, branches=[], streams=[], fork=torch.npu.Event(), joins=[])
+        if args.request_order != "original":
+            entry["restore"] = torch.arange(workload.capacity, dtype=torch.int64, device=data[0].device)
         if args.packed_metadata:
             packed = PackedStepBuffers(
                 dict(
@@ -178,6 +218,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     lengths=metadata.seq_lens_gpu,
                     pages=metadata.block_tables,
                     slots=metadata.slot_mapping,
+                    **({"restore": entry["restore"]} if "restore" in entry else {}),
                 )
             )
             metadata = dataclasses.replace(
@@ -190,6 +231,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             )
             data = (packed.device["ids"], packed.device["positions"], {name: metadata for name in data[2]})
             entry.update(data=data, packed=packed)
+            if "restore" in entry:
+                entry["restore"] = packed.device["restore"]
         if mode != "padding":
             for start, stop in intervals:
                 count = stop - start
@@ -225,6 +268,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             lengths=metadata.seq_lens_gpu,
             pages=metadata.block_tables,
             slots=metadata.slot_mapping,
+            **({"restore": entry["restore"]} if "restore" in entry else {}),
         )
         entry["host"] = (
             entry["packed"].host
@@ -248,14 +292,38 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             staging.copy_(torch.tensor(values, dtype=target.dtype))
             target.copy_(staging, non_blocking=True)
 
-        copy("ids", data[0], list(range(100 + variant, 100 + variant + batch)) + [0] * count)
-        copy("positions", data[1], [workload.kv_length - variant - 1] * batch + [0] * count)
+        payload = None
+        if args.short_kv_length is not None:
+            payload = ordered_request_metadata(
+                workload, args.request_lengths, batch, variant, "original" if reference_phase else args.request_order
+            )
+            lengths = payload["lengths"]
+        copy(
+            "ids",
+            data[0],
+            payload["ids"] if payload else list(range(100 + variant, 100 + variant + batch)) + [0] * count,
+        )
+        copy(
+            "positions",
+            data[1],
+            payload["positions"] if payload else [workload.kv_length - variant - 1] * batch + [0] * count,
+        )
         copy("lengths", metadata.seq_lens_gpu, lengths)
         if not args.packed_metadata:
             metadata.seq_lens_cpu.copy_(entry["host"]["lengths"])
         metadata.seq_lens_list = lengths
-        copy("pages", metadata.block_tables, values["pages"] + [[0] * workload.pages_per_request for _ in range(count)])
-        copy("slots", metadata.slot_mapping, [slot - variant for slot in values["slots"]] + [-1] * count)
+        copy(
+            "pages",
+            metadata.block_tables,
+            payload["pages"] if payload else values["pages"] + [[0] * workload.pages_per_request for _ in range(count)],
+        )
+        copy(
+            "slots",
+            metadata.slot_mapping,
+            payload["slots"] if payload else [slot - variant for slot in values["slots"]] + [-1] * count,
+        )
+        if "restore" in entry:
+            copy("restore", entry["restore"], payload["restore"])
         if args.packed_metadata:
             entry["packed"].transfer()
         for branch, (start, stop) in zip(entry["branches"], intervals):
@@ -272,7 +340,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     for group in entry["update_groups"]:
                         group["native"].bind(tuple(entry["tasks"][i] for i in group["indices"]))
 
-    def forward(mode, parallel=True, partition=True):
+    def forward_impl(mode, parallel=True, partition=True):
         entry = entries[mode]
         data = entry["data"]
         hidden = model.model.embed_tokens(data[0])
@@ -351,6 +419,13 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
             projected, _ = attention.o_proj(output)
         normalized, residual = layer.post_attention_layernorm(projected, hidden)
         return layer.mlp(normalized), residual
+
+    def forward(mode, parallel=True, partition=True):
+        result = forward_impl(mode, parallel, partition)
+        if "restore" in entries[mode]:
+            # Restore canonical request order inside the graph on both strategies.
+            result = tuple(tensor.index_select(0, entries[mode]["restore"]) for tensor in result)
+        return result
 
     checks = []
 
@@ -494,6 +569,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
                     metadata.slot_mapping.data_ptr(),
                     metadata.seq_lens_cpu.data_ptr(),
                     metadata.seq_lens_gpu.data_ptr(),
+                    *((entry["restore"].data_ptr(),) if "restore" in entry else ()),
                     *(value.data_ptr() for value in entry["graph"].capture_resources.values()),
                     *(
                         tensor.data_ptr()
@@ -658,6 +734,21 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         qualification_cases=qualification_cases,
         timed_dynamic_cases=args.dynamic_cases,
         timed_kv_length=workload.kv_length,
+        request_order=args.request_order,
+        request_lengths=args.request_lengths,
+        canonical_original_order_reference=True,
+        snapshot_first_block_only=args.snapshot_first_block_only,
+        output_restore_gathers=2 if args.request_order != "original" else 0,
+        timed_request_metadata=[
+            dict(
+                batch=batch,
+                variant=variant,
+                **ordered_request_metadata(workload, args.request_lengths, batch, variant, args.request_order),
+            )
+            for batch, variant in dict.fromkeys(args.dynamic_cases)
+        ]
+        if args.short_kv_length is not None
+        else [],
         real_lane_counts=[fixed_lane_counts(batch, args.pair) for batch, _ in args.reuse_cases],
         graph_count=len(entries),
         serial_control=args.serial_control,
@@ -673,7 +764,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv):
         native_update=args.native_update,
         native_replay=args.native_replay,
         packed_metadata=args.packed_metadata,
-        h2d_submissions_per_step=1 if args.packed_metadata else 5,
+        h2d_submissions_per_step=1 if args.packed_metadata else (6 if args.request_order != "original" else 5),
         packed_buffer_schema=entries["padding"]["packed"].schema if args.packed_metadata else None,
         phase_diagnostics=phase_diagnostics,
         static_task_plan=args.static_task_plan,
@@ -730,6 +821,9 @@ def main():
     parser.add_argument("--batch-max", type=int, default=256)
     parser.add_argument("--max-num-seqs", type=int, default=256)
     parser.add_argument("--kv-length", type=int, default=512)
+    parser.add_argument("--short-kv-length", type=int, help="seeded mixed short/long requests; maximum is --kv-length")
+    parser.add_argument("--snapshot-first-block-only", action="store_true", help="snapshot only the measured block KV")
+    parser.add_argument("--request-order", choices=("original", "length_asc", "length_desc"), default="original")
     parser.add_argument("--attention-cores", type=int, default=0)
     parser.add_argument("--lane-cores", type=int, nargs=2)
     parser.add_argument("--independent-updates", action="store_true")
@@ -768,6 +862,10 @@ def main():
         parser.error("projection pipeline requires the qualified shared-cache path")
     if args.pipeline_ffn and (not args.shared_cache or args.pipeline_output_projection):
         parser.error("FFN pipeline requires shared cache and excludes the O-only pipeline")
+    if args.request_order != "original" and args.short_kv_length is None:
+        parser.error("request sorting requires mixed lengths")
+    if args.short_kv_length is not None and not 2 <= args.short_kv_length <= args.kv_length:
+        parser.error("short KV length must be between 2 and the maximum KV length")
     try:
         args.lane_limits = lane_core_limits(args.attention_cores, args.lane_cores)
     except ValueError as error:
@@ -790,12 +888,13 @@ def main():
     workload = ReplayWorkload(
         args.selection["batch"], capacity, 1, args.kv_length, fixed_lane_counts(args.selection["batch"], args.pair)
     )
+    args.request_lengths = request_lengths(capacity, args.kv_length, args.short_kv_length or args.kv_length, args.seed)
     if args.output.exists():
         parser.error("output exists; use a new path")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(dict(status="running")), encoding="utf-8")
     try:
-        run(args, workload, experiment=experiment)
+        run(args, workload, experiment=experiment, snapshot_first_block=args.snapshot_first_block_only)
     except Exception as error:
         args.output.write_text(
             json.dumps(
