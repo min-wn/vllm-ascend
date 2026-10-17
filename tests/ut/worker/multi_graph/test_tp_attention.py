@@ -275,7 +275,7 @@ def test_actual_split_mlp_schedule_waits_for_and_joins_returned_collective_stora
         down=down,
         residual=residual,
         output_weight_nz=o_weight,
-        gate_up_weight_nz=gate_up_weight,
+        gate_up_weight_timed=gate_up_weight,
         down_weight_nz=down_weight,
         local_mlp=local_mlp,
         weight_nz=qkv_weight,
@@ -366,3 +366,78 @@ def test_actual_split_mlp_schedule_waits_for_and_joins_returned_collective_stora
     ]
     indices = [log.index(item) for item in expected_order]
     assert indices == sorted(indices)
+
+
+@pytest.mark.parametrize("parts", [1, 2])
+def test_paired_gate_up_channels_preserve_activation_and_down(benchmark, parts):
+    torch.manual_seed(73)
+    x = torch.randn(7, 8, dtype=torch.float64)
+    residual = torch.randn_like(x)
+    packed = torch.randn(12, 8, dtype=torch.float64)
+    down = torch.randn(8, 6, dtype=torch.float64)
+
+    def norm(value, prior):
+        updated = value + prior
+        return updated * torch.rsqrt(updated.square().mean(-1, keepdim=True) + 1e-6), updated
+
+    def act(value):
+        gate, up = value.chunk(2, dim=-1)
+        return functional.silu(gate) * up
+
+    expected = benchmark.project_mlp(x, residual, norm, act, packed, down)
+    weights = benchmark.partition_gate_up(packed, parts)
+    normalized, _ = norm(x, residual)
+    intermediate = torch.cat([act(functional.linear(normalized, w)) for w in weights], dim=-1)
+    torch.testing.assert_close(intermediate, act(functional.linear(normalized, packed)))
+    observed = benchmark.project_mlp(x, residual, norm, act, weights if parts > 1 else weights[0], down)
+    torch.testing.assert_close(observed, expected)
+    split = [benchmark.project_mlp(x[a:b], residual[a:b], norm, act, weights, down) for a, b in ((0, 4), (4, 7))]
+    for i in (0, 1):
+        torch.testing.assert_close(torch.cat([p[i] for p in split]), expected[i])
+    with pytest.raises(ValueError, match="equally divisible"):
+        benchmark.partition_gate_up(packed, 4)
+
+
+@pytest.mark.parametrize("weight_format", ["ND", "NZ"])
+@pytest.mark.parametrize("lowercase", [False, True])
+def test_gate_up_cli_normalizes_format_and_preserves_common_controls(
+    benchmark, monkeypatch, tmp_path, weight_format, lowercase
+):
+    weight_format = weight_format.lower() if lowercase else weight_format
+    seen = []
+    monkeypatch.setenv("WORLD_SIZE", "2")
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "benchmark",
+            "--include-mlp",
+            "--shared-qkv",
+            "--gate-up-format",
+            weight_format,
+            "--gate-up-partitions",
+            "2",
+            "--output",
+            str(tmp_path / "result.json"),
+        ],
+    )
+    monkeypatch.setattr(
+        benchmark,
+        "select_workload",
+        lambda args: dict(
+            pair_tokens=[200, 200],
+            pair_requests=[50, 50],
+            batch=98,
+            capacity_requests=100,
+        ),
+    )
+    monkeypatch.setattr(benchmark, "run_qwen35", lambda args, workload, **kwargs: seen.append((args, workload)))
+    benchmark.main()
+    args, workload = seen[0]
+    assert args.gate_up_format == weight_format.upper()
+    assert args.gate_up_partitions == 2 and args.shared_qkv and args.include_mlp
+    assert benchmark.experiment_modes(args.include_mlp, args.split_output_overlap) == (
+        "joined",
+        "split_output_overlap",
+        "split_mlp_overlap",
+    )
+    assert workload.capacity == 100

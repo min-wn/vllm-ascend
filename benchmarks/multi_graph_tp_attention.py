@@ -74,12 +74,32 @@ def execution_layout(mode, rows, pair, include_mlp, shared_qkv=False):
     )
 
 
+def partition_gate_up(weight, partitions):
+    """Prepack matching gate/up channels without changing intermediate order."""
+    import torch
+
+    if weight.ndim != 2 or partitions < 1 or weight.shape[0] % (2 * partitions):
+        raise ValueError("GateUp rows must contain equally divisible gate and up channels")
+    if partitions == 1:
+        return (weight,)
+    gate, up = weight.chunk(2, dim=0)
+    return tuple(
+        torch.cat((gate_part, up_part), dim=0)
+        for gate_part, up_part in zip(gate.chunk(partitions), up.chunk(partitions), strict=True)
+    )
+
+
 def project_mlp(value, residual, post_norm, act_fn, gate_up_weight, down_weight):
     """Return local Down and the real post-Norm residual, before any TP sum."""
     import torch.nn.functional as functional
 
     normalized, next_residual = post_norm(value, residual)
-    intermediate = act_fn(functional.linear(normalized, gate_up_weight))
+    if isinstance(gate_up_weight, tuple):
+        import torch
+
+        intermediate = torch.cat([act_fn(functional.linear(normalized, weight)) for weight in gate_up_weight], dim=-1)
+    else:
+        intermediate = act_fn(functional.linear(normalized, gate_up_weight))
     return functional.linear(intermediate, down_weight), next_residual
 
 
@@ -229,6 +249,15 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         down_weight_nz = torch_npu.npu_format_cast(down_weight_nd, 29)
         if any(torch_npu.get_npu_format(weight) != 29 for weight in (gate_up_weight_nz, down_weight_nz)):
             raise ValueError("NZ MLP projection conversion did not take effect")
+        gate_up_weight_timed = gate_up_weight_nd if args.gate_up_format == "ND" else gate_up_weight_nz
+        if args.gate_up_partitions > 1:
+            # Prepack before capture. Each activation consumes matching gate/up
+            # channels; the runtime intermediate join remains inside the timer.
+            weight_format = 2 if args.gate_up_format == "ND" else 29
+            gate_up_weight_timed = tuple(
+                torch_npu.npu_format_cast(weight, weight_format)
+                for weight in partition_gate_up(gate_up_weight_nd, args.gate_up_partitions)
+            )
     down = torch.empty((rows, weight_nd.shape[1]), dtype=torch.bfloat16, device="npu")
     residual = torch.empty_like(down)
     cache_shape = (workload.kv_blocks, workload.block_size, attention.num_kv_heads, attention.head_dim)
@@ -580,7 +609,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         def mlp_lane(self, lane, value):
             start, stop = (0, boundary) if lane == 0 else (boundary, rows)
             projected_down, next_residual = local_mlp(
-                value, self.attention_residual[start:stop], gate_up_weight_nz, down_weight_nz
+                value, self.attention_residual[start:stop], gate_up_weight_timed, down_weight_nz
             )
             ready, done = self.mlp_events[lane * 2 : lane * 2 + 2]
             ready.record(self.root)
@@ -609,7 +638,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         def finish_shared_mlp(self, value):
             if not args.include_mlp:
                 return value
-            return shared_mlp(value, self.attention_residual, gate_up_weight_nz, down_weight_nz)
+            return shared_mlp(value, self.attention_residual, gate_up_weight_timed, down_weight_nz)
 
         def finish_output_lanes(self, first_output, second_output):
             self.output_partitions = (first_output, second_output)
@@ -792,6 +821,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 mode: execution_layout(mode, rows, args.pair, args.include_mlp, args.shared_qkv) for mode in modes
             },
             shared_input_norm_qkv=bool(args.shared_qkv),
+            gate_up_weight_format=args.gate_up_format if args.include_mlp else None,
+            gate_up_channel_partitions=args.gate_up_partitions if args.include_mlp else None,
             split_output_overlap=bool(args.split_output_overlap),
             split_output_overlap_requested=args.split_output_overlap_requested,
             include_mlp=bool(args.include_mlp),
@@ -846,6 +877,20 @@ def main():
         "--shared-qkv", action="store_true", help="with --include-mlp, share full-bucket input reduction, Norm and QKV"
     )
     parser.add_argument(
+        "--gate-up-format",
+        type=str.upper,
+        choices=("NZ", "ND"),
+        default="NZ",
+        help="GateUp weight format used equally by padding and both split schedules; conversion is outside capture",
+    )
+    parser.add_argument(
+        "--gate-up-partitions",
+        type=int,
+        choices=(1, 2),
+        default=1,
+        help="prepack paired gate/up channel blocks equally for padding and split; runtime joins are timed",
+    )
+    parser.add_argument(
         "--split-output-overlap",
         action="store_true",
         help="also time split O projections with output reduction A overlapping attention branch B",
@@ -862,6 +907,8 @@ def main():
         args.split_output_overlap = True
     if args.shared_qkv and not args.include_mlp:
         parser.error("--shared-qkv requires the three same-endpoint --include-mlp controls")
+    if (args.gate_up_format != "NZ" or args.gate_up_partitions != 1) and not args.include_mlp:
+        parser.error("GateUp variants require --include-mlp")
     if args.output.exists() or min(args.rounds, args.repeats) < 1:
         parser.error("positive sample counts and a new output path are required")
     if int(os.environ.get("WORLD_SIZE", "1")) != args.tensor_parallel_size or args.tensor_parallel_size < 2:
@@ -887,6 +934,8 @@ def main():
             scope=experiment_scope(args.include_mlp),
             include_mlp=bool(args.include_mlp),
             shared_input_norm_qkv=bool(args.shared_qkv),
+            gate_up_weight_format=args.gate_up_format if args.include_mlp else None,
+            gate_up_channel_partitions=args.gate_up_partitions if args.include_mlp else None,
             split_output_overlap=bool(args.split_output_overlap),
             selection=args.selection,
             model=args.model,

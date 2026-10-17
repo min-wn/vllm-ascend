@@ -427,10 +427,96 @@ profiler GEMM extraction. All runs record the following exact sources:
 | Runtime-stride RoPE kernel | `43111c26ca71e85f76c1f854a464af030214681bdb29feedbb1cfef15ad058cf` |
 
 The focused CPU suite has 21 passing tests. Full `format.sh ci` was attempted;
-Ruff and Markdown checks pass, while existing codespell `nd` findings, the
+Ruff and Markdown checks pass, while existing codespell findings in the resource probe, the
 existing forbidden direct Triton import, and Windows shell/Python launcher
 limits leave the full check unresolved. These local limitations do not change
 the NPU numerical results or replace further hardware qualification.
+
+## GateUp follow-up: measured candidates and full-model readiness
+
+Two explicit benchmark controls retain the qualified default path:
+`--gate-up-format NZ` and `--gate-up-partitions 1`. Changing either applies
+identically to padding and both split schedules. All packing and format
+conversion occurs before graph capture, while each projection, activation,
+intermediate concatenation, Down reduction, and final drain remains timed.
+These controls are experimental choices, not automatic runtime tuning.
+
+`--gate-up-format ND` keeps the projection equations unchanged. Its three-round,
+eight-sample run passes the same 74 checks per rank. Wall times are 2088.52 us
+for joined, 2131.70 us for the shared-MLP control, and 2137.92 us for split MLP.
+Split MLP is 2.37% slower than same-run padding. In the separate rank-1 second
+profiler replay, GateUp takes 304.84 + 290.04 = 594.88 us in split MLP, versus
+371.12 us in joined. This candidate does not resolve the observed penalty and
+is not adopted as the default. The original NZ results remain the qualified
+positive result; the ND experiment is not a new speedup.
+
+`--gate-up-partitions 2` prepacks two matching pairs of gate/up feature-channel
+blocks. Each block applies the loaded activation, then their intermediate
+outputs are concatenated in original channel order before the unchanged Down.
+It keeps the request split at the legal default 200 + 200 and does not split
+attention heads or introduce a capture capacity. CPU tests check its complete
+mathematics, residual, and request-sliced composition against the original MLP.
+
+The two-sample, one-round paired-channel pilot passes all 62 checks per rank.
+Split-MLP device time is 1989.89 us; the two previous NZ single-block formal
+runs gave 1941.24 and 1937.73 us. This short screen does not show an absolute
+latency improvement and is not promoted to a formal performance claim. Its
+same-pilot wall advantage over its own slower padding baseline must not be
+presented as an improvement over the existing best implementation. A larger
+matrix is not justified by this screen alone.
+
+The installed `torch_npu.npu_ffn` documentation was also inspected. Its
+SwiGLU/GEGLU/ReGLU restriction is FP16 in high-performance mode; the documented
+BF16 support for other activations does not qualify this BF16 SwiGLU layer.
+No dtype or activation change was made to obtain fusion.
+
+Artifacts are `tp2-27b-mlp-sharedqkv-200-200-gu-nd` and
+`tp2-27b-mlp-sharedqkv-200-200-gu-paired-pilot`, with JSON, logs, and two rank
+traces in the same local and remote artifact directories. The exact source
+snapshots are `gate_up_nd_benchmark.py` (SHA-256
+`e6a7591ae6fe70e91da33777a372b02feb417a4a9cf6bf36791536c1c636253a`) and
+`gate_up_paired_benchmark.py` (SHA-256
+`7d39e37259f875323e32a6df1ed65735d8856e2709abd9ea47827d7b556b85ed`).
+`gate_up_candidate_audit.json` checks their identities and distinguishes the
+formal ND run from the short channel-partition pilot. Focused CPU validation
+now passes 27 tests, including case-insensitive CLI controls. Both candidates remain opt-in, with NZ and one block as
+the defaults.
+
+### Why selected-layer gains may shrink in the complete model
+
+The measured endpoint contains one full-attention layer and its real MLP,
+plus a synthetic preceding producer's input reduction. Qwen3.5-27B has 16
+full-attention and 48 GDN layers. Layer counts alone do not determine the
+latency fraction attributable to each path. Unchanged GDN work can dilute the
+benefit; extra graph joins, state gathering, or launch gaps can erase it.
+Conversely, a real adjacent layer may supply another useful overlap window.
+Neither direction is established by the current selected-layer result.
+
+A whole-model comparison must not repeat the benchmark's synthetic input
+reduction at every layer: the preceding layer's real Down is already reduced.
+It must also account for the actual final output endpoint and all transitions
+between attention types. A per-layer final join is a concrete potential cost;
+carrying request partitions through compatible boundaries would avoid repeated
+repacking, but remains unimplemented and requires state-aware validation.
+
+The startup warning about missing Triton `causal_conv1d_update_npu` belongs
+to the KDA compatibility rebind in `patch_triton.py`. It is not evidence that
+Qwen3.5 GDN uses the PyTorch fallback. The inspected `gdn.py` imports its
+convolution and recurrent update from `fla_npu.ops.ascendc`. The installed
+`causal_conv1d_update` signature accepts speculative lengths, accepted-token
+counts, null state IDs, output buffers, and optional host metadata. This
+source inspection establishes the actual entry point, not successful GDN
+capture or correct state transitions. Those still require the qualification
+below.
+
+The next integration gate is actual layer 3 -> layer 4 with the real GDN
+implementation. First qualify its official eager execution, captured replay,
+and state updates on identical inputs. Then compare a joined baseline and
+request pipeline through both complete layers, including both MLPs and the
+last reduction. Only after this gate passes should the experiment extend to
+full-model replay. Runtime bucket routing and performance selection require
+measuring this complete boundary and dispatch overhead; the existing CLI
+prototype does not supply an engine-level planner.
 
 ## Alternative if full MLP fragmentation loses
 
