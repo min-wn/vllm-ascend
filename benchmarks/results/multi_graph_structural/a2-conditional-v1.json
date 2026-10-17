@@ -1,0 +1,102 @@
+{
+  "status": "unsupported",
+  "calls": [
+    {
+      "api": "aclInit",
+      "result": 0
+    },
+    {
+      "api": "aclrtSetDevice",
+      "result": 0
+    },
+    {
+      "api": "aclrtCreateStream",
+      "result": 0
+    },
+    {
+      "api": "aclrtCreateStream",
+      "result": 0
+    },
+    {
+      "api": "aclrtCreateStream",
+      "result": 0
+    },
+    {
+      "api": "aclrtCreateStream",
+      "result": 0
+    },
+    {
+      "api": "aclrtMalloc",
+      "result": 0
+    },
+    {
+      "api": "aclrtMemcpy",
+      "result": 0
+    },
+    {
+      "api": "aclrtMalloc",
+      "result": 0
+    },
+    {
+      "api": "aclrtMemcpy",
+      "result": 0
+    },
+    {
+      "api": "aclrtMalloc",
+      "result": 0
+    },
+    {
+      "api": "aclrtMemcpy",
+      "result": 0
+    },
+    {
+      "api": "aclrtMalloc",
+      "result": 0
+    },
+    {
+      "api": "aclrtMemcpy",
+      "result": 0
+    },
+    {
+      "api": "aclrtMalloc",
+      "result": 0
+    },
+    {
+      "api": "aclrtMemcpy",
+      "result": 0
+    },
+    {
+      "api": "aclrtMalloc",
+      "result": 0
+    },
+    {
+      "api": "aclrtMemcpy",
+      "result": 0
+    },
+    {
+      "api": "aclmdlRICaptureBegin",
+      "result": 0
+    },
+    {
+      "api": "aclmdlRICaptureGetInfo",
+      "result": 0
+    },
+    {
+      "api": "aclmdlRICondHandleCreate",
+      "result": 207000
+    }
+  ],
+  "cleanup_errors": [],
+  "device": 0,
+  "scope": "Raw ACLGraph IF with D2D branches; no FIA/HCCL/model qualification",
+  "source_sha256": "0fd464cb958fbb00792fc8ddb51184cb619adbbe1143179de57e13c43c511168",
+  "no_driver_or_device_reset": true,
+  "condition_contract": "Parent captured D2D copies conditionInput to condPtr after ASSIGN_DEFAULT initialization",
+  "reference": "https://github.com/hicann/runtime/blob/b5c8dd9a4022aba8964feb2daa2dc8973f7cb214/example/2_advanced_features/model_ri/3_cond_model/main.cpp",
+  "api": "aclmdlRICondHandleCreate",
+  "error_code": 207000,
+  "error": "aclmdlRICondHandleCreate returned 207000: [PID: 625493] 2026-10-17-17:30:12.435.087 Invalid_Argument(EE1001): The argument is invalid. Reason: rtModelCondHandleCreate execution failed, the feature is not supported.\n        Solution: 1. Check the input parameter range of the function. 2. Check the function invocation relationship.\n",
+  "recent_error": "[PID: 625493] 2026-10-17-17:30:12.435.087 Invalid_Argument(EE1001): The argument is invalid. Reason: rtModelCondHandleCreate execution failed, the feature is not supported.\n        Solution: 1. Check the input parameter range of the function. 2. Check the function invocation relationship.\n",
+  "support_gate": "softwareSQ + driver dynamicSQbinding + TS_FEATURE_ACLGRAPH_COND_OP",
+  "cleanup_complete": true
+}
