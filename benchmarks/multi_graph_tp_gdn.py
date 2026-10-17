@@ -23,7 +23,7 @@ def request_state_values(start, stop, live, query=4):
     )
 
 
-def qualify_gdn(args, workload, runner, model, previous_output, cpu_group):
+def qualify_gdn(args, workload, runner, model, previous_output, cpu_group, *, setup_only=False):
     """Qualify real stateful eager/capture paths before cross-layer scheduling."""
     import torch
     import torch.distributed as dist
@@ -128,6 +128,66 @@ def qualify_gdn(args, workload, runner, model, previous_output, cpu_group):
             return layer(
                 hidden_states=hidden[start:stop], residual=residual[start:stop], positions=positions[start:stop]
             )
+
+    if setup_only:
+        from types import SimpleNamespace
+
+        import torch.nn.functional as functional
+
+        if layer.layer_scale or layer.use_attn_reduce_scatter_for_moe:
+            raise ValueError("adjacent pipeline requires an unscaled dense GDN layer")
+        for projection in (gdn.out_proj, layer.mlp.down_proj):
+            if projection.custom_op is not None or projection.bias is not None or not projection.reduce_results:
+                raise ValueError("adjacent pipeline requires ordinary bias-free TP reductions")
+        data_by_name = {name: metadata(count, name) for name in intervals}
+        addresses = {name: identity(data) for name, data in data_by_name.items()}
+
+        def refresh(live):
+            for name in intervals:
+                data_by_name[name] = metadata(live, name)
+                # Python slicing is captured once. Keep the full lane extent;
+                # zero query intervals and null state IDs mask inactive rows.
+                start, stop = intervals[name]
+                data_by_name[name].num_actual_tokens = (stop - start) * 4
+                if identity(data_by_name[name]) != addresses[name]:
+                    raise ValueError("GDN metadata buffer address changed")
+
+        def run(value, prior, name="full", local=False):
+            start, stop = (request * 4 for request in intervals[name])
+            with set_ascend_forward_context(
+                {gdn.prefix: data_by_name[name]},
+                config,
+                num_tokens=stop - start,
+                num_actual_tokens=stop - start,
+                aclgraph_runtime_mode=CUDAGraphMode.NONE,
+                model_instance=model,
+                skip_compiled=True,
+            ):
+                if not local:
+                    return layer(hidden_states=value, residual=prior, positions=positions[start:stop])
+                normalized, next_residual = layer.input_layernorm(value, prior)
+                gdn.out_proj.reduce_results = False
+                try:
+                    projected = gdn(hidden_states=normalized)
+                finally:
+                    gdn.out_proj.reduce_results = True
+                return projected, next_residual
+
+        def local_mlp(value, prior):
+            normalized, next_residual = layer.post_attention_layernorm(value, prior)
+            packed, _ = layer.mlp.gate_up_proj(normalized)
+            projected = functional.linear(layer.mlp.act_fn(packed), layer.mlp.down_proj.weight)
+            return projected, next_residual
+
+        return SimpleNamespace(
+            refresh=refresh,
+            reset=reset,
+            run=run,
+            local_mlp=local_mlp,
+            states=gdn.kv_cache,
+            initial=initial,
+            layer_index=index,
+        )
 
     checks = []
     entries = {}

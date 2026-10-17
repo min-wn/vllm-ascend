@@ -541,7 +541,8 @@ unbounded savings once the early partition's work is fully hidden.
 
 ## Future adjacent GDN boundary
 
-The complete cross-layer pipeline is not implemented. The qualification probe
+The complete cross-layer pipeline is implemented as an experimental benchmark,
+but has not passed its two-layer numerical gate. The qualification probe
 described below now exercises actual layer 4. Layer 4 is a real GDN layer, so repeating
 the selected full-attention layer would not qualify the adjacent model
 boundary. A later experiment must satisfy these additional requirements:
@@ -658,8 +659,9 @@ Its tested GDN source SHA256 is
 Both state tensors demonstrably changed from their initial values, excluding
 a metadata-free no-op. All state
 restores used for comparison are outside any performance scope; no latency
-is reported by this probe. The actual layer-3-to-layer-4 overlapping schedule,
-complete two-layer timing and full-model integration remain separate work.
+is reported by this probe. The layer-3-to-layer-4 overlapping schedule is now
+implemented separately with `--gdn-pipeline`; qualification and outcomes are
+recorded below. Full-model integration remains separate work.
 
 Raw JSON, logs and traces are retained under
 `outputs/multi_graph_tp_attention_mlp/` locally and
@@ -672,3 +674,89 @@ passed. `bash format.sh ci` was attempted: repository Ruff and Markdown
 checks passed, while unrelated existing codespell/forbidden-import findings
 and Windows shellcheck, `/bin/bash`, and python3 launcher gaps prevent a
 clean full CI result. See `contention-gdn-format-ci.log` with the raw artifacts.
+
+## Complete two-layer scheduling experiment
+
+`--gdn-pipeline --include-mlp --shared-qkv --shared-rope --pair 200 200`
+extends the endpoint through the actual layer 4 GDN and its complete MLP.
+Both hidden and residual outputs, Conv state and SSM state are checked against
+the unchanged layer 3 ND oracle followed by official layer 4 execution.
+Every timed sample restores the same states outside timing. FIA update remains
+after graph replay submission, using the existing external-event protocol.
+
+The joined control uses both whole layers. `split_gdn_barrier` and
+`split_mlp_overlap` use the same request partitions and GDN decomposition:
+the latter begins GDN A's local Norm/projection/recurrence/output-projection
+after layer 3 Down_A, while Down_B can still be running. The barrier control
+waits for Down_B first. Both wait for Down_B before submitting GDN collectives.
+GDN output reductions A/B and MLP Down reductions A/B use one ordered
+communication stream; all final waits and hidden/residual joins are timed.
+The official GDN output projection's reduction is disabled only while building
+the local prefix and restored in `finally`; the benchmark explicitly submits
+exactly one reduction. No communication is counted twice or omitted.
+
+The first qualification outcomes reject several candidates before timing:
+
+| Artifact stem | Candidate | Outcome |
+| --- | --- | --- |
+| `tp2-27b-two-layer-pilot` | NZ GateUp, split GDN barrier control | Initial residual: 1/2,007,040 elements fails, max failing difference 0.0625 |
+| `tp2-27b-two-layer-shared-gdn` | Split layer 3, complete layer 4 | Same initial residual failure at the same location |
+| `tp2-27b-two-layer-nd-gateup` | ND GateUp, split GDN barrier control | Same initial residual failure; exact candidate layer 3 input passes local GDN comparison |
+| `tp2-27b-two-layer-shared-mlp` | Shared layer 3 MLP and complete GDN | Initial batch passes; B97 residual has 1/1,986,560 failing elements, difference 0.0234375 |
+
+The initial failures are present without cross-layer overlap, so they do not
+establish an overlap synchronization bug. Keeping GDN whole and changing
+GateUp format do not remove them. Keeping the first MLP whole removes the
+initial failure but not the dynamic-input failure. Individual-layer tolerance
+passes cannot be extrapolated to their composition. These candidates receive
+no speedup claim, and the original tolerances remain unchanged.
+
+Additional controls are explicit: `--gdn-shared` keeps GDN whole;
+`--gdn-shared-mlp` also keeps the first MLP whole; `--gdn-shared-dense` retains
+all dense GEMM row shapes and runs only the two FIA request partitions on
+separate streams before the whole O projection. All use the same default
+400-token capacity and legal 200+200 pair, without custom capture sizes.
+
+The first shared-dense experiment exposed a benchmark setup error on B99:
+runtime GDN metadata had captured a Python slice extent of 392 from initial
+B98, truncating new requests. Even the joined baseline failed. The runtime
+now fixes captured Python extents at full lane capacity and uses zero device
+query intervals/null state IDs for inactive requests, matching the standalone
+GDN qualification. The first `tp2-27b-two-layer-shared-dense` run is invalid
+for dynamic replay and performance; subsequent results must use the fixed
+runtime. This fix does not change the precision threshold.
+
+The corrected `tp2-27b-two-layer-shared-dense-v2.json` passed 88 recorded
+checks per rank, including B98 -> B97 -> B99 -> B98 outputs and full GDN
+states. Three rounds of eight samples alternate mode order and use the
+slower rank per sample. All FIA updates and both layers' reductions/MLPs
+remain inside the timing endpoint:
+
+| Two-layer candidate | Wall replay, us | Device replay, us |
+| --- | ---: | ---: |
+| Joined padding | 4807.17 | 4743.53 |
+| Parallel FIA with shared dense shapes | 4853.91 | 4791.72 |
+
+The qualified candidate is **0.97% slower in wall time** and **1.02% slower
+in device time**. All three round medians have the same ordering. This is a
+negative two-layer result, not an end-to-end gain. Its tested attention
+benchmark SHA256 is
+`d4de3404466692ea5fd77360f8f2f7f1953bb4e507309d3c46f06af9401ea87b`;
+the exact attention and GDN sources are saved with the raw artifacts as
+`two_layer_attention_tested.py` and `two_layer_gdn_tested.py`.
+
+Current status: selected single-layer split-MLP gains do not yet extend to a
+qualified two-layer speedup. The more aggressive cross-layer schedule is
+implemented but blocked by its non-overlapping control's numerical failure;
+the shape-preserving control qualifies but loses performance. No full-model
+or serving speedup has been demonstrated. Future work must jointly preserve
+numerical behavior across layer boundaries and reduce the extra split work,
+rather than treating independently qualified layers as automatically
+composable. None of these experimental switches enables engine routing.
+
+Delivery validation: 45 focused CPU tests passed (391 deselected), including
+collective ordering, final drain, CLI constraints and the growing-batch capture
+extent regression. Scoped Ruff, codespell and Markdown checks passed. Full
+`bash format.sh ci` was attempted; existing unrelated findings and Windows
+tool availability still prevent a clean repository-wide result. The log is
+`two-layer-format-ci.log` with the local experiment artifacts.

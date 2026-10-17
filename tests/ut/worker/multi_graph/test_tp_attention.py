@@ -68,6 +68,11 @@ def test_gdn_padding_and_split_preserve_global_state_identity(benchmark, live):
         ["--gdn-probe"],
         ["--gdn-probe", "--include-mlp", "--shared-qkv", "--query", "1"],
         ["--gdn-probe", "--contention-probe", "--include-mlp", "--shared-qkv"],
+        ["--gdn-pipeline"],
+        ["--gdn-shared"],
+        ["--gdn-shared-mlp"],
+        ["--gdn-shared-dense"],
+        ["--gdn-pipeline", "--gdn-probe", "--include-mlp", "--shared-qkv"],
     ],
 )
 def test_probe_cli_rejects_incompatible_modes(benchmark, monkeypatch, tmp_path, flags):
@@ -75,6 +80,46 @@ def test_probe_cli_rejects_incompatible_modes(benchmark, monkeypatch, tmp_path, 
     with pytest.raises(SystemExit) as error:
         benchmark.main()
     assert error.value.code == 2
+
+
+def test_parallel_fia_keeps_all_dense_shapes_and_collectives(benchmark):
+    result = benchmark.execution_layout("split_attention_parallel", 400, (200, 200), True, True)
+    assert result["attention_tokens"] == [200, 200]
+    assert result["attention_streams"] == ["root", "comm"]
+    assert result["input_and_qkv_tokens"] == result["projection_tokens"] == [400]
+    assert result["mlp"]["projection_tokens"] == [400]
+    assert result["collective_order"] == ["input", "output", "down"]
+    with pytest.raises(ValueError, match="shared QKV"):
+        benchmark.execution_layout("split_attention_parallel", 400, (200, 200), True, False)
+
+
+def test_gdn_runtime_refresh_keeps_capture_extent_when_live_batch_grows(benchmark):
+    from multi_graph_tp_gdn import qualify_gdn
+
+    function = next(
+        node
+        for node in ast.walk(ast.parse(inspect.getsource(qualify_gdn)))
+        if isinstance(node, ast.FunctionDef) and node.name == "refresh"
+    )
+    intervals = dict(full=(0, 100), left=(0, 50), right=(50, 100))
+    data = {}
+
+    def metadata(live, name):
+        start, stop = intervals[name]
+        return SimpleNamespace(num_actual_tokens=max(0, min(live, stop) - start) * 4, live=live, pointer=name)
+
+    namespace = dict(
+        intervals=intervals,
+        data_by_name=data,
+        metadata=metadata,
+        addresses={name: name for name in intervals},
+        identity=lambda value: value.pointer,
+    )
+    exec(compile(ast.Module(body=[function], type_ignores=[]), "gdn_refresh", "exec"), namespace)
+    for live in (98, 97, 99, 98):
+        namespace["refresh"](live)
+        assert {name: value.num_actual_tokens for name, value in data.items()} == dict(full=400, left=200, right=200)
+        assert all(value.live == live for value in data.values())
 
 
 @pytest.mark.parametrize("query", [1, 4])
@@ -312,6 +357,7 @@ def test_actual_split_mlp_schedule_waits_for_and_joins_returned_collective_stora
         return projection
 
     namespace = dict(
+        adjacent=None,
         torch=SimpleNamespace(npu=SimpleNamespace(stream=stream)),
         functional=functional,
         args=SimpleNamespace(include_mlp=True, shared_rope=False, shared_qkv=shared_qkv),
@@ -442,6 +488,51 @@ def test_paired_gate_up_channels_preserve_activation_and_down(benchmark, parts):
         torch.testing.assert_close(torch.cat([p[i] for p in split]), expected[i])
     with pytest.raises(ValueError, match="equally divisible"):
         benchmark.partition_gate_up(packed, 4)
+
+
+@pytest.mark.parametrize("overlap", [False, True])
+def test_adjacent_pipeline_orders_collectives_and_drains_both_lanes(benchmark, overlap):
+    syntax = ast.parse(inspect.getsource(benchmark.experiment))
+    definition = next(
+        node for node in syntax.body[0].body if isinstance(node, ast.ClassDef) and node.name == "CapturedAttention"
+    )
+    log = []
+
+    def run(value, prior, name, local):
+        assert local
+        log.append(f"prefix_{name}")
+        return value + 1, prior + 2
+
+    def mlp(value, prior):
+        return value + 3, prior + 4
+
+    namespace = dict(adjacent=SimpleNamespace(run=run, local_mlp=mlp), boundary=2)
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), benchmark.__file__, "exec"), namespace)
+    cls = namespace["CapturedAttention"]
+    entry = cls.__new__(cls)
+    entry.gdn_overlap = overlap
+    entry.root = SimpleNamespace(wait_event=lambda event: log.append(event))
+    entry.mlp_events = ("DA_ready", "DA_done", "DB_ready", "DB_done")
+    entry.gdn_events = tuple(f"gdn_{i}" for i in range(8))
+
+    def reduce(value, index):
+        log.append(f"reduce_{index}")
+        return value * 2
+
+    entry.gdn_reduce = reduce
+    entry.joined_output = torch.empty(4, 3)
+    entry.joined_residual = torch.empty(4, 3)
+    first, second = torch.full((2, 3), 2.0), torch.full((2, 3), 5.0)
+    prior = torch.ones(2, 3)
+    output, residual = entry.finish_adjacent((None, first, prior), (None, second, prior))
+    torch.testing.assert_close(output, torch.cat((first, second)) * 4 + 10)
+    torch.testing.assert_close(residual, torch.full((4, 3), 7.0))
+    assert [item for item in log if item.startswith("reduce")] == [f"reduce_{i}" for i in range(4)]
+    assert log.index("DB_done") < log.index("reduce_0")
+    assert (log.index("prefix_left") < log.index("DB_done")) == overlap
+    assert log.index("gdn_1") < log.index("reduce_2")
+    assert log.index("gdn_3") < log.index("reduce_3")
+    assert log[-2:] == ["gdn_5", "gdn_7"]
 
 
 @pytest.mark.parametrize("weight_format", ["ND", "NZ"])
