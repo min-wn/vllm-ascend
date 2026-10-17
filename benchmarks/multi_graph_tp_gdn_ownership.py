@@ -133,6 +133,8 @@ def time_entries(entries, cpu_group, rounds, repeats):
         names = tuple(entries) if round_id % 2 == 0 else tuple(reversed(entries))
         for name in names:
             entry = entries[name]
+            if "prepare_timing" in entry:
+                entry["prepare_timing"]()
             with torch.npu.stream(entry["root"]):
                 for _ in range(3):
                     entry["graph"].replay()
@@ -196,6 +198,21 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     layer = model.get_submodule(f"language_model.model.layers.{layer_index}")
     if layer.linear_attn.gqa_interleaved_layout or layer.input_layernorm.weight.numel() != 5120:
         raise ValueError("only the qualified noninterleaved, hidden-size-5120 Qwen3.5 layout is supported")
+    if args.compute_overlap_only:
+        from multi_graph_tp_gdn_compute_overlap import measure_compute_overlap
+
+        overlap = measure_compute_overlap(args, workload, runner, model, group, cpu_group)
+        report = dict(
+            status=overlap["status"],
+            compute_overlap=overlap,
+            selection=args.selection,
+            model=args.model,
+            source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        )
+        if rank == 0:
+            args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+            print(json.dumps(overlap["timing"]["summary"], indent=2), flush=True)
+        return
     if args.mlp_only:
         from multi_graph_tp_gdn_owner_mlp import measure_owner_mlp
 
@@ -458,6 +475,8 @@ def main():
     parser.add_argument("--core-only", action="store_true")
     parser.add_argument("--boundary-only", action="store_true")
     parser.add_argument("--mlp-only", action="store_true")
+    parser.add_argument("--compute-overlap-only", action="store_true")
+    parser.add_argument("--trace", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if (
@@ -467,6 +486,7 @@ def main():
         or (args.skip_core and args.core_only)
         or (args.boundary_only and (args.skip_core or args.core_only))
         or (args.mlp_only and (args.skip_core or args.core_only or args.boundary_only))
+        or (args.compute_overlap_only and (args.skip_core or args.core_only or args.boundary_only or args.mlp_only))
     ):
         parser.error("new output path, unique formats and positive counts required")
     args.gdn_pipeline, args.dtype, args.batch_invariant, args.kv_length = True, "bfloat16", False, 512
