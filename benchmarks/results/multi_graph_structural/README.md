@@ -10,6 +10,9 @@ correctness checks. They do not establish a TP2 decoder performance win.
 - `gdn-compact-v1-breakdown.json`: the same endpoints plus isolated emission
   and reconstruction diagnostics. The isolated modes omit required work and
   cannot be compared as replacement decoder endpoints.
+- `gdn-compact-v2-fused.json`: official-matching V tiling and fused accepted
+  reconstruction, including mixed per-request correctness. It remains slower
+  than the installed official recurrence; it is not a decoder speedup.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is
