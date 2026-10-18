@@ -7,6 +7,7 @@ The immutable random trajectory supplies ownership, lengths and accepted counts.
 """
 
 import argparse
+import faulthandler
 import hashlib
 import json
 import os
@@ -120,7 +121,12 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
     cache_identity = cache_binding_identity(bundle)
     cpu_group = get_world_group().cpu_group
     main = torch.npu.current_stream()
-    modes = ("deferred_overlap", "deferred_pipeline")
+    modes = (
+        ("deferred_overlap", "deferred_tile_separate", "deferred_tile_delayed", "deferred_tile_ready")
+        if args.tile_extension is not None
+        else ("deferred_overlap", "deferred_pipeline")
+    )
+    candidate = "deferred_tile_ready" if args.tile_extension is not None else "deferred_pipeline"
     initial = complete_snapshot(torch, bundle, registry)
     frames, tokens = {}, {}
     for capacity in selection["required_tokens"]:
@@ -143,6 +149,8 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
     # All graphs execute exclusively. Shared pool storage may alias across
     # captures; endpoints are consumed before another graph is submitted.
     pool = torch.npu.graph_pool_handle()
+    # Keep the shared graph allocator on one capture stream across buckets.
+    capture_root, update_stream = torch.npu.Stream(), torch.npu.Stream()
     capture_start = time.perf_counter()
     for mode in modes:
         registry.mode = mode
@@ -150,13 +158,14 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             index = selection["dispatched_tokens"].index(capacity)
             frame = prepare(trace.steps[index], capacity)
             restore_complete(torch, bundle, registry, initial)
-            root, update = torch.npu.Stream(), torch.npu.Stream()
+            root, update = capture_root, update_stream
             root.wait_stream(main)
             with torch.npu.stream(root):
                 for _ in range(2):
                     forward(frame, tokens[capacity], registry=registry)
             torch.npu.synchronize()
             restore_complete(torch, bundle, registry, initial)
+            print(f"rank={dist.get_rank()} full-model capture begin mode={mode} tokens={capacity}", flush=True)
             dist.barrier(group=cpu_group)
             root.wait_stream(main)
             graph = UpdatableGraph()
@@ -178,7 +187,11 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         required_default_buckets=selection["required_tokens"],
         fia_tasks_per_graph=16,
         elapsed_seconds=time.perf_counter() - capture_start,
-        partition="native GDN request products/solve ranges inside each legal full-model bucket",
+        partition=(
+            "native GDN request-tile readiness inside each legal full-model bucket"
+            if args.tile_extension is not None
+            else "native GDN request products/solve ranges inside each legal full-model bucket"
+        ),
     )
     report["memory"].append(memory_record(torch, "all_required_default_graphs_captured"))
 
@@ -259,6 +272,8 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         for mode in modes
     }
     means = {mode: latency[mode]["mean_us"] for mode in modes}
+    padding_modes = tuple(mode for mode in modes if mode != candidate)
+    baseline = min(padding_modes, key=lambda mode: means[mode])
     paired_trials = []
     for trial in range(args.trials):
         times = {
@@ -268,7 +283,7 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             for mode in modes
         }
         paired_trials.append(
-            dict(trial=trial, mean_us=times, reduction_percent=100 * (1 - times[modes[1]] / times[modes[0]]))
+            dict(trial=trial, mean_us=times, reduction_percent=100 * (1 - times[candidate] / times[baseline]))
         )
     report.update(
         status="measured_complete_replay_pending_full_correctness_audit",
@@ -276,7 +291,12 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         mean_critical_rank_us=means,
         latency=latency,
         paired_trials=paired_trials,
-        mean_reduction_percent=100 * (1 - means[modes[1]] / means[modes[0]]),
+        baseline=baseline,
+        candidate=candidate,
+        mean_reduction_percent=100 * (1 - means[candidate] / means[baseline]),
+        same_kernel_readiness_reduction_percent=(
+            100 * (1 - means[candidate] / means["deferred_tile_delayed"]) if args.tile_extension is not None else None
+        ),
         required_goal_reduction_percent=5,
         complete_goal_achieved=False,
         correctness_limitations=(
@@ -452,9 +472,12 @@ def experiment(args, trace, runner, model, config):
         log = load_extension("gdn_q4_log", args.extension)
         products = load_extension("gdn_q4_products", args.products_extension)
         deferred = load_extension("gdn_q4_log_deferred", args.deferred_extension)
+        tile = load_extension("gdn_q4_tile_pipeline", args.tile_extension) if args.tile_extension is not None else None
         registry = CompactSSMRegistry()
         for item in bundle.gdn_entries:
-            backend = Q4LogBackend(item.state, log, products, "deferred_overlap", deferred_module=deferred)
+            backend = Q4LogBackend(
+                item.state, log, products, "deferred_overlap", deferred_module=deferred, tile_module=tile
+            )
             backend.reserve_exclusive_capacity(max_batch=max(args.selection["required_tokens"]) // 4)
             registry.register(item.state.handle, backend, item.gdn.out_proj)
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
@@ -504,6 +527,7 @@ def main():
     parser.add_argument("--extension", type=Path, required=True)
     parser.add_argument("--products-extension", type=Path, required=True)
     parser.add_argument("--deferred-extension", type=Path, required=True)
+    parser.add_argument("--tile-extension", type=Path)
     parser.add_argument("--trials", type=int, default=3)
     parser.add_argument("--qualification-steps", type=int, default=3)
     parser.add_argument("--output", type=Path, required=True)
@@ -513,6 +537,8 @@ def main():
     if args.trials < 2 or not 2 <= args.qualification_steps <= 128:
         parser.error("at least two paired trials and 2..128 continued qualification steps required")
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    faulthandler.enable()
+    faulthandler.dump_traceback_later(180, repeat=True)
     try:
         trace = load_fixed_trace(args.trace)
         run_full_model(args, trace, experiment=experiment)
@@ -525,6 +551,8 @@ def main():
         if rank == 0:
             args.output.write_text(text, encoding="utf-8")
         raise
+    finally:
+        faulthandler.cancel_dump_traceback_later()
 
 
 if __name__ == "__main__":

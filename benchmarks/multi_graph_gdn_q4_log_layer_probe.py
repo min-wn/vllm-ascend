@@ -41,17 +41,27 @@ def mode_backend_name(mode):
         compact_deferred_serial="deferred_serial",
         compact_deferred_overlap="deferred_overlap",
         compact_deferred_pipeline="deferred_pipeline",
+        compact_deferred_tile_delayed="deferred_tile_delayed",
+        compact_deferred_tile_ready="deferred_tile_ready",
+        compact_deferred_tile_separate="deferred_tile_separate",
     )
     if mode not in modes:
         raise ValueError("unknown real-layer recurrence control")
     return modes[mode]
 
 
-def layer_modes(deferred_extension):
+def layer_modes(deferred_extension, tile_extension=None):
+    if tile_extension is not None and not deferred_extension:
+        raise ValueError("request-tile controls require the deferred extension")
     modes = ("official_padding", "compact_padding", "compact_serial", "compact_pipeline")
-    return modes + (
+    modes += (
         ("compact_deferred_serial", "compact_deferred_overlap", "compact_deferred_pipeline")
         if deferred_extension
+        else ()
+    )
+    return modes + (
+        ("compact_deferred_tile_delayed", "compact_deferred_tile_ready", "compact_deferred_tile_separate")
+        if tile_extension is not None
         else ()
     )
 
@@ -76,6 +86,50 @@ def deferred_pipeline_comparison(round_medians):
             100 * (1 - statistics.median(candidate_times) / statistics.median(baseline_times))
         ),
         scope="one complete real GDN layer; does not establish full-model replay improvement",
+    )
+
+
+def tile_pipeline_comparison(round_medians):
+    """Keep public kernel gains separate from request-tile readiness overlap."""
+    candidate = "compact_deferred_tile_ready"
+    if candidate not in round_medians:
+        return None
+    public_controls = (
+        "compact_deferred_overlap",
+        "compact_deferred_tile_separate",
+        "compact_deferred_tile_delayed",
+    )
+    baseline = min(public_controls, key=lambda mode: statistics.median(round_medians[mode]))
+
+    def comparison(control):
+        before, after = round_medians[control], round_medians[candidate]
+        return dict(
+            baseline=control,
+            candidate=candidate,
+            baseline_round_medians_us=before,
+            candidate_round_medians_us=after,
+            paired_round_latency_reduction_percent=[
+                100 * (1 - current / previous) for previous, current in zip(before, after, strict=True)
+            ],
+            median_of_round_medians_reduction_percent=(
+                100 * (1 - statistics.median(after) / statistics.median(before))
+            ),
+        )
+
+    return dict(
+        scope="one complete real GDN layer; does not establish full-model replay improvement",
+        common_schedule="all controls retain deferred accepted-state commit and the timed complete-layer join",
+        baseline_selection="lowest median of round medians among all three public padding controls",
+        eligible_public_padding_controls=list(public_controls),
+        versus_best_public_padding=comparison(baseline),
+        versus_each_public_padding={control: comparison(control) for control in public_controls},
+        same_kernel_readiness_increment=comparison("compact_deferred_tile_delayed"),
+        versus_previous_request_pipeline=comparison("compact_deferred_pipeline"),
+        attribution=(
+            "delayed and ready use the same tile producer/consumer kernels; delayed waits for each producer wave, "
+            "while ready consumes request tiles as they become available within that wave; "
+            "separate and delayed expose public kernel gains to padding before assigning incremental split benefit"
+        ),
     )
 
 
@@ -129,7 +183,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             dense_state[slot].copy_(seed)
     compact_state = Q4LogState(torch, dense_state, candidate_slots, [1] * workload.capacity)
     prefix = fixture.phases.gdn.prefix
-    modes = layer_modes(args.deferred_extension)
+    modes = layer_modes(args.deferred_extension, args.tile_extension)
     schedule = qualification_schedule(workload.batch, workload.capacity)
     graphs, graph_outputs, checks, diagnostics, samples = {}, {}, [], [], []
 
@@ -223,6 +277,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             args.products_extension,
             mode="padding",
             deferred_path=args.deferred_extension,
+            tile_path=args.tile_extension,
         ) as backend,
         installed_commit_pre_hook(fixture.phases.gdn.out_proj, backend),
     ):
@@ -405,6 +460,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             critical_rank_samples=joined_samples,
             round_medians_us=round_medians,
             deferred_pipeline_increment=deferred_pipeline_comparison(round_medians),
+            request_tile_increment=tile_pipeline_comparison(round_medians),
             includes=(
                 "whole real GDN layer, official conv/gates/L2norm, projections, MLP, "
                 "TP reductions, state drains and joins"
@@ -439,6 +495,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 for name, path in (
                     (("log", args.extension), ("products", args.products_extension))
                     + ((("deferred", args.deferred_extension),) if args.deferred_extension else ())
+                    + ((("tile", args.tile_extension),) if args.tile_extension else ())
                 )
             },
         )
@@ -460,6 +517,7 @@ def main():
     parser.add_argument("--extension", type=Path, required=True)
     parser.add_argument("--products-extension", type=Path, required=True)
     parser.add_argument("--deferred-extension", type=Path, help="explicit deferred commit/solve library")
+    parser.add_argument("--tile-extension", type=Path, help="request-ready tile library; requires --deferred-extension")
     parser.add_argument("--pair", nargs=2, type=int, default=(200, 200))
     parser.add_argument("--kv-length", type=int, default=512)
     parser.add_argument("--rounds", type=int, default=3)
@@ -469,6 +527,8 @@ def main():
     args = parser.parse_args()
     if args.output.exists() or args.rounds < 2 or args.repeats < 3 or not 0 < args.max_nrmse <= 0.005:
         parser.error("new output, rounds >= 2, repeats >= 3 and 0 < max-nrmse <= 0.005 required")
+    if args.tile_extension is not None and args.deferred_extension is None:
+        parser.error("--tile-extension requires --deferred-extension")
     if int(os.environ.get("WORLD_SIZE", "1")) != 2 or args.tensor_parallel_size != 2:
         parser.error("launch through torchrun with exactly two ranks")
     args.query, args.dtype, args.batch_invariant, args.compiled = 4, "bfloat16", False, False

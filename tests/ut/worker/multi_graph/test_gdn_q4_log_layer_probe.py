@@ -62,6 +62,9 @@ def test_invalid_schedule_bounds_are_rejected(probe, batch, capacity):
         ("compact_deferred_serial", "deferred_serial"),
         ("compact_deferred_overlap", "deferred_overlap"),
         ("compact_deferred_pipeline", "deferred_pipeline"),
+        ("compact_deferred_tile_delayed", "deferred_tile_delayed"),
+        ("compact_deferred_tile_ready", "deferred_tile_ready"),
+        ("compact_deferred_tile_separate", "deferred_tile_separate"),
     ],
 )
 def test_layer_controls_select_only_the_recurrence_backend(probe, mode, backend):
@@ -80,6 +83,18 @@ def test_deferred_controls_require_the_explicit_extension_option(probe):
         "compact_deferred_serial",
         "compact_deferred_overlap",
         "compact_deferred_pipeline",
+    )
+    assert probe.layer_modes(Path("deferred.so"), None) == probe.layer_modes(Path("deferred.so"))
+
+
+def test_request_tile_controls_require_both_explicit_extensions_and_keep_all_prior_controls(probe):
+    with pytest.raises(ValueError, match="require the deferred extension"):
+        probe.layer_modes(None, Path("tile.so"))
+    original = probe.layer_modes(Path("deferred.so"))
+    assert probe.layer_modes(Path("deferred.so"), Path("tile.so")) == original + (
+        "compact_deferred_tile_delayed",
+        "compact_deferred_tile_ready",
+        "compact_deferred_tile_separate",
     )
 
 
@@ -109,6 +124,84 @@ def test_deferred_pipeline_comparison_keeps_losses_and_pairing_mismatch_visible(
         probe.deferred_pipeline_comparison(
             dict(compact_deferred_overlap=[2400, 2400], compact_deferred_pipeline=[2280])
         )
+
+
+@pytest.mark.parametrize(
+    "separate_times,delayed_times,expected_baseline,expected_improvement",
+    [
+        ([2400] * 3, [2250] * 3, "compact_deferred_overlap", 10),
+        ([1800] * 3, [2250] * 3, "compact_deferred_tile_separate", 0),
+        ([2400] * 3, [1875] * 3, "compact_deferred_tile_delayed", 4),
+    ],
+)
+def test_tile_comparison_credits_only_increment_beyond_best_public_padding(
+    probe, separate_times, delayed_times, expected_baseline, expected_improvement
+):
+    comparison = probe.tile_pipeline_comparison(
+        dict(
+            official_padding=[3000, 3000, 3000],
+            compact_deferred_overlap=[2000, 2000, 2000],
+            compact_deferred_tile_separate=separate_times,
+            compact_deferred_tile_delayed=delayed_times,
+            compact_deferred_tile_ready=[1800, 1800, 1800],
+            compact_deferred_pipeline=[1900, 1900, 1900],
+        )
+    )
+    best = comparison["versus_best_public_padding"]
+    assert best["baseline"] == expected_baseline
+    assert best["median_of_round_medians_reduction_percent"] == pytest.approx(expected_improvement)
+    assert set(comparison["versus_each_public_padding"]) == {
+        "compact_deferred_overlap",
+        "compact_deferred_tile_separate",
+        "compact_deferred_tile_delayed",
+    }
+    assert comparison["same_kernel_readiness_increment"]["paired_round_latency_reduction_percent"] == pytest.approx(
+        [100 * (1 - 1800 / previous) for previous in delayed_times]
+    )
+    assert comparison["versus_previous_request_pipeline"]["baseline"] == "compact_deferred_pipeline"
+    assert "not establish full-model" in comparison["scope"]
+    assert probe.tile_pipeline_comparison(dict(compact_deferred_overlap=[2000])) is None
+
+
+def test_tile_comparison_preserves_losses_round_pairing_and_fast_public_consumer(probe):
+    times = dict(
+        compact_deferred_overlap=[2400, 2000, 2200],
+        compact_deferred_tile_separate=[2200, 1900, 2100],
+        compact_deferred_tile_delayed=[2100, 1800, 2000],
+        compact_deferred_tile_ready=[2310, 1995, 2205],
+        compact_deferred_pipeline=[2300, 1950, 2150],
+    )
+    comparison = probe.tile_pipeline_comparison(times)
+    best = comparison["versus_best_public_padding"]
+    assert best["baseline"] == "compact_deferred_tile_delayed"
+    assert best["paired_round_latency_reduction_percent"] == pytest.approx([-10.0, -10.833333333, -10.25])
+    assert best["median_of_round_medians_reduction_percent"] == pytest.approx(-10.25)
+    assert comparison["versus_each_public_padding"]["compact_deferred_tile_separate"][
+        "paired_round_latency_reduction_percent"
+    ] == pytest.approx([-5, -5, -5])
+    assert comparison["same_kernel_readiness_increment"]["paired_round_latency_reduction_percent"] == pytest.approx(
+        [-10.0, -10.833333333, -10.25]
+    )
+    times["compact_deferred_tile_ready"] = [2310, 1995]
+    with pytest.raises(ValueError):
+        probe.tile_pipeline_comparison(times)
+
+
+def test_tile_comparison_does_not_assign_fused_delayed_kernel_gain_to_readiness(probe):
+    comparison = probe.tile_pipeline_comparison(
+        dict(
+            compact_deferred_overlap=[2340.41, 2349.94, 2347.46],
+            compact_deferred_tile_delayed=[2343.40, 2333.54, 2337.04],
+            compact_deferred_tile_ready=[2196.82, 2206.53, 2185.73],
+            compact_deferred_tile_separate=[2607, 2608, 2609],
+            compact_deferred_pipeline=[2300, 2301, 2302],
+        )
+    )
+    best = comparison["versus_best_public_padding"]
+    assert best["baseline"] == "compact_deferred_tile_delayed"
+    assert best["median_of_round_medians_reduction_percent"] == pytest.approx(100 * (1 - 2196.82 / 2337.04))
+    assert best == comparison["same_kernel_readiness_increment"]
+    assert "waits for each producer wave" in comparison["attribution"]
 
 
 @pytest.mark.parametrize("raise_inside", [False, True])

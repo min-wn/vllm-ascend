@@ -15,6 +15,16 @@ from pathlib import Path
 from multi_graph_gdn_q4_backend import load_extension
 from multi_graph_gdn_q4_log_probe import request_pipeline_operations
 
+TILE_MODES = ("deferred_tile_delayed", "deferred_tile_ready", "deferred_tile_separate")
+COMPACT_MODES = (
+    "padding",
+    "serial",
+    "pipeline",
+    "deferred_serial",
+    "deferred_overlap",
+    "deferred_pipeline",
+) + TILE_MODES
+
 
 class CompactSSMHandle:
     """Opaque registry identity, deliberately without any Tensor interface."""
@@ -244,9 +254,10 @@ class Q4LogState:
 
 
 class Q4LogBackend:
-    def __init__(self, state, log_module, product_module, mode="padding", deferred_module=None):
+    def __init__(self, state, log_module, product_module, mode="padding", deferred_module=None, tile_module=None):
         self.state, self.log_module, self.product_module = state, log_module, product_module
         self.deferred_module = deferred_module
+        self.tile_module = tile_module
         self.buffers = {}
         self._exclusive_buffers = None
         self._exclusive_capacity = None
@@ -296,10 +307,12 @@ class Q4LogBackend:
     def mode(self, mode):
         if self._pending_commit is not None:
             raise RuntimeError("cannot change compact mode before the pending state commit is joined")
-        if mode not in ("padding", "serial", "pipeline", "deferred_serial", "deferred_overlap", "deferred_pipeline"):
+        if mode not in COMPACT_MODES:
             raise ValueError("unknown compact backend execution mode")
         if mode.startswith("deferred_") and self.deferred_module is None:
             raise ValueError("deferred compact execution requires an explicit deferred extension")
+        if mode in TILE_MODES and self.tile_module is None:
+            raise ValueError("tile compact execution requires an explicit tile extension")
         self._mode = mode
 
     def __call__(self, query, key, value, initial_state, **kwargs):
@@ -439,7 +452,53 @@ class Q4LogBackend:
                     stop,
                 )
 
-            if self.mode == "deferred_pipeline":
+            if self.mode in TILE_MODES:
+                q_float, k_float = prepare()
+                if self.mode == "deferred_tile_separate":
+                    product_range(q_float, k_float, 0, batch)
+                    self.tile_module.consume(
+                        products,
+                        query,
+                        key,
+                        value,
+                        beta,
+                        gate,
+                        self.state.base,
+                        sequence,
+                        compact_ids,
+                        accepted,
+                        output,
+                        self.state.logs,
+                        self.state.valid,
+                        buffers["new_logs"],
+                        buffers["new_valid"],
+                        40,
+                    )
+                else:
+                    # Both mixed-core controls share task ownership and math;
+                    # only ready mode exposes each request's product early.
+                    self.tile_module.solve(
+                        self.state.base,
+                        q_float,
+                        k_float,
+                        query,
+                        key,
+                        value,
+                        beta,
+                        gate,
+                        sequence,
+                        compact_ids,
+                        accepted,
+                        products,
+                        output,
+                        self.state.logs,
+                        self.state.valid,
+                        buffers["new_logs"],
+                        buffers["new_valid"],
+                        20,
+                        self.mode == "deferred_tile_ready",
+                    )
+            elif self.mode == "deferred_pipeline":
                 # Distinct dispatch from fused range execution: a captured
                 # deferred solve must never retain a later fused-step closure.
                 if "deferred_range_dispatch" not in buffers:
@@ -586,10 +645,12 @@ class Q4LogBackend:
             lifecycle="optional host prepare/finish guards; no native generation or retry validation",
             preparation="device owner lookup, output clear, Q/K casts included in callable",
             deferred_extension_loaded=self.deferred_module is not None,
+            tile_extension_loaded=self.tile_module is not None,
             deferred_commit_pending=self._pending_commit is not None,
             deferred_staging="scratch only; active new logs published into canonical old bank by commit",
             deferred_overlap="output-projection prehook launches commit; full-layer endpoint must join",
             deferred_pipeline="fixed request halves overlap products/solve; all solves joined before gated Norm",
+            deferred_tile="request tasks; separate/delayed/ready controls share deferred commit and endpoint join",
             libraries=self.sources,
             production_default_changed=False,
         )
@@ -681,10 +742,12 @@ class CompactSSMRegistry:
     def mode(self, mode):
         if any(backend._pending_commit is not None for _, backend, _, _ in self.entries):
             raise RuntimeError("join all compact commits before changing registry mode")
-        if mode not in ("padding", "serial", "pipeline", "deferred_serial", "deferred_overlap", "deferred_pipeline"):
+        if mode not in COMPACT_MODES:
             raise ValueError("unknown compact backend execution mode")
         if mode.startswith("deferred_") and any(backend.deferred_module is None for _, backend, _, _ in self.entries):
             raise ValueError("every compact layer needs the deferred extension")
+        if mode in TILE_MODES and any(backend.tile_module is None for _, backend, _, _ in self.entries):
+            raise ValueError("every compact layer needs the tile extension")
         for _, backend, _, _ in self.entries:
             backend.mode = mode
 
@@ -837,7 +900,7 @@ def installed_log_registry(registry):
 
 
 @contextmanager
-def installed_log_backend(state, logpath, productpath, mode="padding", deferred_path=None):
+def installed_log_backend(state, logpath, productpath, mode="padding", deferred_path=None, tile_path=None):
     import vllm_ascend.ops.gdn as gdn
 
     original = gdn.recurrent_gated_delta_rule
@@ -847,11 +910,17 @@ def installed_log_backend(state, logpath, productpath, mode="padding", deferred_
         load_extension("gdn_q4_products", productpath),
         mode,
         deferred_module=load_extension("gdn_q4_log_deferred", deferred_path) if deferred_path is not None else None,
+        tile_module=load_extension("gdn_q4_tile_pipeline", tile_path) if tile_path is not None else None,
     )
     backend.original = original
     backend.sources = {
         name: dict(path=str(path), sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest())
-        for name, path in (("log", logpath), ("products", productpath), ("deferred", deferred_path))
+        for name, path in (
+            ("log", logpath),
+            ("products", productpath),
+            ("deferred", deferred_path),
+            ("tile", tile_path),
+        )
         if path is not None
     }
     gdn.recurrent_gated_delta_rule = backend
