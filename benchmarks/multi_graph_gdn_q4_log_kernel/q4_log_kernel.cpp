@@ -56,10 +56,10 @@ class Q4Log {
     Sync<HardEvent::S_V>();
   }
 
-  __aicore__ inline void Process() {
+  __aicore__ inline void Process(uint32_t requestStart, uint32_t requestStop) {
     int32_t begin = sequence_.GetValue(0);
     uint32_t cursor = 0;
-    for (uint32_t task = GetBlockIdx(); task < batch_ * kHeads; task += GetBlockNum()) {
+    for (uint32_t task = requestStart * kHeads + GetBlockIdx(); task < requestStop * kHeads; task += GetBlockNum()) {
       const uint32_t row = task / kHeads, head = task % kHeads;
       // Task rows increase monotonically. Each core scans the request counts
       // once, rather than repeating a prefix scan for every request/head task.
@@ -345,7 +345,7 @@ class Q4Log {
 __global__ __aicore__ void q4_log(GM_ADDR products, GM_ADDR query, GM_ADDR key, GM_ADDR value, GM_ADDR beta,
                                   GM_ADDR gate, GM_ADDR state, GM_ADDR sequence, GM_ADDR ids, GM_ADDR accepted,
                                   GM_ADDR output, GM_ADDR logs, GM_ADDR valid, uint32_t batch, uint32_t slots,
-                                  uint64_t stateStride, bool exportOnly) {
+                                  uint64_t stateStride, bool exportOnly, uint32_t requestStart, uint32_t requestStop) {
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
   TPipe pipe;
   Q4Log op;
@@ -354,13 +354,13 @@ __global__ __aicore__ void q4_log(GM_ADDR products, GM_ADDR query, GM_ADDR key, 
   if (exportOnly)
     op.Export(output);
   else
-    op.Process();
+    op.Process(requestStart, requestStop);
 }
 
 extern "C" void q4_log_launch(uint32_t cores, void* stream, void* products, void* query, void* key, void* value,
                               void* beta, void* gate, void* state, void* sequence, void* ids, void* accepted,
                               void* output, void* logs, void* valid, uint32_t batch, uint32_t slots,
-                              uint64_t stateStride, bool exportOnly) {
+                              uint64_t stateStride, bool exportOnly, uint32_t requestStart, uint32_t requestStop) {
   q4_log<<<cores, nullptr, stream>>>(products, query, key, value, beta, gate, state, sequence, ids, accepted, output,
-                                     logs, valid, batch, slots, stateStride, exportOnly);
+                                     logs, valid, batch, slots, stateStride, exportOnly, requestStart, requestStop);
 }

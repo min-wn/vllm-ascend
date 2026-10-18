@@ -497,3 +497,46 @@ library SHA256 is
 `68a3b0098edf6cc89b95c307e01fcf2a76cd57468ff1ef71bb7abdac32c81436`;
 the products library SHA256 is
 `e167b52c6987a2578269ca452703ecdb9d9f68d9db63627cade8879e3fb8e823`.
+
+### Fixed-range request pipeline
+
+The next causal experiment adds only static request task ranges to the
+existing full-capacity kernels. Buffers, metadata, row addressing and native
+M384/N8/K128 products remain unchanged. The fixed rule is `boundary=B//2`;
+the capacity-100 control uses ranges `[0,50)` and `[50,100)`. No graph capture
+size is added or tailored to the live batch. The operations are:
+
+```text
+compact:          cast/clear -> P_full -> S_full
+compact_serial:   cast/clear -> P_A -> S_A -> P_B -> S_B
+compact_pipeline: cast/clear -> P_A -> (S_A || P_B) -> S_B -> root join
+```
+
+`gdn-q4-log-pipeline-v3.json` passes 41 checks. Both partitioned controls
+start each continued step from the identical compact state and produce
+bitwise-equal full output, base/pages, logs and flags to full compact.
+The eight-step official numerical and canonical candidate/commit checks
+also pass unchanged. Timing includes casts, output clear, range operations,
+events, waits, accepted commit and the final root-stream join.
+
+| Endpoint | Three device round medians (us) | Median of round medians (us) |
+| --- | --- | ---: |
+| Installed dense recurrence | 1012.84 / 999.68 / 1000.32 | 1000.32 |
+| Full compact | 706.85 / 698.05 / 697.47 | 698.05 |
+| Partitioned serial compact | 726.31 / 729.72 / 715.76 | 726.31 |
+| Partitioned pipeline compact | 667.22 / 666.66 / 653.64 | 666.66 |
+| Full compact plus all dense export | 1460.35 / 1453.35 / 1452.41 | 1453.35 |
+
+The pipeline saves 59.65 us (8.21%) against the same partitioned serial
+arithmetic, but partitioning costs 28.26 us relative to the full compact
+control. Its net saving against equally optimized full compact is therefore
+31.39 us (4.50%). This demonstrates a qualified recurrence-range effect;
+it does not meet the complete-model average 5% gate. Full-layer common work
+can dilute or erase this difference. A real layer is the next check, with
+compact representation and all public operator improvements on both sides.
+
+Exact tested sources and products tiling are archived under
+`/workspace/multi-graph-results/q4-log-v3-tested-source/`. Log and products
+library SHA256 values are respectively
+`787efd722754a96e2fa5ef4194bec5b86bc070ae9ea3bc86f3826d233b2b1068`
+and `49f2157b07d363f62a6a24969005973981e8f0b9a848d61e5b312cd22ee6cb6c`.

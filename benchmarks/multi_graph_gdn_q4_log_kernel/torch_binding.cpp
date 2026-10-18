@@ -6,7 +6,7 @@
 extern "C" void q4_log_launch(uint32_t cores, void* stream, void* products, void* query, void* key, void* value,
                               void* beta, void* gate, void* state, void* sequence, void* ids, void* accepted,
                               void* output, void* logs, void* valid, uint32_t batch, uint32_t slots,
-                              uint64_t stateStride, bool exportOnly);
+                              uint64_t stateStride, bool exportOnly, uint32_t requestStart, uint32_t requestStop);
 
 namespace {
 void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool contiguous = true) {
@@ -32,7 +32,7 @@ void state_contract(const at::Tensor& state, const at::Tensor& logs, const at::T
 
 void step(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor value, at::Tensor beta, at::Tensor gate,
           at::Tensor state, at::Tensor sequence, at::Tensor ids, at::Tensor accepted, at::Tensor output,
-          at::Tensor logs, at::Tensor valid, int64_t cores) {
+          at::Tensor logs, at::Tensor valid, int64_t cores, int64_t requestStart, int64_t requestStop) {
   state_contract(state, logs, valid, cores);
   check(products, at::kFloat, 4);
   for (const auto& tensor : {query, key, value, output}) check(tensor, at::kBFloat16, 3);
@@ -40,6 +40,8 @@ void step(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor valu
   check(gate, at::kFloat, 2);
   for (const auto& tensor : {sequence, ids, accepted}) check(tensor, at::kInt, 1);
   const auto batch = accepted.numel(), tokens = 4 * batch;
+  if (requestStop == -1) requestStop = batch;
+  TORCH_CHECK(requestStart >= 0 && requestStart < requestStop && requestStop <= batch, "invalid request task range");
   TORCH_CHECK(batch >= 1 && batch <= 128, "1..128 fixed-capacity Q4 requests required");
   TORCH_CHECK(query.size(0) == tokens && query.size(1) == 8 && query.size(2) == 128 && key.sizes() == query.sizes(),
               "raw Q/K require [4B,8,128]");
@@ -59,7 +61,7 @@ void step(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor valu
     q4_log_launch(cores, stream, products.data_ptr(), query.data_ptr(), key.data_ptr(), value.data_ptr(),
                   beta.data_ptr(), gate.data_ptr(), state.data_ptr(), sequence.data_ptr(), ids.data_ptr(),
                   accepted.data_ptr(), output.data_ptr(), logs.data_ptr(), valid.data_ptr(), batch, state.size(0),
-                  state.stride(0), false);
+                  state.stride(0), false, requestStart, requestStop);
     return 0;
   });
   command.Run();
@@ -77,7 +79,7 @@ void export_candidates(at::Tensor state, at::Tensor logs, at::Tensor valid, at::
   command.SetCustomHandler([=]() -> int {
     q4_log_launch(cores, stream, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, state.data_ptr(), nullptr,
                   nullptr, nullptr, output.data_ptr(), logs.data_ptr(), valid.data_ptr(), 0, state.size(0),
-                  state.stride(0), true);
+                  state.stride(0), true, 0, 0);
     return 0;
   });
   command.Run();
@@ -88,7 +90,8 @@ PYBIND11_MODULE(gdn_q4_log, module) {
   namespace py = pybind11;
   module.def("step", &step, py::arg("products"), py::arg("query"), py::arg("key"), py::arg("value"), py::arg("beta"),
              py::arg("gate"), py::arg("state"), py::arg("sequence"), py::arg("ids"), py::arg("accepted"),
-             py::arg("output"), py::arg("logs"), py::arg("valid"), py::arg("cores") = 40);
+             py::arg("output"), py::arg("logs"), py::arg("valid"), py::arg("cores") = 40, py::arg("request_start") = 0,
+             py::arg("request_stop") = -1);
   module.def("export_candidates", &export_candidates, py::arg("state"), py::arg("logs"), py::arg("valid"),
              py::arg("output"), py::arg("cores") = 40);
 }

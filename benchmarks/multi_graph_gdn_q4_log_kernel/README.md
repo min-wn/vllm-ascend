@@ -10,6 +10,12 @@ extension.step(products, query, key, value, beta, gate, base,
 extension.export_candidates(base, logs, valid, candidates, cores=40)
 ```
 
+`step` and the matching products entry also accept optional
+`request_start=0, request_stop=-1` after `cores`. The range partitions tasks
+inside the full bucket and keeps all global row/metadata addresses. It is
+not a new graph capture capacity. The caller must retain unique request
+ownership and join every state writer before completing the endpoint.
+
 Base is FP32 `[Nrequest,24,128,128]` with optional page padding. Logs are
 FP32 `[Nrequest,24,1056]`: four 128-element keys, four 128-element update
 vectors and four eight-float padded decay scalars. Valid flags are int32

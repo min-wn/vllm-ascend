@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Closed Q4 compact-log recurrence qualification, not model or split replay.
+"""Closed Q4 compact-log recurrence qualification, not full model replay.
 
 The timed compact endpoint includes raw Q/K casts, base products, correction,
 solve, previous accepted-base commit, new logs and full attention output.
 All four logical candidates are exported independently for correctness. An
 additional export-inclusive control quantifies a consumer needing dense state.
+An optional fixed-half request pipeline separates partition costs from actual
+product/state overlap while preserving full bucket capacity and global buffers.
 """
 
 import argparse
@@ -27,6 +29,41 @@ def base_slot_ids(requests):
     return [request + 1 for request in requests for _ in range(4)]
 
 
+def request_pipeline_operations(torch, batch, prepare, product_range, step_range, output):
+    """Reuse full buffers with one fixed request split and an explicit final join."""
+    boundary = batch // 2
+    side_stream = torch.npu.Stream()
+    first_products_ready, second_products_ready, state_done = (torch.npu.Event(enable_timing=False) for _ in range(3))
+
+    def serial():
+        q_float, k_float = prepare()
+        product_range(q_float, k_float, 0, boundary)
+        step_range(0, boundary)
+        product_range(q_float, k_float, boundary, batch)
+        step_range(boundary, batch)
+        return output
+
+    def pipeline():
+        # Capture runs on its own stream; never retain the setup/default stream.
+        root_stream = torch.npu.current_stream()
+        q_float, k_float = prepare()
+        product_range(q_float, k_float, 0, boundary)
+        first_products_ready.record(root_stream)
+        with torch.npu.stream(side_stream):
+            side_stream.wait_event(first_products_ready)
+            step_range(0, boundary)
+        product_range(q_float, k_float, boundary, batch)
+        second_products_ready.record(root_stream)
+        with torch.npu.stream(side_stream):
+            side_stream.wait_event(second_products_ready)
+            step_range(boundary, batch)
+            state_done.record(side_stream)
+        root_stream.wait_event(state_done)
+        return output
+
+    return dict(compact_serial=serial, compact_pipeline=pipeline)
+
+
 def main():
     # Keep one setup/qualification/timing transaction so no failed check can
     # leave a success report or a timing-only result without its provenance.
@@ -38,6 +75,7 @@ def main():
     parser.add_argument("--live", type=int, default=98)
     parser.add_argument("--repeats", type=int, default=10)
     parser.add_argument("--state-padding", type=int, default=65536)
+    parser.add_argument("--request-pipeline", action="store_true", help="fixed-half serial and two-stream controls")
     args = parser.parse_args()
     if args.output.exists() or not 3 <= args.live <= args.batch <= 128 or args.repeats < 3 or args.state_padding < 0:
         parser.error("new output, 3 <= live <= batch <= 128, repeats >= 3 and nonnegative padding required")
@@ -146,6 +184,35 @@ def main():
         export()
         return output
 
+    def prepare_request_ranges():
+        output.zero_()
+        return q.float(), k.float()
+
+    def product_range(q_float, k_float, request_start, request_stop):
+        products_module.products(
+            compact_state, q_float, k_float, sequence, compact_ids, accepted, products, 20, request_start, request_stop
+        )
+
+    def step_range(request_start, request_stop):
+        module.step(
+            products,
+            q,
+            k,
+            v,
+            beta,
+            gate,
+            compact_state,
+            sequence,
+            compact_ids,
+            accepted,
+            output,
+            logs,
+            valid,
+            40,
+            request_start,
+            request_stop,
+        )
+
     def compare(actual, wanted, stage, step):
         delta = actual.float() - wanted.float()
         dimensions = tuple(range(1, actual.ndim))
@@ -160,6 +227,12 @@ def main():
     metadata(args.live, 0)
     graphs, graph_outputs = {}, {}
     operations = dict(official=official, compact=compact, compact_export_all=compact_with_export)
+    partition_operations = (
+        request_pipeline_operations(torch, batch, prepare_request_ranges, product_range, step_range, output)
+        if args.request_pipeline
+        else {}
+    )
+    operations.update(partition_operations)
     saved = snapshot()
     for name, operation in operations.items():
         stream, graph = torch.npu.Stream(), torch.npu.NPUGraph()
@@ -179,7 +252,12 @@ def main():
             [0] + candidate_slot_ids([request for request in range(batch) if request not in requests]), device=device
         )
         before = snapshot()
-        for name in ("official", "compact"):
+        compact_before, canonical_compact_state, canonical_compact_output = None, None, None
+        for name in ("official", "compact", *partition_operations):
+            if name == "compact":
+                compact_before = snapshot()
+            elif name in partition_operations:
+                restore(compact_before)
             mode_before = snapshot()
             wanted_output = operations[name]().clone()
             torch.npu.synchronize()
@@ -187,7 +265,8 @@ def main():
             restore(mode_before)
             repeated = operations[name]().clone()
             torch.npu.synchronize()
-            exact(repeated[: live * 4], wanted_output[: live * 4], f"{name}/eager_output/step{step}")
+            output_limit = live * 4 if name == "official" else batch * 4
+            exact(repeated[:output_limit], wanted_output[:output_limit], f"{name}/eager_output/step{step}")
             for index, (actual, expected) in enumerate(zip(mutable, wanted, strict=True)):
                 exact(actual, expected, f"{name}/eager_state{index}/step{step}")
             restore(mode_before)
@@ -196,9 +275,15 @@ def main():
             with torch.npu.stream(stream):
                 graph.replay()
             torch.npu.synchronize()
-            exact(graph_outputs[name][: live * 4], wanted_output[: live * 4], f"{name}/replay_output/step{step}")
+            exact(graph_outputs[name][:output_limit], wanted_output[:output_limit], f"{name}/replay_output/step{step}")
             for index, (actual, expected) in enumerate(zip(mutable, wanted, strict=True)):
                 exact(actual, expected, f"{name}/replay_state{index}/step{step}")
+            if name == "compact":
+                canonical_compact_state, canonical_compact_output = snapshot(), output.clone()
+            elif name in partition_operations:
+                exact(output, canonical_compact_output, f"{name}/full_compact_output/step{step}")
+                for index, (actual, expected) in enumerate(zip(mutable, canonical_compact_state, strict=True)):
+                    exact(actual, expected, f"{name}/full_compact_state{index}/step{step}")
             if name == "official":
                 exact(
                     official_state[official_paused],
@@ -221,8 +306,12 @@ def main():
                     repeat_eager_exact=True,
                     same_schedule_graph_exact=True,
                     null_paused_exact=True,
+                    full_compact_bit_exact=name in partition_operations,
                 )
             )
+        if partition_operations:
+            restore(canonical_compact_state)
+            output.copy_(canonical_compact_output)
         export()
         torch.npu.synchronize()
         request_slots = torch.tensor([request + 1 for request in requests], device=device)
@@ -293,7 +382,11 @@ def main():
             torch.npu.synchronize()
             finite()
     report = dict(
-        status="qualified_q4_log_recurrence_not_model_or_split",
+        status=(
+            "qualified_q4_log_request_pipeline_not_full_model"
+            if args.request_pipeline
+            else "qualified_q4_log_recurrence_not_model_or_split"
+        ),
         batch=batch,
         live=args.live,
         checks=checks,
@@ -316,6 +409,14 @@ def main():
         ),
         excludes="convolution, real layer/model, FIA host updates, TP communication, trace preparation and dispatch",
         lifecycle="sequential request generations only; production stale/retry/reuse validation not integrated",
+        request_pipeline=dict(
+            enabled=args.request_pipeline,
+            boundary=batch // 2 if args.request_pipeline else None,
+            capacity="unchanged full bucket and global input/products/state/log buffers",
+            serial="cast full Q/K and clear output once; P_A, S_A, P_B, S_B",
+            concurrent="P_A -> (S_A on side stream || P_B on capture stream) -> S_B -> capture-stream join",
+            timing="complete range operations, casts, clear, event waits and final join; no full-model claim",
+        ),
         state_strides=list(compact_state.stride()),
         memory=dict(
             compact_base_pages_bytes=compact_pages.numel() * compact_pages.element_size(),

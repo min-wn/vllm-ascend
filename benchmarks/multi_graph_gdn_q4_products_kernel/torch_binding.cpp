@@ -4,7 +4,7 @@
 #include <torch_npu/csrc/framework/OpCommand.h>
 
 extern "C" void q4_products_launch(uint32_t, void*, void*, void*, void*, void*, void*, void*, void*, uint32_t, uint32_t,
-                                   uint64_t, bool);
+                                   uint64_t, bool, uint32_t, uint32_t);
 
 namespace {
 void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool contiguous = true) {
@@ -14,7 +14,7 @@ void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool co
 }
 
 void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor sequence, at::Tensor stateIds,
-              at::Tensor accepted, at::Tensor output, int64_t cores) {
+              at::Tensor accepted, at::Tensor output, int64_t cores, int64_t requestStart, int64_t requestStop) {
   TORCH_CHECK(state.scalar_type() == at::kBFloat16 || state.scalar_type() == at::kFloat, "BF16/FP32 state required");
   check(state, state.scalar_type(), 4, false);
   TORCH_CHECK(state.stride(3) == 1 && state.stride(2) == 128 && state.stride(1) == 128 * 128 &&
@@ -24,6 +24,8 @@ void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor seq
   for (const auto& tensor : {sequence, stateIds, accepted}) check(tensor, at::kInt, 1);
   check(output, at::kFloat, 4);
   const int64_t batch = accepted.numel(), tokens = batch * 4;
+  if (requestStop == -1) requestStop = batch;
+  TORCH_CHECK(requestStart >= 0 && requestStart < requestStop && requestStop <= batch, "invalid request task range");
   TORCH_CHECK(batch >= 1 && batch <= 128 && cores >= 1 && cores <= 20, "invalid A2 Cube prototype extent");
   for (const auto& tensor : {query, key, sequence, stateIds, accepted, output}) {
     TORCH_CHECK(tensor.device() == state.device(), "all buffers must be on one NPU");
@@ -41,7 +43,7 @@ void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor seq
   command.SetCustomHandler([=]() -> int {
     q4_products_launch(cores, stream, state.data_ptr(), query.data_ptr(), key.data_ptr(), sequence.data_ptr(),
                        stateIds.data_ptr(), accepted.data_ptr(), output.data_ptr(), batch, state.size(0),
-                       state.stride(0), state.scalar_type() == at::kFloat);
+                       state.stride(0), state.scalar_type() == at::kFloat, requestStart, requestStop);
     return 0;
   });
   command.Run();
@@ -51,5 +53,6 @@ void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor seq
 PYBIND11_MODULE(gdn_q4_products, module) {
   namespace py = pybind11;
   module.def("products", &products, py::arg("state"), py::arg("query"), py::arg("key"), py::arg("sequence"),
-             py::arg("state_ids"), py::arg("accepted"), py::arg("output"), py::arg("cores") = 20);
+             py::arg("state_ids"), py::arg("accepted"), py::arg("output"), py::arg("cores") = 20,
+             py::arg("request_start") = 0, py::arg("request_stop") = -1);
 }

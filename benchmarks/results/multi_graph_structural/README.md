@@ -45,6 +45,9 @@ correctness checks. They do not establish a TP2 decoder performance win.
   strict continued checks, canonical native candidate export/commit, complete
   compact endpoint and an all-candidate-export-inclusive control. This is
   still a one-device recurrence, not a model or split win.
+- `gdn-q4-log-pipeline-v3.json`: fixed global request ranges; full compact,
+  partitioned serial and partitioned pipeline controls. The pipeline's net
+  recurrence gain is 4.50% against full compact; this is not full replay.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is

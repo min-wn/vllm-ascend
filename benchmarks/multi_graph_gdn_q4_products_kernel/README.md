@@ -10,6 +10,10 @@ extension.products(state, query, key, sequence, state_ids, accepted,
                    output, cores=20)
 ```
 
+Optional `request_start=0, request_stop=-1` arguments after `cores` partition
+global request tasks while preserving full bucket extents and addressing.
+Default stop selects all requests. This creates no new capture size.
+
 The tensors are on one NPU. State is BF16 or FP32
 `[Nslots>=1,24,128,128]`, raw normalized Q/K have the same dtype as state
 and shape `[4B,8,128]`, sequence is

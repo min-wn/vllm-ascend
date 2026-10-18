@@ -51,10 +51,11 @@ class DirectProducts {
     pipe->InitBuffer(rightBuffer_, kPaddedColumns * kWidth * sizeof(InputType));
   }
 
-  __aicore__ inline void Process() {
+  __aicore__ inline void Process(uint32_t requestStart, uint32_t requestStop) {
     int32_t begin = sequence_.GetValue(0);
     uint32_t cursor = 0;
-    for (uint32_t task = GetBlockIdx(); task < batch_ * kKeyHeads; task += GetBlockNum()) {
+    for (uint32_t task = requestStart * kKeyHeads + GetBlockIdx(); task < requestStop * kKeyHeads;
+         task += GetBlockNum()) {
       const uint32_t row = task / kKeyHeads, keyHead = task % kKeyHeads;
       for (; cursor < row; ++cursor) begin += sequence_.GetValue(cursor + 1);
       if (sequence_.GetValue(row + 1) != kTokens) continue;
@@ -117,23 +118,24 @@ class DirectProducts {
 
 __global__ __aicore__ void q4_products(GM_ADDR state, GM_ADDR query, GM_ADDR key, GM_ADDR sequence, GM_ADDR ids,
                                        GM_ADDR accepted, GM_ADDR output, uint32_t batch, uint32_t slots,
-                                       uint64_t stateStride, bool stateFp32) {
+                                       uint64_t stateStride, bool stateFp32, uint32_t requestStart,
+                                       uint32_t requestStop) {
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIC_ONLY);
   TPipe pipe;
   if (stateFp32) {
     DirectProducts<float> op;
     op.Init(state, query, key, sequence, ids, accepted, output, batch, slots, stateStride, &pipe);
-    op.Process();
+    op.Process(requestStart, requestStop);
   } else {
     DirectProducts<bfloat16_t> op;
     op.Init(state, query, key, sequence, ids, accepted, output, batch, slots, stateStride, &pipe);
-    op.Process();
+    op.Process(requestStart, requestStop);
   }
 }
 
 extern "C" void q4_products_launch(uint32_t cores, void* stream, void* state, void* query, void* key, void* sequence,
                                    void* ids, void* accepted, void* output, uint32_t batch, uint32_t slots,
-                                   uint64_t stateStride, bool stateFp32) {
+                                   uint64_t stateStride, bool stateFp32, uint32_t requestStart, uint32_t requestStop) {
   q4_products<<<cores, nullptr, stream>>>(state, query, key, sequence, ids, accepted, output, batch, slots, stateStride,
-                                          stateFp32);
+                                          stateFp32, requestStart, requestStop);
 }
