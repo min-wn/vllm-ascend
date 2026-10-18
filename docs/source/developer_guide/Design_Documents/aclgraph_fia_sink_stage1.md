@@ -6,6 +6,11 @@ fails qualification:** the pinned upstream host route explicitly rejects
 D256, and bypassing that check would exceed the kernel's K L1 slot size.
 No graph, dynamic correctness or performance qualification is claimed.
 
+A subsequent [stage-two kernel adaptation](aclgraph_fia_sink_stage2.md)
+passes bounded eager and dynamic graph checks for the explicitly patched
+D256 prototype. The rejection and buffer findings here remain the correct
+result for the unmodified pinned arithmetic source.
+
 The evidence summary is
 [`fia-sink-stage1-qualification.json`](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage1-qualification.json).
 Raw build, smoke, source manifests and selected CANN logs are preserved in

@@ -84,18 +84,29 @@ that check is unsafe. The earlier inference that a `GENERAL_GQA` branch
 established target eligibility was incorrect and is superseded by this
 source/runtime audit. This failure does not establish a driver problem.
 
-There is no target ACLGraph, native incremental planner or new performance
-qualification. D256 buffer/tiling support is now a prerequisite milestone
-before those experiments. A previously source-derived upper workspace
+The [second qualification stage](aclgraph_fia_sink_stage2.md) now supplies
+an isolated D256 kernel adaptation: smaller internal MM1/MM2 subblocks keep
+the existing L1 layout and satisfy static slot bounds. All 25 bounded eager
+gates, D128/D256 constant regressions and B1/B4/shared-plan graph gates pass
+on the actual 910B3. Graphs include the device metadata producer and use
+unchanged addresses while lengths/pages/data change. This supersedes the
+stage-one target rejection for this explicitly patched prototype; upstream
+unmodified source still rejects D256.
+
+There is no native incremental planner or new performance qualification.
+The graph checks cover small fixed capacities and two shared attention
+occurrences, not all sixteen model layers or the original dynamic model
+trajectory. A previously source-derived upper workspace
 formula at 24 cores is 145.5 MiB plus library/executor storage, but that is a
 conditional allocation formula, not evidence of D256 support or a measured
 allocation. The actual device stream reports 20 Cube/40 Vector cores; the
 smoke passes those limits explicitly. The 4 KiB metadata buffer does not
 describe total workspace.
 
-The local inventory is preserved in the parent workspace at
+The initial inventory is preserved in the parent workspace at
 `outputs/thesis_incremental_plan/sink-remote-inventory.log`. The native source
 audit pins the upstream commit separately from installed capabilities.
+Stage-two evidence is under `outputs/thesis_incremental_plan/stage2-evidence/`.
 
 ## Existing project results and thesis scope
 

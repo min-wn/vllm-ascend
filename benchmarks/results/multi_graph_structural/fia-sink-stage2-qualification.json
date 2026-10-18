@@ -1,0 +1,5613 @@
+{
+  "schema_version": 2,
+  "state": "completed",
+  "all_selected_stage2_gates_passed": true,
+  "evidence_root": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\stage2-evidence",
+  "artifacts": {
+    "build-status.json": {
+      "expected_paths": [
+        "root/build-status.json",
+        "build-status.json"
+      ],
+      "state": "present",
+      "relative_path": "build-status.json",
+      "bytes": 426,
+      "sha256": "98c5055cb002019b4a01356afba13fb82fe2a4e254f2a0e7f5424b79143440d7"
+    },
+    "d256-patch-manifest.json": {
+      "expected_paths": [
+        "root/d256-patch-manifest.json",
+        "d256-patch-manifest.json"
+      ],
+      "state": "present",
+      "relative_path": "d256-patch-manifest.json",
+      "bytes": 1199,
+      "sha256": "21da2f8d556289ce7174f226c4e127cb916813faaaab9d1a30a20aeb83e02148"
+    },
+    "deployed-tools.json": {
+      "expected_paths": [
+        "root/deployed-tools.json",
+        "deployed-tools.json"
+      ],
+      "state": "present",
+      "relative_path": "deployed-tools.json",
+      "bytes": 454,
+      "sha256": "c54d19d9dd92e6767cc03f23fe57df302d82a604dfd55a65936a3cae9681e031"
+    },
+    "staged-opp-manifest.json": {
+      "expected_paths": [
+        "root/staged-opp-manifest.json",
+        "staged-opp-manifest.json"
+      ],
+      "state": "present",
+      "relative_path": "staged-opp-manifest.json",
+      "bytes": 135594,
+      "sha256": "142753918536a155d9344566652ee34765e039d4bcd43713a7daab1e0e4ce295"
+    },
+    "pipeline-status.json": {
+      "expected_paths": [
+        "root/pipeline-status.json",
+        "pipeline-status.json"
+      ],
+      "state": "present",
+      "relative_path": "pipeline-status.json",
+      "bytes": 4828,
+      "sha256": "3744a5b5770a09048846616fdd30ab69f69bfbaddbf92b3d3c056c816284a6a5"
+    },
+    "extension-status.json": {
+      "expected_paths": [
+        "root/extension-status.json",
+        "extension-status.json"
+      ],
+      "state": "present",
+      "relative_path": "extension-status.json",
+      "bytes": 5636,
+      "sha256": "a93c4d22f2d9f502160cb180892a05297064395adabad927af4d0188f28f1afe"
+    },
+    "final-artifact-inventory.json": {
+      "expected_paths": [
+        "root/final-artifact-inventory.json",
+        "final-artifact-inventory.json"
+      ],
+      "state": "present",
+      "relative_path": "final-artifact-inventory.json",
+      "bytes": 6975,
+      "sha256": "170fc8fddd2931f115a9d6b22e3f4b7870bd806143471e0636bb2b240265d671"
+    },
+    "eager": {
+      "expected_paths": [
+        "eager-v1/stage2-status.json"
+      ],
+      "state": "present",
+      "relative_path": "eager-v1/stage2-status.json",
+      "bytes": 96060,
+      "sha256": "2a9c34d96933f79d73c68b5f7797af2bacbf68926a5809ef35c25a583222749d"
+    },
+    "constant": {
+      "expected_paths": [
+        "constant-v1/smoke-status.json"
+      ],
+      "state": "present",
+      "relative_path": "constant-v1/smoke-status.json",
+      "bytes": 10930,
+      "sha256": "e0da7e6e5a5b8000e78de332bd098345557ed86734e35161e0b258a2e481b98a"
+    },
+    "b1": {
+      "expected_paths": [
+        "graph-b1-v1/stage2-graph-status.json"
+      ],
+      "state": "present",
+      "relative_path": "graph-b1-v1/stage2-graph-status.json",
+      "bytes": 50774,
+      "sha256": "0e9ecc5cde3c20956cb302a8145e93235df1b24f059fbbdacabe1864b6c31fb2"
+    },
+    "b4": {
+      "expected_paths": [
+        "graph-b4-v1/stage2-graph-status.json"
+      ],
+      "state": "present",
+      "relative_path": "graph-b4-v1/stage2-graph-status.json",
+      "bytes": 50576,
+      "sha256": "bdbb38d134ca7d494c499f5b7927f94af86256af7ae2b3938f3cdc6c74df6bec"
+    },
+    "shared": {
+      "expected_paths": [
+        "graph-shared-v1/stage2-graph-status.json"
+      ],
+      "state": "present",
+      "relative_path": "graph-shared-v1/stage2-graph-status.json",
+      "bytes": 57696,
+      "sha256": "9359f957673030fe865a9f5109620396c3e49830ae96018de6d9689ba8a52e5d"
+    }
+  },
+  "foundations": {
+    "build": {
+      "state": "completed",
+      "returncode": 0,
+      "complete": true
+    },
+    "patch": {
+      "source_commit": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "files": [
+        {
+          "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp",
+          "before_sha256": "a8c628b253010b14e5a7f855dc964b40fdc5a25c85ef3d64581ae70f4001fa06",
+          "after_sha256": "0b7a072e2b6ae6938588b91411eaede6621f2c8b13c98a4f5fdaa32751262bc0"
+        },
+        {
+          "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+          "before_sha256": "600b15942b202996c480a5b978eb56d7045591aeb40012f6e0463d475964ac06",
+          "after_sha256": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e"
+        },
+        {
+          "file": "csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp",
+          "before_sha256": "bffd08092e0c431674f1c361681be58315a714d517d80136a18edb1faf1bbeec",
+          "after_sha256": "a3e4bbeeca240d55d09f8624efe0a83fc5e77c1f692d72f73ee55a0872e9b51d"
+        }
+      ],
+      "complete": true
+    },
+    "deployed_tools": {
+      "tools": {
+        "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+        "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+        "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+        "stage-opp.py": "d04255bf67a95fa36077a4c13a268c5589c3132cfb61ba5d4188ffe3e94bb72f"
+      },
+      "complete": true
+    },
+    "staged_opp": {
+      "vendor_leaf": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+      "libraries": [
+        {
+          "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+          "size": 202672,
+          "sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40"
+        },
+        {
+          "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_proto/lib/linux/aarch64/libcust_opsproto_rt2.0.so",
+          "size": 243664,
+          "sha256": "fe2986e929daee1e1be3ba05ec0cb80f80f65154e4a26674012fb0550fe1f863"
+        },
+        {
+          "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/op_tiling/liboptiling.so",
+          "size": 1751184,
+          "sha256": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949"
+        },
+        {
+          "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so",
+          "size": 1751184,
+          "sha256": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949"
+        },
+        {
+          "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so",
+          "size": 5375824,
+          "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b"
+        },
+        {
+          "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libtransformer_aicpu_kernels.so",
+          "size": 5375824,
+          "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b"
+        }
+      ],
+      "complete": true
+    },
+    "pipeline": {
+      "state": "completed",
+      "returncode": 0,
+      "steps": [
+        {
+          "name": "stage_opp",
+          "state": "completed",
+          "returncode": 0
+        },
+        {
+          "name": "eager_first",
+          "state": "completed",
+          "returncode": 0
+        },
+        {
+          "name": "eager_remaining",
+          "state": "completed",
+          "returncode": 0
+        },
+        {
+          "name": "d128_and_d256_constant",
+          "state": "completed",
+          "returncode": 0
+        },
+        {
+          "name": "graph_b1",
+          "state": "completed",
+          "returncode": 0
+        },
+        {
+          "name": "graph_b4",
+          "state": "completed",
+          "returncode": 0
+        },
+        {
+          "name": "graph_shared",
+          "state": "completed",
+          "returncode": 0
+        }
+      ],
+      "missing_or_unqualified_steps": [],
+      "complete": true
+    },
+    "extension": {
+      "state": "completed",
+      "returncode": 0,
+      "npu_work_executed": false,
+      "library": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/extension-build/thesis_fia_sink_bec19b8dea1e.so",
+      "library_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+      "complete": true
+    }
+  },
+  "provenance": {
+    "complete": true,
+    "checks": {
+      "deployed_matches_local_execution_sources": true,
+      "eager_script_bindings": true,
+      "graph_script_bindings": true,
+      "constant_script_binding": true,
+      "constant_extension_status_binding": true,
+      "extension_binary_bindings": true,
+      "opp_roots": true,
+      "complete_opp_inventories": true,
+      "core_limits": true,
+      "seeds": true,
+      "staged_library_bindings": true,
+      "opapi_binary_bindings": true,
+      "staged_required_libraries": true
+    },
+    "local_execution_sources": {
+      "aclgraph_fia_sink_stage1_smoke.py": {
+        "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\aclgraph_fia_sink_stage1_smoke.py",
+        "sha256": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7"
+      },
+      "aclgraph_fia_sink_stage2_validate.py": {
+        "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\aclgraph_fia_sink_stage2_validate.py",
+        "sha256": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137"
+      },
+      "aclgraph_fia_sink_stage2_graph.py": {
+        "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\aclgraph_fia_sink_stage2_graph.py",
+        "sha256": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571"
+      }
+    },
+    "linked_staged_libraries": [
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "inventory_path": "op_api/lib/libcust_opapi.so",
+        "sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+        "matches": true
+      },
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_proto/lib/linux/aarch64/libcust_opsproto_rt2.0.so",
+        "inventory_path": "op_proto/lib/linux/aarch64/libcust_opsproto_rt2.0.so",
+        "sha256": "fe2986e929daee1e1be3ba05ec0cb80f80f65154e4a26674012fb0550fe1f863",
+        "matches": true
+      },
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/op_tiling/liboptiling.so",
+        "inventory_path": "op_impl/ai_core/tbe/op_tiling/liboptiling.so",
+        "sha256": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+        "matches": true
+      },
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so",
+        "inventory_path": "op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so",
+        "sha256": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+        "matches": true
+      },
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so",
+        "inventory_path": "op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so",
+        "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+        "matches": true
+      },
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libtransformer_aicpu_kernels.so",
+        "inventory_path": "op_impl/cpu/aicpu_kernel/impl/libtransformer_aicpu_kernels.so",
+        "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+        "matches": true
+      }
+    ],
+    "shared_distinct_contents_evidence": "Source-backed assertion in the hash-bound executed graph runner; independent per-copy FP32 checks and storage addresses are recorded, raw tensor hashes are not persisted.",
+    "staging_script_evidence": "stage-opp.py hash is declared in deployed-tools; its command is in pipeline-status. the staging process does not emit an independent self-hash. Binary linkage uses staged library hashes."
+  },
+  "final_inventory": {
+    "complete": true,
+    "checks": {
+      "source_matches_patch_manifest_reported": true,
+      "source_after_hashes": true,
+      "unique_valid_final_records": true,
+      "extension_after_hash": true,
+      "execution_binary_after_hashes": true
+    },
+    "linked_execution_binaries": [
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_22fd7a23ae3f8d2befb5fcbdfbcfd219.o",
+        "sha256": "37267378d76ca6110f7e1a87a5c215b44f70991ad5f0c4f71beffde119efa70e",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3623e899e9d3a1f66ad6fe99f4cadbf5.o",
+        "sha256": "83a15048bc7b57692a5477b746b109068c123cb5321c9a60b8b11edfc6948e46",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3af553d2e3779008f566bfbd8e20c9b1.o",
+        "sha256": "d9944374d3c709941428b473cf39a2bc99feee9e545ab887c68521e531203a28",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_5a319bb1985b55f485f46cf2da6f30c5.o",
+        "sha256": "e44b532d6b42278e6c133c6a688984c229891b4eb2635f78bb317b3120566ad1",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_78549e07db252c9cb755753e9af14a18.o",
+        "sha256": "e0b76fca6c9fbc9dcb54a9cc4e9a779b90ced1d2a8892a225bb3b60bc72a15f7",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_9763cafe0d9b6c14d767e9cc6d2b745e.o",
+        "sha256": "2c734b63938d4a4f42feeb73424a0b9f752c5166b5aaa810db7a4bfa65d68cd0",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_ac1fcefd2c5202b9568e867f7227bd18.o",
+        "sha256": "1f6833483d86214312ee97408de336d32a98f8166aca26cbd2ca745ad6b53a40",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+        "sha256": "9098b4ac6441c9c730e15d362c1cd42bc93df2a80c0ced523c1df530bf3f04ea",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_d85d0408456b0e088e525f5df8ea9960.o",
+        "sha256": "f46a35ee78e20fdbfb6101dbef2753d5b31af334e3ee36c847ef7201696ae5aa",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_e4b3528397fbaa4fd0671478823aa029.o",
+        "sha256": "1edc9aa2e986924e6855c407201379360e26613b9b0972ed67d6fce947123ff8",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f3c1a2a54ea0ebef38257460b01a81f3.o",
+        "sha256": "094f2c8e008c8e02240b99822f464cf8d26fc0cc557550fe2d2d203dd3cc47da",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f94076a7655ef41b5c54277d6ebc204f.o",
+        "sha256": "4971e124306ad36ff307394b044311eb930fc325fbc9984a58436f884ec355da",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f9bae0033134e0df2b402ea5dee83479.o",
+        "sha256": "79128ea1f8aaf6902012ece8fa245b2300a9376238a0ac63974d50952cd0ff6f",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so",
+        "sha256": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/ai_core/tbe/op_tiling/liboptiling.so",
+        "sha256": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so",
+        "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libtransformer_aicpu_kernels.so",
+        "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+        "matches": true
+      },
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage2_transformer/op_proto/lib/linux/aarch64/libcust_opsproto_rt2.0.so",
+        "sha256": "fe2986e929daee1e1be3ba05ec0cb80f80f65154e4a26674012fb0550fe1f863",
+        "matches": true
+      }
+    ],
+    "source_after_hashes": {
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp": "0b7a072e2b6ae6938588b91411eaede6621f2c8b13c98a4f5fdaa32751262bc0",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+      "csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp": "a3e4bbeeca240d55d09f8624efe0a83fc5e77c1f692d72f73ee55a0872e9b51d"
+    },
+    "limitation": "Recorded source and artifact hashes are bound; the native build is not independently reproduced."
+  },
+  "eager": {
+    "state": "completed",
+    "returncode": 0,
+    "checkpoint": "initialization",
+    "npu_work_executed": true,
+    "selected_group_complete": true,
+    "complete": true,
+    "expected_case_count": 25,
+    "distinct_passed_case_count": 25,
+    "attempt_count": 25,
+    "missing_or_unqualified_ids": [],
+    "unexpected_ids": [],
+    "issues": [],
+    "cases": [
+      {
+        "case": {
+          "id": "b1-q4-kv127-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            127
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0005305558443069458,
+            "rms_error": 0.00010686924360925332,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 127,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 127,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "90f69616b5288d0a3d627db0980f6ade7efc07296948fd598259055d6b1ebb24",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              3
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              2,
+              4
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 2,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              5,
+              128,
+              512
+            ],
+            "value": [
+              5,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              2
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv128-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            128
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0005819648504257202,
+            "rms_error": 0.00010871163249248639,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 128,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 128,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "7fb7387f332e816c7d5eea692491cb17b501066411e81d37f14e165529fb9f69",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              3
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              2,
+              4
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 1,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              5,
+              128,
+              512
+            ],
+            "value": [
+              5,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              2
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv129-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            129
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0006148219108581543,
+            "rms_error": 0.00010607386502670124,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 129,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 129,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "7deab25d838f9de42ce273c8d71afa9ebb95e5145dc39a4c9d7ab69f21dc8c99",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              3,
+              4
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              2,
+              5
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 2,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              6,
+              128,
+              512
+            ],
+            "value": [
+              6,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              3
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv511-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            511
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0002611130475997925,
+            "rms_error": 5.2758940000785515e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 511,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 511,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "869e9352619903e223a489b859f1f3ddddec15d4b4198e129ba5ed415d455506",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              5,
+              6,
+              1,
+              4
+            ],
+            "unused_physical_pages": [
+              0,
+              2,
+              3,
+              7
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 2,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              8,
+              128,
+              512
+            ],
+            "value": [
+              8,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              5
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv512-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            512
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0002975165843963623,
+            "rms_error": 5.3420691983774304e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 512,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "3fe069423af0d0a2961ae907dce9f14c616ad69d7228bc33f30e6adf314ac66c",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              2,
+              3,
+              6,
+              1
+            ],
+            "unused_physical_pages": [
+              0,
+              4,
+              5,
+              7
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 4,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              8,
+              128,
+              512
+            ],
+            "value": [
+              8,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              5
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv513-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            513
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.00028949975967407227,
+            "rms_error": 5.314392183208838e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 4,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 43,
+          "metadata_sha256": "4367238618ba96efd84e10e3705a0a478fe99ab1ed64ee93f734ed7eda5d48da",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              1,
+              4,
+              3,
+              6,
+              2
+            ],
+            "unused_physical_pages": [
+              0,
+              5,
+              7,
+              8
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 5,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              9,
+              128,
+              512
+            ],
+            "value": [
+              9,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              6
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv1025-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            1025
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0001932084560394287,
+            "rms_error": 3.760923209483735e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 54,
+          "metadata_sha256": "789ed5ec39c634f757692bba07908d58b515c32f305d48baf5b25cdb72fa0c0e",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              8,
+              3,
+              5,
+              4,
+              7,
+              11,
+              9,
+              10,
+              1
+            ],
+            "unused_physical_pages": [
+              0,
+              2,
+              6,
+              12
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 2,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              13,
+              128,
+              512
+            ],
+            "value": [
+              13,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              10
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv4097-full",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            4097
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 9.819865226745605e-05,
+            "rms_error": 1.9138731659040786e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 16,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 4097,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              9,
+              8,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              9,
+              8
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 110,
+          "metadata_sha256": "afc969193a37b4f67c06ec69f12c2338a78810fbd0681f5175c3c1de0b5ff76c",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              10,
+              5,
+              1,
+              21,
+              6,
+              14,
+              20,
+              17,
+              9,
+              32,
+              27,
+              30,
+              11,
+              31,
+              4,
+              34,
+              22,
+              26,
+              19,
+              12,
+              3,
+              33,
+              7,
+              35,
+              28,
+              15,
+              8,
+              18,
+              23,
+              25,
+              2,
+              29,
+              13
+            ],
+            "unused_physical_pages": [
+              0,
+              16,
+              24,
+              36
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 16,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              37,
+              128,
+              512
+            ],
+            "value": [
+              37,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              34
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "ragged-full",
+          "q_lengths": [
+            4,
+            1,
+            3
+          ],
+          "kv_lengths": [
+            129,
+            511,
+            1025
+          ],
+          "causal": false,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0006070137023925781,
+            "rms_error": 7.991853635758162e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 9,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 3,
+              "actualKVDims": 3
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 69,
+          "metadata_sha256": "48911fce29b1e498ffe335ba6fa74a7cc6dd50739ebf6819e028842547d9bc79",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              2,
+              9,
+              8,
+              1,
+              12,
+              17,
+              15,
+              3,
+              4,
+              6,
+              14,
+              16,
+              10,
+              11,
+              5
+            ],
+            "unused_physical_pages": [
+              0,
+              7,
+              13,
+              18
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 13,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              12,
+              12,
+              256
+            ],
+            "key": [
+              19,
+              128,
+              512
+            ],
+            "value": [
+              19,
+              128,
+              512
+            ],
+            "block_table": [
+              3,
+              10
+            ],
+            "q_lengths": [
+              3
+            ],
+            "kv_lengths": [
+              3
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv127-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            127
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.00585329532623291,
+            "rms_error": 0.0017730975523591042,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 127,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 127,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "90f69616b5288d0a3d627db0980f6ade7efc07296948fd598259055d6b1ebb24",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 1.9127235412597656,
+            "max_normalized_full_vs_causal": 635.6964721679688,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              2
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              3,
+              4
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 3,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              5,
+              128,
+              512
+            ],
+            "value": [
+              5,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              2
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv128-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            128
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.007958412170410156,
+            "rms_error": 0.0018461955478414893,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 128,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 128,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "7fb7387f332e816c7d5eea692491cb17b501066411e81d37f14e165529fb9f69",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 1.6297850608825684,
+            "max_normalized_full_vs_causal": 542.2291870117188,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              1
+            ],
+            "unused_physical_pages": [
+              0,
+              2,
+              3,
+              4
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 3,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              5,
+              128,
+              512
+            ],
+            "value": [
+              5,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              2
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv129-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            129
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.006798505783081055,
+            "rms_error": 0.0017814220627769828,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 129,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 129,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "7deab25d838f9de42ce273c8d71afa9ebb95e5145dc39a4c9d7ab69f21dc8c99",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 1.7577828168869019,
+            "max_normalized_full_vs_causal": 584.637451171875,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              4,
+              1
+            ],
+            "unused_physical_pages": [
+              0,
+              2,
+              3,
+              5
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 3,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              6,
+              128,
+              512
+            ],
+            "value": [
+              6,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              3
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv511-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            511
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.00198441743850708,
+            "rms_error": 0.00044865309610031545,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 511,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 511,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "869e9352619903e223a489b859f1f3ddddec15d4b4198e129ba5ed415d455506",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 0.4947178363800049,
+            "max_normalized_full_vs_causal": 164.68807983398438,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              3,
+              5,
+              4,
+              6
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              2,
+              7
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 2,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              8,
+              128,
+              512
+            ],
+            "value": [
+              8,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              5
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv512-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            512
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.001977264881134033,
+            "rms_error": 0.0005021934048272669,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 512,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "3fe069423af0d0a2961ae907dce9f14c616ad69d7228bc33f30e6adf314ac66c",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 0.4582058787345886,
+            "max_normalized_full_vs_causal": 152.2191162109375,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              5,
+              1,
+              2,
+              3
+            ],
+            "unused_physical_pages": [
+              0,
+              4,
+              6,
+              7
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 4,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              8,
+              128,
+              512
+            ],
+            "value": [
+              8,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              5
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv513-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            513
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0015687942504882812,
+            "rms_error": 0.00042438053060323,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 4,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 43,
+          "metadata_sha256": "4367238618ba96efd84e10e3705a0a478fe99ab1ed64ee93f734ed7eda5d48da",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 0.5386089086532593,
+            "max_normalized_full_vs_causal": 179.26693725585938,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              1,
+              7,
+              4,
+              2,
+              6
+            ],
+            "unused_physical_pages": [
+              0,
+              3,
+              5,
+              8
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 3,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              9,
+              128,
+              512
+            ],
+            "value": [
+              9,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              6
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv1025-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            1025
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0011073946952819824,
+            "rms_error": 0.00024249282432720065,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 54,
+          "metadata_sha256": "789ed5ec39c634f757692bba07908d58b515c32f305d48baf5b25cdb72fa0c0e",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 0.26863086223602295,
+            "max_normalized_full_vs_causal": 89.43144226074219,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              4,
+              2,
+              7,
+              10,
+              9,
+              1,
+              8,
+              11,
+              3
+            ],
+            "unused_physical_pages": [
+              0,
+              5,
+              6,
+              12
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 5,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              13,
+              128,
+              512
+            ],
+            "value": [
+              13,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              10
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv4097-causal",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            4097
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0003162696957588196,
+            "rms_error": 5.7459663366898894e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 16,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 4097,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              9,
+              8,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              9,
+              8
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 110,
+          "metadata_sha256": "afc969193a37b4f67c06ec69f12c2338a78810fbd0681f5175c3c1de0b5ff76c",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 0.0519738495349884,
+            "max_normalized_full_vs_causal": 17.3161678314209,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              30,
+              8,
+              27,
+              9,
+              34,
+              20,
+              18,
+              12,
+              23,
+              7,
+              6,
+              10,
+              14,
+              5,
+              28,
+              2,
+              25,
+              15,
+              11,
+              35,
+              3,
+              4,
+              26,
+              29,
+              16,
+              19,
+              13,
+              22,
+              24,
+              1,
+              21,
+              33,
+              31
+            ],
+            "unused_physical_pages": [
+              0,
+              17,
+              32,
+              36
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 17,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              37,
+              128,
+              512
+            ],
+            "value": [
+              37,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              34
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "ragged-causal",
+          "q_lengths": [
+            4,
+            1,
+            3
+          ],
+          "kv_lengths": [
+            129,
+            511,
+            1025
+          ],
+          "causal": true,
+          "group": "positive"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.007135152816772461,
+            "rms_error": 0.001197310397401452,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 9,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 3,
+              "actualKVDims": 3
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 69,
+          "metadata_sha256": "48911fce29b1e498ffe335ba6fa74a7cc6dd50739ebf6819e028842547d9bc79",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 2.2011513710021973,
+            "max_normalized_full_vs_causal": 731.1426391601562,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              16,
+              9,
+              12,
+              1,
+              7,
+              6,
+              4,
+              10,
+              17,
+              13,
+              2,
+              5,
+              3,
+              8,
+              14
+            ],
+            "unused_physical_pages": [
+              0,
+              11,
+              15,
+              18
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 15,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              12,
+              12,
+              256
+            ],
+            "key": [
+              19,
+              128,
+              512
+            ],
+            "value": [
+              19,
+              128,
+              512
+            ],
+            "block_table": [
+              3,
+              10
+            ],
+            "q_lengths": [
+              3
+            ],
+            "kv_lengths": [
+              3
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv4-causal-short",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            4
+          ],
+          "causal": true,
+          "group": "positive",
+          "purpose": "short-context right-down causal semantic gate"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.19329833984375,
+            "rms_error": 0.06540154665708542,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 4,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 4,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "7178b442c72f581819edcfedaa007f8631e08a6106a64f4226346e27c9c40851",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 51.308677673339844,
+            "max_normalized_full_vs_causal": 15917.7236328125,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              2
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              3,
+              4
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 3,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              5,
+              128,
+              512
+            ],
+            "value": [
+              5,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              2
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q4-kv7-causal-short",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            7
+          ],
+          "causal": true,
+          "group": "positive",
+          "purpose": "short-context right-down causal semantic gate"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true,
+          "mask_witness": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.153228759765625,
+            "rms_error": 0.037116825580596924,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 7,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 7,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "948df30ee62f0ac631180a855f2b2a5ac4271ab0ab8f260b93342812b15e5a2b",
+          "mask_sensitivity": {
+            "max_abs_full_vs_causal": 32.407066345214844,
+            "max_normalized_full_vs_causal": 10646.01171875,
+            "required_normalized_difference": 10.0,
+            "forbidden_tail_value": 64.0
+          },
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              2
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              3,
+              4
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 1,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": 64.0
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              5,
+              128,
+              512
+            ],
+            "value": [
+              5,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              2
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ],
+            "atten_mask": [
+              2048,
+              2048
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "b1-q97-kv513-full-internal-loop-boundary",
+          "q_lengths": [
+            97
+          ],
+          "kv_lengths": [
+            513
+          ],
+          "causal": false,
+          "group": "positive",
+          "purpose": "internal M=582 multi-loop boundary only; no model/mixed-request support claim"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0003398284316062927,
+            "rms_error": 5.4864143749000505e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 12,
+              "maxS1": 97,
+              "maxS2": 513,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 63,
+          "metadata_sha256": "dcdff713ff0e8913ab35557d89d649a096c053b87f92275fc745ab95a269ab2e",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              4,
+              2,
+              7,
+              5,
+              3
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              6,
+              8
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 6,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              101,
+              12,
+              256
+            ],
+            "key": [
+              9,
+              128,
+              512
+            ],
+            "value": [
+              9,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              6
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "zero-kv-only",
+          "q_lengths": [
+            4
+          ],
+          "kv_lengths": [
+            0
+          ],
+          "causal": false,
+          "group": "zero-kv"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0,
+            "rms_error": 0.0,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 1,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 1024,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 12,
+          "metadata_sha256": "0e268dcd00ac0f9ff7787f64d69b5e94a85d1d69dc83aecfd13654134a84ea5b",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [
+            {
+              "row": 0,
+              "q_length": 4,
+              "nonzero_output_elements": 0
+            }
+          ],
+          "canaries": {
+            "used_physical_pages": [],
+            "unused_physical_pages": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 1,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              4,
+              128,
+              512
+            ],
+            "value": [
+              4,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              1
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "zero-kv-mixed",
+          "q_lengths": [
+            4,
+            4,
+            4
+          ],
+          "kv_lengths": [
+            0,
+            129,
+            0
+          ],
+          "causal": false,
+          "group": "zero-kv"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0005558431148529053,
+            "rms_error": 6.061825479264371e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 129,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 129,
+              "actualQDims": 3,
+              "actualKVDims": 3
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "49aa8af46709fb1a2168db6bef64e5039d3ab83f2f7f01590b1f6c7bd18bec61",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [
+            {
+              "row": 0,
+              "q_length": 4,
+              "nonzero_output_elements": 0
+            },
+            {
+              "row": 2,
+              "q_length": 4,
+              "nonzero_output_elements": 0
+            }
+          ],
+          "canaries": {
+            "used_physical_pages": [
+              2,
+              3
+            ],
+            "unused_physical_pages": [
+              0,
+              1,
+              4,
+              5
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 4,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              16,
+              12,
+              256
+            ],
+            "key": [
+              6,
+              128,
+              512
+            ],
+            "value": [
+              6,
+              128,
+              512
+            ],
+            "block_table": [
+              3,
+              3
+            ],
+            "q_lengths": [
+              3
+            ],
+            "kv_lengths": [
+              3
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "zero-q-only",
+          "q_lengths": [
+            0
+          ],
+          "kv_lengths": [
+            129
+          ],
+          "causal": false,
+          "group": "zero-q"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0,
+            "rms_error": 0.0,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 129,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 1,
+              "usedFdVecNum": 0,
+              "maxS1": 0,
+              "maxS2": 129,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 11,
+          "metadata_sha256": "3c9d641c56502359537356adfef63618e6c0cc1ababa3baa9de74839a65ef28a",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              1,
+              4
+            ],
+            "unused_physical_pages": [
+              0,
+              2,
+              3,
+              5
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 2,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              4,
+              12,
+              256
+            ],
+            "key": [
+              6,
+              128,
+              512
+            ],
+            "value": [
+              6,
+              128,
+              512
+            ],
+            "block_table": [
+              1,
+              3
+            ],
+            "q_lengths": [
+              1
+            ],
+            "kv_lengths": [
+              1
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      },
+      {
+        "case": {
+          "id": "zero-q-mixed",
+          "q_lengths": [
+            0,
+            4,
+            0
+          ],
+          "kv_lengths": [
+            129,
+            511,
+            0
+          ],
+          "causal": false,
+          "group": "zero-q"
+        },
+        "passed": true,
+        "checks": {
+          "case_contract": true,
+          "final_checkpoint": true,
+          "finite_error_metrics": true,
+          "inputs_unchanged": true,
+          "exact_zero_kv": true,
+          "metadata_plan": true,
+          "metadata_hash": true
+        },
+        "attempt_count": 1,
+        "evidence": {
+          "checkpoint": "reference_and_canaries_passed",
+          "errors": {
+            "max_abs_error": 0.0003399774432182312,
+            "rms_error": 5.372365194489248e-05,
+            "rtol": 0.03,
+            "atol": 0.003
+          },
+          "metadata_plan": {
+            "base": {
+              "mBase": 512,
+              "sInner": 511,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 511,
+              "actualQDims": 3,
+              "actualKVDims": 3
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_nonzero": 16,
+          "metadata_sha256": "502e98dfc58907ba8c29b40e876e8400ff37b8b3537259b0864bb2bb0ae19231",
+          "mask_sensitivity": null,
+          "zero_kv_rows": [],
+          "canaries": {
+            "used_physical_pages": [
+              8,
+              1,
+              2,
+              6,
+              5,
+              4
+            ],
+            "unused_physical_pages": [
+              0,
+              3,
+              7,
+              9
+            ],
+            "query_guard_rows": 2,
+            "unused_table_page": 7,
+            "key_canary": 13.25,
+            "value_canary": -17.5,
+            "forbidden_tail_value": null
+          },
+          "shapes": {
+            "query_storage": [
+              8,
+              12,
+              256
+            ],
+            "key": [
+              10,
+              128,
+              512
+            ],
+            "value": [
+              10,
+              128,
+              512
+            ],
+            "block_table": [
+              3,
+              5
+            ],
+            "q_lengths": [
+              3
+            ],
+            "kv_lengths": [
+              3
+            ]
+          }
+        },
+        "unsuccessful_attempts": []
+      }
+    ],
+    "fd_present_ids": [
+      "b1-q4-kv513-full",
+      "b1-q4-kv1025-full",
+      "b1-q4-kv4097-full",
+      "ragged-full",
+      "b1-q4-kv513-causal",
+      "b1-q4-kv1025-causal",
+      "b1-q4-kv4097-causal",
+      "ragged-causal",
+      "b1-q97-kv513-full-internal-loop-boundary"
+    ],
+    "actual_fd_path_covered": true,
+    "core_limit": {
+      "cube_core_num": 20,
+      "vector_core_num": 40
+    },
+    "fingerprint": {
+      "phase": "eager",
+      "seed": 1703,
+      "case_group": "all",
+      "rtol": 0.03,
+      "atol": 0.003,
+      "script_sha256": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+      "helper_sha256": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+      "opapi_sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+      "extension_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+      "opp_root": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+      "fingerprint_sha256": "0bb36f7ca4dcb9169e6818d4becbf6ce207cbce11fd8db9b13e8c0ddf0a10ecc",
+      "opp_inventory_ref": "cb24e99d397b8fa9a5bb79b8f914ad1e2cfb51c4b481be19899a9b7758ffe1bf"
+    }
+  },
+  "constant": {
+    "state": "completed",
+    "returncode": 0,
+    "npu_work_executed": true,
+    "smoke_passed": true,
+    "complete": true,
+    "expected_ids": [
+      "official_layout_d128_gqa4",
+      "target_q4_d256_gqa6"
+    ],
+    "distinct_expected_passed_count": 2,
+    "missing_or_unqualified_ids": [],
+    "cases": [
+      {
+        "name": "official_layout_d128_gqa4",
+        "status": "passed",
+        "query": 8,
+        "query_heads": 4,
+        "kv_heads": 1,
+        "head_dim": 128,
+        "metadata_shape": [
+          1024
+        ],
+        "metadata_nonzero": 25,
+        "metadata_sha256": "7ea8b5dfe7c5f260225a25af50cc70d596de7191d02f2f66346e2d3e16801502",
+        "output_shape": [
+          8,
+          4,
+          128
+        ],
+        "max_abs_error_from_one": 0.0,
+        "output_finite": true
+      },
+      {
+        "name": "target_q4_d256_gqa6",
+        "status": "passed",
+        "query": 4,
+        "query_heads": 12,
+        "kv_heads": 2,
+        "head_dim": 256,
+        "metadata_shape": [
+          1024
+        ],
+        "metadata_nonzero": 43,
+        "metadata_sha256": "9f70b694ce86d70aab1e6e0effc733e1a793008961844b5653f517098d7ac4f3",
+        "output_shape": [
+          4,
+          12,
+          256
+        ],
+        "max_abs_error_from_one": 0.0,
+        "output_finite": true
+      }
+    ],
+    "current_case": {
+      "name": "target_q4_d256_gqa6",
+      "query": 4,
+      "query_heads": 12,
+      "kv_heads": 2,
+      "head_dim": 256,
+      "status": "passed",
+      "checkpoint": "attention_completed",
+      "metadata": {
+        "metadata_shape": [
+          1024
+        ],
+        "metadata_dtype": "torch.int32",
+        "metadata_nonzero": 43,
+        "metadata_sha256": "9f70b694ce86d70aab1e6e0effc733e1a793008961844b5653f517098d7ac4f3"
+      },
+      "attention": {
+        "output_shape": [
+          4,
+          12,
+          256
+        ],
+        "output_finite": true,
+        "max_abs_error_from_one": 0.0
+      }
+    },
+    "opapi_library_sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40"
+  },
+  "graphs": {
+    "b1": {
+      "state": "completed",
+      "returncode": 0,
+      "checkpoint": "replay_passed",
+      "npu_work_executed": true,
+      "selected_graph_gate_qualified": true,
+      "gate": "b1",
+      "complete": true,
+      "expected_step_count": 8,
+      "distinct_passed_step_count": 8,
+      "missing_or_unqualified_ids": [],
+      "issues": [],
+      "unexpected_ids": [],
+      "steps": [
+        {
+          "case": {
+            "id": "b1-0-kv4",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              4
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.1735992431640625,
+              "rms_error": 0.06194712966680527,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 54.24681091308594,
+                "max_normalized_full_vs_causal": 17281.923828125,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 4,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 4,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "7178b442c72f581819edcfedaa007f8631e08a6106a64f4226346e27c9c40851",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-1-kv7",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              7
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.13419342041015625,
+              "rms_error": 0.0354076586663723,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 30.277645111083984,
+                "max_normalized_full_vs_causal": 9971.25,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 7,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 7,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "948df30ee62f0ac631180a855f2b2a5ac4271ab0ab8f260b93342812b15e5a2b",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-2-kv127",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              127
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.00861668586730957,
+              "rms_error": 0.0018870208878070116,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.8431410789489746,
+                "max_normalized_full_vs_causal": 612.6075439453125,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 127,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 127,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "90f69616b5288d0a3d627db0980f6ade7efc07296948fd598259055d6b1ebb24",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-3-kv129",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              129
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.009392261505126953,
+              "rms_error": 0.0019289866322651505,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.7342950105667114,
+                "max_normalized_full_vs_causal": 573.1459350585938,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 129,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 129,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "7deab25d838f9de42ce273c8d71afa9ebb95e5145dc39a4c9d7ab69f21dc8c99",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-4-kv513",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              513
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.0022588372230529785,
+              "rms_error": 0.0004954594187438488,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 0.532936155796051,
+                "max_normalized_full_vs_causal": 176.8836212158203,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 4,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "4367238618ba96efd84e10e3705a0a478fe99ab1ed64ee93f734ed7eda5d48da",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-5-kv1025",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              1025
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.00115281343460083,
+              "rms_error": 0.0002499246911611408,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 0.23255175352096558,
+                "max_normalized_full_vs_causal": 77.29804992675781,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "789ed5ec39c634f757692bba07908d58b515c32f305d48baf5b25cdb72fa0c0e",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-6-kv127",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              127
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.007648468017578125,
+              "rms_error": 0.0018160465406253934,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 2.2077136039733887,
+                "max_normalized_full_vs_causal": 732.9508056640625,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 127,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 127,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "90f69616b5288d0a3d627db0980f6ade7efc07296948fd598259055d6b1ebb24",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b1-7-kv4",
+            "q_lengths": [
+              4
+            ],
+            "kv_lengths": [
+              4
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.18599700927734375,
+              "rms_error": 0.06238715350627899,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 54.207706451416016,
+                "max_normalized_full_vs_causal": 17482.791015625,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 4,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 2,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 4,
+              "actualQDims": 1,
+              "actualKVDims": 1
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "7178b442c72f581819edcfedaa007f8631e08a6106a64f4226346e27c9c40851",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        }
+      ],
+      "capture_addresses": {
+        "input_addresses": [
+          {
+            "query_storage": {
+              "pointer": 20616935636992,
+              "shape": [
+                8,
+                12,
+                256
+              ],
+              "stride": [
+                3072,
+                256,
+                1
+              ]
+            },
+            "key": {
+              "pointer": 20616937734144,
+              "shape": [
+                13,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "value": {
+              "pointer": 20616939438592,
+              "shape": [
+                13,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "block_table": {
+              "pointer": 20616935686656,
+              "shape": [
+                1,
+                10
+              ],
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "q_lengths": {
+              "pointer": 20616935687168,
+              "shape": [
+                1
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "kv_lengths": {
+              "pointer": 20616935687680,
+              "shape": [
+                1
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "atten_mask": {
+              "pointer": 20616941143040,
+              "shape": [
+                2048,
+                2048
+              ],
+              "stride": [
+                2048,
+                1
+              ]
+            }
+          }
+        ],
+        "metadata_pointer": 20616960802816,
+        "output_pointers": [
+          20616960807424
+        ]
+      },
+      "captured_occurrences": {
+        "metadata": 1,
+        "attention": 1
+      },
+      "distinct_metadata_hashes": 6,
+      "fd_present_ids": [
+        "b1-4-kv513",
+        "b1-5-kv1025"
+      ],
+      "actual_fd_path_covered": true,
+      "core_limit": {
+        "cube_core_num": 20,
+        "vector_core_num": 40
+      },
+      "shared_input_independence_evidence": null,
+      "fingerprint": {
+        "gate": "b1",
+        "seed": 1703,
+        "rtol": 0.03,
+        "atol": 0.003,
+        "scripts": {
+          "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+          "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+          "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7"
+        },
+        "extension_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+        "opp_root": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "fingerprint_sha256": "d61f3e26f3f2a74f5cceb0dfc7f9cdda240035c4d21226eef48eb0e24ec4ef34",
+        "opp_inventory_ref": "cb24e99d397b8fa9a5bb79b8f914ad1e2cfb51c4b481be19899a9b7758ffe1bf"
+      }
+    },
+    "b4": {
+      "state": "completed",
+      "returncode": 0,
+      "checkpoint": "replay_passed",
+      "npu_work_executed": true,
+      "selected_graph_gate_qualified": true,
+      "gate": "b4",
+      "complete": true,
+      "expected_step_count": 7,
+      "distinct_passed_step_count": 7,
+      "missing_or_unqualified_ids": [],
+      "issues": [],
+      "unexpected_ids": [],
+      "steps": [
+        {
+          "case": {
+            "id": "b4-capture",
+            "q_lengths": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "kv_lengths": [
+              127,
+              127,
+              127,
+              127
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.00971364974975586,
+              "rms_error": 0.0018167250091210008,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9479289054870605,
+                "max_normalized_full_vs_causal": 648.188232421875,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 127,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 8,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 127,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "6ffa3a6e600eca2467990933b6ba04a053b1cbdc0615f65aa072497753d8d64e",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b4-holes",
+            "q_lengths": [
+              4,
+              0,
+              4,
+              4
+            ],
+            "kv_lengths": [
+              129,
+              0,
+              513,
+              1025
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.008751153945922852,
+              "rms_error": 0.0009002669830806553,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.7084925174713135,
+                "max_normalized_full_vs_causal": 567.8255615234375,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 4,
+              "usedCoreNum": 11,
+              "usedFdVecNum": 12,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "4d3ad36622351e9169af7c17b3aae6eb11f9b8bb3623980bbbb729f73b4ebadb",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b4-resume",
+            "q_lengths": [
+              0,
+              4,
+              0,
+              4
+            ],
+            "kv_lengths": [
+              0,
+              1025,
+              0,
+              129
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.006764411926269531,
+              "rms_error": 0.0009404228767380118,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9472019672393799,
+                "max_normalized_full_vs_causal": 647.3927001953125,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 7,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "68ec5162bd4f01be6437ca118c12ae65c345c2d48012db6aa894c4e62a68a08a",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b4-shorten",
+            "q_lengths": [
+              4,
+              4,
+              4,
+              0
+            ],
+            "kv_lengths": [
+              513,
+              127,
+              129,
+              0
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.009242773056030273,
+              "rms_error": 0.001308912644162774,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.8710602521896362,
+                "max_normalized_full_vs_causal": 620.837646484375,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "29c39a499cec694da6bf4c014f82dc132e5491f26356b355847ea588b800bdbf",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b4-zero-kv",
+            "q_lengths": [
+              4,
+              4,
+              0,
+              4
+            ],
+            "kv_lengths": [
+              0,
+              129,
+              0,
+              513
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.007837772369384766,
+              "rms_error": 0.0009468456846661866,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 2.1432712078094482,
+                "max_normalized_full_vs_causal": 712.9738159179688,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": [
+                {
+                  "row": 0,
+                  "q_length": 4,
+                  "nonzero_output_elements": 0
+                }
+              ]
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "3435ed1744821c93abc5fcba74b700bf8f38d3ce78d4b84a40dad75078addc3b",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b4-empty",
+            "q_lengths": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "kv_lengths": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.0,
+              "rms_error": 0.0,
+              "mask_sensitivity": null,
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 1,
+              "usedFdVecNum": 0,
+              "maxS1": 0,
+              "maxS2": 1024,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "7c89a1f4e49327b35c31d412674937576d57aee63768565cc99b87dcfb0e5fb4",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "b4-all-live",
+            "q_lengths": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "kv_lengths": [
+              127,
+              129,
+              513,
+              1025
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.00747990608215332,
+              "rms_error": 0.0013549762079492211,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9809613227844238,
+                "max_normalized_full_vs_causal": 657.8882446289062,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 4,
+              "usedCoreNum": 12,
+              "usedFdVecNum": 12,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "4dd00ce9cb3b15f0b13e5652fac2ae34784696f6383daa5f2fe87905d60e0d2b",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        }
+      ],
+      "capture_addresses": {
+        "input_addresses": [
+          {
+            "query_storage": {
+              "pointer": 20616935636992,
+              "shape": [
+                20,
+                12,
+                256
+              ],
+              "stride": [
+                3072,
+                256,
+                1
+              ]
+            },
+            "key": {
+              "pointer": 20616937734144,
+              "shape": [
+                40,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "value": {
+              "pointer": 20616942977536,
+              "shape": [
+                40,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "block_table": {
+              "pointer": 20616935760384,
+              "shape": [
+                4,
+                10
+              ],
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "q_lengths": {
+              "pointer": 20616935760896,
+              "shape": [
+                4
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "kv_lengths": {
+              "pointer": 20616935761408,
+              "shape": [
+                4
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "atten_mask": {
+              "pointer": 20616948220928,
+              "shape": [
+                2048,
+                2048
+              ],
+              "stride": [
+                2048,
+                1
+              ]
+            }
+          }
+        ],
+        "metadata_pointer": 20616960802816,
+        "output_pointers": [
+          20616960807424
+        ]
+      },
+      "captured_occurrences": {
+        "metadata": 1,
+        "attention": 1
+      },
+      "distinct_metadata_hashes": 7,
+      "fd_present_ids": [
+        "b4-holes",
+        "b4-resume",
+        "b4-shorten",
+        "b4-zero-kv",
+        "b4-all-live"
+      ],
+      "actual_fd_path_covered": true,
+      "core_limit": {
+        "cube_core_num": 20,
+        "vector_core_num": 40
+      },
+      "shared_input_independence_evidence": null,
+      "fingerprint": {
+        "gate": "b4",
+        "seed": 1703,
+        "rtol": 0.03,
+        "atol": 0.003,
+        "scripts": {
+          "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+          "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+          "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7"
+        },
+        "extension_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+        "opp_root": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "fingerprint_sha256": "ae80e634c063f82199e50432d89e79e2353173f24c4faa0579009221d3662b69",
+        "opp_inventory_ref": "cb24e99d397b8fa9a5bb79b8f914ad1e2cfb51c4b481be19899a9b7758ffe1bf"
+      }
+    },
+    "shared": {
+      "state": "completed",
+      "returncode": 0,
+      "checkpoint": "replay_passed",
+      "npu_work_executed": true,
+      "selected_graph_gate_qualified": true,
+      "gate": "shared",
+      "complete": true,
+      "expected_step_count": 7,
+      "distinct_passed_step_count": 7,
+      "missing_or_unqualified_ids": [],
+      "issues": [],
+      "unexpected_ids": [],
+      "steps": [
+        {
+          "case": {
+            "id": "shared-capture",
+            "q_lengths": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "kv_lengths": [
+              127,
+              127,
+              127,
+              127
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.00971364974975586,
+              "rms_error": 0.0018167250091210008,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9479289054870605,
+                "max_normalized_full_vs_causal": 648.188232421875,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            },
+            {
+              "max_abs_error": 0.0072100162506103516,
+              "rms_error": 0.0017269303789362311,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.921867847442627,
+                "max_normalized_full_vs_causal": 637.5896606445312,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 127,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 8,
+              "usedFdVecNum": 0,
+              "maxS1": 4,
+              "maxS2": 127,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "6ffa3a6e600eca2467990933b6ba04a053b1cbdc0615f65aa072497753d8d64e",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "shared-holes",
+            "q_lengths": [
+              4,
+              0,
+              4,
+              4
+            ],
+            "kv_lengths": [
+              129,
+              0,
+              513,
+              1025
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.008751153945922852,
+              "rms_error": 0.0009002669830806553,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.7084925174713135,
+                "max_normalized_full_vs_causal": 567.8255615234375,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            },
+            {
+              "max_abs_error": 0.006809115409851074,
+              "rms_error": 0.0009729923331178725,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9189074039459229,
+                "max_normalized_full_vs_causal": 636.5610961914062,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 4,
+              "usedCoreNum": 11,
+              "usedFdVecNum": 12,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "4d3ad36622351e9169af7c17b3aae6eb11f9b8bb3623980bbbb729f73b4ebadb",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "shared-resume",
+            "q_lengths": [
+              0,
+              4,
+              0,
+              4
+            ],
+            "kv_lengths": [
+              0,
+              1025,
+              0,
+              129
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.006764411926269531,
+              "rms_error": 0.0009404228767380118,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9472019672393799,
+                "max_normalized_full_vs_causal": 647.3927001953125,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            },
+            {
+              "max_abs_error": 0.007315158843994141,
+              "rms_error": 0.0008812901214696467,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9418492317199707,
+                "max_normalized_full_vs_causal": 645.8385620117188,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 7,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "68ec5162bd4f01be6437ca118c12ae65c345c2d48012db6aa894c4e62a68a08a",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "shared-shorten",
+            "q_lengths": [
+              4,
+              4,
+              4,
+              0
+            ],
+            "kv_lengths": [
+              513,
+              127,
+              129,
+              0
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.009242773056030273,
+              "rms_error": 0.001308912644162774,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.8710602521896362,
+                "max_normalized_full_vs_causal": 620.837646484375,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            },
+            {
+              "max_abs_error": 0.006565213203430176,
+              "rms_error": 0.0012784474529325962,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9288783073425293,
+                "max_normalized_full_vs_causal": 638.7454223632812,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "29c39a499cec694da6bf4c014f82dc132e5491f26356b355847ea588b800bdbf",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "shared-zero-kv",
+            "q_lengths": [
+              4,
+              4,
+              0,
+              4
+            ],
+            "kv_lengths": [
+              0,
+              129,
+              0,
+              513
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.007837772369384766,
+              "rms_error": 0.0009468456846661866,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 2.1432712078094482,
+                "max_normalized_full_vs_causal": 712.9738159179688,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": [
+                {
+                  "row": 0,
+                  "q_length": 4,
+                  "nonzero_output_elements": 0
+                }
+              ]
+            },
+            {
+              "max_abs_error": 0.010228633880615234,
+              "rms_error": 0.0010609171586111188,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.7728849649429321,
+                "max_normalized_full_vs_causal": 587.8797607421875,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": [
+                {
+                  "row": 0,
+                  "q_length": 4,
+                  "nonzero_output_elements": 0
+                }
+              ]
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 2,
+              "usedCoreNum": 6,
+              "usedFdVecNum": 6,
+              "maxS1": 4,
+              "maxS2": 513,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "3435ed1744821c93abc5fcba74b700bf8f38d3ce78d4b84a40dad75078addc3b",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "shared-empty",
+            "q_lengths": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "kv_lengths": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.0,
+              "rms_error": 0.0,
+              "mask_sensitivity": null,
+              "zero_kv_outputs_exact": []
+            },
+            {
+              "max_abs_error": 0.0,
+              "rms_error": 0.0,
+              "mask_sensitivity": null,
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 0,
+              "usedCoreNum": 1,
+              "usedFdVecNum": 0,
+              "maxS1": 0,
+              "maxS2": 1024,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              0
+            ],
+            "fd_group_s2_split_count": [],
+            "fd_present": false,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "7c89a1f4e49327b35c31d412674937576d57aee63768565cc99b87dcfb0e5fb4",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        },
+        {
+          "case": {
+            "id": "shared-all-live",
+            "q_lengths": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "kv_lengths": [
+              127,
+              129,
+              513,
+              1025
+            ],
+            "causal": true
+          },
+          "passed": true,
+          "checks": {
+            "record_passed": true,
+            "case_contract": true,
+            "addresses": true,
+            "input_storage_canaries": true,
+            "zero_output_tail": true,
+            "error_metrics": true,
+            "exact_zero_kv": true,
+            "mask_witness": true,
+            "metadata": true,
+            "metadata_hash": true
+          },
+          "errors": [
+            {
+              "max_abs_error": 0.00747990608215332,
+              "rms_error": 0.0013549762079492211,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.9809613227844238,
+                "max_normalized_full_vs_causal": 657.8882446289062,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            },
+            {
+              "max_abs_error": 0.010217905044555664,
+              "rms_error": 0.001326334779150784,
+              "mask_sensitivity": {
+                "max_abs_full_vs_causal": 1.8381505012512207,
+                "max_normalized_full_vs_causal": 610.856201171875,
+                "required_normalized_difference": 10.0,
+                "forbidden_tail_value": 64.0
+              },
+              "zero_kv_outputs_exact": []
+            }
+          ],
+          "metadata_fd": {
+            "base": {
+              "mBase": 512,
+              "sInner": 512,
+              "mFdBase": 8,
+              "numFd": 4,
+              "usedCoreNum": 12,
+              "usedFdVecNum": 12,
+              "maxS1": 4,
+              "maxS2": 1025,
+              "actualQDims": 4,
+              "actualKVDims": 4
+            },
+            "fd_s2_split_count_by_aic_metadata_slot": [
+              2,
+              2,
+              3,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "fd_group_s2_split_count": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "fd_present": true,
+            "fd_count_semantics": "FD group arrays are serialized in AIC slots; a slot is not ownership of a core"
+          },
+          "metadata_sha256": "4dd00ce9cb3b15f0b13e5652fac2ae34784696f6383daa5f2fe87905d60e0d2b",
+          "addresses_reference": "capture_addresses; runner records per-step equality, not per-step raw pointers"
+        }
+      ],
+      "capture_addresses": {
+        "input_addresses": [
+          {
+            "query_storage": {
+              "pointer": 20616935636992,
+              "shape": [
+                20,
+                12,
+                256
+              ],
+              "stride": [
+                3072,
+                256,
+                1
+              ]
+            },
+            "key": {
+              "pointer": 20616937734144,
+              "shape": [
+                40,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "value": {
+              "pointer": 20616942977536,
+              "shape": [
+                40,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "block_table": {
+              "pointer": 20616935760384,
+              "shape": [
+                4,
+                10
+              ],
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "q_lengths": {
+              "pointer": 20616935760896,
+              "shape": [
+                4
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "kv_lengths": {
+              "pointer": 20616935761408,
+              "shape": [
+                4
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "atten_mask": {
+              "pointer": 20616948220928,
+              "shape": [
+                2048,
+                2048
+              ],
+              "stride": [
+                2048,
+                1
+              ]
+            }
+          },
+          {
+            "query_storage": {
+              "pointer": 20616935761920,
+              "shape": [
+                20,
+                12,
+                256
+              ],
+              "stride": [
+                3072,
+                256,
+                1
+              ]
+            },
+            "key": {
+              "pointer": 20616952415744,
+              "shape": [
+                40,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "value": {
+              "pointer": 20616958705664,
+              "shape": [
+                40,
+                128,
+                512
+              ],
+              "stride": [
+                65536,
+                512,
+                1
+              ]
+            },
+            "block_table": {
+              "pointer": 20616935885312,
+              "shape": [
+                4,
+                10
+              ],
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "q_lengths": {
+              "pointer": 20616935760896,
+              "shape": [
+                4
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "kv_lengths": {
+              "pointer": 20616935761408,
+              "shape": [
+                4
+              ],
+              "stride": [
+                1
+              ]
+            },
+            "atten_mask": {
+              "pointer": 20616963949056,
+              "shape": [
+                2048,
+                2048
+              ],
+              "stride": [
+                2048,
+                1
+              ]
+            }
+          }
+        ],
+        "metadata_pointer": 20616981774336,
+        "output_pointers": [
+          20616981778944,
+          20616981877760
+        ]
+      },
+      "captured_occurrences": {
+        "metadata": 1,
+        "attention": 2
+      },
+      "distinct_metadata_hashes": 7,
+      "fd_present_ids": [
+        "shared-holes",
+        "shared-resume",
+        "shared-shorten",
+        "shared-zero-kv",
+        "shared-all-live"
+      ],
+      "actual_fd_path_covered": true,
+      "core_limit": {
+        "cube_core_num": 20,
+        "vector_core_num": 40
+      },
+      "shared_input_independence_evidence": "Distinct Q/K/V storage pointers are persisted. Distinct contents and per-copy FP32 reference checks are assertions in the executed runner, conditional on provenance checks; raw tensor hashes are not persisted.",
+      "fingerprint": {
+        "gate": "shared",
+        "seed": 1703,
+        "rtol": 0.03,
+        "atol": 0.003,
+        "scripts": {
+          "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+          "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+          "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7"
+        },
+        "extension_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+        "opp_root": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "fingerprint_sha256": "971f0c3b90bf5aacea00032b578c34cb49d2e40675ef26f1f0a1f0dcc342ddb8",
+        "opp_inventory_ref": "cb24e99d397b8fa9a5bb79b8f914ad1e2cfb51c4b481be19899a9b7758ffe1bf"
+      }
+    }
+  },
+  "opp_inventories": {
+    "cb24e99d397b8fa9a5bb79b8f914ad1e2cfb51c4b481be19899a9b7758ffe1bf": {
+      "file_count": 100,
+      "inventory_sha256": "cb24e99d397b8fa9a5bb79b8f914ad1e2cfb51c4b481be19899a9b7758ffe1bf"
+    }
+  },
+  "performance_measured": false,
+  "full_model_qualified": false,
+  "incremental_planner_qualified": false,
+  "scope": "Isolated operator/eager/graph correctness only; performance and model remain unqualified"
+}

@@ -40,6 +40,13 @@ dynamic correctness or performance tests; a generic parser branch is not
 evidence that the target is supported. This finding does not establish a
 driver incompatibility or a scheduling speedup.
 
+The subsequent [stage-two adaptation](aclgraph_fia_sink_stage2.md) resolves
+that narrow geometry in an isolated prototype using capacity-bounded inner
+tiles. The actual native build, 25 eager correctness gates and three small
+dynamic/shared-plan graph gates pass. The unmodified upstream source remains
+unsupported, and the prototype has no new performance or full-model result.
+The next decision requires a measured exposed planner/kernel-tail budget.
+
 ## Existing evidence that constrains the search
 
 - The current public ready-tile full-model control averages 143.474 ms over
