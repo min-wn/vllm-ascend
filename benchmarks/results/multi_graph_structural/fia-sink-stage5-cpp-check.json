@@ -1,0 +1,26 @@
+{
+  "check": {
+    "scope": "CPU-only extracted whole-row algorithm, not native operator/NPU qualification",
+    "source_sha256": "300cbe4fc34328a7a1f8f5e1c853df6d4fb7a4d0494003e3d80650d600ac632d",
+    "command": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/reviewed-whole-row.cpp",
+      "-o",
+      "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/reviewed-whole-row-check"
+    ],
+    "compile_returncode": 0,
+    "compile_stdout": "",
+    "compile_stderr": "",
+    "test_returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "raw_source": {
+    "path": "stage5-no-fd/reviewed-cpp-check.json",
+    "sha256": "cb8a3de84df1f6dc1ca6089aef413e2b60f042bd6b87d54a92075bbe08525fbe"
+  }
+}

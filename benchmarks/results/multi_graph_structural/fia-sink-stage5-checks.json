@@ -1,0 +1,68 @@
+{
+  "scoped_quality": {
+    "files": {
+      "benchmarks/aclgraph_fia_sink_stage5_patch.py": "cdcae709d6bf3072644e87b3bb306545386233aae375841513cd1b9d92ba8008",
+      "benchmarks/aclgraph_fia_sink_stage5_build.py": "bd37a3f48bbea05267f51631e4e713aef1f5700029d76f38b0bd507997645021",
+      "benchmarks/aclgraph_fia_sink_stage5_gate.py": "88088520c4e961fe1441423f01397204290dd59ee5bda7e9a00c9ec6ac2069e2",
+      "tests/ut/worker/multi_graph/test_fia_sink_stage5_patch.py": "e9c39458ddf52fd2015599c5cb45b4971d4c4695d241a2b837dd5fede1957215",
+      "tests/ut/worker/multi_graph/test_fia_sink_stage5_build.py": "a6a7cd04671f29197a4de0229e2f2c61c6c4f6bde0a4624ef216f9708e73e794",
+      "tests/ut/worker/multi_graph/test_fia_sink_stage5_gate.py": "0cc55c8cbe4110439b7320dc3c8ee7e7443cfe866219d33e29a637ec36073be8",
+      "docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_stage5.md": "3c085ade99f0005995ca7bf4ed4e20c3eb8efaedda2bf33bb8f52b75eec1a5d3"
+    },
+    "checks": [
+      {
+        "hook": "codespell",
+        "returncode": 0,
+        "output": "codespell................................................................Passed\n"
+      },
+      {
+        "hook": "typos",
+        "returncode": 0,
+        "output": "typos....................................................................Passed\n"
+      },
+      {
+        "hook": "markdownlint",
+        "returncode": 0,
+        "output": "markdownlint.............................................................Passed\n"
+      },
+      {
+        "checker": "check_forbidden_imports.py",
+        "returncode": 0,
+        "output": ""
+      },
+      {
+        "checker": "check_boolean_context_manager.py",
+        "returncode": 0,
+        "output": ""
+      },
+      {
+        "checker": "check_long_functions.py",
+        "returncode": 0,
+        "output": ""
+      }
+    ],
+    "gate_source_note": {
+      "only_post_measurement_change": "run_gate docstring; no executable change",
+      "sha256_without_docstring": "aa3be1acac66d70f15920145d4fd4a5a98fb079f5c00046d46ed1fdf5e0cfa4c",
+      "measured_gate_sha256": "aa3be1acac66d70f15920145d4fd4a5a98fb079f5c00046d46ed1fdf5e0cfa4c"
+    }
+  },
+  "unit_tests": {
+    "passed": 134,
+    "skipped": 1,
+    "scope": "stage4 analyze/prepare/whole_analyze/whole_plan and stage5 patch/build/gate, --noconftest",
+    "skip_reason": "no Windows C++ compiler; corresponding extracted C++ harness compiled and passed on remote host"
+  },
+  "full_repository_ci": {
+    "returncode": 1,
+    "command": "bash format.sh ci",
+    "limitations": [
+      "existing vendor/raw-log spelling errors",
+      "existing direct Triton imports in device_length_decode.py",
+      "Windows /bin/bash and shellcheck unavailable to hooks",
+      "python3 hooks exit 9009"
+    ],
+    "raw_log_sha256": "b86b85881a73401f8ccaea27e138bf274c708757eede0002f5f0f46a6fe6e6bb"
+  },
+  "performance_measured": false
+}
