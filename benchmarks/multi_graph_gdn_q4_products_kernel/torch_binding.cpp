@@ -4,7 +4,7 @@
 #include <torch_npu/csrc/framework/OpCommand.h>
 
 extern "C" void q4_products_launch(uint32_t, void*, void*, void*, void*, void*, void*, void*, void*, uint32_t, uint32_t,
-                                   uint64_t);
+                                   uint64_t, bool);
 
 namespace {
 void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool contiguous = true) {
@@ -15,11 +15,12 @@ void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool co
 
 void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor sequence, at::Tensor stateIds,
               at::Tensor accepted, at::Tensor output, int64_t cores) {
-  check(state, at::kBFloat16, 4, false);
+  TORCH_CHECK(state.scalar_type() == at::kBFloat16 || state.scalar_type() == at::kFloat, "BF16/FP32 state required");
+  check(state, state.scalar_type(), 4, false);
   TORCH_CHECK(state.stride(3) == 1 && state.stride(2) == 128 && state.stride(1) == 128 * 128 &&
                   state.stride(0) >= 24 * 128 * 128,
               "state requires contiguous heads/rows with optional page padding");
-  for (const auto& tensor : {query, key}) check(tensor, at::kBFloat16, 3);
+  for (const auto& tensor : {query, key}) check(tensor, state.scalar_type(), 3);
   for (const auto& tensor : {sequence, stateIds, accepted}) check(tensor, at::kInt, 1);
   check(output, at::kFloat, 4);
   const int64_t batch = accepted.numel(), tokens = batch * 4;
@@ -40,7 +41,7 @@ void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor seq
   command.SetCustomHandler([=]() -> int {
     q4_products_launch(cores, stream, state.data_ptr(), query.data_ptr(), key.data_ptr(), sequence.data_ptr(),
                        stateIds.data_ptr(), accepted.data_ptr(), output.data_ptr(), batch, state.size(0),
-                       state.stride(0));
+                       state.stride(0), state.scalar_type() == at::kFloat);
     return 0;
   });
   command.Run();

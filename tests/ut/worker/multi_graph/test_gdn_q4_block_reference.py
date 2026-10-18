@@ -22,13 +22,13 @@ def block_reference(monkeypatch):
     return module
 
 
-def inputs(seed=31, *, batch=3, key_heads=1, value_heads=3, width_k=16, width_v=12):
+def inputs(seed=31, *, batch=3, key_heads=1, value_heads=3, width_k=16, width_v=12, state_dtype=torch.bfloat16):
     generator = torch.Generator().manual_seed(seed)
 
     def random(*shape):
         return torch.randn(*shape, generator=generator)
 
-    base = (random(batch, value_heads, width_v, width_k) * 0.02).to(torch.bfloat16)
+    base = (random(batch, value_heads, width_v, width_k) * 0.02).to(state_dtype)
     q, k = (torch.nn.functional.normalize(random(batch, 4, key_heads, width_k), dim=-1).bfloat16() for _ in range(2))
     value = (random(batch, 4, value_heads, width_v) * 0.1).bfloat16()
     gamma = torch.exp(-torch.rand(batch, 4, value_heads, generator=generator) * 0.4)
@@ -54,14 +54,17 @@ def sequential(base, q, k, value, gamma, beta, *, dtype, scale):
 
 @pytest.mark.parametrize("key_heads,value_heads", [(1, 1), (1, 3), (2, 6)])
 @pytest.mark.parametrize("scale", [1.0, 0.25])
-def test_q4_formula_matches_fp64_recurrence_and_all_prefixes(block_reference, key_heads, value_heads, scale):
-    data = inputs(key_heads=key_heads, value_heads=value_heads)
+@pytest.mark.parametrize("state_dtype", [torch.bfloat16, torch.float32])
+def test_q4_formula_matches_fp64_recurrence_and_all_prefixes(
+    block_reference, key_heads, value_heads, scale, state_dtype
+):
+    data = inputs(key_heads=key_heads, value_heads=value_heads, state_dtype=state_dtype)
     result = block_reference.q4_block_step(*data, scale=scale, accumulation_dtype=torch.float64)
     states, output, updates = sequential(*data, dtype=torch.float64, scale=scale)
     torch.testing.assert_close(result.unrounded_states, states, rtol=1e-12, atol=1e-12)
     torch.testing.assert_close(result.outputs, output, rtol=1e-12, atol=1e-12)
     torch.testing.assert_close(result.updates, updates, rtol=1e-12, atol=1e-12)
-    torch.testing.assert_close(result.states, states.bfloat16(), rtol=0, atol=0)
+    torch.testing.assert_close(result.states, states.to(state_dtype), rtol=0, atol=0)
     assert torch.equal(torch.diagonal(result.lower, dim1=-2, dim2=-1), torch.ones(3, value_heads, 4))
     assert not torch.triu(result.lower, diagonal=1).count_nonzero()
     # Check the actual unit-triangular equations independently of substitution.
@@ -134,6 +137,23 @@ def test_reference_does_not_mutate_or_alias_inputs(block_reference):
     torch.testing.assert_close(result.states, expected, rtol=0, atol=0)
 
 
+def test_fp32_closed_loop_preserves_candidate_precision(block_reference):
+    data = list(inputs(state_dtype=torch.float32))
+    reference_base, block_base = data[0].clone(), data[0].clone()
+    for step in range(8):
+        data = list(inputs(31 + step, state_dtype=torch.float32))
+        data[0] = block_base
+        observed = block_reference.q4_block_step(*data)
+        states, output, _ = sequential(reference_base, *data[1:], dtype=torch.float32, scale=data[1].shape[-1] ** -0.5)
+        assert observed.states.dtype == torch.float32
+        assert (observed.states != observed.states.bfloat16().float()).any()
+        torch.testing.assert_close(observed.states, states, rtol=1e-5, atol=3e-8)
+        torch.testing.assert_close(observed.outputs, output, rtol=1e-5, atol=3e-8)
+        accepted = (torch.arange(3) + step) % 4
+        block_base = observed.states[torch.arange(3), accepted].clone()
+        reference_base = states[torch.arange(3), accepted].clone()
+
+
 @pytest.mark.parametrize(
     "invalid",
     [
@@ -151,7 +171,7 @@ def test_reference_does_not_mutate_or_alias_inputs(block_reference):
 def test_block_rejects_invalid_contract(block_reference, invalid):
     data, kwargs = list(inputs()), {}
     if invalid == "base_dtype":
-        data[0] = data[0].float()
+        data[0] = data[0].half()
     elif invalid == "query_tokens":
         data[1] = data[1][:, :3]
     elif invalid == "key_heads":

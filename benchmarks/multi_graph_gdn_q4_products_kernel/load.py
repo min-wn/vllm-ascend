@@ -58,6 +58,7 @@ def build(directory):
     )
     with (staging / "q4_products_tiling.h").open("w", encoding="ascii") as output:
         subprocess.run([str(generator)], stdout=output, check=True)
+        subprocess.run([str(generator), "fp32"], stdout=output, check=True)
     subprocess.run(
         [
             "cmake",

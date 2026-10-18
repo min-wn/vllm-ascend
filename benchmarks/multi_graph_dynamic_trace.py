@@ -74,7 +74,19 @@ def make_trace(*, seed=20261018, steps=128, min_batch=64, max_batch=128, min_pre
 
 
 def trace_digest(trace):
-    return hashlib.sha256(json.dumps(trace, sort_keys=True, separators=(",", ":")).encode("ascii")).hexdigest()
+    # JSON object keys become strings on load. Restore numeric request order
+    # so the predeclared digest survives a save/load cycle unchanged.
+    normalized = dict(trace)
+    prefix = {}
+    for request, length in trace["initial_prefix_by_request"].items():
+        if isinstance(request, bool) or not str(request).isdecimal() or str(int(request)) != str(request):
+            raise ValueError("initial prefix keys must be canonical nonnegative request IDs")
+        request = int(request)
+        if request in prefix:
+            raise ValueError("duplicate initial request ID")
+        prefix[request] = length
+    normalized["initial_prefix_by_request"] = prefix
+    return hashlib.sha256(json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode("ascii")).hexdigest()
 
 
 def main():

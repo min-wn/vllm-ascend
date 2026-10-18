@@ -2,6 +2,7 @@
 
 import copy
 import importlib.util
+import json
 import random
 import sys
 from pathlib import Path
@@ -48,6 +49,26 @@ def test_digest_ignores_mapping_order_but_detects_content_changes(dynamic_trace)
     changed = copy.deepcopy(trace)
     changed["steps"][0]["accepted_after_step"][0] = 5
     assert dynamic_trace.trace_digest(changed) != dynamic_trace.trace_digest(trace)
+
+
+def test_saved_manifest_preserves_original_digest_after_json_round_trip(dynamic_trace):
+    path = (
+        Path(__file__).resolve().parents[4]
+        / "benchmarks/results/multi_graph_structural/structural-dynamic-trace-v1.json"
+    )
+    document = json.loads(path.read_text())
+    generated = dynamic_trace.make_trace()
+    assert dynamic_trace.trace_digest(document["trace"]) == document["trace_sha256"]
+    assert dynamic_trace.trace_digest(generated) == document["trace_sha256"]
+    assert dynamic_trace.trace_digest(json.loads(json.dumps(generated))) == document["trace_sha256"]
+
+
+@pytest.mark.parametrize("request_id", ["01", "-1", True, "x", "1.0"])
+def test_digest_rejects_ambiguous_request_identity(dynamic_trace, request_id):
+    trace = dynamic_trace.make_trace(steps=1, min_batch=1, max_batch=1)
+    trace["initial_prefix_by_request"] = {request_id: 10}
+    with pytest.raises(ValueError):
+        dynamic_trace.trace_digest(trace)
 
 
 def test_identity_preserves_pending_prefix_across_reordering_and_inactive_gaps(dynamic_trace):

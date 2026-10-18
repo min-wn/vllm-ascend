@@ -2,8 +2,9 @@
 """CPU Q4 block formula; a mathematical oracle, not a device implementation.
 
 Reassociating decay, reductions and outer products changes FP32 rounding.
-BF16 candidate storage and the next-step BF16 load remain explicit. FP64 mode
-checks the real-arithmetic identity; it is not a proposed device precision.
+Candidate storage and the next-step load preserve the input BF16 or FP32
+state precision. FP64 mode checks the real-arithmetic identity; it is not a
+proposed device precision.
 """
 
 from dataclasses import dataclass
@@ -26,10 +27,10 @@ def _validate(base, query, key, value, gamma, beta, accumulation_dtype):
         not isinstance(base, torch.Tensor)
         or base.ndim != 4
         or min(base.shape) < 1
-        or base.dtype != torch.bfloat16
+        or base.dtype not in (torch.bfloat16, torch.float32)
         or accumulation_dtype not in (torch.float32, torch.float64)
     ):
-        raise ValueError("expected a nonempty BF16 base and FP32/FP64 CPU accumulation")
+        raise ValueError("expected a nonempty BF16/FP32 base and FP32/FP64 CPU accumulation")
     batch, heads, width_v, width_k = base.shape
     if not isinstance(query, torch.Tensor) or query.ndim != 4 or min(query.shape) < 1:
         raise ValueError("query requires [requests, four tokens, key heads, key width]")
@@ -66,8 +67,9 @@ def q4_block_step(base, query, key, value, gamma, beta, *, scale=None, accumulat
     """Solve four rank-one updates using initial-state projections and a 4x4 system.
 
     base is [B,Hv,V,K], Q/K are [B,4,Hk,K], V is [B,4,Hv,V]. The
-    returned four BF16 candidates must be selected/loaded at the next step;
-    retaining an unrounded state across that boundary changes the algorithm.
+    four candidates retain base.dtype and must be selected/loaded at the
+    next step. BF16 rounding is required only for a BF16 cache; an FP32 cache
+    must never be rounded to BF16 at the step boundary.
     """
     ratio = _validate(base, query, key, value, gamma, beta, accumulation_dtype)
     width_k = base.shape[-1]
@@ -119,7 +121,7 @@ def q4_block_step(base, query, key, value, gamma, beta, *, scale=None, accumulat
         outputs.append(output)
     unrounded = torch.stack(states, dim=1)
     return Q4BlockResult(
-        states=unrounded.to(torch.bfloat16),
+        states=unrounded.to(base.dtype),
         unrounded_states=unrounded,
         outputs=torch.stack(outputs, dim=1),
         updates=torch.stack(updates, dim=1),

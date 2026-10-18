@@ -4,7 +4,7 @@
 #include <torch_npu/csrc/framework/OpCommand.h>
 
 extern "C" void q4_block_launch(uint32_t, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*,
-                                void*, uint32_t, uint32_t, uint64_t);
+                                void*, uint32_t, uint32_t, uint64_t, bool);
 
 namespace {
 void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool contiguous = true) {
@@ -20,7 +20,8 @@ void emit(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor valu
   for (const auto& tensor : {query, key, value, output}) check(tensor, at::kBFloat16, 3);
   check(beta, at::kBFloat16, 2);
   check(gate, at::kFloat, 2);
-  check(state, at::kBFloat16, 4, false);
+  TORCH_CHECK(state.scalar_type() == at::kBFloat16 || state.scalar_type() == at::kFloat, "BF16/FP32 state required");
+  check(state, state.scalar_type(), 4, false);
   TORCH_CHECK(state.stride(3) == 1 && state.stride(2) == 128 && state.stride(1) == 128 * 128 &&
                   state.stride(0) >= 24 * 128 * 128,
               "state requires contiguous heads/rows with optional page padding");
@@ -47,7 +48,8 @@ void emit(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor valu
   command.SetCustomHandler([=]() -> int {
     q4_block_launch(cores, stream, products.data_ptr(), query.data_ptr(), key.data_ptr(), value.data_ptr(),
                     beta.data_ptr(), gate.data_ptr(), state.data_ptr(), sequence.data_ptr(), stateIds.data_ptr(),
-                    accepted.data_ptr(), output.data_ptr(), batch, state.size(0), state.stride(0));
+                    accepted.data_ptr(), output.data_ptr(), batch, state.size(0), state.stride(0),
+                    state.scalar_type() == at::kFloat);
     return 0;
   });
   command.Run();

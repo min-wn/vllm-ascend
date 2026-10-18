@@ -10,8 +10,9 @@ extension.products(state, query, key, sequence, state_ids, accepted,
                    output, cores=20)
 ```
 
-The tensors are on one NPU. State is BF16
-`[Nslots>=1+4B,24,128,128]`, raw normalized Q/K are BF16 `[4B,8,128]`, sequence is
+The tensors are on one NPU. State is BF16 or FP32
+`[Nslots>=1+4B,24,128,128]`, raw normalized Q/K have the same dtype as state
+and shape `[4B,8,128]`, sequence is
 int32 `[B+1]` containing an initial offset followed by per-request 4/0 counts,
 state IDs are int32 `[4B]`, and accepted counts are int32 `[B]`. Active tokens are
 packed. Output is FP32 `[B,24,128,8]`: columns 0..3 are H0 times raw K1..4 and
@@ -30,8 +31,11 @@ from the cache slot and writes the actual 384-by-8 FP32 ND result. No gathered s
 intermediate is created in GM. Explicit MTE2-to-MTE1 and reverse barriers
 protect the manually supplied B buffer.
 
-The build runs the installed CANN host tiler once for the fixed 384-by-8-by-128
-shape and embeds its fields in the kernel. The host tiler uses explicit A2
+The build runs the installed CANN host tiler for both BF16 and FP32 inputs at
+the fixed 384-by-8-by-128 shape and embeds its fields in the kernel. FP32 uses
+baseK=64 to fit double-buffered L0A. The kernel explicitly disables HF32 after
+Matmul initialization; the host torch option alone does not control this
+custom Matmul. The host tiler uses explicit A2
 memory capacities and invokes no ACL/NPU API. Runtime request metadata remains
 device data; it does not regenerate tiling or perform host value reads.
 Sources and the generated header are staged inside the fresh build directory
@@ -49,3 +53,9 @@ device. Comparison against the framework FP32-output BMM uses explicit
 cross-kernel error metrics. End-to-end timing must include these products and
 the complete solve/materialization endpoint; isolated products latency is not
 a model replay result.
+
+Actual Qwen3.5 state is FP32. The benchmark adapter casts only the small raw
+BF16 Q/K buffers to FP32 inside the timed/captured callable. It never converts
+or gathers the full state for direct products. Both casts and their memory
+must be included in the complete endpoint. A BF16-state qualification does
+not qualify the default model's FP32-state path.

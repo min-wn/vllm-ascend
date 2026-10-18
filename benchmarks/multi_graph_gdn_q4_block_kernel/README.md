@@ -17,12 +17,12 @@ The supported contract is Q=4,
 
 | Buffer | Dtype | Shape and meaning |
 | --- | --- | --- |
-| products | FP32 | `[B,24,128,8]`, selected BF16 H0 times raw BF16 K1..4,Q1..4 |
+| products | FP32 | `[B,24,128,8]`, selected H0 times raw K1..4,Q1..4 |
 | query, key | BF16 | `[4B,8,128]`, normalized, with no query scaling yet |
 | value, output | BF16 | `[4B,24,128]` |
 | beta | BF16 | `[4B,24]` |
 | gate | FP32 | `[4B,24]`, original log decay; device `Exp` computes gamma |
-| state | BF16 | `[Nslots,24,128,128]`, V-major then K; Nslots >= 1+4B |
+| state | BF16/FP32 | `[Nslots,24,128,128]`, V-major then K; Nslots >= 1+4B |
 | sequence | int32 | `[B+1]`: initial token offset, followed by per-request 4/0 counts |
 | state_ids | int32 | `[4B]`, candidate destination slot for each packed active token |
 | accepted | int32 | `[B]`, previous accepted count 1..4 per active request |
@@ -40,14 +40,16 @@ Each request/head task computes FP32 K/K and K/Q Gram matrices, solves the four
 update vectors, and obtains all four outputs from the supplied initial-state
 projections. Query scaling `1/sqrt(128)` occurs in FP32 after those products.
 The task then reads the selected state in V=64 tiles, performs four ordered
-FP32 decay/FMA state updates, and writes every BF16 candidate. BF16 candidate
-writes do not feed back into later tokens inside a step; the next step loads
-the selected BF16 candidate.
+FP32 decay/FMA state updates, and writes every candidate at the original cache
+precision. Candidate writes do not feed back into later tokens inside a step;
+the next step loads the selected candidate. FP32 state is never rounded to
+BF16 at that boundary. Raw Q/K/V/beta remain BF16 for both state types.
 
 Candidate output uses a separate two-buffer VECOUT queue. Queue ownership
 protects the DMA source until completion while allowing the next token's
 arithmetic to proceed. Input/scratch storage remains separate from those
-candidate buffers; no arithmetic or BF16 step-boundary rule changes.
+candidate buffers. The Gram workspace reuses the later outer-product buffer,
+keeping the FP32-state implementation within the A2 UB budget.
 
 The block solve and Cube products reassociate floating point operations.
 Official cross-algorithm bit equality is not expected. Same-implementation

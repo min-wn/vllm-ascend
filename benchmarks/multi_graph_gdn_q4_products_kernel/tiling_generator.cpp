@@ -4,7 +4,9 @@
 #include "tiling/matmul/matmul_tiling.h"
 #include "kernel_tiling/kernel_tiling.h"
 
-int main() {
+int main(int argc, char**) {
+  const bool fp32 = argc > 1;
+  const auto dtype = fp32 ? matmul_tiling::DataType::DT_FLOAT : matmul_tiling::DataType::DT_BF16;
   matmul_tiling::PlatformInfo platform{};
   platform.socVersion = platform_ascendc::SocVersion::ASCEND910B;
   platform.l1Size = 512 * 1024;
@@ -12,14 +14,12 @@ int main() {
   platform.ubSize = 192 * 1024;
   platform.l0ASize = platform.l0BSize = 64 * 1024;
   matmul_tiling::MatmulApiTiling generator(platform);
-  generator.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_BF16,
-                     false);
-  generator.SetBType(matmul_tiling::TPosition::TSCM, matmul_tiling::CubeFormat::NZ, matmul_tiling::DataType::DT_BF16,
-                     true);
+  generator.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, dtype, false);
+  generator.SetBType(matmul_tiling::TPosition::TSCM, matmul_tiling::CubeFormat::NZ, dtype, true);
   generator.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, matmul_tiling::DataType::DT_FLOAT);
   generator.SetOrgShape(384, 8, 128);
   generator.SetShape(384, 8, 128);
-  generator.SetFixSplit(128, 16, 128);
+  generator.SetFixSplit(128, 16, fp32 ? 64 : 128);
   generator.SetBufferSpace(256 * 1024, 128 * 1024, -1);
   generator.EnableBias(false);
   AscendC::tiling::TCubeTiling tiling{};
@@ -29,7 +29,8 @@ int main() {
   }
   std::cout << "// Offline CANN tiler output for M384 N8 K128, A GM ND, B L1 NZ transposed.\n"
                "#pragma once\n"
-               "__aicore__ inline void FillProductsTiling(AscendC::tiling::TCubeTiling& tiling) {\n";
+            << "__aicore__ inline void " << (fp32 ? "FillProductsTilingFloat" : "FillProductsTiling")
+            << "(AscendC::tiling::TCubeTiling& tiling) {\n";
 #define EMIT(field) std::cout << "  tiling." #field " = " << tiling.field << ";\n";
   EMIT(usedCoreNum)
   EMIT(M)

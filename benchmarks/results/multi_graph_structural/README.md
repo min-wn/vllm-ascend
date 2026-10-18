@@ -30,6 +30,15 @@ correctness checks. They do not establish a TP2 decoder performance win.
   candidate output. Full recurrence accounting and strict continued checks.
 - `gdn-q4-strided-v5.json`: page-strided state qualification with canaries in
   each page gap; avoids a state-layout copy before real-layer integration.
+- `gdn-q4-fp32-v1.json`: actual model state precision and page stride, with
+  timed Q/K conversion and all four FP32 candidate writes. Strict checks pass,
+  but the complete recurrence saves only about 59 us, below the 135 us gate.
+- `gdn-q4-fp32-profile-v2.json`: repeat full endpoint plus isolated products,
+  Q/K casts and solver/materializer diagnostics. These component times are
+  not additive and do not establish a model or split speedup.
+- `structural-hybrid-memory-budget-v1.json`: actual checkpoint-header and
+  config inventory plus unchanged trajectory byte estimates for TP2/4/8.
+  This performs no model loading or NPU allocation and is not OOM evidence.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is

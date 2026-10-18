@@ -441,6 +441,63 @@ preserve the model's FP32 state, rather than silently convert it to BF16 to
 reuse a successful operator result. `tp2-q4-block-layout-v2.log` retains this
 diagnostic. This attempt produced no layer performance measurement.
 
+### Actual FP32 state qualification
+
+Both native kernels now retain BF16 or FP32 state without a full-cache cast.
+The direct Cube kernel uses a separate offline FP32 tiling with
+`baseM=128, baseN=16, baseK=64`, double-buffered L0A/L0B, and explicit
+`Matmul::SetHF32(false, 0)`. FP32 NZ uses eight elements per 32-byte C0 block.
+The adapter converts only raw BF16 Q/K to FP32 inside the executed callable;
+the solve/materializer continues to consume the original BF16 Q/K/V/beta.
+State updates and all four candidate snapshots retain FP32 precision.
+
+`gdn-q4-fp32-v1.json` tests the actual state stride
+`[458752,16384,128,1]`, including 65536 FP32 canary elements between slots.
+All 17 checks pass: direct products against registered FP32 BMM, cache
+read-only access, eight continued steps, repeated eager and graph equality,
+stable random request IDs, mixed accepted prefixes, inactive/null isolation,
+all four candidates, finite results and page-gap preservation. The largest
+reported normalized error is 0.0001718865 (0.01719%), below the preregistered
+0.5% screening gate. This does not certify model quality.
+
+Official round medians are 1000.12/999.46/999.37 us; block medians are
+939.40/942.28/940.14 us. The median-of-rounds improvement is 59.32 us (5.94%)
+for the recurrence alone. This does not reach the 135 us investment gate.
+The earlier BF16-state savings therefore do not justify claiming the same
+real-model improvement. The FP32 adapter is not advanced to a costly layer
+run on the strength of that BF16 result.
+
+`gdn-q4-fp32-profile-v2.json` repeats the complete endpoint and adds isolated
+captured component diagnostics, restoring matching state outside each
+component timing. Official/block medians are 1001.30/943.26 us. Component
+medians are pure products 252.31 us, products including Q/K casts 252.64 us,
+Q/K casts alone 41.38 us, and solve/materialization 662.26 us. These isolated
+numbers are not additive: cache state, launch conditions and overlap differ.
+They are neither a complete-layer result nor a split advantage.
+
+The dominant remaining component is the solver/materializer. At live B98,
+its one FP32 state read plus four dense candidate writes account for about
+770.70 MB. Direct products add another 154.14 MB state read. Two equal
+request chunks could ideally hide only half the products endpoint (about
+126 us), before fragmentation, events and memory contention. This upper
+bound does not support treating two-way stream scheduling as the next large
+optimization. Reducing actual FP32 candidate traffic is a more substantial
+next hypothesis; its design and qualification gates are recorded in
+[Q4 log pipeline](multi_graph_gdn_q4_log_pipeline.md).
+
+At capacity 100 the explicit products scratch is 9,830,400 bytes and FP32
+Q/K conversion outputs total 3,276,800 bytes. Graph-pool retention of these
+conversion outputs must be included in full-model peak memory. The reported
+6.82 GB allocated / 9.50 GB reserved process peaks include both controls and
+correctness snapshots, so they are not incremental model memory costs.
+
+Exact tested native sources, generated products tiling, probe and build logs
+are archived remotely under
+`/workspace/multi-graph-results/q4-fp32-tested-source-v1/`. Tested block and
+products library SHA256 values are respectively
+`1b0ac4492614b27a657f2b17763daf2d9b831136faaf56b43a2211b495aa4883`
+and `f5bf44dc2d781e8f7048ca3dabb990bd107f8eb5f3481e0667ccffb5950399f4`.
+
 The preceding matching recurrence control is approximately 989-999 us, while
 the scoped GDN layer endpoint is about 2709 us. A five-percent GDN improvement
 requires at least 135 us removed from the complete recurrence path. A product
