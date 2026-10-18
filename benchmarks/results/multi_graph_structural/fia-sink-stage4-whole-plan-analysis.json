@@ -1,0 +1,2685 @@
+{
+  "schema_version": 1,
+  "state": "complete_trace",
+  "analysis_valid": true,
+  "protocol_qualified": true,
+  "issues": [],
+  "qualification": {
+    "complete": true,
+    "checks": {
+      "coverage_complete": true,
+      "completed_state": true,
+      "successful_returncode": true,
+      "npu_execution": true,
+      "performance_measured": true,
+      "expected_case_set": true,
+      "occurrences": true,
+      "numeric_controls": true,
+      "installed_catalog_revalidated": true,
+      "installed_catalog_matches": true,
+      "expected_sample_count": true,
+      "formal_representatives": true
+    },
+    "unqualified_checks": []
+  },
+  "coverage": {
+    "complete": true,
+    "expected_sample_count": 240,
+    "raw_sample_count": 240,
+    "distinct_valid_sample_count": 240,
+    "missing": [],
+    "duplicates": [],
+    "unexpected": [],
+    "invalid": []
+  },
+  "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "selected_records": [
+    {
+      "step": 24,
+      "batch": 64,
+      "capacity": 256
+    },
+    {
+      "step": 0,
+      "batch": 98,
+      "capacity": 400
+    },
+    {
+      "step": 5,
+      "batch": 124,
+      "capacity": 496
+    },
+    {
+      "step": 29,
+      "batch": 128,
+      "capacity": 512
+    }
+  ],
+  "selected_capacities": [
+    256,
+    400,
+    496,
+    512
+  ],
+  "requested_trials": 3,
+  "requested_repeats": 5,
+  "expected_sample_count": 240,
+  "full_trace_measured": true,
+  "screen_only": false,
+  "summaries": {
+    "by_case": {
+      "native_shared": {
+        "wall_us": {
+          "count": 60,
+          "mean_us": 4963.950533333334,
+          "p50_us": 5357.029,
+          "p95_us": 5933.55505,
+          "p99_us": 6134.479709999999
+        },
+        "queue_span_us": {
+          "count": 60,
+          "mean_us": 4678.774293263753,
+          "p50_us": 5070.339918136597,
+          "p95_us": 5634.621834754944,
+          "p99_us": 5687.280659675598
+        },
+        "preparation_enqueue_us": {
+          "count": 60,
+          "mean_us": 219.81171666666665,
+          "p50_us": 229.526,
+          "p95_us": 268.094,
+          "p99_us": 378.3199099999992
+        },
+        "submit_join_cpu_us": {
+          "count": 60,
+          "mean_us": 223.62841666666668,
+          "p50_us": 208.211,
+          "p95_us": 241.89049999999997,
+          "p99_us": 512.8431099999991
+        }
+      },
+      "native_oracle": {
+        "wall_us": {
+          "count": 60,
+          "mean_us": 4907.2588,
+          "p50_us": 5082.948,
+          "p95_us": 5916.052,
+          "p99_us": 6046.5103
+        },
+        "queue_span_us": {
+          "count": 60,
+          "mean_us": 4620.272008577983,
+          "p50_us": 4791.630029678345,
+          "p95_us": 5582.225012779236,
+          "p99_us": 5676.216669082642
+        },
+        "preparation_enqueue_us": {
+          "count": 60,
+          "mean_us": 216.07405,
+          "p50_us": 232.64600000000002,
+          "p95_us": 269.161,
+          "p99_us": 271.2161
+        },
+        "submit_join_cpu_us": {
+          "count": 60,
+          "mean_us": 224.03515,
+          "p50_us": 214.441,
+          "p95_us": 253.462,
+          "p99_us": 302.2931999999998
+        }
+      },
+      "whole_cpu": {
+        "wall_us": {
+          "count": 60,
+          "mean_us": 5335.2299,
+          "p50_us": 5593.49,
+          "p95_us": 6448.3065,
+          "p99_us": 6705.062819999998
+        },
+        "queue_span_us": {
+          "count": 60,
+          "mean_us": 4352.266697088878,
+          "p50_us": 4564.879894256592,
+          "p95_us": 5277.783989906311,
+          "p99_us": 5343.348379135131
+        },
+        "preparation_enqueue_us": {
+          "count": 60,
+          "mean_us": 914.9790166666667,
+          "p50_us": 984.2484999999999,
+          "p95_us": 1105.843,
+          "p99_us": 1299.2185099999995
+        },
+        "submit_join_cpu_us": {
+          "count": 60,
+          "mean_us": 225.7367,
+          "p50_us": 213.8255,
+          "p95_us": 253.49854999999974,
+          "p99_us": 402.843
+        }
+      },
+      "whole_oracle": {
+        "wall_us": {
+          "count": 60,
+          "mean_us": 4614.395133333333,
+          "p50_us": 4821.502,
+          "p95_us": 5589.206,
+          "p99_us": 5629.83491
+        },
+        "queue_span_us": {
+          "count": 60,
+          "mean_us": 4346.003333727519,
+          "p50_us": 4539.279937744141,
+          "p95_us": 5293.7851667404175,
+          "p99_us": 5325.60622215271
+        },
+        "preparation_enqueue_us": {
+          "count": 60,
+          "mean_us": 203.6693,
+          "p50_us": 211.8905,
+          "p95_us": 248.32449999999997,
+          "p99_us": 256.46250000000003
+        },
+        "submit_join_cpu_us": {
+          "count": 60,
+          "mean_us": 217.38095,
+          "p50_us": 212.77100000000002,
+          "p95_us": 241.177,
+          "p99_us": 258.14870999999994
+        }
+      }
+    },
+    "by_capacity": {
+      "256": {
+        "native_shared": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 3604.0722666666666,
+            "p50_us": 3610.573,
+            "p95_us": 3634.556,
+            "p99_us": 3636.6335999999997
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 3378.614648183187,
+            "p50_us": 3374.0999698638916,
+            "p95_us": 3402.985954284668,
+            "p99_us": 3418.901138305664
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 162.21053333333333,
+            "p50_us": 157.09,
+            "p95_us": 182.3367,
+            "p99_us": 184.64334
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 211.1016,
+            "p50_us": 205.841,
+            "p95_us": 242.309,
+            "p99_us": 246.3746
+          }
+        },
+        "native_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 3581.5515333333333,
+            "p50_us": 3582.413,
+            "p95_us": 3599.016,
+            "p99_us": 3600.1416
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 3352.330652872721,
+            "p50_us": 3352.5800704956055,
+            "p95_us": 3365.5240297317505,
+            "p99_us": 3365.7927942276
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 163.03986666666668,
+            "p50_us": 161.47,
+            "p95_us": 171.25699999999998,
+            "p99_us": 183.4762
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 222.84553333333332,
+            "p50_us": 211.901,
+            "p95_us": 249.93099999999998,
+            "p99_us": 254.74699999999999
+          }
+        },
+        "whole_cpu": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 3771.2836,
+            "p50_us": 3712.854,
+            "p95_us": 4115.7423,
+            "p99_us": 4227.44046
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 3042.6680405934653,
+            "p50_us": 3024.8000621795654,
+            "p95_us": 3157.18994140625,
+            "p99_us": 3187.934036254883
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 660.1404666666667,
+            "p50_us": 624.692,
+            "p95_us": 865.1682999999998,
+            "p99_us": 940.4608599999999
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 232.48613333333333,
+            "p50_us": 209.471,
+            "p95_us": 364.12299999999993,
+            "p99_us": 394.0494
+          }
+        },
+        "whole_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 3246.9376666666667,
+            "p50_us": 3251.482,
+            "p95_us": 3284.06,
+            "p99_us": 3293.3336
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 3027.940018971761,
+            "p50_us": 3027.440071105957,
+            "p95_us": 3056.4680576324463,
+            "p99_us": 3065.069589614868
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 153.18933333333334,
+            "p50_us": 149.0,
+            "p95_us": 173.6203,
+            "p99_us": 175.41286
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 213.00686666666667,
+            "p50_us": 208.881,
+            "p95_us": 232.88299999999998,
+            "p99_us": 239.5134
+          }
+        }
+      },
+      "400": {
+        "native_shared": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 4686.612133333333,
+            "p50_us": 4659.357,
+            "p95_us": 4827.230299999999,
+            "p99_us": 5068.82046
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 4412.567933400472,
+            "p50_us": 4383.6798667907715,
+            "p95_us": 4537.101888656615,
+            "p99_us": 4785.372190475464
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 210.838,
+            "p50_us": 205.031,
+            "p95_us": 227.4673,
+            "p99_us": 227.63026
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 242.65173333333334,
+            "p50_us": 208.151,
+            "p95_us": 362.15959999999956,
+            "p99_us": 610.2743199999998
+          }
+        },
+        "native_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 4596.031133333333,
+            "p50_us": 4596.096,
+            "p95_us": 4630.4967,
+            "p99_us": 4639.344139999999
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 4317.130692799886,
+            "p50_us": 4316.699981689453,
+            "p95_us": 4349.930143356323,
+            "p99_us": 4354.018087387085
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 210.2674,
+            "p50_us": 207.691,
+            "p95_us": 220.33829999999998,
+            "p99_us": 228.43646
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 219.35606666666666,
+            "p50_us": 217.25,
+            "p95_us": 237.468,
+            "p99_us": 238.1344
+          }
+        },
+        "whole_cpu": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5066.128933333333,
+            "p50_us": 5056.888,
+            "p95_us": 5146.3197,
+            "p99_us": 5169.65434
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 4140.924040476481,
+            "p50_us": 4135.479927062988,
+            "p95_us": 4187.775993347168,
+            "p99_us": 4192.883186340332
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 858.8398666666667,
+            "p50_us": 849.603,
+            "p95_us": 908.7787,
+            "p99_us": 915.80614
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 221.11066666666667,
+            "p50_us": 214.6,
+            "p95_us": 239.70499999999998,
+            "p99_us": 246.4698
+          }
+        },
+        "whole_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 4384.691133333334,
+            "p50_us": 4383.256,
+            "p95_us": 4411.5037,
+            "p99_us": 4418.5367400000005
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 4129.691982269287,
+            "p50_us": 4128.039836883545,
+            "p95_us": 4160.0518226623535,
+            "p99_us": 4160.858249664307
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 195.2734,
+            "p50_us": 194.801,
+            "p95_us": 198.6687,
+            "p99_us": 199.59774000000002
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 214.62946666666667,
+            "p50_us": 212.661,
+            "p95_us": 232.651,
+            "p99_us": 234.275
+          }
+        }
+      },
+      "496": {
+        "native_shared": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5619.191466666666,
+            "p50_us": 5619.25,
+            "p95_us": 5651.327,
+            "p99_us": 5664.0334
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 5311.414623260498,
+            "p50_us": 5308.9799880981445,
+            "p95_us": 5330.367994308472,
+            "p99_us": 5336.729421615601
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 239.73413333333335,
+            "p50_us": 235.381,
+            "p95_us": 259.137,
+            "p99_us": 261.2202
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 216.22740000000002,
+            "p50_us": 208.3,
+            "p95_us": 237.24,
+            "p99_us": 240.7288
+          }
+        },
+        "native_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5552.960133333333,
+            "p50_us": 5550.17,
+            "p95_us": 5578.831999999999,
+            "p99_us": 5579.6552
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 5247.9559898376465,
+            "p50_us": 5243.3600425720215,
+            "p95_us": 5272.540044784546,
+            "p99_us": 5277.8039836883545
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 239.5168,
+            "p50_us": 238.671,
+            "p95_us": 249.267,
+            "p99_us": 249.7822
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 217.25873333333334,
+            "p50_us": 212.911,
+            "p95_us": 237.56599999999997,
+            "p99_us": 242.802
+          }
+        },
+        "whole_cpu": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 6053.141933333333,
+            "p50_us": 6057.761,
+            "p95_us": 6078.744,
+            "p99_us": 6082.6864
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 4957.140000661214,
+            "p50_us": 4954.219818115234,
+            "p95_us": 4984.589958190918,
+            "p99_us": 4993.269996643066
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 1028.2144,
+            "p50_us": 1031.494,
+            "p95_us": 1048.7403,
+            "p99_us": 1053.38326
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 219.28666666666666,
+            "p50_us": 216.331,
+            "p95_us": 234.214,
+            "p99_us": 236.01160000000002
+          }
+        },
+        "whole_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5251.711,
+            "p50_us": 5250.539,
+            "p95_us": 5280.8693,
+            "p99_us": 5308.30986
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 4955.361334482829,
+            "p50_us": 4956.999778747559,
+            "p95_us": 4977.963876724243,
+            "p99_us": 4978.904619216919
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 229.1002,
+            "p50_us": 227.671,
+            "p95_us": 239.25,
+            "p99_us": 246.2668
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 217.66733333333335,
+            "p50_us": 212.06,
+            "p95_us": 234.878,
+            "p99_us": 236.7764
+          }
+        }
+      },
+      "512": {
+        "native_shared": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5945.926266666666,
+            "p50_us": 5920.611,
+            "p95_us": 6091.521299999999,
+            "p99_us": 6310.2186599999995
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 5612.499968210856,
+            "p50_us": 5606.480121612549,
+            "p95_us": 5676.183843612671,
+            "p99_us": 5732.676725387573
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 266.4642,
+            "p50_us": 240.201,
+            "p95_us": 352.15629999999976,
+            "p99_us": 485.3528599999999
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 224.53293333333332,
+            "p50_us": 209.701,
+            "p95_us": 284.1442999999998,
+            "p99_us": 378.4544599999999
+          }
+        },
+        "native_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5898.4924,
+            "p50_us": 5881.141,
+            "p95_us": 6044.45,
+            "p99_us": 6054.9388
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 5563.670698801677,
+            "p50_us": 5548.240184783936,
+            "p95_us": 5668.818092346191,
+            "p99_us": 5706.483573913574
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 251.47213333333335,
+            "p50_us": 243.21,
+            "p95_us": 271.204,
+            "p99_us": 271.2656
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 236.68026666666665,
+            "p50_us": 216.921,
+            "p95_us": 295.75699999999995,
+            "p99_us": 329.0322
+          }
+        },
+        "whole_cpu": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 6450.365133333334,
+            "p50_us": 6401.173,
+            "p95_us": 6666.243599999999,
+            "p99_us": 6863.8687199999995
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 5268.334706624349,
+            "p50_us": 5262.320041656494,
+            "p95_us": 5328.251934051514,
+            "p99_us": 5405.106563568115
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 1112.7213333333334,
+            "p50_us": 1081.084,
+            "p95_us": 1280.0773,
+            "p99_us": 1377.52346
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 230.06333333333333,
+            "p50_us": 213.931,
+            "p95_us": 295.38329999999985,
+            "p99_us": 382.8614599999999
+          }
+        },
+        "whole_oracle": {
+          "wall_us": {
+            "count": 15,
+            "mean_us": 5574.240733333333,
+            "p50_us": 5572.12,
+            "p95_us": 5625.3853,
+            "p99_us": 5648.03786
+          },
+          "queue_span_us": {
+            "count": 15,
+            "mean_us": 5271.019999186198,
+            "p50_us": 5259.84001159668,
+            "p95_us": 5321.4460372924805,
+            "p99_us": 5342.625160217285
+          },
+          "preparation_enqueue_us": {
+            "count": 15,
+            "mean_us": 237.11426666666668,
+            "p50_us": 232.181,
+            "p95_us": 256.336,
+            "p99_us": 256.98
+          },
+          "submit_join_cpu_us": {
+            "count": 15,
+            "mean_us": 224.22013333333334,
+            "p50_us": 214.511,
+            "p95_us": 256.4293,
+            "p99_us": 265.18266
+          }
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "whole_oracle_minus_native_oracle": {
+      "baseline": "native_oracle",
+      "candidate": "whole_oracle",
+      "interpretation": "Oracle comparison excludes whole-plan build and upload from both controls; it is a kernel-path diagnostic.",
+      "paired_count": 60,
+      "metrics": {
+        "wall_us": {
+          "count": 60,
+          "mean_us": -292.86366666666663,
+          "p50_us": -300.06100000000015,
+          "p95_us": -186.7680000000004,
+          "p99_us": -155.83811000000003
+        },
+        "queue_span_us": {
+          "count": 60,
+          "mean_us": -274.26867485046387,
+          "p50_us": -288.9702320098877,
+          "p95_us": -169.2309617996216,
+          "p99_us": -134.10793781280523
+        },
+        "preparation_enqueue_us": {
+          "count": 60,
+          "mean_us": -12.404749999999998,
+          "p50_us": -12.275000000000006,
+          "p95_us": 0.6464999999999812,
+          "p99_us": 12.840319999999997
+        },
+        "submit_join_cpu_us": {
+          "count": 60,
+          "mean_us": -6.654200000000001,
+          "p50_us": -2.775500000000008,
+          "p95_us": 21.055499999999984,
+          "p99_us": 24.349609999999988
+        }
+      },
+      "per_capacity": [
+        {
+          "capacity": 256,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": -334.6138666666667,
+              "p50_us": -330.85199999999986,
+              "p95_us": -294.99699999999996,
+              "p99_us": -277.4802000000001
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -324.39063390096027,
+              "p50_us": -318.8598155975342,
+              "p95_us": -291.9119119644165,
+              "p99_us": -279.95048999786377
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": -9.850533333333335,
+              "p50_us": -12.170000000000016,
+              "p95_us": 3.6766999999999954,
+              "p99_us": 10.334539999999992
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": -9.838666666666667,
+              "p50_us": -2.8100000000000023,
+              "p95_us": 16.323999999999977,
+              "p99_us": 18.048799999999986
+            }
+          }
+        },
+        {
+          "capacity": 400,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": -211.33999999999983,
+              "p50_us": -216.54099999999926,
+              "p95_us": -155.9513000000001,
+              "p99_us": -155.37505999999982
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -187.43871053059897,
+              "p50_us": -189.1002655029297,
+              "p95_us": -135.47415733337402,
+              "p99_us": -128.51885795593262
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": -14.993999999999998,
+              "p50_us": -13.069999999999993,
+              "p95_us": -8.564600000000004,
+              "p99_us": -7.417720000000002
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": -4.726600000000002,
+              "p50_us": -0.7600000000000193,
+              "p95_us": 23.8223,
+              "p99_us": 25.24526
+            }
+          }
+        },
+        {
+          "capacity": 496,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": -301.24913333333336,
+              "p50_us": -312.10100000000057,
+              "p95_us": -259.79470000000015,
+              "p99_us": -249.92694000000006
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -292.5946553548177,
+              "p50_us": -297.8801727294922,
+              "p95_us": -251.29213333129883,
+              "p99_us": -250.8664894104004
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": -10.4166,
+              "p50_us": -11.890000000000015,
+              "p95_us": 2.678699999999988,
+              "p99_us": 9.207739999999973
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": 0.40859999999999935,
+              "p50_us": -0.8410000000000082,
+              "p95_us": 18.143699999999995,
+              "p99_us": 20.388739999999988
+            }
+          }
+        },
+        {
+          "capacity": 512,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": -324.2516666666667,
+              "p50_us": -299.97100000000046,
+              "p95_us": -239.30800000000036,
+              "p99_us": -238.46240000000023
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -292.6506996154785,
+              "p50_us": -276.979923248291,
+              "p95_us": -235.57806015014648,
+              "p99_us": -232.9237937927246
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": -14.357866666666663,
+              "p50_us": -11.571000000000026,
+              "p95_us": -1.4337000000000142,
+              "p99_us": 10.954060000000002
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": -12.460133333333337,
+              "p50_us": -3.0900000000000034,
+              "p95_us": 15.457999999999972,
+              "p99_us": 21.875599999999984
+            }
+          }
+        }
+      ],
+      "candidate_faster_count": 60,
+      "candidate_slower_count": 0,
+      "equal_count": 0,
+      "pairs": [
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -216.54099999999926,
+            "queue_span_us": -178.65991592407227,
+            "preparation_enqueue_us": -7.131,
+            "submit_join_cpu_us": -14.869999999999976
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -313.692,
+            "queue_span_us": -293.15996170043945,
+            "preparation_enqueue_us": -10.501000000000005,
+            "submit_join_cpu_us": 2.2299999999999898
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -325.02099999999973,
+            "queue_span_us": -306.6401481628418,
+            "preparation_enqueue_us": -11.549000000000007,
+            "submit_join_cpu_us": 15.399999999999977
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -410.741,
+            "queue_span_us": -354.9799919128418,
+            "preparation_enqueue_us": -28.94999999999999,
+            "submit_join_cpu_us": -85.61099999999999
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -209.92200000000048,
+            "queue_span_us": -197.44014739990234,
+            "preparation_enqueue_us": -11.330999999999989,
+            "submit_join_cpu_us": -0.4000000000000057
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -323.73199999999997,
+            "queue_span_us": -301.59997940063477,
+            "preparation_enqueue_us": -16.069999999999993,
+            "submit_join_cpu_us": -7.3700000000000045
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -361.0110000000004,
+            "queue_span_us": -340.98005294799805,
+            "preparation_enqueue_us": -14.97999999999999,
+            "submit_join_cpu_us": -0.6299999999999955
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -373.2610000000004,
+            "queue_span_us": -349.06005859375,
+            "preparation_enqueue_us": -8.819000000000017,
+            "submit_join_cpu_us": -40.369999999999976
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -225.5009999999993,
+            "queue_span_us": -196.17986679077148,
+            "preparation_enqueue_us": -20.950000000000017,
+            "submit_join_cpu_us": 5.579999999999984
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -314.58100000000013,
+            "queue_span_us": -295.39966583251953,
+            "preparation_enqueue_us": -20.670000000000016,
+            "submit_join_cpu_us": -1.0800000000000125
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -322.50099999999975,
+            "queue_span_us": -303.71999740600586,
+            "preparation_enqueue_us": -12.938999999999993,
+            "submit_join_cpu_us": -1.710000000000008
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -239.76100000000042,
+            "queue_span_us": -277.13966369628906,
+            "preparation_enqueue_us": 14.051000000000016,
+            "submit_join_cpu_us": 3.530000000000001
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -230.72999999999956,
+            "queue_span_us": -208.81986618041992,
+            "preparation_enqueue_us": -14.52000000000001,
+            "submit_join_cpu_us": -11.399000000000001
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -299.6310000000003,
+            "queue_span_us": -288.08021545410156,
+            "preparation_enqueue_us": -15.830000000000013,
+            "submit_join_cpu_us": -11.720999999999975
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -336.1400000000003,
+            "queue_span_us": -346.51994705200195,
+            "preparation_enqueue_us": -5.008999999999986,
+            "submit_join_cpu_us": 7.949999999999989
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -300.15099999999984,
+            "queue_span_us": -254.8999786376953,
+            "preparation_enqueue_us": -18.879999999999995,
+            "submit_join_cpu_us": -2.8300000000000125
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -238.2609999999995,
+            "queue_span_us": -227.00023651123047,
+            "preparation_enqueue_us": -13.97999999999999,
+            "submit_join_cpu_us": -19.581000000000017
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -302.701,
+            "queue_span_us": -305.26018142700195,
+            "preparation_enqueue_us": -12.189999999999998,
+            "submit_join_cpu_us": -8.610000000000014
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -387.5119999999997,
+            "queue_span_us": -368.2999610900879,
+            "preparation_enqueue_us": -14.5,
+            "submit_join_cpu_us": 0.5999999999999943
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -273.89100000000053,
+            "queue_span_us": -264.9998664855957,
+            "preparation_enqueue_us": -8.069999999999993,
+            "submit_join_cpu_us": -10.821000000000026
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -208.01999999999953,
+            "queue_span_us": -177.85978317260742,
+            "preparation_enqueue_us": -15.570000000000022,
+            "submit_join_cpu_us": -13.990000000000009
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -247.46000000000004,
+            "queue_span_us": -280.01976013183594,
+            "preparation_enqueue_us": -0.8189999999999884,
+            "submit_join_cpu_us": 2.490000000000009
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -273.1010000000001,
+            "queue_span_us": -276.9601345062256,
+            "preparation_enqueue_us": -15.230000000000018,
+            "submit_join_cpu_us": -37.129999999999995
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -310.92099999999937,
+            "queue_span_us": -296.63991928100586,
+            "preparation_enqueue_us": -10.090000000000003,
+            "submit_join_cpu_us": -8.490000000000009
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -187.84100000000035,
+            "queue_span_us": -169.55995559692383,
+            "preparation_enqueue_us": -13.069999999999993,
+            "submit_join_cpu_us": -0.7600000000000193
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -288.04100000000017,
+            "queue_span_us": -319.15998458862305,
+            "preparation_enqueue_us": 10.839999999999975,
+            "submit_join_cpu_us": -4.449999999999989
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -327.27199999999993,
+            "queue_span_us": -318.8598155975342,
+            "preparation_enqueue_us": -10.75,
+            "submit_join_cpu_us": -6.590000000000003
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -286.0510000000004,
+            "queue_span_us": -257.88021087646484,
+            "preparation_enqueue_us": -10.26000000000002,
+            "submit_join_cpu_us": -4.3799999999999955
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -166.3810000000003,
+            "queue_span_us": -162.9800796508789,
+            "preparation_enqueue_us": -10.629999999999995,
+            "submit_join_cpu_us": 23.060000000000002
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -281.72099999999955,
+            "queue_span_us": -262.2199058532715,
+            "preparation_enqueue_us": -11.558999999999997,
+            "submit_join_cpu_us": 20.94999999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -326.84100000000035,
+            "queue_span_us": -298.31981658935547,
+            "preparation_enqueue_us": -13.509000000000015,
+            "submit_join_cpu_us": -31.570999999999998
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -490.03099999999995,
+            "queue_span_us": -270.76005935668945,
+            "preparation_enqueue_us": -11.388999999999982,
+            "submit_join_cpu_us": -6.599999999999994
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -246.3199999999997,
+            "queue_span_us": -189.1002655029297,
+            "preparation_enqueue_us": -34.24000000000001,
+            "submit_join_cpu_us": 25.601
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -322.46200000000044,
+            "queue_span_us": -305.11999130249023,
+            "preparation_enqueue_us": -11.341000000000008,
+            "submit_join_cpu_us": 10.36099999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -310.76099999999997,
+            "queue_span_us": -322.4198818206787,
+            "preparation_enqueue_us": -11.549999999999983,
+            "submit_join_cpu_us": -48.91
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -483.60099999999966,
+            "queue_span_us": -476.4399528503418,
+            "preparation_enqueue_us": -15.179999999999978,
+            "submit_join_cpu_us": -61.089999999999975
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -155.23099999999977,
+            "queue_span_us": -126.78003311157227,
+            "preparation_enqueue_us": -22.370000000000005,
+            "submit_join_cpu_us": -34.72
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -312.10100000000057,
+            "queue_span_us": -309.8797798156738,
+            "preparation_enqueue_us": -7.8799999999999955,
+            "submit_join_cpu_us": -4.341000000000008
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -333.5210000000002,
+            "queue_span_us": -308.0599308013916,
+            "preparation_enqueue_us": -12.170000000000016,
+            "submit_join_cpu_us": 18.47999999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -250.71000000000004,
+            "queue_span_us": -242.00010299682617,
+            "preparation_enqueue_us": -9.949999999999989,
+            "submit_join_cpu_us": 23.47999999999999
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -252.02999999999975,
+            "queue_span_us": -219.58017349243164,
+            "preparation_enqueue_us": -12.948999999999984,
+            "submit_join_cpu_us": -14.920000000000016
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -283.5109999999995,
+            "queue_span_us": -251.52015686035156,
+            "preparation_enqueue_us": -13.840000000000003,
+            "submit_join_cpu_us": 15.620000000000005
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -304.38099999999986,
+            "queue_span_us": -308.91990661621094,
+            "preparation_enqueue_us": 0.11000000000001364,
+            "submit_join_cpu_us": -18.908999999999992
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -269.9220000000005,
+            "queue_span_us": -236.9999885559082,
+            "preparation_enqueue_us": -29.72999999999996,
+            "submit_join_cpu_us": -2.741000000000014
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -156.26000000000022,
+            "queue_span_us": -139.20021057128906,
+            "preparation_enqueue_us": -12.018999999999977,
+            "submit_join_cpu_us": 8.088999999999999
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -316.3809999999994,
+            "queue_span_us": -297.8801727294922,
+            "preparation_enqueue_us": -14.0,
+            "submit_join_cpu_us": 16.941000000000003
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -330.85199999999986,
+            "queue_span_us": -304.6598434448242,
+            "preparation_enqueue_us": -12.941000000000003,
+            "submit_join_cpu_us": -1.3789999999999907
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -238.2510000000002,
+            "queue_span_us": -232.26022720336914,
+            "preparation_enqueue_us": -11.571000000000026,
+            "submit_join_cpu_us": 12.019999999999982
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -231.1819999999998,
+            "queue_span_us": -215.0402069091797,
+            "preparation_enqueue_us": -14.34099999999998,
+            "submit_join_cpu_us": -0.5699999999999932
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -317.33100000000013,
+            "queue_span_us": -306.73980712890625,
+            "preparation_enqueue_us": -12.37899999999999,
+            "submit_join_cpu_us": -0.8410000000000082
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -341.9209999999998,
+            "queue_span_us": -344.1801071166992,
+            "preparation_enqueue_us": -10.670000000000016,
+            "submit_join_cpu_us": -2.8100000000000023
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -297.04099999999926,
+            "queue_span_us": -276.979923248291,
+            "preparation_enqueue_us": -12.360000000000014,
+            "submit_join_cpu_us": 0.21999999999999886
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -205.97000000000025,
+            "queue_span_us": -182.8598976135254,
+            "preparation_enqueue_us": -12.629999999999995,
+            "submit_join_cpu_us": 3.6210000000000093
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -330.3109999999997,
+            "queue_span_us": -322.12018966674805,
+            "preparation_enqueue_us": -8.119999999999976,
+            "submit_join_cpu_us": -33.5
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -351.37199999999984,
+            "queue_span_us": -354.43997383117676,
+            "preparation_enqueue_us": 11.998999999999995,
+            "submit_join_cpu_us": -34.47
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -299.97100000000046,
+            "queue_span_us": -289.8602485656738,
+            "preparation_enqueue_us": -17.189999999999998,
+            "submit_join_cpu_us": -0.1290000000000191
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -239.90999999999985,
+            "queue_span_us": -220.52001953125,
+            "preparation_enqueue_us": -9.179000000000002,
+            "submit_join_cpu_us": -25.639999999999986
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": -265.08100000000013,
+            "queue_span_us": -250.76007843017578,
+            "preparation_enqueue_us": -11.890000000000015,
+            "submit_join_cpu_us": 9.450000000000017
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": -387.0010000000002,
+            "queue_span_us": -362.87999153137207,
+            "preparation_enqueue_us": -14.069999999999993,
+            "submit_join_cpu_us": -5.900999999999982
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": -339.47099999999955,
+            "queue_span_us": -308.86030197143555,
+            "preparation_enqueue_us": -36.97999999999999,
+            "submit_join_cpu_us": -3.0900000000000034
+          }
+        }
+      ]
+    },
+    "whole_cpu_minus_native_shared": {
+      "baseline": "native_shared",
+      "candidate": "whole_cpu",
+      "interpretation": "whole_cpu includes exact whole-plan build, pinned host fill, metadata copy, replay and final join.",
+      "paired_count": 60,
+      "metrics": {
+        "wall_us": {
+          "count": 60,
+          "mean_us": 371.2793666666667,
+          "p50_us": 421.7265000000002,
+          "p95_us": 563.6194999999998,
+          "p99_us": 783.8293999999989
+        },
+        "queue_span_us": {
+          "count": 60,
+          "mean_us": -326.5075961748759,
+          "p50_us": -346.8599319458008,
+          "p95_us": -193.33200454711914,
+          "p99_us": -174.62415933609012
+        },
+        "preparation_enqueue_us": {
+          "count": 60,
+          "mean_us": 695.1673,
+          "p50_us": 719.518,
+          "p95_us": 865.6904999999999,
+          "p99_us": 1045.5723999999996
+        },
+        "submit_join_cpu_us": {
+          "count": 60,
+          "mean_us": 2.108283333333334,
+          "p50_us": 7.460000000000008,
+          "p95_us": 44.78899999999972,
+          "p99_us": 182.45659999999995
+        }
+      },
+      "per_capacity": [
+        {
+          "capacity": 256,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": 167.21133333333336,
+              "p50_us": 113.59000000000015,
+              "p95_us": 533.6105999999999,
+              "p99_us": 641.9325199999998
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -335.9466075897217,
+              "p50_us": -347.62001037597656,
+              "p95_us": -214.51208591461187,
+              "p99_us": -179.5904588699341
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": 497.92993333333334,
+              "p50_us": 462.62199999999996,
+              "p95_us": 707.2955999999998,
+              "p99_us": 780.5503199999999
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": 21.38453333333334,
+              "p50_us": 7.490000000000009,
+              "p95_us": 147.89599999999996,
+              "p99_us": 170.8672
+            }
+          }
+        },
+        {
+          "capacity": 400,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": 379.5168000000001,
+              "p50_us": 404.1419999999998,
+              "p95_us": 457.63300000000044,
+              "p99_us": 497.99220000000037
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -271.6438929239909,
+              "p50_us": -244.74000930786133,
+              "p95_us": -188.6079788208008,
+              "p99_us": -179.51351165771484
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": 648.0018666666666,
+              "p50_us": 642.933,
+              "p95_us": 687.8793,
+              "p99_us": 689.72226
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": -21.54106666666667,
+              "p50_us": 9.189999999999998,
+              "p95_us": 35.117,
+              "p99_us": 39.03139999999999
+            }
+          }
+        },
+        {
+          "capacity": 496,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": 433.9504666666667,
+              "p50_us": 429.8609999999999,
+              "p95_us": 465.7389999999996,
+              "p99_us": 470.21339999999947
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -354.2746225992839,
+              "p50_us": -354.219913482666,
+              "p95_us": -316.88194274902344,
+              "p99_us": -301.61643981933594
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": 788.4802666666667,
+              "p50_us": 786.793,
+              "p95_us": 815.495,
+              "p99_us": 818.4294000000001
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": 3.0592666666666615,
+              "p50_us": 7.409999999999997,
+              "p95_us": 23.29899999999998,
+              "p99_us": 29.083799999999993
+            }
+          }
+        },
+        {
+          "capacity": 512,
+          "paired_count": 15,
+          "metrics": {
+            "wall_us": {
+              "count": 15,
+              "mean_us": 504.43886666666657,
+              "p50_us": 493.58200000000033,
+              "p95_us": 732.5492999999994,
+              "p99_us": 905.7522599999998
+            },
+            "queue_span_us": {
+              "count": 15,
+              "mean_us": -344.16526158650714,
+              "p50_us": -354.1398048400879,
+              "p95_us": -241.67618751525887,
+              "p99_us": -200.75108528137213
+            },
+            "preparation_enqueue_us": {
+              "count": 15,
+              "mean_us": 846.2571333333334,
+              "p50_us": 835.643,
+              "p95_us": 1029.5959999999998,
+              "p99_us": 1110.9304
+            },
+            "submit_join_cpu_us": {
+              "count": 15,
+              "mean_us": 5.530400000000005,
+              "p50_us": 6.699000000000012,
+              "p95_us": 73.78099999999982,
+              "p99_us": 167.45219999999992
+            }
+          }
+        }
+      ],
+      "candidate_faster_count": 1,
+      "candidate_slower_count": 59,
+      "equal_count": 0,
+      "pairs": [
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": -60.55000000000018,
+            "queue_span_us": -709.6796035766602,
+            "preparation_enqueue_us": 655.673,
+            "submit_join_cpu_us": -460.102
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 409.15200000000004,
+            "queue_span_us": -367.4802780151367,
+            "preparation_enqueue_us": 772.762,
+            "submit_join_cpu_us": 7.409999999999997
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 94.11999999999989,
+            "queue_span_us": -339.6599292755127,
+            "preparation_enqueue_us": 455.301,
+            "submit_join_cpu_us": -30.659999999999997
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 0,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 949.0529999999999,
+            "queue_span_us": -190.5198097229004,
+            "preparation_enqueue_us": 1131.2640000000001,
+            "submit_join_cpu_us": 190.87
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 404.1419999999998,
+            "queue_span_us": -238.91973495483398,
+            "preparation_enqueue_us": 632.023,
+            "submit_join_cpu_us": 11.439999999999998
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 452.5719999999992,
+            "queue_span_us": -343.99986267089844,
+            "preparation_enqueue_us": 785.254,
+            "submit_join_cpu_us": 20.19999999999999
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 77.91100000000006,
+            "queue_span_us": -366.6799068450928,
+            "preparation_enqueue_us": 459.812,
+            "submit_join_cpu_us": 7.430000000000007
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 1,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 501.34199999999964,
+            "queue_span_us": -337.63980865478516,
+            "preparation_enqueue_us": 829.043,
+            "submit_join_cpu_us": 11.65100000000001
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 405.6310000000003,
+            "queue_span_us": -238.29984664916992,
+            "preparation_enqueue_us": 631.672,
+            "submit_join_cpu_us": -18.670999999999992
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 423.1220000000003,
+            "queue_span_us": -332.79991149902344,
+            "preparation_enqueue_us": 766.6030000000001,
+            "submit_join_cpu_us": 5.739999999999981
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 102.28099999999995,
+            "queue_span_us": -346.7600345611572,
+            "preparation_enqueue_us": 456.6719999999999,
+            "submit_join_cpu_us": 8.629000000000019
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 2,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 559.6120000000001,
+            "queue_span_us": -290.219783782959,
+            "preparation_enqueue_us": 842.133,
+            "submit_join_cpu_us": 9.551000000000016
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 395.3109999999997,
+            "queue_span_us": -256.2999725341797,
+            "preparation_enqueue_us": 640.322,
+            "submit_join_cpu_us": 32.28999999999999
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 441.23199999999997,
+            "queue_span_us": -359.1198921203613,
+            "preparation_enqueue_us": 787.0830000000001,
+            "submit_join_cpu_us": 9.030000000000001
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 124.53999999999996,
+            "queue_span_us": -344.559907913208,
+            "preparation_enqueue_us": 467.711,
+            "submit_join_cpu_us": 2.4599999999999795
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 3,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 472.0809999999992,
+            "queue_span_us": -357.4800491333008,
+            "preparation_enqueue_us": 823.8029999999999,
+            "submit_join_cpu_us": 6.699000000000012
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 434.98199999999997,
+            "queue_span_us": -227.73981094360352,
+            "preparation_enqueue_us": 644.5719999999999,
+            "submit_join_cpu_us": 6.4599999999999795
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 393.8019999999997,
+            "queue_span_us": -351.6998291015625,
+            "preparation_enqueue_us": 797.7729999999999,
+            "submit_join_cpu_us": -4.320999999999998
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 122.30999999999995,
+            "queue_span_us": -347.62001037597656,
+            "preparation_enqueue_us": 474.97099999999995,
+            "submit_join_cpu_us": 9.870000000000005
+          }
+        },
+        {
+          "trial": 0,
+          "repeat": 4,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 493.58200000000033,
+            "queue_span_us": -368.0996894836426,
+            "preparation_enqueue_us": 869.633,
+            "submit_join_cpu_us": 9.02000000000001
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 508.08200000000033,
+            "queue_span_us": -177.23989486694336,
+            "preparation_enqueue_us": 690.183,
+            "submit_join_cpu_us": 40.00999999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 414.8119999999999,
+            "queue_span_us": -389.0795707702637,
+            "preparation_enqueue_us": 798.1529999999999,
+            "submit_join_cpu_us": -30.230999999999995
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 669.0129999999999,
+            "queue_span_us": -170.86005210876465,
+            "preparation_enqueue_us": 798.864,
+            "submit_join_cpu_us": 176.61
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 0,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 462.5010000000002,
+            "queue_span_us": -366.34016036987305,
+            "preparation_enqueue_us": 835.643,
+            "submit_join_cpu_us": -13.400000000000006
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 376.35199999999986,
+            "queue_span_us": -270.5397605895996,
+            "preparation_enqueue_us": 656.423,
+            "submit_join_cpu_us": -18.93100000000001
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 428.83200000000033,
+            "queue_span_us": -354.219913482666,
+            "preparation_enqueue_us": 786.793,
+            "submit_join_cpu_us": 30.53
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 66.70000000000027,
+            "queue_span_us": -414.21985626220703,
+            "preparation_enqueue_us": 457.78200000000004,
+            "submit_join_cpu_us": -41.00999999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 1,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 487.53099999999995,
+            "queue_span_us": -353.33967208862305,
+            "preparation_enqueue_us": 833.783,
+            "submit_join_cpu_us": 3.5600000000000023
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 380.91100000000006,
+            "queue_span_us": -265.5000686645508,
+            "preparation_enqueue_us": 648.592,
+            "submit_join_cpu_us": -4.679000000000002
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 402.33200000000033,
+            "queue_span_us": -382.82012939453125,
+            "preparation_enqueue_us": 777.023,
+            "submit_join_cpu_us": -17.35900000000001
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 142.93100000000004,
+            "queue_span_us": -365.25988578796387,
+            "preparation_enqueue_us": 461.81100000000004,
+            "submit_join_cpu_us": 23.19999999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 2,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 41.590000000000146,
+            "queue_span_us": -483.2601547241211,
+            "preparation_enqueue_us": 557.182,
+            "submit_join_cpu_us": -183.802
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 394.27199999999993,
+            "queue_span_us": -244.74000930786133,
+            "preparation_enqueue_us": 633.753,
+            "submit_join_cpu_us": 23.00999999999999
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 463.34199999999964,
+            "queue_span_us": -297.80006408691406,
+            "preparation_enqueue_us": 748.8530000000001,
+            "submit_join_cpu_us": 14.230000000000018
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 111.98100000000022,
+            "queue_span_us": -369.61984634399414,
+            "preparation_enqueue_us": 478.922,
+            "submit_join_cpu_us": 7.980000000000018
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 3,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 639.7619999999997,
+            "queue_span_us": -351.1199951171875,
+            "preparation_enqueue_us": 986.024,
+            "submit_join_cpu_us": 23.599999999999994
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 411.9210000000003,
+            "queue_span_us": -193.4800148010254,
+            "preparation_enqueue_us": 612.582,
+            "submit_join_cpu_us": 26.629999999999995
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 425.2310000000007,
+            "queue_span_us": -380.7401657104492,
+            "preparation_enqueue_us": 819.1630000000001,
+            "submit_join_cpu_us": -24.701000000000022
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 102.84000000000015,
+            "queue_span_us": -346.95982933044434,
+            "preparation_enqueue_us": 458.932,
+            "submit_join_cpu_us": 7.490000000000009
+          }
+        },
+        {
+          "trial": 1,
+          "repeat": 4,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 463.6419999999998,
+            "queue_span_us": -365.6196594238281,
+            "preparation_enqueue_us": 824.8639999999999,
+            "submit_join_cpu_us": 1.9790000000000134
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 436.0120000000006,
+            "queue_span_us": -249.11975860595703,
+            "preparation_enqueue_us": 679.943,
+            "submit_join_cpu_us": 3.408999999999992
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 448.5020000000004,
+            "queue_span_us": -381.9398880004883,
+            "preparation_enqueue_us": 813.9229999999999,
+            "submit_join_cpu_us": 10.859999999999985
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 475.58100000000013,
+            "queue_span_us": -233.22010040283203,
+            "preparation_enqueue_us": 668.0519999999999,
+            "submit_join_cpu_us": 135.59
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 0,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 420.33100000000013,
+            "queue_span_us": -369.5998191833496,
+            "preparation_enqueue_us": 786.5830000000001,
+            "submit_join_cpu_us": 1.9590000000000032
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 397.3010000000004,
+            "queue_span_us": -289.68000411987305,
+            "preparation_enqueue_us": 686.8919999999999,
+            "submit_join_cpu_us": 9.189999999999998
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 458.98199999999997,
+            "queue_span_us": -351.1199951171875,
+            "preparation_enqueue_us": 798.873,
+            "submit_join_cpu_us": 6.3799999999999955
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 114.58100000000013,
+            "queue_span_us": -351.79996490478516,
+            "preparation_enqueue_us": 463.53200000000004,
+            "submit_join_cpu_us": 0.3300000000000125
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 1,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 544.7920000000004,
+            "queue_span_us": -313.6601448059082,
+            "preparation_enqueue_us": 865.483,
+            "submit_join_cpu_us": 14.569999999999993
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 427.27199999999993,
+            "queue_span_us": -224.29990768432617,
+            "preparation_enqueue_us": 642.933,
+            "submit_join_cpu_us": 33.02000000000001
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 471.3319999999994,
+            "queue_span_us": -325.0598907470703,
+            "preparation_enqueue_us": 785.0120000000001,
+            "submit_join_cpu_us": 8.691000000000003
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 67.35099999999966,
+            "queue_span_us": -348.599910736084,
+            "preparation_enqueue_us": 440.39300000000003,
+            "submit_join_cpu_us": 1.6590000000000202
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 2,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 519.5409999999993,
+            "queue_span_us": -354.1398048400879,
+            "preparation_enqueue_us": 850.633,
+            "submit_join_cpu_us": 14.899000000000001
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 370.9810000000007,
+            "queue_span_us": -254.9600601196289,
+            "preparation_enqueue_us": 630.452,
+            "submit_join_cpu_us": -15.411000000000001
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 429.8609999999999,
+            "queue_span_us": -334.34009552001953,
+            "preparation_enqueue_us": 781.663,
+            "submit_join_cpu_us": 9.719999999999999
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 122.44000000000005,
+            "queue_span_us": -350.9998321533203,
+            "preparation_enqueue_us": 462.62199999999996,
+            "submit_join_cpu_us": 9.280000000000001
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 3,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 454.8919999999998,
+            "queue_span_us": -397.8400230407715,
+            "preparation_enqueue_us": 838.5440000000001,
+            "submit_join_cpu_us": -13.060000000000002
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 0,
+          "capacity": 400,
+          "values": {
+            "wall_us": 410.1319999999996,
+            "queue_span_us": -234.1599464416504,
+            "preparation_enqueue_us": 634.0129999999999,
+            "submit_join_cpu_us": 9.218999999999994
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 5,
+          "capacity": 496,
+          "values": {
+            "wall_us": 446.15100000000075,
+            "queue_span_us": -361.89985275268555,
+            "preparation_enqueue_us": 808.2730000000001,
+            "submit_join_cpu_us": -0.29000000000002046
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 24,
+          "capacity": 256,
+          "values": {
+            "wall_us": 113.59000000000015,
+            "queue_span_us": -342.3800468444824,
+            "preparation_enqueue_us": 463.572,
+            "submit_join_cpu_us": 1.9099999999999966
+          }
+        },
+        {
+          "trial": 2,
+          "repeat": 4,
+          "step": 29,
+          "capacity": 512,
+          "values": {
+            "wall_us": 556.3310000000001,
+            "queue_span_us": -263.60034942626953,
+            "preparation_enqueue_us": 819.242,
+            "submit_join_cpu_us": 4.860000000000014
+          }
+        }
+      ]
+    }
+  },
+  "interpretation": {
+    "whole_cpu": "Measured dynamic whole-plan endpoint including plan construction and copy.",
+    "whole_oracle": "Plan construction and copy excluded; diagnostic only.",
+    "limitation": "Isolated attention chain only; no full-model, serving or end-to-end speedup claim."
+  },
+  "full_model_measured": false,
+  "end_to_end_speedup_proven": false,
+  "source_schedule": {
+    "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+    "default_capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "dispatched_tokens": [
+      400,
+      304,
+      288,
+      352,
+      272,
+      496,
+      400,
+      464,
+      464,
+      480,
+      304,
+      320,
+      496,
+      480,
+      448,
+      272,
+      320,
+      384,
+      368,
+      480,
+      352,
+      432,
+      352,
+      480,
+      256,
+      384,
+      384,
+      464,
+      400,
+      512,
+      272,
+      352,
+      352,
+      400,
+      448,
+      384,
+      496,
+      336,
+      416,
+      304,
+      464,
+      464,
+      496,
+      496,
+      512,
+      416,
+      288,
+      496,
+      400,
+      352,
+      416,
+      272,
+      336,
+      256,
+      288,
+      416,
+      464,
+      384,
+      352,
+      336,
+      288,
+      288,
+      512,
+      352,
+      464,
+      304,
+      288,
+      288,
+      416,
+      496,
+      480,
+      304,
+      448,
+      480,
+      512,
+      448,
+      512,
+      432,
+      288,
+      400,
+      288,
+      496,
+      432,
+      432,
+      368,
+      272,
+      464,
+      320,
+      368,
+      368,
+      432,
+      320,
+      336,
+      416,
+      256,
+      336,
+      448,
+      496,
+      272,
+      304,
+      320,
+      432,
+      464,
+      288,
+      272,
+      480,
+      384,
+      416,
+      464,
+      480,
+      448,
+      416,
+      512,
+      512,
+      464,
+      464,
+      368,
+      480,
+      464,
+      416,
+      288,
+      512,
+      304,
+      512,
+      448,
+      368,
+      496,
+      320
+    ],
+    "trace_file_sha256": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "selection_sha256": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba",
+    "metadata_source_sha256": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147",
+    "catalog_resolver_source_sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0"
+  },
+  "input": {
+    "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage4-whole-plan.json",
+    "sha256": "78d47b0cb37f2176527ef90fc0ce63ac7ecfdb22192d0664fedad4c8e6907f28"
+  },
+  "analyzer_sha256": "8b545220be971fdac2df557d04d0610ed1c8a3dd5f806d4d503882d79d64ab78"
+}

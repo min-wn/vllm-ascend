@@ -131,6 +131,14 @@ document records measured regressions, a no-FD versus selective-FD causal
 experiment and stopping gates. Incremental maintenance remains a conditional
 research hypothesis rather than a promised large improvement.
 
+The [fourth stage](aclgraph_fia_sink_stage4.md) supplies that first concrete
+kernel-work signal. A legal whole-row no-FD plan on capacities 256/400/496/512
+is 292.9 us faster than the native FD plan in an oracle attention comparison,
+with all 60 pairs improving. Including the CPU plan and metadata copy is still
+371.3 us slower than the shared native endpoint, so this is not yet a usable
+speedup. The next implementation gate is a native producer that reproduces the
+whole-row plan with the same exact sparse/causal semantics and ABI.
+
 ## Existing project results and thesis scope
 
 The existing branch supplies default-bucket dispatch, true FIA host updates,

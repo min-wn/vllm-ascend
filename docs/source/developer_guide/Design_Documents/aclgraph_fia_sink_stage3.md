@@ -226,6 +226,13 @@ by this stage. The negative planner budget is an experimental result and
 changes the priority of the proposal; it must not be hidden by crediting
 upstream plan sharing or omitting preparation.
 
+The next [stage-four experiment](aclgraph_fia_sink_stage4.md) keeps the same
+consumer and tests a legal whole-row no-FD assignment. It finds a 292.9 us
+oracle attention advantage across four real default capacities, while the CPU
+plan plus copy remains 371.3 us slower than shared native execution. This
+separates a promising execution-work target from an as-yet-unusable planner
+implementation.
+
 ## Saved evidence and reproduction
 
 The parent workspace retains original successful and failed reports under

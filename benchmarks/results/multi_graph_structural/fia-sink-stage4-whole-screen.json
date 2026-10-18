@@ -1,0 +1,1767 @@
+{
+  "state": "completed",
+  "started_unix": 1792348200.9603405,
+  "scope": "Four fixed canonical records, isolated attention chain; not full trace/model/serving",
+  "endpoint": "current pinned descriptors + required CPU whole plan and H2D or shared native plan + replay/join",
+  "oracle_diagnostic": "Oracle cases exclude fresh planning and its copy; they are not dynamic algorithms.",
+  "qualification_scope": "all private outputs on all four selected records; three occurrence0 FP32 rows",
+  "scripts": {
+    "aclgraph_fia_sink_stage3_trace.py": "e99f60febf234336569a3ca5f0b1176eacadf89851c5b20b065b389693d85aa5",
+    "aclgraph_fia_sink_stage3_budget.py": "a71e01920680a7a0449f6e041bb49ddf5e5dccc3c583d3b9c1d35ead336a09ca",
+    "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+    "aclgraph_fia_sink_stage4_whole_plan.py": "a09ebb591fd310666eef31f45011962757cc7657d05012ac636f391d579e7c0c",
+    "aclgraph_fia_sink_stage4_whole_probe.py": "f84ea3eba02fd8632e713e7e16514c912c032ece0b8332f0c936c397461c7b27",
+    "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+    "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "aclgraph_fia_sink_stage4_prepare.py": "21a723a09a3bc4e2949e3292c5e9c9756bdcbb5d293853c68cd569a7093f1072",
+    "aclgraph_fia_sink_stage3_legacy.py": "406562489d9f97d1cf995dabf28fe4977396f24d8060295698940f462f3428a1"
+  },
+  "extension_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+  "opp_artifacts": {
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink.h": "9240608d02f454561b6761077dc30f3b07999aeee4b254d7110b1b2e8a46e1ac",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_metadata.h": "a4445c69629109a875b30e7b6d8d8a9e1e419fde7da415177641e9df165afcda",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_metadata_v2.h": "974f148c7f32f7807a87c56f0dd2566c7dff064619a48838680c2c5f588c60e5",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_v2.h": "f74d9114812f5343261844664d71ffd52fba53655649333c37da76fc17bbcea7",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_v3.h": "38a4b1500c92e9544600782eb856f08c15928ab1b342f846d35bf6d6642dcc7b",
+    "op_api/include/aclnnop/aclnn_ops_transformer_thesis_fia_stage2.h": "74af955a6836a1584a1d1328c2e3b0baa9b2c1a564ee12576353fa9697f49091",
+    "op_api/lib/libcust_opapi.so": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+    "op_impl/ai_core/tbe/config/ascend910b/aic-ascend910b-ops-info.json": "5c898b0c1ed531ba6486a7511f30eb7169af7668d297d0f6680133dafe0b6a06",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_22fd7a23ae3f8d2befb5fcbdfbcfd219.json": "f71490f20f8906bc94c5bf7eb734db09cd07b2e4430c58201cdf4783d415b564",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_22fd7a23ae3f8d2befb5fcbdfbcfd219.o": "37267378d76ca6110f7e1a87a5c215b44f70991ad5f0c4f71beffde119efa70e",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3623e899e9d3a1f66ad6fe99f4cadbf5.json": "6fded4ea9ce9e48c426959a46d469762b7a9bb67655344228087934df41a1633",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3623e899e9d3a1f66ad6fe99f4cadbf5.o": "83a15048bc7b57692a5477b746b109068c123cb5321c9a60b8b11edfc6948e46",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3af553d2e3779008f566bfbd8e20c9b1.json": "57a291beb9b039ad730dadd02c389ea28da0921a2577de4460ab2dae9420aaeb",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3af553d2e3779008f566bfbd8e20c9b1.o": "d9944374d3c709941428b473cf39a2bc99feee9e545ab887c68521e531203a28",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_5a319bb1985b55f485f46cf2da6f30c5.json": "705939545c70a16eb9709b08f936f8367c90b537bc14bb2f8b8a45ef84cce093",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_5a319bb1985b55f485f46cf2da6f30c5.o": "e44b532d6b42278e6c133c6a688984c229891b4eb2635f78bb317b3120566ad1",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_78549e07db252c9cb755753e9af14a18.json": "79111b36a8dcc69af0e4bc680836951431e06b2711efcb2672ecbbd00a50399f",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_78549e07db252c9cb755753e9af14a18.o": "e0b76fca6c9fbc9dcb54a9cc4e9a779b90ced1d2a8892a225bb3b60bc72a15f7",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_9763cafe0d9b6c14d767e9cc6d2b745e.json": "80eb6cb85148ecc8d8416b9eec1e37abfc63344a944570bb3e4119503d33a991",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_9763cafe0d9b6c14d767e9cc6d2b745e.o": "2c734b63938d4a4f42feeb73424a0b9f752c5166b5aaa810db7a4bfa65d68cd0",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_ac1fcefd2c5202b9568e867f7227bd18.json": "ea147acaa1a36db05e7cf4fb374ce90ed4d44451a57f452df523d98ef1966aee",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_ac1fcefd2c5202b9568e867f7227bd18.o": "1f6833483d86214312ee97408de336d32a98f8166aca26cbd2ca745ad6b53a40",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": "789cc7c75440484c7e93f3a379072535799ab18b35df82238822b529c0b08f76",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": "9098b4ac6441c9c730e15d362c1cd42bc93df2a80c0ced523c1df530bf3f04ea",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_d85d0408456b0e088e525f5df8ea9960.json": "fda5093862d9a7c2e30a1d1c1d8502f1d74771e7bdb967af7b17ef25ba6004ab",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_d85d0408456b0e088e525f5df8ea9960.o": "f46a35ee78e20fdbfb6101dbef2753d5b31af334e3ee36c847ef7201696ae5aa",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_e4b3528397fbaa4fd0671478823aa029.json": "86e2b5edbb67c32729545caebb44ed04e07cb0eb7b01b17063414eede4d4a583",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_e4b3528397fbaa4fd0671478823aa029.o": "1edc9aa2e986924e6855c407201379360e26613b9b0972ed67d6fce947123ff8",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f3c1a2a54ea0ebef38257460b01a81f3.json": "c5b232c8a6741e32f40ac29453faa4a5a2dc01fffbd3c80717deeedb5adb37c5",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f3c1a2a54ea0ebef38257460b01a81f3.o": "094f2c8e008c8e02240b99822f464cf8d26fc0cc557550fe2d2d203dd3cc47da",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f94076a7655ef41b5c54277d6ebc204f.json": "0efe13b84975e4102f04ac7bc66feb4e6daaab129f5cd8739386ae5388bef390",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f94076a7655ef41b5c54277d6ebc204f.o": "4971e124306ad36ff307394b044311eb930fc325fbc9984a58436f884ec355da",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f9bae0033134e0df2b402ea5dee83479.json": "e9818a85691e8ae29a8490e25aeef8bb0c8b17e73a3fa7ca8d68ec832213db28",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f9bae0033134e0df2b402ea5dee83479.o": "79128ea1f8aaf6902012ece8fa245b2300a9376238a0ac63974d50952cd0ff6f",
+    "op_impl/ai_core/tbe/kernel/config/ascend910b/binary_info_config.json": "4e2ed53452c14ce0d7150aa9691cc29e6fc4d6b5e07ebec05ee56009d3a36141",
+    "op_impl/ai_core/tbe/kernel/config/ascend910b/fused_infer_attention_score_v2_sink.json": "bc82fe788f504f6c118756df51939bcd5ca8bea881cbb861fdffc25fdf441454",
+    "op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+    "op_impl/ai_core/tbe/op_tiling/liboptiling.so": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/common.h": "d26d042b297cf862c584e05b2625136e7ee99de3be53be2e32fb28efe62d60d9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/common_func.h": "1de03871c582d97e9ed1814763e65f30381bdaaa0dae6705a74ea0281ffa809b",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/dropmask.h": "b93b07a2d06c590243cd1ba757c281a6b268d03ff819b311fb5aa088e06a7654",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/gm_to_l1_iterator.h": "4e7e3b9b489e8b60ae356aa8f95d088ed2ddf1013a4518032312f4e13eefa7f9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/gm_to_ub_iterator.h": "a28634b12f044aad50eca3a46af52e3d0eb1a024b6301d1a948d917d3095a508",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/hardware.h": "05a8bf30e465e22ea13b71f0eb2b71075de4396da35e3d95c80ba086ae5f42a8",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/iterator.h": "70535c8c9c01aa935d45aed44d977f69f0ed2eeebeea1d80f060e4b1d1fbd39f",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l0c_to_gm_iterator.h": "a3eea68d194669fb7db53a3b38d3117cb1584f6637d22085081e4c0768a2429e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l0c_to_l1_iterator.h": "2b73136bb76f3ef99649406fdba15c8dc7f50b606d728ab005e2417860ea7d06",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l0c_to_ub_iterator.h": "ede17f84df3f67a7063792f190b6b66cd328213af0d55ffd9997255988ab73f8",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_bt_iterator.h": "45ae57cd939a7a30e74b33dbfd088f8998445648cee71c8d291d449808233440",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_fb_iterator.h": "db7c233466609cf1b46c94b7d72f2b9d73ab6cc2167ed27f6809e2a097d06d1c",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_l0_iterator.h": "81308eebcfcdabc041d129af63e7de1655f94c232e24b2e360cfb8c5dad4ca90",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_ub_iterator.h": "3b4b7e08af1ed4d82b13e4994916c4d2fdd3ebe906cb3c406295b04e410d111a",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/layout.h": "29815798a7238d674b649dbf97b48a250e58ca2b8ff6dc09a5667a2e973fdbde",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/mem.h": "e240841f845f8343bf01e06cf1528c011986504a6da80fe54615f01b2a4428c5",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/mma.h": "1d307e242c4d39c668668f254bb696b421326efbb6117ed9df704876fa6d877d",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/pse.h": "0b1ec227c944e430a8ec354d4b40830626e2282ac06a5192439619b11833cde4",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/simd.h": "88519d7abc601dc4fc6c36de52814901b407d549912c8b51d69b55ef070a5d31",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/util.h": "442648c354814d149ba7f8185e4b16cc7d528d1333f8437f07c0f3c5c93187d9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/CopyInL1.h": "42f1619817f636acf4b824624cc1f37b260a8d41dd96f63d2b13acc2c34f5614",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/FixpipeOut.h": "a43d183efc0101a3ede52606846cefa0dfc2e5893febc81f5ae2d6c2b337d5f0",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/axis.h": "ea3d5fa888fc9162eb38a10dfc1be116d927f829a6ac07e4261ad8340e6645fa",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffer.h": "75f1708ef3b88da6ac0edda4543d123e92e808031126f3b1947f57cbcff8294a",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffer_manager.h": "40bc0c2f6df26955782bf2395c6068f614468ec98c42cae9a5bdf0d3c724b6d8",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffer_mix_core.h": "6ff52c7db120365aa0078395892cb4490a0d049b1a75664d04416310ee6cbb08",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffers_policy.h": "846242b5a88b55385776a23b86c770ff66b563f6c7defedbdb854016dd0d52c3",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_cube_nonquant_gqa_sink.h": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_cube_nonquant_mla_sink.h": "05454a599cb2d9b2e56c3c8fb59c1b89dcf0d487dbf2fd822b7abe70f8c382a2",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_cube_nonquant_sink.h": "920c2b0ec94d347a75ada0707de6fdc10d6641b132f765355628c439eb149bc9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_vec_flashdecode_sink.h": "b8e55ebd2e93a57ff16c291e169db9b7d764c3089b8f99eb46bb500e84ebe4ad",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_vec_nonquant_mla_sink.h": "765066653915e4c5ffec142768557f00a68039339182e4b9eeef0e3bd51a6449",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_kernel_nonquant_mla_sink.h": "23df706e2abb8bbb7118579860911c571c8b87ffdb0752d28fa62ec3ec094d1e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_public_define.h": "54150ffef7aae1ad8b0922816b49be37840007bc56e7a43aa310b669fbd2a62e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fused_infer_attention_score_v2_sink.cpp": "e719a4fa20507166633a963d14e4c6656a44b9336135d34af76bbea565b90b49",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fused_infer_attention_score_v2_sink_metadata.h": "a33c4c3e870b7ca0c9a1bc53d834b44fd6203625d2bcc82c868badb257ee2013",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fused_infer_attention_score_v2_sink_tilingkey.h": "d35a4d66679194f6f3cc6eaf0cd0da7fb0e9a7445cda6b4206aecbeb42a34c28",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/kernel_common_sink.h": "55e4176d5c796fae002ac2e405fdf047e1c9245097d98229165a8c5306239f96",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/matmul.h": "a224d05ca417a90365b870438b8ec7608aafc8d951059483043678e211c76afd",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/copy_gm_to_l1.h": "6293778b165cbeaf1a844bf7489d387abf560217ea7045abe6f1127e7e6117fc",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/copy_gm_to_ub.h": "98ad825ca31c5f232bb5b9d124d95f019ec31c166711e814f2281f43ddea1b17",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/copy_ub_to_gm.h": "5fd5cab5d7c12e3907e6aaeb9d66fe65db9a5a6c6af04f8eed3531dc8a97f5fa",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/fa_gm_tensor.h": "afea40fda64041724cecb1887cf46dc3d28c0c26084d8fd17201e68b729ca72c",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/fa_l1_tensor.h": "03805d27791ce125513ac07ec6d51f9366c463d0793fe02575275400d0d0287d",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/fa_ub_tensor.h": "97ae6e862d7c80a2e25f95c58f33a63923fce5509a33908e71620ea9e6eead26",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/gm_coord.h": "4a99ca73b1cd1b110a067a4679aac19279a0f00d44f3d44c2617dd35b5238bfb",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/gm_layout.h": "66971b608f79b1ac4ec4b8d58b34f93e39f2b965a77fd1c988b3c3aa9d4e3784",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/offset_calculator_v2.h": "8cae62420aa811a79c1192978476129b88107d76bb745fc823bd1239c83f357c",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/parser.h": "36293eebadd8d83df4780933a5e4c6ec8c3bbee56ddff49fbb0fc51651ee5823",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memory_copy.h": "3d735fa9a7fbe689ca9c42ecb133b17c5c0bad7a6fd1d38a5fc129dd55881977",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/offset_calculator.h": "3f1e8642e9eb73166367876f033435dbb2301513b0c08ba9be2e5d982875fd1b",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/vector_common.h": "3772a293bb875844f6154a5905b212c60a93d2a0a0c13c642af6c14519404b7a",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/dynamic/fused_infer_attention_score_v2_sink.py": "f3b17010b179eaf4c34efca7c1fb5f90eb67245f85e3c27e63e5169a755cf01a",
+    "op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+    "op_impl/cpu/aicpu_kernel/impl/libtransformer_aicpu_kernels.so": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+    "op_impl/cpu/config/cust_aicpu_kernel.json": "1127c8287069e1ab1f2a681e76a3dd9c1385eb86e2a8584dd02400333ed09203",
+    "op_proto/inc/fused_infer_attention_score_v2_sink_proto.h": "dcf7de5dc06431165905908534158a6e01d4b5cd5bded9b13516d56e780d6e4c",
+    "op_proto/lib/linux/aarch64/libcust_opsproto_rt2.0.so": "fe2986e929daee1e1be3ba05ec0cb80f80f65154e4a26674012fb0550fe1f863",
+    "version.info": "fdd4d0d83c19ab6cd3f874c61c773a54a29e64ac85cd7783f409c4fc4d06c311"
+  },
+  "performance_measured": true,
+  "npu_work_executed": true,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "child_pid": 1343665,
+  "python_startup_opp": "/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/opp/vendors/fla_npu_transformer:/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/opp/vendors/fla_npu_transformer/op_api/lib:/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+  "symbols": [
+    {
+      "symbol": "aclnnFusedInferAttentionScoreV2SinkV3GetWorkspaceSize",
+      "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+      "address": "0xfffef98a62b0"
+    },
+    {
+      "symbol": "aclnnFusedInferAttentionScoreV2SinkV3",
+      "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+      "address": "0xfffef98a5930"
+    },
+    {
+      "symbol": "aclnnFusedInferAttentionScoreV2SinkMetadataGetWorkspaceSize",
+      "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+      "address": "0xfffef98b2490"
+    },
+    {
+      "symbol": "aclnnFusedInferAttentionScoreV2SinkMetadata",
+      "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+      "address": "0xfffef98b23b0"
+    }
+  ],
+  "effective_opp_before_native_load": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+  "schemas": {
+    "_npu_fused_infer_attention_score_v2_sink_metadata": {
+      "schema": "thesis_fia_sink_stage1::_npu_fused_infer_attention_score_v2_sink_metadata(int num_heads_q, int num_heads_kv, int head_dim_qk, int head_dim_v, *, Tensor? actual_seq_lengths=None, Tensor? actual_seq_lengths_kv=None, int batch_size=0, int sparse_mode=0, int pre_tokens=2147483647, int next_tokens=2147483647, str input_layout=\"TND\", str input_layout_kv=\"TND\", int sink_num=0, int k_sink_num=0, int rope_head_dim=0, int block_size=0, int aic_core_num=24, int aiv_core_num=48, bool batch_invariant=False) -> Tensor",
+      "argument_names": [
+        "num_heads_q",
+        "num_heads_kv",
+        "head_dim_qk",
+        "head_dim_v",
+        "actual_seq_lengths",
+        "actual_seq_lengths_kv",
+        "batch_size",
+        "sparse_mode",
+        "pre_tokens",
+        "next_tokens",
+        "input_layout",
+        "input_layout_kv",
+        "sink_num",
+        "k_sink_num",
+        "rope_head_dim",
+        "block_size",
+        "aic_core_num",
+        "aiv_core_num",
+        "batch_invariant"
+      ]
+    },
+    "npu_fused_infer_attention_score_v2_sink": {
+      "schema": "thesis_fia_sink_stage1::npu_fused_infer_attention_score_v2_sink(Tensor query, Tensor key, Tensor value, *, Tensor? query_rope=None, Tensor? key_rope=None, Tensor? pse_shift=None, Tensor? atten_mask=None, Tensor? actual_seq_qlen=None, Tensor? actual_seq_kvlen=None, Tensor? block_table=None, Tensor? meta_data=None, int num_query_heads=1, int num_key_value_heads=0, float softmax_scale=1., int pre_tokens=2147483647, int next_tokens=2147483647, str input_layout=\"TND\", int sparse_mode=0, int block_size=0, int inner_precise=0, bool return_softmax_lse=False) -> (Tensor, Tensor)",
+      "argument_names": [
+        "query",
+        "key",
+        "value",
+        "query_rope",
+        "key_rope",
+        "pse_shift",
+        "atten_mask",
+        "actual_seq_qlen",
+        "actual_seq_kvlen",
+        "block_table",
+        "meta_data",
+        "num_query_heads",
+        "num_key_value_heads",
+        "softmax_scale",
+        "pre_tokens",
+        "next_tokens",
+        "input_layout",
+        "sparse_mode",
+        "block_size",
+        "inner_precise",
+        "return_softmax_lse"
+      ]
+    }
+  },
+  "opapi_mappings": [
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so"
+  ],
+  "torch_version": "2.10.0+cpu",
+  "torch_npu_version": "2.10.0.post4",
+  "core_limit": {
+    "cube_core_num": 20,
+    "vector_core_num": 40
+  },
+  "device_name": "Ascend910B3",
+  "stage": "completed",
+  "schedule": {
+    "records": [
+      {
+        "step": 0,
+        "batch": 98,
+        "physical_tokens": 400
+      },
+      {
+        "step": 1,
+        "batch": 73,
+        "physical_tokens": 304
+      },
+      {
+        "step": 2,
+        "batch": 69,
+        "physical_tokens": 288
+      },
+      {
+        "step": 3,
+        "batch": 87,
+        "physical_tokens": 352
+      },
+      {
+        "step": 4,
+        "batch": 66,
+        "physical_tokens": 272
+      },
+      {
+        "step": 5,
+        "batch": 124,
+        "physical_tokens": 496
+      },
+      {
+        "step": 6,
+        "batch": 99,
+        "physical_tokens": 400
+      },
+      {
+        "step": 7,
+        "batch": 115,
+        "physical_tokens": 464
+      },
+      {
+        "step": 8,
+        "batch": 115,
+        "physical_tokens": 464
+      },
+      {
+        "step": 9,
+        "batch": 118,
+        "physical_tokens": 480
+      },
+      {
+        "step": 10,
+        "batch": 73,
+        "physical_tokens": 304
+      },
+      {
+        "step": 11,
+        "batch": 80,
+        "physical_tokens": 320
+      },
+      {
+        "step": 12,
+        "batch": 124,
+        "physical_tokens": 496
+      },
+      {
+        "step": 13,
+        "batch": 119,
+        "physical_tokens": 480
+      },
+      {
+        "step": 14,
+        "batch": 111,
+        "physical_tokens": 448
+      },
+      {
+        "step": 15,
+        "batch": 67,
+        "physical_tokens": 272
+      },
+      {
+        "step": 16,
+        "batch": 80,
+        "physical_tokens": 320
+      },
+      {
+        "step": 17,
+        "batch": 93,
+        "physical_tokens": 384
+      },
+      {
+        "step": 18,
+        "batch": 90,
+        "physical_tokens": 368
+      },
+      {
+        "step": 19,
+        "batch": 120,
+        "physical_tokens": 480
+      },
+      {
+        "step": 20,
+        "batch": 85,
+        "physical_tokens": 352
+      },
+      {
+        "step": 21,
+        "batch": 108,
+        "physical_tokens": 432
+      },
+      {
+        "step": 22,
+        "batch": 87,
+        "physical_tokens": 352
+      },
+      {
+        "step": 23,
+        "batch": 118,
+        "physical_tokens": 480
+      },
+      {
+        "step": 24,
+        "batch": 64,
+        "physical_tokens": 256
+      },
+      {
+        "step": 25,
+        "batch": 95,
+        "physical_tokens": 384
+      },
+      {
+        "step": 26,
+        "batch": 93,
+        "physical_tokens": 384
+      },
+      {
+        "step": 27,
+        "batch": 113,
+        "physical_tokens": 464
+      },
+      {
+        "step": 28,
+        "batch": 100,
+        "physical_tokens": 400
+      },
+      {
+        "step": 29,
+        "batch": 128,
+        "physical_tokens": 512
+      },
+      {
+        "step": 30,
+        "batch": 67,
+        "physical_tokens": 272
+      },
+      {
+        "step": 31,
+        "batch": 86,
+        "physical_tokens": 352
+      },
+      {
+        "step": 32,
+        "batch": 88,
+        "physical_tokens": 352
+      },
+      {
+        "step": 33,
+        "batch": 98,
+        "physical_tokens": 400
+      },
+      {
+        "step": 34,
+        "batch": 109,
+        "physical_tokens": 448
+      },
+      {
+        "step": 35,
+        "batch": 93,
+        "physical_tokens": 384
+      },
+      {
+        "step": 36,
+        "batch": 121,
+        "physical_tokens": 496
+      },
+      {
+        "step": 37,
+        "batch": 83,
+        "physical_tokens": 336
+      },
+      {
+        "step": 38,
+        "batch": 101,
+        "physical_tokens": 416
+      },
+      {
+        "step": 39,
+        "batch": 73,
+        "physical_tokens": 304
+      },
+      {
+        "step": 40,
+        "batch": 115,
+        "physical_tokens": 464
+      },
+      {
+        "step": 41,
+        "batch": 114,
+        "physical_tokens": 464
+      },
+      {
+        "step": 42,
+        "batch": 121,
+        "physical_tokens": 496
+      },
+      {
+        "step": 43,
+        "batch": 123,
+        "physical_tokens": 496
+      },
+      {
+        "step": 44,
+        "batch": 126,
+        "physical_tokens": 512
+      },
+      {
+        "step": 45,
+        "batch": 103,
+        "physical_tokens": 416
+      },
+      {
+        "step": 46,
+        "batch": 72,
+        "physical_tokens": 288
+      },
+      {
+        "step": 47,
+        "batch": 121,
+        "physical_tokens": 496
+      },
+      {
+        "step": 48,
+        "batch": 100,
+        "physical_tokens": 400
+      },
+      {
+        "step": 49,
+        "batch": 87,
+        "physical_tokens": 352
+      },
+      {
+        "step": 50,
+        "batch": 101,
+        "physical_tokens": 416
+      },
+      {
+        "step": 51,
+        "batch": 65,
+        "physical_tokens": 272
+      },
+      {
+        "step": 52,
+        "batch": 81,
+        "physical_tokens": 336
+      },
+      {
+        "step": 53,
+        "batch": 64,
+        "physical_tokens": 256
+      },
+      {
+        "step": 54,
+        "batch": 72,
+        "physical_tokens": 288
+      },
+      {
+        "step": 55,
+        "batch": 103,
+        "physical_tokens": 416
+      },
+      {
+        "step": 56,
+        "batch": 115,
+        "physical_tokens": 464
+      },
+      {
+        "step": 57,
+        "batch": 93,
+        "physical_tokens": 384
+      },
+      {
+        "step": 58,
+        "batch": 86,
+        "physical_tokens": 352
+      },
+      {
+        "step": 59,
+        "batch": 84,
+        "physical_tokens": 336
+      },
+      {
+        "step": 60,
+        "batch": 69,
+        "physical_tokens": 288
+      },
+      {
+        "step": 61,
+        "batch": 72,
+        "physical_tokens": 288
+      },
+      {
+        "step": 62,
+        "batch": 127,
+        "physical_tokens": 512
+      },
+      {
+        "step": 63,
+        "batch": 86,
+        "physical_tokens": 352
+      },
+      {
+        "step": 64,
+        "batch": 113,
+        "physical_tokens": 464
+      },
+      {
+        "step": 65,
+        "batch": 75,
+        "physical_tokens": 304
+      },
+      {
+        "step": 66,
+        "batch": 72,
+        "physical_tokens": 288
+      },
+      {
+        "step": 67,
+        "batch": 69,
+        "physical_tokens": 288
+      },
+      {
+        "step": 68,
+        "batch": 101,
+        "physical_tokens": 416
+      },
+      {
+        "step": 69,
+        "batch": 124,
+        "physical_tokens": 496
+      },
+      {
+        "step": 70,
+        "batch": 117,
+        "physical_tokens": 480
+      },
+      {
+        "step": 71,
+        "batch": 74,
+        "physical_tokens": 304
+      },
+      {
+        "step": 72,
+        "batch": 112,
+        "physical_tokens": 448
+      },
+      {
+        "step": 73,
+        "batch": 120,
+        "physical_tokens": 480
+      },
+      {
+        "step": 74,
+        "batch": 126,
+        "physical_tokens": 512
+      },
+      {
+        "step": 75,
+        "batch": 110,
+        "physical_tokens": 448
+      },
+      {
+        "step": 76,
+        "batch": 128,
+        "physical_tokens": 512
+      },
+      {
+        "step": 77,
+        "batch": 105,
+        "physical_tokens": 432
+      },
+      {
+        "step": 78,
+        "batch": 71,
+        "physical_tokens": 288
+      },
+      {
+        "step": 79,
+        "batch": 99,
+        "physical_tokens": 400
+      },
+      {
+        "step": 80,
+        "batch": 72,
+        "physical_tokens": 288
+      },
+      {
+        "step": 81,
+        "batch": 124,
+        "physical_tokens": 496
+      },
+      {
+        "step": 82,
+        "batch": 107,
+        "physical_tokens": 432
+      },
+      {
+        "step": 83,
+        "batch": 106,
+        "physical_tokens": 432
+      },
+      {
+        "step": 84,
+        "batch": 89,
+        "physical_tokens": 368
+      },
+      {
+        "step": 85,
+        "batch": 68,
+        "physical_tokens": 272
+      },
+      {
+        "step": 86,
+        "batch": 116,
+        "physical_tokens": 464
+      },
+      {
+        "step": 87,
+        "batch": 80,
+        "physical_tokens": 320
+      },
+      {
+        "step": 88,
+        "batch": 92,
+        "physical_tokens": 368
+      },
+      {
+        "step": 89,
+        "batch": 90,
+        "physical_tokens": 368
+      },
+      {
+        "step": 90,
+        "batch": 105,
+        "physical_tokens": 432
+      },
+      {
+        "step": 91,
+        "batch": 78,
+        "physical_tokens": 320
+      },
+      {
+        "step": 92,
+        "batch": 84,
+        "physical_tokens": 336
+      },
+      {
+        "step": 93,
+        "batch": 104,
+        "physical_tokens": 416
+      },
+      {
+        "step": 94,
+        "batch": 64,
+        "physical_tokens": 256
+      },
+      {
+        "step": 95,
+        "batch": 84,
+        "physical_tokens": 336
+      },
+      {
+        "step": 96,
+        "batch": 112,
+        "physical_tokens": 448
+      },
+      {
+        "step": 97,
+        "batch": 124,
+        "physical_tokens": 496
+      },
+      {
+        "step": 98,
+        "batch": 66,
+        "physical_tokens": 272
+      },
+      {
+        "step": 99,
+        "batch": 76,
+        "physical_tokens": 304
+      },
+      {
+        "step": 100,
+        "batch": 77,
+        "physical_tokens": 320
+      },
+      {
+        "step": 101,
+        "batch": 107,
+        "physical_tokens": 432
+      },
+      {
+        "step": 102,
+        "batch": 115,
+        "physical_tokens": 464
+      },
+      {
+        "step": 103,
+        "batch": 70,
+        "physical_tokens": 288
+      },
+      {
+        "step": 104,
+        "batch": 68,
+        "physical_tokens": 272
+      },
+      {
+        "step": 105,
+        "batch": 118,
+        "physical_tokens": 480
+      },
+      {
+        "step": 106,
+        "batch": 94,
+        "physical_tokens": 384
+      },
+      {
+        "step": 107,
+        "batch": 103,
+        "physical_tokens": 416
+      },
+      {
+        "step": 108,
+        "batch": 115,
+        "physical_tokens": 464
+      },
+      {
+        "step": 109,
+        "batch": 119,
+        "physical_tokens": 480
+      },
+      {
+        "step": 110,
+        "batch": 110,
+        "physical_tokens": 448
+      },
+      {
+        "step": 111,
+        "batch": 101,
+        "physical_tokens": 416
+      },
+      {
+        "step": 112,
+        "batch": 128,
+        "physical_tokens": 512
+      },
+      {
+        "step": 113,
+        "batch": 128,
+        "physical_tokens": 512
+      },
+      {
+        "step": 114,
+        "batch": 113,
+        "physical_tokens": 464
+      },
+      {
+        "step": 115,
+        "batch": 116,
+        "physical_tokens": 464
+      },
+      {
+        "step": 116,
+        "batch": 92,
+        "physical_tokens": 368
+      },
+      {
+        "step": 117,
+        "batch": 119,
+        "physical_tokens": 480
+      },
+      {
+        "step": 118,
+        "batch": 114,
+        "physical_tokens": 464
+      },
+      {
+        "step": 119,
+        "batch": 102,
+        "physical_tokens": 416
+      },
+      {
+        "step": 120,
+        "batch": 70,
+        "physical_tokens": 288
+      },
+      {
+        "step": 121,
+        "batch": 126,
+        "physical_tokens": 512
+      },
+      {
+        "step": 122,
+        "batch": 74,
+        "physical_tokens": 304
+      },
+      {
+        "step": 123,
+        "batch": 126,
+        "physical_tokens": 512
+      },
+      {
+        "step": 124,
+        "batch": 110,
+        "physical_tokens": 448
+      },
+      {
+        "step": 125,
+        "batch": 92,
+        "physical_tokens": 368
+      },
+      {
+        "step": 126,
+        "batch": 121,
+        "physical_tokens": 496
+      },
+      {
+        "step": 127,
+        "batch": 77,
+        "physical_tokens": 320
+      }
+    ],
+    "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+    "trace_sha256": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+    "trace_file_sha256": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "selection_sha256": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba",
+    "metadata_source_sha256": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147",
+    "catalog_resolver_source_sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0",
+    "default_capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "required_capture_sizes": [
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "catalog_source": "installed EngineArgs defaults; no capture sizes supplied",
+    "installed_catalog_revalidated": true,
+    "query": 4,
+    "page_size": 128,
+    "owner_count": 128
+  },
+  "selected_records": [
+    {
+      "step": 0,
+      "batch": 98,
+      "physical_tokens": 400
+    }
+  ],
+  "cases": [
+    "native_shared",
+    "native_oracle",
+    "whole_cpu",
+    "whole_oracle"
+  ],
+  "occurrences": 1,
+  "trials": 1,
+  "repeats": 1,
+  "screen": true,
+  "expected_samples": 4,
+  "installed_catalog": {
+    "selection": {
+      "capture_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        24,
+        32,
+        40,
+        48,
+        56,
+        64,
+        72,
+        80,
+        88,
+        96,
+        104,
+        112,
+        120,
+        128,
+        136,
+        144,
+        152,
+        160,
+        168,
+        176,
+        184,
+        192,
+        200,
+        208,
+        216,
+        224,
+        232,
+        240,
+        248,
+        256,
+        272,
+        288,
+        304,
+        320,
+        336,
+        352,
+        368,
+        384,
+        400,
+        416,
+        432,
+        448,
+        464,
+        480,
+        496,
+        512
+      ],
+      "dispatched_tokens": [
+        400,
+        304,
+        288,
+        352,
+        272,
+        496,
+        400,
+        464,
+        464,
+        480,
+        304,
+        320,
+        496,
+        480,
+        448,
+        272,
+        320,
+        384,
+        368,
+        480,
+        352,
+        432,
+        352,
+        480,
+        256,
+        384,
+        384,
+        464,
+        400,
+        512,
+        272,
+        352,
+        352,
+        400,
+        448,
+        384,
+        496,
+        336,
+        416,
+        304,
+        464,
+        464,
+        496,
+        496,
+        512,
+        416,
+        288,
+        496,
+        400,
+        352,
+        416,
+        272,
+        336,
+        256,
+        288,
+        416,
+        464,
+        384,
+        352,
+        336,
+        288,
+        288,
+        512,
+        352,
+        464,
+        304,
+        288,
+        288,
+        416,
+        496,
+        480,
+        304,
+        448,
+        480,
+        512,
+        448,
+        512,
+        432,
+        288,
+        400,
+        288,
+        496,
+        432,
+        432,
+        368,
+        272,
+        464,
+        320,
+        368,
+        368,
+        432,
+        320,
+        336,
+        416,
+        256,
+        336,
+        448,
+        496,
+        272,
+        304,
+        320,
+        432,
+        464,
+        288,
+        272,
+        480,
+        384,
+        416,
+        464,
+        480,
+        448,
+        416,
+        512,
+        512,
+        464,
+        464,
+        368,
+        480,
+        464,
+        416,
+        288,
+        512,
+        304,
+        512,
+        448,
+        368,
+        496,
+        320
+      ],
+      "required_tokens": [
+        256,
+        272,
+        288,
+        304,
+        320,
+        336,
+        352,
+        368,
+        384,
+        400,
+        416,
+        432,
+        448,
+        464,
+        480,
+        496,
+        512
+      ],
+      "config_source": "installed EngineArgs defaults; no capture sizes supplied",
+      "query": 4
+    },
+    "model_config_only": true,
+    "weights_loaded": false,
+    "installed_catalog_revalidated": true
+  },
+  "memory": [
+    {
+      "label": "private_cache_allocated",
+      "allocated_bytes": 346698240,
+      "reserved_bytes": 851443712,
+      "peak_allocated_bytes": 679084544
+    },
+    {
+      "label": "captured_native_shared_400",
+      "allocated_bytes": 351628288,
+      "reserved_bytes": 702545920,
+      "peak_allocated_bytes": 679084544
+    },
+    {
+      "label": "captured_native_oracle_400",
+      "allocated_bytes": 354091008,
+      "reserved_bytes": 702545920,
+      "peak_allocated_bytes": 679084544
+    },
+    {
+      "label": "captured_whole_400",
+      "allocated_bytes": 356558336,
+      "reserved_bytes": 702545920,
+      "peak_allocated_bytes": 679084544
+    },
+    {
+      "label": "timing_complete",
+      "allocated_bytes": 356547072,
+      "reserved_bytes": 702545920,
+      "peak_allocated_bytes": 679084544
+    }
+  ],
+  "capture_capacity": 400,
+  "capture_mode": "whole",
+  "checks": [
+    {
+      "step": 0,
+      "capacity": 400,
+      "controls_close": true,
+      "private_occurrences": 1,
+      "zero_padding_exact": true,
+      "resident_queries_unchanged": true,
+      "exact_descriptors_unchanged": true,
+      "fp32_sampled_rows": [
+        {
+          "case": "native_shared",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "native_oracle",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "whole_cpu",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "whole_oracle",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "native_shared",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "native_oracle",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "whole_cpu",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "whole_oracle",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "native_shared",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        },
+        {
+          "case": "native_oracle",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        },
+        {
+          "case": "whole_cpu",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        },
+        {
+          "case": "whole_oracle",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        }
+      ],
+      "whole_plan": {
+        "used_cores": 20,
+        "physical_heads": 200,
+        "attention_tiles": 466,
+        "core_costs": [
+          1708,
+          1848,
+          1868,
+          1868,
+          1804,
+          1908,
+          1824,
+          1868,
+          1764,
+          1806,
+          1810,
+          1680,
+          1724,
+          1724,
+          1748,
+          1908,
+          1876,
+          1664,
+          1784,
+          1888
+        ],
+        "cost_model": "abstract_6_10_upper_bound"
+      }
+    }
+  ],
+  "samples": [
+    {
+      "case": "native_shared",
+      "trial": 0,
+      "repeat": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 762.232,
+      "preparation_enqueue_us": 207.61,
+      "submit_join_cpu_us": 239.791,
+      "queue_span_us": 487.43999004364014,
+      "excluded_oracle_planning": false
+    },
+    {
+      "case": "native_oracle",
+      "trial": 0,
+      "repeat": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 681.013,
+      "preparation_enqueue_us": 213.311,
+      "submit_join_cpu_us": 212.611,
+      "queue_span_us": 400.31999349594116,
+      "excluded_oracle_planning": true
+    },
+    {
+      "case": "whole_cpu",
+      "trial": 0,
+      "repeat": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 2247.608,
+      "preparation_enqueue_us": 1786.696,
+      "submit_join_cpu_us": 217.331,
+      "queue_span_us": 399.2399871349335,
+      "excluded_oracle_planning": false
+    },
+    {
+      "case": "whole_oracle",
+      "trial": 0,
+      "repeat": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 648.942,
+      "preparation_enqueue_us": 197.531,
+      "submit_join_cpu_us": 225.2,
+      "queue_span_us": 403.56001257896423,
+      "excluded_oracle_planning": true
+    }
+  ],
+  "completed_trial": 0,
+  "post_timing_checks": [
+    {
+      "step": 0,
+      "capacity": 400,
+      "controls_close": true,
+      "private_occurrences": 1,
+      "zero_padding_exact": true,
+      "resident_queries_unchanged": true,
+      "exact_descriptors_unchanged": true,
+      "fp32_sampled_rows": [
+        {
+          "case": "native_shared",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "native_oracle",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "whole_cpu",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "whole_oracle",
+          "row": 0,
+          "max_abs_error": 0.00017317384481430054
+        },
+        {
+          "case": "native_shared",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "native_oracle",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "whole_cpu",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "whole_oracle",
+          "row": 49,
+          "max_abs_error": 0.00016602501273155212
+        },
+        {
+          "case": "native_shared",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        },
+        {
+          "case": "native_oracle",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        },
+        {
+          "case": "whole_cpu",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        },
+        {
+          "case": "whole_oracle",
+          "row": 97,
+          "max_abs_error": 0.00016273558139801025
+        }
+      ],
+      "whole_plan": {
+        "used_cores": 20,
+        "physical_heads": 200,
+        "attention_tiles": 466,
+        "core_costs": [
+          1708,
+          1848,
+          1868,
+          1868,
+          1804,
+          1908,
+          1824,
+          1868,
+          1764,
+          1806,
+          1810,
+          1680,
+          1724,
+          1724,
+          1748,
+          1908,
+          1876,
+          1664,
+          1784,
+          1888
+        ],
+        "cost_model": "abstract_6_10_upper_bound"
+      }
+    }
+  ],
+  "prepared_descriptors": {
+    "400": {
+      "mode": "sink",
+      "physical_tokens": 400,
+      "physical_requests": 100,
+      "host_pinned": {
+        "q_lengths": true,
+        "kv_lengths": true,
+        "block_table": true
+      },
+      "host": {
+        "q_lengths": {
+          "pointer": 20617998827520,
+          "shape": [
+            100
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.int64",
+          "device": "cpu",
+          "storage_bytes": 800
+        },
+        "kv_lengths": {
+          "pointer": 20617998831616,
+          "shape": [
+            100
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.int64",
+          "device": "cpu",
+          "storage_bytes": 800
+        },
+        "block_table": {
+          "pointer": 20617998835712,
+          "shape": [
+            100,
+            15
+          ],
+          "stride": [
+            15,
+            1
+          ],
+          "dtype": "torch.int32",
+          "device": "cpu",
+          "storage_bytes": 6000
+        }
+      },
+      "device": {
+        "q_lengths": {
+          "pointer": 20617785000960,
+          "shape": [
+            100
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.int64",
+          "device": "npu:0",
+          "storage_bytes": 800
+        },
+        "kv_lengths": {
+          "pointer": 20617785001984,
+          "shape": [
+            100
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.int64",
+          "device": "npu:0",
+          "storage_bytes": 800
+        },
+        "block_table": {
+          "pointer": 20617784994816,
+          "shape": [
+            100,
+            15
+          ],
+          "stride": [
+            15,
+            1
+          ],
+          "dtype": "torch.int32",
+          "device": "npu:0",
+          "storage_bytes": 6000
+        }
+      },
+      "stable_host_allocations": true,
+      "stable_device_allocations": true,
+      "host_allocation_count": 3,
+      "device_allocation_count": 0,
+      "setup_copies": {
+        "q_lengths": 1,
+        "kv_lengths": 0,
+        "block_table": 0
+      },
+      "step_copies": {
+        "q_lengths": 0,
+        "kv_lengths": 24,
+        "block_table": 24
+      },
+      "prepared_steps": 24,
+      "completed_steps": 24,
+      "inflight": false,
+      "q4_invariant": {
+        "query_length": 4,
+        "cumulative_q": [
+          4,
+          8,
+          12,
+          16,
+          20,
+          24,
+          28,
+          32,
+          36,
+          40,
+          44,
+          48,
+          52,
+          56,
+          60,
+          64,
+          68,
+          72,
+          76,
+          80,
+          84,
+          88,
+          92,
+          96,
+          100,
+          104,
+          108,
+          112,
+          116,
+          120,
+          124,
+          128,
+          132,
+          136,
+          140,
+          144,
+          148,
+          152,
+          156,
+          160,
+          164,
+          168,
+          172,
+          176,
+          180,
+          184,
+          188,
+          192,
+          196,
+          200,
+          204,
+          208,
+          212,
+          216,
+          220,
+          224,
+          228,
+          232,
+          236,
+          240,
+          244,
+          248,
+          252,
+          256,
+          260,
+          264,
+          268,
+          272,
+          276,
+          280,
+          284,
+          288,
+          292,
+          296,
+          300,
+          304,
+          308,
+          312,
+          316,
+          320,
+          324,
+          328,
+          332,
+          336,
+          340,
+          344,
+          348,
+          352,
+          356,
+          360,
+          364,
+          368,
+          372,
+          376,
+          380,
+          384,
+          388,
+          392,
+          396,
+          400
+        ]
+      },
+      "completion_contract": "Caller performs the final device join before complete(); no extra join is inserted."
+    }
+  },
+  "whole_plan_sources": {
+    "400": {
+      "host_pointer": 20617998843904,
+      "device_pointer": 20617785012224,
+      "host_pinned": true,
+      "host_storage_bytes": 4096,
+      "device_storage_bytes": 4096,
+      "native_template_pointer": 20617785007616,
+      "template_sha256": "a5aa697abdbf226a1701bd1cb61787af3d80f59fc165d69d9be5d879475ad84d",
+      "plan_sha256": "77faa651bcd39f62b8ea77db5edc7febb8105c236f563b9a707bdf35f4beff7a",
+      "stable_host_pointer": true,
+      "stable_device_pointer": true,
+      "async_plan_copies": 8,
+      "first_plan_validation": {
+        "used_cores": 20,
+        "physical_heads": 200,
+        "attention_tiles": 466,
+        "core_costs": [
+          1708,
+          1848,
+          1868,
+          1868,
+          1804,
+          1908,
+          1824,
+          1868,
+          1764,
+          1806,
+          1810,
+          1680,
+          1724,
+          1724,
+          1748,
+          1908,
+          1876,
+          1664,
+          1784,
+          1888
+        ],
+        "cost_model": "abstract_6_10_upper_bound"
+      }
+    }
+  },
+  "final_native_provenance": {
+    "libraries": [
+      {
+        "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40"
+      }
+    ],
+    "sink_symbols": [
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkV3GetWorkspaceSize",
+        "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xfffef98a62b0"
+      },
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkV3",
+        "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xfffef98a5930"
+      },
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkMetadataGetWorkspaceSize",
+        "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xfffef98b2490"
+      },
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkMetadata",
+        "source": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xfffef98b23b0"
+      }
+    ],
+    "known_extra_library": "vLLM imports batch-invariant registration even when that mode is disabled",
+    "alternate_sink_symbols_absent": true,
+    "selected_library_handle_retained": true
+  },
+  "returncode": 0,
+  "finished_unix": 1792348230.3628688,
+  "incremental_native_planner_implemented": false,
+  "evidence_projection": {
+    "original_report_sha256": "b587e64b254dfb42e29f1924ce25edec713a8174ce7faee03bb7fc034941ff0f",
+    "original_report_bytes": 8378100,
+    "original_report_parent_workspace_path": "outputs\\thesis_incremental_plan\\stage4-evidence\\stage4-whole-screen-v1\\stage4-whole-plan.json",
+    "timing_samples_preserved_exactly": true,
+    "omitted_fields": [
+      "schedule.owner_pages",
+      "schedule.records: exact descriptor arrays"
+    ],
+    "regeneration": "canonical trace/selection artifacts and stage-four trace helper"
+  }
+}
