@@ -1,5 +1,20 @@
 # Objective: identify gains caused by request splitting
 
+## Scope amendment on 2026-10-18
+
+The user stopped attention-weight replication and broadened the research to
+dynamic-shape ACLGraph inference, whether or not request splitting is needed.
+Keep the original TP weight partition. The [literature-backed research plan](aclgraph_dynamic_shape_research.md)
+records that amendment and the next qualification gates. The original
+split-specific objective below is retained for history; a general optimization
+must not be misreported as proof that splitting itself won.
+
+For the user's graduation-project requirement, the
+[independent algorithm proposal](aclgraph_incremental_attention_thesis.md)
+focuses on incremental attention-plan maintenance with dynamic membership
+and selective KV-range splitting. Official device-length support and plan
+sharing are baselines, not independent contributions or evidence of novelty.
+
 ## Goal and scope
 
 Find and validate a structural optimization whose incremental benefit comes

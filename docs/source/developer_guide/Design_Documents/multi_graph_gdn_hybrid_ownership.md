@@ -1,5 +1,14 @@
 # Hybrid request-owned GDN and tensor-parallel MLP
 
+## User termination
+
+On 2026-10-18 the user rejected additional attention-weight memory and traffic
+and explicitly stopped this architecture, including permanent ownership
+through FIA. Do not continue its runtime integration or weight replication.
+Completed probes below remain negative research evidence. The
+[new research plan](aclgraph_dynamic_shape_research.md) preserves original TP
+shards and permits general dynamic-shape ACLGraph optimization without splitting.
+
 ## Measured investment decision
 
 The bounded hardware gate now runs, but it does **not** justify implementing
