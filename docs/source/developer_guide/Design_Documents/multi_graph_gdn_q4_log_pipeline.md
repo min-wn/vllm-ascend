@@ -7,7 +7,8 @@ rather than add streams around the current write-heavy Q4 operator. This
 document proposes retaining an FP32 base and four ordered update records,
 computing the next attention products through that representation, and
 committing only the previous accepted prefix to the base. It is a research
-design with a CPU mathematical oracle, not a qualified runtime backend.
+design with a CPU mathematical oracle and qualified isolated native
+recurrence, not an integrated model runtime backend.
 
 The first gate is a closed recurrence endpoint with the real TP2-local
 layout, all required state work, and continued dynamic request histories.
@@ -353,8 +354,14 @@ in its equally optimized control.
 The CPU oracle first checks the mathematical and lifecycle contracts:
 FP64 algebraic projection identity; FP32 projection drift; ordered candidate
 export and commit; zero/underflow decays; mixed accepted counts; first use;
-request permutation, pause/resume and exactly-once generation consumption.
-It must not substitute for device FMA/reduction or performance evidence.
+request permutation and pause/resume. Its current valid flag assumes normal
+sequential calls; it does not detect stale acceptance, retries or request
+reuse. Explicit generation/transaction checks remain an integration gate.
+CPU reconstruction uses separate multiply/add, while the native exporter
+and commit must share the actual device FMA path and agree bitwise. The CPU
+oracle must not substitute for device FMA/reduction or performance evidence.
+Finite logs and outputs do not prove finite logical candidates; exported
+candidates are checked independently, including an overflow regression.
 
 Device qualification then requires repeated identical eager execution and
 same-schedule eager/replay equality, continued dynamic inputs/state, all four
@@ -408,3 +415,85 @@ constraint as well as traffic, provided the runtime genuinely removes the
 four-candidate allocation. Keeping the original shared pages alive while
 adding logs cannot claim that saving. A complete cache-manager integration
 must preserve speculative convolution state and every required dense export.
+
+## Native recurrence qualification
+
+`multi_graph_gdn_q4_log_kernel` implements one full request/head task after
+the direct FP32 Cube products kernel. The task loads all old log operands,
+corrects projections, solves outputs/current updates, commits the previous
+accepted prefix and writes the new log. Old-log reading finishes before
+new-log overwriting in the same task. The initial prototype uses one log
+bank and externally serialized request generations; this ownership proof
+does not cover overlapping generations or a future parallel reader.
+
+The native exporter and accepted commit call the same `ApplyOldLog` code,
+with FP32 gamma multiplication followed by `MulAddDst`. This is the actual
+device canonical reconstruction, unlike the CPU oracle's separate
+multiply/add. Export is a read-only state consumer with explicit output.
+
+### Rejected packed-flag version
+
+The first build fails repeated eager state comparison in validity flags at
+step zero, with maximum integer difference 1. It is rejected before timing;
+the retained log is `gdn-q4-log-v1-rejected.log`. Packed four-byte flags
+allowed neighboring cores to publish into the same cache line. V2 replaces
+them with one 32-byte record per request/head and publishes the whole record
+using DMA, removing both shared-line ownership and scalar publication. No
+recurrence arithmetic changes. This is a state-publication correctness bug,
+not acceptable cross-algorithm floating-point drift.
+
+The exact rejected V1 source set is archived under
+`/workspace/multi-graph-results/q4-log-v1-rejected-source/`; reconstruction
+was checked against its original loader fingerprint
+`49b11b8d81e77db1be99cc18bfc84abb3a1cc784976da735da6b01a018ad25de`.
+
+### Qualified V2 and its boundary
+
+`gdn-q4-log-v2.json` passes 25 device checks at capacity 100 and live batches
+97-99. It covers eight continued dynamic-input steps, stable shuffled IDs,
+mixed accepted 1..4, first use, pauses/resumption, repeated eager and
+same-schedule graph equality, null/inactive state/log/flag isolation, page
+canaries, finite outputs and every logical candidate. The next accepted
+base is bitwise equal to the previous native exported prefix. A separate
+export-inclusive graph matches its eager output, state and all candidates.
+Worst-request cross-algorithm normalized error across the recorded output
+and prefix checks is 0.0001723924 (0.01724%), below the preregistered 0.5%
+screen. This does not certify model-level numerical behavior.
+
+| Complete recurrence endpoint | Three device round medians (us) | Median of round medians (us) |
+| --- | --- | ---: |
+| Installed dense recurrence | 1005.04 / 1001.55 / 1000.06 | 1001.55 |
+| Compact Q4 including accepted commit | 688.24 / 688.50 / 686.17 | 688.24 |
+| Same compact Q4 plus all dense candidate export | 1459.08 / 1460.50 / 1459.27 | 1459.27 |
+
+The closed compact endpoint saves 313.31 us (31.28%) in this recurrence
+experiment, passing the 135 us real-layer investment gate. It includes Q/K
+casts, Cube base products, previous-log correction, solve, the full previous
+accepted-base commit, new logs, output zeroing and device completion. It is
+not the goal's full-model timing boundary and does not compare split against
+equally optimized padding.
+
+All-candidate export removes the latency benefit and is slower than official.
+Thus a downstream Q4 consumer must use the explicit compact representation;
+the existing dense-cache interface cannot be retained by silently exporting
+every step or by omitting required consumers from timing. A real-layer
+adapter must integrate compact state in reset, snapshots, continued
+trajectories, inactive checks and state ownership. Production
+generation/retry/reuse validation, prefill and non-spec transitions remain
+unimplemented. Both padding and split must receive these same changes.
+
+Explicit compact base pages, logs and padded flags occupy respectively
+185,335,808 / 10,238,976 / 77,568 bytes in this probe, versus 735,838,208
+bytes of paired official pages. These are actual tensor extents, including
+artificial page canaries. They are not full-model allocator savings.
+The 635,437,056-byte dense export scratch is present for qualification and
+the export-inclusive consumer. Peak process allocation 7,671,243,776 bytes
+includes both controls, all graphs and snapshots; it is not incremental
+runtime peak memory.
+
+Tested V2 sources and probe are archived under
+`/workspace/multi-graph-results/q4-log-v2-tested-source/`. The log kernel
+library SHA256 is
+`68a3b0098edf6cc89b95c307e01fcf2a76cd57468ff1ef71bb7abdac32c81436`;
+the products library SHA256 is
+`e167b52c6987a2578269ca452703ecdb9d9f68d9db63627cade8879e3fb8e823`.

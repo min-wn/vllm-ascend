@@ -39,6 +39,12 @@ correctness checks. They do not establish a TP2 decoder performance win.
 - `structural-hybrid-memory-budget-v1.json`: actual checkpoint-header and
   config inventory plus unchanged trajectory byte estimates for TP2/4/8.
   This performs no model loading or NPU allocation and is not OOM evidence.
+- `gdn-q4-log-v1-rejected.log`: first compact Q4 native version fails exact
+  repeated eager validity flags. It supplies no accepted timing result.
+- `gdn-q4-log-v2.json`: padded per-task validity records and DMA publication;
+  strict continued checks, canonical native candidate export/commit, complete
+  compact endpoint and an all-candidate-export-inclusive control. This is
+  still a one-device recurrence, not a model or split win.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is

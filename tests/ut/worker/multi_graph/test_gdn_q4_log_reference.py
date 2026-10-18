@@ -123,6 +123,16 @@ def test_zero_and_underflow_decay_are_finite_without_inverse_products(oracle):
             assert torch.isfinite(tensor).all()
 
 
+def test_finite_logs_and_outputs_do_not_imply_finite_logical_candidates(oracle):
+    cache = oracle.initialize_q4_log_cache(torch.full((1, 1, 1, 1), 2e38), 1)
+    q = k = v = torch.zeros(1, 4, 1, 1)
+    gamma, beta = torch.full((1, 4, 1), 2.0), torch.zeros(1, 4, 1)
+    result = oracle.q4_log_step(cache, q, k, v, gamma, beta, torch.tensor([1]), torch.tensor([0]))
+    assert torch.isfinite(result.outputs).all()
+    with pytest.raises(ValueError, match="nonfinite logical candidate"):
+        oracle.reconstruct_q4_log_candidates(result.cache)
+
+
 @pytest.mark.parametrize("invalid", ["duplicate", "oob", "accepted", "nonfinite", "state_precision", "gamma"])
 def test_invalid_log_contract_is_rejected(oracle, invalid):
     base = torch.zeros(3, 6, 8, 8)

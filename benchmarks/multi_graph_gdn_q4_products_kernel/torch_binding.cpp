@@ -30,8 +30,8 @@ void products(at::Tensor state, at::Tensor query, at::Tensor key, at::Tensor seq
   }
   TORCH_CHECK(query.size(0) == tokens && query.size(1) == 8 && query.size(2) == 128 && key.sizes() == query.sizes(),
               "Q/K must have shape [4B,8,128]");
-  TORCH_CHECK(state.size(0) >= 1 + tokens && state.size(1) == 24 && state.size(2) == 128 && state.size(3) == 128,
-              "state must have shape [Nslots>=1+4B,24,128,128]");
+  TORCH_CHECK(state.size(0) >= 1 && state.size(1) == 24 && state.size(2) == 128 && state.size(3) == 128,
+              "read-only state must have shape [Nslots>=1,24,128,128]");
   TORCH_CHECK(output.size(0) == batch && output.size(1) == 24 && output.size(2) == 128 && output.size(3) == 8,
               "products output must have shape [B,24,128,8]");
   TORCH_CHECK(sequence.numel() == batch + 1 && stateIds.numel() == tokens, "invalid Q4 metadata shape");

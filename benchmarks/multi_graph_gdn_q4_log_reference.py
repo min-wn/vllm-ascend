@@ -132,6 +132,8 @@ def reconstruct_q4_log_candidates(cache, request_ids=None):
     for prefix in range(4):
         accepted = torch.full((len(indices),), prefix + 1, dtype=torch.int64)
         candidates[active, prefix] = _ordered_selected(cache, indices, accepted)
+    if not torch.isfinite(candidates).all():
+        raise ValueError("nonfinite logical candidate during export")
     return candidates
 
 

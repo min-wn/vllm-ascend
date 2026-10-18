@@ -11,7 +11,7 @@ extension.products(state, query, key, sequence, state_ids, accepted,
 ```
 
 The tensors are on one NPU. State is BF16 or FP32
-`[Nslots>=1+4B,24,128,128]`, raw normalized Q/K have the same dtype as state
+`[Nslots>=1,24,128,128]`, raw normalized Q/K have the same dtype as state
 and shape `[4B,8,128]`, sequence is
 int32 `[B+1]` containing an initial offset followed by per-request 4/0 counts,
 state IDs are int32 `[4B]`, and accepted counts are int32 `[B]`. Active tokens are
@@ -22,6 +22,9 @@ contiguous. Other tensors must be contiguous. The slot stride is passed as a
 static launch argument, with no state copy or runtime host value read.
 B is between 1 and 128. Inactive output rows retain their contents;
 neither state nor slot 0 is written.
+Every selected ID must be within the supplied read-only state pool. The
+consumer defines whether IDs address dense candidates or one compact base
+per request; the products kernel does not require four physical states.
 
 Each Cube task owns one request/key head. Two strided GM-to-L1 ND2NZ copies
 assemble the four key rows and four query rows directly in a padded 16-by-128

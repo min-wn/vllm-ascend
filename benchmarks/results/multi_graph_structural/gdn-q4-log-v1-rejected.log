@@ -1,0 +1,10 @@
+[W1018 04:32:26.570233411 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+Traceback (most recent call last):
+  File "/vllm-workspace/vllm-ascend/benchmarks/multi_graph_gdn_q4_log_probe.py", line 342, in <module>
+    main()
+  File "/vllm-workspace/vllm-ascend/benchmarks/multi_graph_gdn_q4_log_probe.py", line 192, in main
+    exact(actual, expected, f"{name}/eager_state{index}/step{step}")
+  File "/vllm-workspace/vllm-ascend/benchmarks/multi_graph_gdn_q4_log_probe.py", line 86, in exact
+    raise AssertionError(f"{stage}: nonexact repeat/commit, max={difference.max().item()}")
+AssertionError: compact/eager_state3/step0: nonexact repeat/commit, max=1.0
+[ERROR] 2026-10-18-04:32:27 (PID:721358, Device:0, RankID:-1) ERR99999 UNKNOWN applicaiton exception
