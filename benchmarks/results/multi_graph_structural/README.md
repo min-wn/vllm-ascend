@@ -13,6 +13,14 @@ correctness checks. They do not establish a TP2 decoder performance win.
 - `gdn-compact-v2-fused.json`: official-matching V tiling and fused accepted
   reconstruction, including mixed per-request correctness. It remains slower
   than the installed official recurrence; it is not a decoder speedup.
+- `gdn-q4-products-v3.json`: qualified BF16-to-FP32 eight-column products,
+  including selected-state gather and Q/K packing. This omits solve and states.
+- `gdn-q4-block-v2-debug-out2.json`: a rejected native kernel with repeat-eager
+  state corruption in V rows 64-76. Product and output repetition passed; this
+  failed implementation supplies no performance evidence.
+- `gdn-q4-block-v3.json`: corrected DMA dependency, strict dynamic same-schedule
+  checks and cross-algorithm error diagnostics. The complete recurrence saves
+  about 61 us; it has not met the 135 us gate to justify a full GDN experiment.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is
@@ -28,6 +36,7 @@ Related design records:
 
 - [Conditional graph qualification](../../../docs/source/developer_guide/Design_Documents/multi_graph_conditional_capture.md)
 - [Compact state qualification](../../../docs/source/developer_guide/Design_Documents/multi_graph_gdn_compact_state.md)
+- [Q4 block recurrence](../../../docs/source/developer_guide/Design_Documents/multi_graph_gdn_q4_block.md)
 
 The original reports also remain under
 `/workspace/multi-graph-results/tp-boundary/` on `vllm-ascend-030`. Exact tested
