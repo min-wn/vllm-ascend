@@ -39,6 +39,10 @@ correctness checks. They do not establish a TP2 decoder performance win.
 - `structural-hybrid-memory-budget-v1.json`: actual checkpoint-header and
   config inventory plus unchanged trajectory byte estimates for TP2/4/8.
   This performs no model loading or NPU allocation and is not OOM evidence.
+- `structural-hybrid-memory-budget-v2-compact.json`: preserves the original
+  dense estimates and adds direct compact allocation, two banks and products
+  scratch budgets. TP2's named ideal subtotal is 41.76 GiB before products
+  and unknown runtime overhead; actual full-model fit remains unverified.
 - `gdn-q4-log-v1-rejected.log`: first compact Q4 native version fails exact
   repeated eager validity flags. It supplies no accepted timing result.
 - `gdn-q4-log-v2.json`: padded per-task validity records and DMA publication;
@@ -48,6 +52,25 @@ correctness checks. They do not establish a TP2 decoder performance win.
 - `gdn-q4-log-pipeline-v3.json`: fixed global request ranges; full compact,
   partitioned serial and partitioned pipeline controls. The pipeline's net
   recurrence gain is 4.50% against full compact; this is not full replay.
+- `gdn-q4-log-fixed-trace-v4.json`: 128 records and 641 correctness checks
+  for the immutable trace's request/acceptance/input-seed histories. This
+  does not execute model sequence lengths or default bucket dispatch. Its
+  timing rows are a separate B98 recurrence fixture, not trace averages.
+- `gdn-q4-log-real-layer-v1-rejected.json`: official inactive hidden output
+  is unspecified and contains NaNs; this failed repetition has no timing win.
+- `gdn-q4-log-real-layer-v2.json`: complete actual GDN layer with TP2/MLP,
+  strict same-schedule state/output checks and common inactive output restore.
+  Splitting adds 2.18% against equally optimized compact padding in this test.
+- `gdn-q4-log-deferred-v1.json`: exact two-phase recurrence/projection causal
+  control, including commit/publication and final join. Synthetic projection
+  shapes and local state qualify dependencies, not model performance.
+- `gdn-q4-log-real-layer-deferred-v3.json`: complete real layer, deferred
+  commit launched after gated Norm and joined at the endpoint; exact state
+  controls and both-rank raw samples. This public dependency optimization
+  improves the layer by 8.38% and also belongs in fair padding.
+- `gdn-q4-log-real-layer-combined-v4.json`: both controls use compact state
+  and deferred commit. Fixed request-range products/solve overlap adds
+  2.64% in the complete real GDN layer; this remains below the final goal.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is

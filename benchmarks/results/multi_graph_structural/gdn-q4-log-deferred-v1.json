@@ -1,0 +1,1118 @@
+{
+  "status": "qualified_deferred_commit_projection_causal_endpoint_not_model",
+  "scope": "synthetic_single_device_TP2_local_shapes; not real GDN layer, full replay or TP2 communication",
+  "batch": 100,
+  "live": 98,
+  "checks": [
+    {
+      "mode": "fused_projection",
+      "step": 0,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 0,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 0,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 0,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 1,
+      "live": 97,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 1,
+      "live": 97,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 1,
+      "live": 97,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 1,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 2,
+      "live": 99,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 2,
+      "live": 99,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 2,
+      "live": 99,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 2,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 3,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 3,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 3,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 3,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 4,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 4,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 4,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 4,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 5,
+      "live": 97,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 5,
+      "live": 97,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 5,
+      "live": 97,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 5,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 6,
+      "live": 99,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 6,
+      "live": 99,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 6,
+      "live": 99,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 6,
+      "passed": true
+    },
+    {
+      "mode": "fused_projection",
+      "step": 7,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_serial",
+      "step": 7,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "mode": "deferred_overlap",
+      "step": 7,
+      "live": 98,
+      "repeat_eager_exact": true,
+      "eager_replay_exact": true,
+      "all_candidates_exact": true,
+      "accepted_commit_exact": true,
+      "null_paused_exact": true,
+      "stable_state_matches_fused": true,
+      "finite": true,
+      "page_canaries": true
+    },
+    {
+      "stage": "solve_readonly_old_and_paused_staging",
+      "step": 7,
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 0,
+      "device_us": 847.8599786758423,
+      "wall_us": 1223.584
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 1,
+      "device_us": 856.0600280761719,
+      "wall_us": 1003.514
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 2,
+      "device_us": 848.5000133514404,
+      "wall_us": 979.043
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 3,
+      "device_us": 860.1400256156921,
+      "wall_us": 981.884
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 4,
+      "device_us": 852.840006351471,
+      "wall_us": 979.664
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 5,
+      "device_us": 845.1600074768066,
+      "wall_us": 974.213
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 6,
+      "device_us": 849.6999740600586,
+      "wall_us": 974.034
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 7,
+      "device_us": 847.000002861023,
+      "wall_us": 969.973
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 8,
+      "device_us": 854.2199730873108,
+      "wall_us": 976.244
+    },
+    {
+      "mode": "fused_projection",
+      "round": 0,
+      "sample": 9,
+      "device_us": 849.9400019645691,
+      "wall_us": 978.754
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 0,
+      "device_us": 920.3199744224548,
+      "wall_us": 1046.614
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 1,
+      "device_us": 916.9399738311768,
+      "wall_us": 1047.294
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 2,
+      "device_us": 921.3399887084961,
+      "wall_us": 1044.554
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 3,
+      "device_us": 919.0800189971924,
+      "wall_us": 1040.633
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 4,
+      "device_us": 919.700026512146,
+      "wall_us": 1049.884
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 5,
+      "device_us": 926.9999861717224,
+      "wall_us": 1050.224
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 6,
+      "device_us": 916.8999791145325,
+      "wall_us": 1051.354
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 7,
+      "device_us": 929.2799830436707,
+      "wall_us": 1052.104
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 8,
+      "device_us": 922.5999712944031,
+      "wall_us": 1044.584
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 0,
+      "sample": 9,
+      "device_us": 919.3800091743469,
+      "wall_us": 1047.474
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 0,
+      "device_us": 817.579984664917,
+      "wall_us": 944.614
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 1,
+      "device_us": 822.6400017738342,
+      "wall_us": 961.583
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 2,
+      "device_us": 813.7800097465515,
+      "wall_us": 935.274
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 3,
+      "device_us": 814.1999840736389,
+      "wall_us": 935.483
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 4,
+      "device_us": 838.5400176048279,
+      "wall_us": 961.634
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 5,
+      "device_us": 820.5400109291077,
+      "wall_us": 947.133
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 6,
+      "device_us": 815.6599998474121,
+      "wall_us": 941.593
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 7,
+      "device_us": 813.8399720191956,
+      "wall_us": 934.143
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 8,
+      "device_us": 824.6399760246277,
+      "wall_us": 947.714
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 0,
+      "sample": 9,
+      "device_us": 824.1199851036072,
+      "wall_us": 945.383
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 0,
+      "device_us": 814.9999976158142,
+      "wall_us": 935.324
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 1,
+      "device_us": 817.4399733543396,
+      "wall_us": 934.813
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 2,
+      "device_us": 816.8399930000305,
+      "wall_us": 945.434
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 3,
+      "device_us": 824.4400024414062,
+      "wall_us": 947.833
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 4,
+      "device_us": 827.019989490509,
+      "wall_us": 948.524
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 5,
+      "device_us": 814.7000074386597,
+      "wall_us": 930.153
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 6,
+      "device_us": 828.8400173187256,
+      "wall_us": 959.834
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 7,
+      "device_us": 823.1199979782104,
+      "wall_us": 947.383
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 8,
+      "device_us": 813.9200210571289,
+      "wall_us": 928.944
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 1,
+      "sample": 9,
+      "device_us": 815.6800270080566,
+      "wall_us": 940.763
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 0,
+      "device_us": 916.5599942207336,
+      "wall_us": 1042.984
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 1,
+      "device_us": 926.4000058174133,
+      "wall_us": 1053.903
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 2,
+      "device_us": 928.0200004577637,
+      "wall_us": 1052.604
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 3,
+      "device_us": 919.3000197410583,
+      "wall_us": 1039.564
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 4,
+      "device_us": 920.6399917602539,
+      "wall_us": 1054.004
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 5,
+      "device_us": 926.580011844635,
+      "wall_us": 1047.114
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 6,
+      "device_us": 919.0199971199036,
+      "wall_us": 1040.714
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 7,
+      "device_us": 918.940007686615,
+      "wall_us": 1039.684
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 8,
+      "device_us": 923.6000180244446,
+      "wall_us": 1049.893
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 1,
+      "sample": 9,
+      "device_us": 930.9999942779541,
+      "wall_us": 1047.394
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 0,
+      "device_us": 847.320020198822,
+      "wall_us": 992.324
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 1,
+      "device_us": 844.3199992179871,
+      "wall_us": 969.583
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 2,
+      "device_us": 850.2200245857239,
+      "wall_us": 969.363
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 3,
+      "device_us": 880.5999755859375,
+      "wall_us": 1019.444
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 4,
+      "device_us": 844.4200158119202,
+      "wall_us": 971.943
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 5,
+      "device_us": 846.1599946022034,
+      "wall_us": 967.623
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 6,
+      "device_us": 853.659987449646,
+      "wall_us": 976.534
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 7,
+      "device_us": 846.1199998855591,
+      "wall_us": 967.343
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 8,
+      "device_us": 844.980001449585,
+      "wall_us": 973.514
+    },
+    {
+      "mode": "fused_projection",
+      "round": 1,
+      "sample": 9,
+      "device_us": 843.779981136322,
+      "wall_us": 968.223
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 0,
+      "device_us": 858.2599759101868,
+      "wall_us": 979.364
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 1,
+      "device_us": 847.5000262260437,
+      "wall_us": 966.903
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 2,
+      "device_us": 849.399983882904,
+      "wall_us": 977.153
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 3,
+      "device_us": 849.9199748039246,
+      "wall_us": 971.914
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 4,
+      "device_us": 856.000006198883,
+      "wall_us": 980.063
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 5,
+      "device_us": 845.1799750328064,
+      "wall_us": 960.504
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 6,
+      "device_us": 848.2000231742859,
+      "wall_us": 967.433
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 7,
+      "device_us": 851.3000011444092,
+      "wall_us": 987.564
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 8,
+      "device_us": 858.2599759101868,
+      "wall_us": 980.984
+    },
+    {
+      "mode": "fused_projection",
+      "round": 2,
+      "sample": 9,
+      "device_us": 847.4599719047546,
+      "wall_us": 976.283
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 0,
+      "device_us": 922.6199984550476,
+      "wall_us": 1065.714
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 1,
+      "device_us": 925.2200126647949,
+      "wall_us": 1045.414
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 2,
+      "device_us": 919.9600219726562,
+      "wall_us": 1045.683
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 3,
+      "device_us": 921.779990196228,
+      "wall_us": 1059.993
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 4,
+      "device_us": 921.3200211524963,
+      "wall_us": 1058.234
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 5,
+      "device_us": 926.9999861717224,
+      "wall_us": 1043.934
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 6,
+      "device_us": 919.0800189971924,
+      "wall_us": 1043.134
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 7,
+      "device_us": 921.7399954795837,
+      "wall_us": 1043.174
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 8,
+      "device_us": 922.1000075340271,
+      "wall_us": 1054.154
+    },
+    {
+      "mode": "deferred_serial",
+      "round": 2,
+      "sample": 9,
+      "device_us": 933.5799813270569,
+      "wall_us": 1053.884
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 0,
+      "device_us": 816.3800239562988,
+      "wall_us": 935.114
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 1,
+      "device_us": 815.280020236969,
+      "wall_us": 938.663
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 2,
+      "device_us": 814.0400052070618,
+      "wall_us": 940.364
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 3,
+      "device_us": 821.6400146484375,
+      "wall_us": 942.633
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 4,
+      "device_us": 817.0199990272522,
+      "wall_us": 935.254
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 5,
+      "device_us": 815.4199719429016,
+      "wall_us": 939.613
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 6,
+      "device_us": 815.8800005912781,
+      "wall_us": 938.294
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 7,
+      "device_us": 823.7599730491638,
+      "wall_us": 945.213
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 8,
+      "device_us": 814.7600293159485,
+      "wall_us": 931.223
+    },
+    {
+      "mode": "deferred_overlap",
+      "round": 2,
+      "sample": 9,
+      "device_us": 818.0599808692932,
+      "wall_us": 940.453
+    }
+  ],
+  "round_medians_us": {
+    "fused_projection": [
+      849.8199880123138,
+      846.1399972438812,
+      849.6599793434143
+    ],
+    "deferred_serial": [
+      920.0100004673004,
+      922.1200048923492,
+      921.9399988651276
+    ],
+    "deferred_overlap": [
+      819.0599977970123,
+      817.1399831771851,
+      816.1300122737885
+    ]
+  },
+  "components": {
+    "prepare": {
+      "device_us": [
+        283.45999121665955,
+        254.8600137233734,
+        234.81999337673187,
+        233.7999939918518,
+        236.78000271320343,
+        233.48000645637512,
+        236.95999383926392,
+        234.69999432563782,
+        232.8999936580658,
+        238.8399988412857
+      ],
+      "median_us": 235.79999804496765
+    },
+    "solve": {
+      "device_us": [
+        374.46001172065735,
+        351.8199920654297,
+        333.75999331474304,
+        321.94000482559204,
+        333.6000144481659,
+        320.6399977207184,
+        333.24000239372253,
+        334.0199887752533,
+        323.7999975681305,
+        334.0800106525421
+      ],
+      "median_us": 333.68000388145447
+    },
+    "commit": {
+      "device_us": [
+        369.9600100517273,
+        349.50000047683716,
+        330.41998744010925,
+        331.53998851776123,
+        329.2199969291687,
+        330.3399980068207,
+        330.55999875068665,
+        329.27998900413513,
+        316.90001487731934,
+        331.25999569892883
+      ],
+      "median_us": 330.48999309539795
+    },
+    "projection_residual": {
+      "device_us": [
+        172.72000014781952,
+        134.8000019788742,
+        118.90000104904175,
+        118.51999908685684,
+        120.03999948501587,
+        119.34000253677368,
+        106.4400002360344,
+        117.88000166416168,
+        106.94000124931335,
+        119.25999820232391
+      ],
+      "median_us": 119.07999962568283
+    }
+  },
+  "component_scope": "isolated, state restored before each sample; intervals are not additive",
+  "projection": {
+    "weight_shape": [
+      5120,
+      3072
+    ],
+    "input_shape": [
+      400,
+      3072
+    ],
+    "dtype": "bfloat16",
+    "weight_format": "NZ",
+    "synthetic_fixed_weights": true,
+    "residual_add_included": true
+  },
+  "dependency": {
+    "fused": "products -> fused solve+commit -> projection+residual",
+    "serial": "products -> solve -> commit -> projection+residual",
+    "overlap": "products -> solve -> (commit AIV || projection/residual) -> explicit final state join",
+    "stable_bank": "old logs remain authoritative; active staged logs published by commit"
+  },
+  "includes": "output clear, raw Q/K casts, base products, solve, accepted base commit, new log publication, projection, residual and both completion paths",
+  "excludes": "input trajectory preparation, conv, gating prep, gated Norm, MLP, FIA host update, TP collective, model, scheduler",
+  "all_candidate_export": "outside measured recurrence/projection; exact checks every continued step",
+  "lifecycle": "sequential isolated request generations; no production stale/retry/fallback validation",
+  "source_sha256": "30d1ca7d78a22c4a3f893f1fbec588d8057b9b62bc7c7904653e021dfb280486",
+  "libraries": {
+    "deferred": {
+      "path": "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so",
+      "sha256": "55be9250ed36220de088317b1d5241ee9e8e5c2076ae43f8966225eb6f9675cb"
+    },
+    "fused": {
+      "path": "/workspace/multi-graph-results/q4-log-build-v3-ranges/gdn_q4_log.so",
+      "sha256": "787efd722754a96e2fa5ef4194bec5b86bc070ae9ea3bc86f3826d233b2b1068"
+    },
+    "products": {
+      "path": "/workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so",
+      "sha256": "49f2157b07d363f62a6a24969005973981e8f0b9a848d61e5b312cd22ee6cb6c"
+    }
+  },
+  "memory": {
+    "base_pages_bytes": 185335808,
+    "log_banks_bytes": 20633088,
+    "projection_weight_bytes": 31457280,
+    "peak_allocated_bytes": 5509797888,
+    "scope": "all graphs, diagnostic exports, snapshots and weights; not model incremental memory"
+  }
+}

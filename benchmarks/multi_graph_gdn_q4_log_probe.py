@@ -17,6 +17,7 @@ import statistics
 import time
 from pathlib import Path
 
+from multi_graph_dynamic_trace import trace_digest
 from multi_graph_gdn_q4_backend import load_extension
 from multi_graph_gdn_q4_block_probe import allocate_cache_pages
 
@@ -76,9 +77,17 @@ def main():
     parser.add_argument("--repeats", type=int, default=10)
     parser.add_argument("--state-padding", type=int, default=65536)
     parser.add_argument("--request-pipeline", action="store_true", help="fixed-half serial and two-stream controls")
+    parser.add_argument("--trace", type=Path, help="fixed request/acceptance manifest for continued correctness")
     args = parser.parse_args()
     if args.output.exists() or not 3 <= args.live <= args.batch <= 128 or args.repeats < 3 or args.state_padding < 0:
         parser.error("new output, 3 <= live <= batch <= 128, repeats >= 3 and nonnegative padding required")
+    trace_document = json.loads(args.trace.read_text()) if args.trace else None
+    if trace_document is not None:
+        trace = trace_document["trace"]
+        if trace_digest(trace) != trace_document["trace_sha256"] or trace["query"] != 4:
+            parser.error("fixed trace digest or query contract mismatch")
+        if len(trace["initial_prefix_by_request"]) != args.batch:
+            parser.error("trace requires one stable owner per capacity request")
     import torch
     import torch.nn.functional as functional
     import torch_npu  # noqa: F401
@@ -136,11 +145,11 @@ def main():
         module.export_candidates(compact_state, logs, valid, exported)
         return exported
 
-    def metadata(live, step):
-        torch.manual_seed(19518 + step)
+    def metadata(live, step, record=None):
+        torch.manual_seed(19518 + step if record is None else record["input_seed"])
         rng = random.Random(9518 + step)
-        requests = rng.sample(range(batch), live)
-        counts = [rng.randint(1, 4) for _ in range(live)]
+        requests = rng.sample(range(batch), live) if record is None else record["request_ids"]
+        counts = [rng.randint(1, 4) for _ in range(live)] if record is None else record["accepted_from_previous"]
         sequence.zero_()
         sequence[1 : live + 1].fill_(4)
         accepted.fill_(1)
@@ -243,8 +252,14 @@ def main():
         restore(saved)
         graphs[name] = (graph, stream)
 
-    for step, live in enumerate((args.live, args.live - 1, min(batch, args.live + 1), args.live) * 2):
-        requests, counts = metadata(live, step + 1)
+    records = (
+        trace_document["trace"]["steps"]
+        if trace_document is not None
+        else [dict(batch=live) for live in (args.live, args.live - 1, min(batch, args.live + 1), args.live) * 2]
+    )
+    for step, record in enumerate(records):
+        live = record["batch"]
+        requests, counts = metadata(live, step + 1, record if trace_document is not None else None)
         prior_candidates = export().clone()
         torch.npu.synchronize()
         paused = torch.tensor([0] + [request + 1 for request in range(batch) if request not in requests], device=device)
@@ -388,6 +403,8 @@ def main():
             else "qualified_q4_log_recurrence_not_model_or_split"
         ),
         batch=batch,
+        trace_sha256=trace_document["trace_sha256"] if trace_document is not None else None,
+        trace_scope="request identities/acceptance/input seeds only; no full-model sequence-length execution",
         live=args.live,
         checks=checks,
         diagnostics=diagnostics,

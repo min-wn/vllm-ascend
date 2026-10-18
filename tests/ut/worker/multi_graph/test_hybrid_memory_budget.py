@@ -80,6 +80,13 @@ def test_fp32_state_page_alignment_and_tp8_kv_replication(budget):
     assert tp8["fia_kv_heads_replicated"] and not tp4["fia_kv_heads_replicated"]
     assert all(value is None for value in report["unknown_additional_device_bytes"].values())
     assert report["status"] == "cpu_capacity_estimate_not_allocation_or_oom_evidence"
+    compact = tp2["compact_direct_allocation_estimate"]
+    assert compact["base_slots_including_null"] == 3
+    assert compact["base_bytes"] == 3 * 3 * 24 * 128 * 128 * 4
+    assert compact["log_bank_bytes"] == 3 * 3 * 24 * 1056 * 4
+    assert compact["padded_valid_bank_bytes"] == 3 * 3 * 24 * 8 * 4
+    assert compact["decode_conv_bytes"] == tp2["conv_state_bytes"]
+    assert not compact["production_cache_manager_support"]
 
 
 def test_digest_detects_mutated_input_before_estimating(budget):

@@ -540,3 +540,194 @@ Exact tested sources and products tiling are archived under
 library SHA256 values are respectively
 `787efd722754a96e2fa5ef4194bec5b86bc070ae9ea3bc86f3826d233b2b1068`
 and `49f2157b07d363f62a6a24969005973981e8f0b9a848d61e5b312cd22ee6cb6c`.
+
+### Fixed-manifest continued-state check
+
+`gdn-q4-log-fixed-trace-v4.json` runs all 128 saved request/acceptance/input
+seed records from the unchanged manifest with digest
+`0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524`.
+It passes 641 checks across official, full compact, partitioned serial and
+partitioned pipeline execution. Worst-request recorded output/candidate
+NRMSE is 0.0003298022 (0.03298%); canonical native export/accepted commit
+and same-schedule invariants remain exact. The test covers long histories,
+random request positions, mixed acceptance and paused request resumption.
+
+This is a recurrence correctness replay using a fixed capacity-128 buffer,
+not a full-model execution of the manifest's sequence lengths or per-step
+default dispatcher. Its timing samples use one separate B98 recurrence
+fixture after qualification. They must not be described as the manifest's
+average latency. In those local samples full compact/pipeline medians are
+688.16/676.38 us, a 1.71% difference. Together with the earlier 4.50% result,
+this shows the scheduling gain is small and sensitive to task distribution;
+it does not establish the target's dynamic full-replay improvement.
+
+## Complete real GDN layer qualification
+
+`multi_graph_gdn_q4_log_backend.py` introduces an explicit state object. It
+imports each request's declared initial accepted candidate once, maps real
+dense IDs to stable compact owners on device inside replay, and exposes
+snapshot/restore and explicit candidate export. Its canonical base/log/valid
+tensors are authoritative. The original dense SSM tensor becomes a stale
+initialization/control source, and non-spec or unknown consumers are rejected.
+The official convolution cache and metadata remain unchanged. Optional host
+generation guards cover declared fixture transactions; native arbitrary
+metadata, production retry and cache-manager integration remain unqualified.
+
+The separate `multi_graph_gdn_q4_log_layer_probe.py` executes the actual
+checkpoint's complete layer 4 under TP2, including input Norm, all projections,
+official convolution/gating/L2 normalization, recurrence, gated Norm, output
+projection and all-reduce, post Norm, MLP, final reduction and hidden/residual.
+All four controls keep the same full-layer math and use the default selected
+400-token capacity. Only the recurrence implementation/schedule changes.
+Inputs and metadata are synthetic, prepared outside this layer timer; no
+preceding FIA, full-model prefix or serving trace is executed.
+
+The first attempt is rejected by exact repetition because the official
+recurrence leaves inactive output lanes unspecified. Its step-1 mismatch
+starts at row 388, the first inactive token row for B97, and includes NaNs.
+Active output and all state invariants are not relaxed. The revised probe
+applies the same dynamic device output mask to hidden and residual in all
+timed controls, explicitly restoring inactive lanes to zero. Its CPU
+regression covers changing masks and NaN/Inf inactive values. The failure
+report is `gdn-q4-log-real-layer-v1-rejected.json`.
+
+`gdn-q4-log-real-layer-v2.json` passes 32 checks on each of two ranks over
+eight continued steps with B98/97/99/98 and mixed per-request acceptance.
+Same-schedule eager repetition/replay and compact partition equivalence are
+bitwise exact for output and physical state. Null/inactive conv, dense source,
+base, logs and flags remain unchanged; all logical candidates are exported
+and finite. Worst-request cross-algorithm NRMSE is 0.31313% for hidden,
+0.09080% for residual and approximately 1.00e-7 for candidate 4. These
+metrics pass the 0.5% screen but do not certify long full-model feedback.
+
+| Complete real layer | Critical-rank device round medians (us) | Median of round medians (us) |
+| --- | --- | ---: |
+| Official padding | 2826.36 / 2820.19 / 2826.92 | 2826.36 |
+| Compact padding | 2566.64 / 2561.07 / 2555.69 | 2561.07 |
+| Compact partitioned serial | 2603.23 / 2596.31 / 2604.76 | 2603.23 |
+| Compact partitioned pipeline | 2505.34 / 2505.37 / 2503.22 | 2505.34 |
+
+The common compact representation saves 9.39% against official padding.
+Partitioned pipeline adds 2.18% against equally optimized compact padding;
+that is the splitting-specific comparison. Their combined change versus
+official is not evidence that splitting beats fair padding by the goal's
+5% full-replay threshold.
+
+Raw samples also expose tails. With 24 measured samples per mode, device
+P95/P99 in microseconds are official 2846.74/2848.22, compact padding
+2599.02/4688.03, serial 2620.93/2645.69 and pipeline 2604.45/2662.85.
+Wall P95/P99 are respectively 3005.28/3177.25, 5029.08/5442.90,
+2770.93/2794.87 and 2771.58/2812.13. The padding control has outliers;
+these small-sample tails cannot establish stable serving-tail improvements.
+No samples are removed. Both ranks peak at 33,680,623,616 allocated and
+35,825,647,616 reserved bytes, including loaded weights, controls, four
+graphs, exports and snapshots. Original dense storage remains allocated in
+this layer test; it cannot establish full-model compact memory savings.
+
+Exact tested layer/backend/helper sources are retained under
+`/workspace/multi-graph-results/q4-log-real-layer-v2-tested-source/`.
+
+## Deferred accepted-state dependency experiment
+
+The remaining accepted-base commit is required before the next generation
+uses that request's state, but current attention output does not read the
+committed base. An isolated two-phase extension therefore separates
+`solve` (read old base/logs; emit outputs and staged new logs) from `commit`
+(apply old accepted prefix, then publish the active staged log into fixed
+canonical addresses). A second bank retains old operands during solve.
+Only active records are copied at publication; no full-bank copy or graph
+pointer flip is hidden. The endpoint must join state completion.
+
+`gdn-q4-log-deferred-v1.json` passes 32 device checks, including exact
+equivalence of the canonical state, attention, projection and all candidates
+to fused compact; repeated eager/replay; solve read-only state; accepted
+commit; inactive/null/page/finite checks across eight continued steps.
+This causal probe uses synthetic weights with the actual TP2-local output
+projection shape `[4B,3072] x [5120,3072]` and residual addition. It omits
+gated Norm, complete GDN layer, TP communication and model execution.
+
+Fused compact plus projection has round medians 849.82/846.14/849.66 us;
+deferred serial 920.01/922.12/921.94 us; deferred overlap
+819.06/817.14/816.13 us. The net saving against fused is only 32.52 us
+(3.83%); the phase boundary/publication cost is about 72.28 us and overlap
+recovers about 104.80 us. Isolated non-additive components are preparation
+235.80 us, solve 333.68 us, commit 330.49 us and projection/residual 119.08 us.
+This bounds the current mechanism: hiding a roughly 119 us projection cannot
+remove the entire 330 us commit. A real-layer experiment must launch commit
+after gated Norm and join after downstream work, then compare the complete
+endpoint against fused compact. Both padding and split may use this legal
+dependency optimization; it is not exclusive splitting credit.
+
+### Real-layer deferred commit result
+
+`gdn-q4-log-real-layer-deferred-v3.json` applies the two-phase extension to
+the complete actual layer. A forward prehook launches commit after the
+official gated Norm and before output GEMM. The root stream continues through
+output projection, TP reduction and MLP; its endpoint waits for commit and
+active-log publication before the common inactive output restoration. A
+pending-transaction guard rejects reentry or a missing launch/join. Capture
+contains these same event dependencies; snapshots retain canonical state.
+
+Both ranks pass 48 checks. Deferred serial and deferred overlap match fused
+compact output/base/log/valid bitwise at each continued step, including
+inactive/null isolation. Cross-algorithm metrics against official remain the
+same as the preceding layer test.
+
+| Complete layer control | Device round medians (us) | Median of round medians (us) |
+| --- | --- | ---: |
+| Official padding | 2829.43 / 2834.81 / 2839.24 | 2834.81 |
+| Compact fused padding | 2570.66 / 2577.22 / 2578.16 | 2577.22 |
+| Compact request pipeline | 2507.23 / 2505.57 / 2495.22 | 2505.57 |
+| Compact deferred serial | 2637.76 / 2639.83 / 2636.19 | 2637.76 |
+| Compact deferred overlap | 2361.29 / 2372.45 / 2353.16 | 2361.29 |
+
+Deferred overlap removes 216.0 us (8.38%) relative to fused compact and
+276.47 us (10.48%) relative to its own serial phase control. Its combined
+representation/dependency improvement against official is 16.70%. This is
+an actual complete-layer effect, with state completion counted. It is not
+full-model replay, and the dependency change is available to padding.
+Consequently deferred overlap becomes the fair padding baseline for the next
+request-partition experiment; neither 8.38% nor 16.70% is splitting credit.
+
+For compact fused/deferred overlap respectively, device P50/P95/P99 are
+2574.80/2591.11/2597.64 and 2357.59/2411.62/2414.25 us. Wall values are
+2700.98/2726.57/2727.34 and 2485.78/2539.54/2542.48 us. These are 24 samples
+per mode in one experiment, not stable serving-tail estimates. Peak allocated
+bytes are 33,743,615,488 per rank and reserved 35,773,218,816 for the entire
+process with six graphs and qualification histories. Staging logs are an
+additional physical bank even though canonical snapshots stay at three
+tensors. They must remain part of future full-model memory accounting.
+
+Exact tested backend and layer sources are archived under
+`/workspace/multi-graph-results/q4-log-real-layer-deferred-v3-tested-source/`.
+The next controlled combination pipelines range products/solves, joins output
+readiness before gated Norm, then defers the same full commit. Only its
+increment over deferred full-bucket padding can count as a split advantage.
+
+### Combined pipeline against equally optimized padding
+
+`gdn-q4-log-real-layer-combined-v4.json` adds a seventh control. It prepares
+the full inputs once, executes `P_A -> (solve_A || P_B) -> solve_B`, joins
+all output solves before gated Norm, then uses the same deferred commit
+launch and final state join as full-bucket deferred padding. Both sides
+have identical compact representation, commit publication, projections,
+TP reductions and MLP. Fixed halves partition tasks within the existing
+capacity; no custom capture size is introduced.
+
+Both ranks pass 56 checks with exact canonical state/output equivalence.
+Fair deferred-padding round medians are 2359.51/2352.82/2375.95 us; combined
+pipeline 2297.28/2295.11/2313.46 us. Paired round improvements are
+2.64%/2.45%/2.63%, and the median-of-rounds gain is 2.64%. This is the
+increment attributable to request partitioning after both common structural
+optimizations. It remains below 5% even for one complete GDN layer and must
+not be substituted for the full-model goal. The larger combined difference
+against the unmodified official operator mixes public and partition gains.
+
+The result justifies keeping the working implementation as a controlled
+baseline, while further structural work and complete replay integration
+remain necessary. The next integration must allocate compact base/logs
+directly across all GDN layers, run real prefix initialization, build all FIA
+metadata/providers and execute the fixed dynamic default-bucket trajectory.
+It must release the obsolete dense initialization pools rather than count
+unrealized memory savings. See
+[complete replay integration](multi_graph_gdn_q4_full_replay.md).

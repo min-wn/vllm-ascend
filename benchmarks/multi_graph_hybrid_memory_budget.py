@@ -208,6 +208,35 @@ def estimate_budget(inventory, trace_document, *, tensor_parallel_sizes=(2, 4, 8
         common["estimated_remaining_bytes_before_unknowns"] = (
             int(capacity_gib * 1024**3) - common["ideal_text_weights_plus_raw_state_and_max_fia_bytes"]
         )
+        compact_slots = residency["logical_requests"] + 1
+        local_value_heads = config["linear_num_value_heads"] // tp
+        compact_base = compact_slots * ssm_page * linear_layers
+        log_record_elements = trace["query"] * (config["linear_key_head_dim"] + config["linear_value_head_dim"] + 8)
+        log_bank = compact_slots * local_value_heads * log_record_elements * 4 * linear_layers
+        valid_bank = compact_slots * local_value_heads * 8 * 4 * linear_layers
+        compact_conv = slots * conv_page * linear_layers
+        products = (
+            residency["logical_requests"]
+            * local_value_heads
+            * config["linear_value_head_dim"]
+            * (2 * trace["query"])
+            * 4
+            * linear_layers
+        )
+        compact_total = ideal_text_weights + compact_base + 2 * log_bank + 2 * valid_bank + compact_conv + fia_maximum
+        common["compact_direct_allocation_estimate"] = dict(
+            base_slots_including_null=compact_slots,
+            base_bytes=compact_base,
+            decode_conv_bytes=compact_conv,
+            log_bank_bytes=log_bank,
+            padded_valid_bank_bytes=valid_bank,
+            two_log_and_valid_banks_bytes=2 * (log_bank + valid_bank),
+            products_scratch_all_layers_max_capacity_bytes=products,
+            ideal_text_weights_plus_compact_state_and_max_fia_bytes=compact_total,
+            remaining_bytes_before_products_and_unknowns=int(capacity_gib * 1024**3) - compact_total,
+            assumption="direct separate conv/base/log allocation; obsolete dense SSM pages released",
+            production_cache_manager_support=False,
+        )
         rows.append(common)
     return dict(
         status="cpu_capacity_estimate_not_allocation_or_oom_evidence",
