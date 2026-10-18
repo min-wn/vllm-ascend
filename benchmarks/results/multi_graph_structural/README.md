@@ -21,6 +21,15 @@ correctness checks. They do not establish a TP2 decoder performance win.
 - `gdn-q4-block-v3.json`: corrected DMA dependency, strict dynamic same-schedule
   checks and cross-algorithm error diagnostics. The complete recurrence saves
   about 61 us; it has not met the 135 us gate to justify a full GDN experiment.
+- `gdn-q4-block-v3-gqa-fold.json`: one stacked matrix per shared Q/K head;
+  complete recurrence saves about 86 us against its paired official control.
+  This also remains below the 135 us gate.
+- `gdn-q4-direct-v5.json`: direct selected-cache Cube products plus the V3
+  solver/materializer. Complete recurrence passes its 135 us investment gate.
+- `gdn-q4-direct-queue-v4.json`: same direct products with double-buffered
+  candidate output. Full recurrence accounting and strict continued checks.
+- `gdn-q4-strided-v5.json`: page-strided state qualification with canaries in
+  each page gap; avoids a state-layout copy before real-layer integration.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
   trajectory. This is an input manifest; it has not yet been executed by an
   integrated engine benchmark. Its canonical `trace_digest` is

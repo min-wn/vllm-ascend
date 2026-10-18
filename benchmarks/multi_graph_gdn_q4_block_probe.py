@@ -18,13 +18,18 @@ def main():
     source_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--extension", type=Path, required=True)
+    parser.add_argument(
+        "--products-extension", type=Path, help="direct selected-cache Cube products instead of gather/BMM"
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--batch", type=int, default=100)
     parser.add_argument("--live", type=int, default=98)
     parser.add_argument("--repeats", type=int, default=12)
+    parser.add_argument("--state-padding", type=int, default=0, help="BF16 canary elements between logical state slots")
+    parser.add_argument("--fold-gqa", action="store_true", help="stack the three value-head matrices sharing each Q/K")
     parser.add_argument("--recheck-eager", action="store_true", help="diagnose eager determinism before replay checks")
     args = parser.parse_args()
-    if args.output.exists() or not 3 <= args.live <= args.batch <= 128 or args.repeats < 3:
+    if args.output.exists() or not 3 <= args.live <= args.batch <= 128 or args.repeats < 3 or args.state_padding < 0:
         parser.error("new output path, 3 <= live <= batch <= 128 and repeats >= 3 required")
     import torch
     import torch.nn.functional as functional
@@ -39,18 +44,34 @@ def main():
     spec = importlib.util.spec_from_file_location("gdn_q4_block", args.extension)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    product_module = None
+    if args.products_extension:
+        product_spec = importlib.util.spec_from_file_location("gdn_q4_products", args.products_extension)
+        product_module = importlib.util.module_from_spec(product_spec)
+        product_spec.loader.exec_module(product_module)
     q, k = tuple(torch.empty(batch * 4, key_heads, width, device=device, dtype=torch.bfloat16) for _ in range(2))
     v = torch.empty(batch * 4, heads, width, device=device, dtype=torch.bfloat16)
     beta = torch.empty(batch * 4, heads, device=device, dtype=torch.bfloat16)
     gate = torch.empty(batch * 4, heads, device=device)
     initial = (torch.randn(batch + 1, heads, width, width, device=device) * 0.01).bfloat16()
     initial = torch.cat((initial[:1], initial[1:].repeat_interleave(4, dim=0)))
-    caches = {mode: initial.clone() for mode in ("official", "block")}
+    cache_pages = {
+        mode: torch.full(
+            (len(initial), heads * width * width + args.state_padding), 7, dtype=torch.bfloat16, device=device
+        )
+        for mode in ("official", "block")
+    }
+    caches = {
+        mode: pages[:, : heads * width * width].view(len(initial), heads, width, width)
+        for mode, pages in cache_pages.items()
+    }
+    for state in caches.values():
+        state.copy_(initial)
     output = torch.zeros_like(v)
     sequence = torch.zeros(batch + 1, dtype=torch.int32, device=device)
     ids = torch.zeros(batch * 4, dtype=torch.int32, device=device)
     accepted = torch.ones(batch, dtype=torch.int32, device=device)
-    product_storage = torch.empty(batch, heads, width, 8, device=device)
+    product_storage = torch.zeros(batch, heads, width, 8, device=device)
     state_tensors = (*caches.values(), output)
     rng = random.Random(88107)
     checks, diagnostics = [], []
@@ -94,15 +115,30 @@ def main():
         torch.npu.synchronize()
         return [0] + [1 + request * 4 + token for request in set(range(batch)) - set(requests) for token in range(4)]
 
-    def products(state):
+    def bmm_products(state, target):
         selected = ids.view(batch, 4).gather(1, (accepted - 1).long().view(batch, 1)).view(batch).long()
-        base = state.index_select(0, selected).view(batch * heads, width, width)
+        matrix_heads = key_heads if args.fold_gqa else heads
+        matrix_rows = width * (heads // key_heads) if args.fold_gqa else width
+        base = state.index_select(0, selected).view(batch * matrix_heads, matrix_rows, width)
         # Raw BF16 query stays unscaled here. The FP32 consumer applies scale.
         rhs = torch.cat((k.view(batch, 4, key_heads, width), q.view(batch, 4, key_heads, width)), dim=1)
-        rhs = rhs.permute(0, 2, 3, 1).repeat_interleave(heads // key_heads, dim=1).contiguous()
+        rhs = rhs.permute(0, 2, 3, 1)
+        if not args.fold_gqa:
+            rhs = rhs.repeat_interleave(heads // key_heads, dim=1)
+        rhs = rhs.contiguous()
         torch.ops.aten.bmm.dtype_out(
-            base, rhs.view(batch * heads, width, 8), torch.float32, out=product_storage.view(batch * heads, width, 8)
+            base,
+            rhs.view(batch * matrix_heads, width, 8),
+            torch.float32,
+            out=target.view(batch * matrix_heads, matrix_rows, 8),
         )
+        return target
+
+    def products(state):
+        if product_module is not None:
+            product_module.products(state, q, k, sequence, ids, accepted, product_storage)
+        else:
+            bmm_products(state, product_storage)
         return product_storage
 
     def block_op():
@@ -134,6 +170,10 @@ def main():
     def finite(tensors):
         if any(not torch.isfinite(tensor).all().item() for tensor in tensors):
             raise AssertionError("nonfinite block recurrence result")
+        if args.state_padding:
+            for pages in cache_pages.values():
+                if not (pages[:, heads * width * width :] == 7).all().item():
+                    raise AssertionError("recurrence overwrote padding between state pages")
 
     def metrics(actual, expected, stage, step, live):
         finite((actual, expected))
@@ -168,6 +208,14 @@ def main():
     graphs, graph_outputs = {}, {}
     operations = (("official", official_op), ("block", block_op))
     metadata(args.live, 0)
+    if product_module is not None:
+        cache_before = caches["block"].clone()
+        expected = bmm_products(caches["block"], torch.empty_like(product_storage))
+        observed = products(caches["block"])
+        torch.npu.synchronize()
+        torch.testing.assert_close(observed[: args.live], expected[: args.live], rtol=1e-4, atol=2e-6)
+        exact(caches["block"], cache_before, "direct_products/cache_read_only")
+        checks.append(dict(stage="direct_products", compared_to_registered_bmm_fp32=True))
     for mode, operation in operations:
         saved = snapshot()
         stream, graph = torch.npu.Stream(), torch.npu.NPUGraph()
@@ -252,18 +300,30 @@ def main():
         diagnostics=diagnostics,
         samples=samples,
         batch=batch,
+        state_strides=list(caches["block"].stride()),
+        state_padding_canary_elements=args.state_padding,
         live=args.live,
-        includes="selected-state gather, GQA Q/K packing, FP32 BMM, solve, four dense states",
+        includes=(
+            "direct selected-state Cube products, solve, four dense states"
+            if product_module is not None
+            else "selected-state gather, GQA Q/K packing, FP32 BMM, solve, four dense states"
+        ),
         excludes="convolution, model layers, TP communication, FIA and serving input preparation",
         source_sha256=source_sha256,
         extension_sha256=hashlib.sha256(args.extension.read_bytes()).hexdigest(),
+        products_extension_sha256=(
+            hashlib.sha256(args.products_extension.read_bytes()).hexdigest() if args.products_extension else None
+        ),
+        fold_gqa=args.fold_gqa,
         numerical_gate="cross-algorithm <=0.5% NRMSE; same-schedule eager/replay bit exact; no model quality claim",
         memory=dict(
             peak_allocated_bytes=torch.npu.max_memory_allocated(),
             peak_reserved_bytes=torch.npu.max_memory_reserved(),
             fixed_product_bytes=product_storage.numel() * product_storage.element_size(),
-            gathered_base_bytes=batch * heads * width * width * 2,
-            packed_rhs_bytes=batch * heads * width * 8 * 2,
+            gathered_base_bytes=0 if product_module is not None else batch * heads * width * width * 2,
+            packed_rhs_bytes=(
+                0 if product_module is not None else batch * (key_heads if args.fold_gqa else heads) * width * 8 * 2
+            ),
             scope="process with both graphs and correctness snapshots; not full-model incremental peak",
         ),
     )

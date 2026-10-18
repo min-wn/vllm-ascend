@@ -4,12 +4,12 @@
 #include <torch_npu/csrc/framework/OpCommand.h>
 
 extern "C" void q4_block_launch(uint32_t, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*, void*,
-                                void*, uint32_t, uint32_t);
+                                void*, uint32_t, uint32_t, uint64_t);
 
 namespace {
-void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank) {
+void check(const at::Tensor& tensor, at::ScalarType dtype, int64_t rank, bool contiguous = true) {
   TORCH_CHECK(tensor.device().type() == c10::DeviceType::PrivateUse1, "NPU tensors required");
-  TORCH_CHECK(tensor.scalar_type() == dtype && tensor.dim() == rank && tensor.is_contiguous(),
+  TORCH_CHECK(tensor.scalar_type() == dtype && tensor.dim() == rank && (!contiguous || tensor.is_contiguous()),
               "contiguous tensor with declared dtype and rank required");
 }
 
@@ -20,7 +20,10 @@ void emit(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor valu
   for (const auto& tensor : {query, key, value, output}) check(tensor, at::kBFloat16, 3);
   check(beta, at::kBFloat16, 2);
   check(gate, at::kFloat, 2);
-  check(state, at::kBFloat16, 4);
+  check(state, at::kBFloat16, 4, false);
+  TORCH_CHECK(state.stride(3) == 1 && state.stride(2) == 128 && state.stride(1) == 128 * 128 &&
+                  state.stride(0) >= 24 * 128 * 128,
+              "state requires contiguous heads/rows with optional page padding");
   for (const auto& tensor : {sequence, stateIds, accepted}) check(tensor, at::kInt, 1);
   const int64_t batch = accepted.numel(), tokens = batch * 4;
   TORCH_CHECK(batch >= 1 && batch <= 128 && cores >= 1 && cores <= 40, "invalid A2 prototype extent");
@@ -44,7 +47,7 @@ void emit(at::Tensor products, at::Tensor query, at::Tensor key, at::Tensor valu
   command.SetCustomHandler([=]() -> int {
     q4_block_launch(cores, stream, products.data_ptr(), query.data_ptr(), key.data_ptr(), value.data_ptr(),
                     beta.data_ptr(), gate.data_ptr(), state.data_ptr(), sequence.data_ptr(), stateIds.data_ptr(),
-                    accepted.data_ptr(), output.data_ptr(), batch, state.size(0));
+                    accepted.data_ptr(), output.data_ptr(), batch, state.size(0), state.stride(0));
     return 0;
   });
   command.Run();

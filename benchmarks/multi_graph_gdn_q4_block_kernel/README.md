@@ -10,7 +10,9 @@ extension.emit(products, query, key, value, beta, gate, state,
                sequence, state_ids, accepted, output, cores=40)
 ```
 
-All buffers are contiguous and on one NPU. The supported contract is Q=4,
+All buffers are on one NPU. State supports a padded slot stride while the
+head/value/key dimensions remain contiguous; other buffers are contiguous.
+The supported contract is Q=4,
 1 <= B <= 128, Hk=8, Hv=24, and both state dimensions 128.
 
 | Buffer | Dtype | Shape and meaning |
@@ -41,6 +43,11 @@ The task then reads the selected state in V=64 tiles, performs four ordered
 FP32 decay/FMA state updates, and writes every BF16 candidate. BF16 candidate
 writes do not feed back into later tokens inside a step; the next step loads
 the selected BF16 candidate.
+
+Candidate output uses a separate two-buffer VECOUT queue. Queue ownership
+protects the DMA source until completion while allowing the next token's
+arithmetic to proceed. Input/scratch storage remains separate from those
+candidate buffers; no arithmetic or BF16 step-boundary rule changes.
 
 The block solve and Cube products reassociate floating point operations.
 Official cross-algorithm bit equality is not expected. Same-implementation

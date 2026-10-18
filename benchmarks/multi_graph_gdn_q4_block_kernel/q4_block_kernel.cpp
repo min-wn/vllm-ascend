@@ -16,10 +16,11 @@ class Q4Block {
  public:
   __aicore__ inline void Init(GM_ADDR products, GM_ADDR query, GM_ADDR key, GM_ADDR value, GM_ADDR beta, GM_ADDR gate,
                               GM_ADDR state, GM_ADDR sequence, GM_ADDR ids, GM_ADDR accepted, GM_ADDR output,
-                              uint32_t batch, uint32_t slots, TPipe* pipe) {
+                              uint32_t batch, uint32_t slots, uint64_t stateStride, TPipe* pipe) {
     pipe_ = pipe;
     batch_ = batch;
     slots_ = slots;
+    stateStride_ = stateStride;
     products_.SetGlobalBuffer((__gm__ float*)products);
     query_.SetGlobalBuffer((__gm__ bfloat16_t*)query);
     key_.SetGlobalBuffer((__gm__ bfloat16_t*)key);
@@ -34,6 +35,7 @@ class Q4Block {
     pipe->InitBuffer(stateBuffer_, kVTile * kWidth * sizeof(float));
     pipe->InitBuffer(outerBuffer_, kVTile * kWidth * sizeof(float));
     pipe->InitBuffer(bf16Buffer_, kVTile * kWidth * sizeof(bfloat16_t));
+    pipe->InitBuffer(stateOutputQueue_, 2, kVTile * kWidth * sizeof(bfloat16_t));
     pipe->InitBuffer(queryBuffer_, kTokens * kWidth * sizeof(float));
     pipe->InitBuffer(keyBuffer_, kTokens * kWidth * sizeof(float));
     pipe->InitBuffer(valueBuffer_, kTokens * kWidth * sizeof(float));
@@ -209,7 +211,7 @@ class Q4Block {
     auto key = keyBuffer_.Get<float>();
     auto updates = updateBuffer_.Get<float>();
     for (uint32_t vStart = 0; vStart < kWidth; vStart += kVTile) {
-      const uint64_t source = (static_cast<uint64_t>(selected) * kHeads + head) * kWidth * kWidth + vStart * kWidth;
+      const uint64_t source = static_cast<uint64_t>(selected) * stateStride_ + head * kWidth * kWidth + vStart * kWidth;
       Sync<HardEvent::V_MTE2>();
       DataCopy(bf16, state_[source], kVTile * kWidth);
       Sync<HardEvent::MTE2_V>();
@@ -230,12 +232,16 @@ class Q4Block {
         PipeBarrier<PIPE_V>();
         const int32_t target = ids_.GetValue(begin + token);
         if (target != 0) {
-          Cast(bf16, state, RoundMode::CAST_RINT, kVTile * kWidth);
-          Sync<HardEvent::V_MTE3>();
+          auto candidate = stateOutputQueue_.AllocTensor<bfloat16_t>();
+          Cast(candidate, state, RoundMode::CAST_RINT, kVTile * kWidth);
+          stateOutputQueue_.EnQue<bfloat16_t>(candidate);
+          auto ready = stateOutputQueue_.DeQue<bfloat16_t>();
           const uint64_t destination =
-              (static_cast<uint64_t>(target) * kHeads + head) * kWidth * kWidth + vStart * kWidth;
-          DataCopy(state_[destination], bf16, kVTile * kWidth);
-          Sync<HardEvent::MTE3_V>();
+              static_cast<uint64_t>(target) * stateStride_ + head * kWidth * kWidth + vStart * kWidth;
+          DataCopy(state_[destination], ready, kVTile * kWidth);
+          // The queue owns the MTE3->V reuse dependency. A second candidate
+          // buffer permits the next token's arithmetic during this DMA.
+          stateOutputQueue_.FreeTensor(ready);
         }
       }
     }
@@ -243,6 +249,7 @@ class Q4Block {
 
   TPipe* pipe_;
   uint32_t batch_, slots_;
+  uint64_t stateStride_;
   float gamma_[kTokens];
   GlobalTensor<float> products_, gate_;
   GlobalTensor<bfloat16_t> query_, key_, value_, beta_, state_, output_;
@@ -250,22 +257,24 @@ class Q4Block {
   TBuf<TPosition::VECCALC> stateBuffer_, outerBuffer_, bf16Buffer_, queryBuffer_, keyBuffer_, valueBuffer_;
   TBuf<TPosition::VECCALC> updateBuffer_, outputBuffer_, outputBf16Buffer_, productsBuffer_, gramBuffer_;
   TBuf<TPosition::VECCALC> scalarBuffer_, temporary_, indicesBuffer_;
+  TQue<QuePosition::VECOUT, 2> stateOutputQueue_;
 };
 }  // namespace
 
 __global__ __aicore__ void q4_block(GM_ADDR products, GM_ADDR query, GM_ADDR key, GM_ADDR value, GM_ADDR beta,
                                     GM_ADDR gate, GM_ADDR state, GM_ADDR sequence, GM_ADDR ids, GM_ADDR accepted,
-                                    GM_ADDR output, uint32_t batch, uint32_t slots) {
+                                    GM_ADDR output, uint32_t batch, uint32_t slots, uint64_t stateStride) {
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
   TPipe pipe;
   Q4Block op;
-  op.Init(products, query, key, value, beta, gate, state, sequence, ids, accepted, output, batch, slots, &pipe);
+  op.Init(products, query, key, value, beta, gate, state, sequence, ids, accepted, output, batch, slots, stateStride,
+          &pipe);
   op.Process();
 }
 
 extern "C" void q4_block_launch(uint32_t cores, void* stream, void* products, void* query, void* key, void* value,
                                 void* beta, void* gate, void* state, void* sequence, void* ids, void* accepted,
-                                void* output, uint32_t batch, uint32_t slots) {
+                                void* output, uint32_t batch, uint32_t slots, uint64_t stateStride) {
   q4_block<<<cores, nullptr, stream>>>(products, query, key, value, beta, gate, state, sequence, ids, accepted, output,
-                                       batch, slots);
+                                       batch, slots, stateStride);
 }

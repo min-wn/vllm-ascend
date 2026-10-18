@@ -159,6 +159,16 @@ def request_values(workload, start, stop, batch, variant):
 
 
 def experiment(args, workload, runner, model, inputs, context, reset_kv, *, module):
+    if getattr(args, "gdn_block_extension", None) is None:
+        return run_experiment(args, workload, runner, model, inputs, context, reset_kv, module=module)
+    from multi_graph_gdn_q4_backend import installed_backend
+
+    with installed_backend(args.gdn_block_extension, args.gdn_products_extension) as backend:
+        args.gdn_block_backend = backend
+        return run_experiment(args, workload, runner, model, inputs, context, reset_kv, module=module)
+
+
+def run_experiment(args, workload, runner, model, inputs, context, reset_kv, *, module):
     # The weight-only loader's callbacks intentionally carry no attention state.
     # This experiment owns and qualifies only the selected full-attention layer.
     import torch
@@ -1436,6 +1446,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             summaries[mode] = summary
         report = dict(
             status="completed_with_numerical_diagnostics" if args.numerical_assessment else "passed",
+            experimental_gdn_backend=(
+                args.gdn_block_backend.describe() if getattr(args, "gdn_block_backend", None) is not None else None
+            ),
             numerical_assessment=args.numerical_assessment,
             scope="two_adjacent_decoder_layers_not_full_model"
             if adjacent is not None
@@ -1604,6 +1617,8 @@ def main():
     parser.add_argument("--repeats", type=int, default=8)
     parser.add_argument("--trace", action="store_true")
     parser.add_argument("--gdn-probe", action="store_true", help="qualify actual adjacent GDN layer and state capture")
+    parser.add_argument("--gdn-block-extension", type=Path, help="explicit experimental Q4 recurrence library")
+    parser.add_argument("--gdn-products-extension", type=Path, help="direct selected-cache products library")
     parser.add_argument("--gdn-pipeline", action="store_true", help="time complete layer 3 to layer 4 GDN pipeline")
     parser.add_argument(
         "--gdn-wavefront",
@@ -1677,6 +1692,10 @@ def main():
     )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if bool(args.gdn_block_extension) != bool(args.gdn_products_extension):
+        parser.error("experimental GDN requires both block and products extensions")
+    if args.gdn_block_extension and not args.gdn_pipeline:
+        parser.error("experimental GDN backend currently requires the complete --gdn-pipeline endpoint")
     args.split_output_overlap_requested = args.split_output_overlap
     if args.numerical_assessment and not args.gdn_pipeline:
         parser.error("--numerical-assessment requires --gdn-pipeline")

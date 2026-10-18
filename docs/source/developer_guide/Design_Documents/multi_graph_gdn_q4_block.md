@@ -341,8 +341,25 @@ small, deterministic cross-algorithm differences recorded above.
 
 ## Next structural target: direct selected-state Cube products
 
-The measured complete recurrence still needs at least another 73.76 us
-removed to pass the 135 us gate. The eight-column product diagnostic shows
+An additional registered-BMM control folds the three consecutive value-head
+matrices that share one key/query head. Their selected H0 matrices form a
+contiguous `[384,128]` matrix and use one `[128,8]` RHS, rather than three
+separate `[128,128]` products with replicated RHS. The FP32 result reshapes
+directly to the existing `[3,128,8]` value-head layout. This preserves the TP
+partition and all request/candidate state identities.
+
+`gdn-q4-block-v3-gqa-fold.json` passes the same 16 strict graph checks and
+eight continued steps, including mixed accepted counts, random stable IDs,
+inactive/null slots and per-prefix drift checks. It uses the unchanged V3
+solve/materialization binary. Its three official device round medians are
+1011.18/1011.42/1011.35 us; block medians are 924.35/926.18/925.12 us.
+The paired median-of-rounds saving is 86.23 us, still below the 135 us gate.
+Clock differences between this run and the preceding run prevent assigning
+their raw block-time difference entirely to folding. Direct Cube products
+will use the same folded shape to avoid three separate Matmul API calls.
+
+The initial un-folded recurrence needs another 73.76 us removed to pass the
+135 us gate; the folded control still needs 48.77 us. The product diagnostic shows
 roughly 106-110 us between prepacked products and the real gather/pack/product
 endpoint. Eliminating globally materialized selected-state and GQA RHS
 buffers therefore identifies a concrete candidate budget. It does not prove
@@ -365,6 +382,64 @@ must also be applied to the padding control before any split advantage is
 claimed. The framework integration is deferred pending this causal result.
 
 ## Cost budget and stop gates
+
+### Direct products and page-strided qualification
+
+The first direct Cube implementation reads the accepted BF16 state slot in
+place. It forms raw K/Q in L1 NZ using two strided copies and folds the three
+value heads per key head into one M384/N8/K128 Matmul with FP32 output. The
+fixed CANN host tiling is generated at build time. The runtime kernel reads
+current state IDs, counts and accepted values from device metadata; it does
+not call host shape update or depend on conditional graph support.
+
+`gdn-q4-direct-v5.json` qualifies this implementation against registered
+FP32-output BMM and verifies read-only cache access. It then passes all
+continued-state, repeated-eager and graph checks using the existing V3
+solver/materializer. Median-of-round medians is 1010.79 us for official and
+777.64 us for block: 233.15 us saved. Block round medians are
+781.25/777.64/775.60 us. This exceeds the 135 us gate for a real-layer
+experiment, but is still a single-device recurrence result.
+
+The solve/materializer's V4 control adds an independent two-deep VECOUT queue
+for candidate BF16 writes. It retains FP32 operation order and all four state
+snapshots, and no longer waits for each individual DMA before computing the
+next token. `gdn-q4-direct-queue-v4.json` passes the same checks. Paired
+official round medians are 1012.45/1000.72/1000.35 us and block medians are
+706.89/691.38/690.65 us, giving median-of-rounds 1000.72 versus 691.38 us.
+These are endpoint measurements, not sums of isolated savings.
+
+Real GDN `bind_kv_cache` views share one page with conv state and can have a
+gap between SSM slots. Both native kernels now accept a static slot stride,
+while requiring contiguous inner head/value/key dimensions. There is no
+layout conversion or state copy. `gdn-q4-strided-v5.json` uses stride
+`[425984,16384,128,1]` and 32768 BF16 canary elements per slot. All 17 checks
+pass, including gap canaries, repeated eager, graph replay, random request
+identity, mixed accepted values and continued states. Paired round medians
+are official 1012.82/1013.11/1013.19 us and block 701.63/702.85/704.81 us.
+
+The direct algorithm retains a fixed FP32 products buffer of 9,830,400 bytes
+at capacity 100. It removes the named gathered-state and packed-RHS global
+buffers. Reported allocator peaks still include both controls, graphs and
+qualification snapshots; they are not a measured full-model memory delta.
+
+An explicit benchmark adapter replaces only the real GDN recurrence call.
+Convolution, gating, Q/K normalization, output normalization and cache
+ownership remain with the official layer. It validates supported Q4 metadata
+and refuses incompatible speculative calls rather than silently falling back.
+Each independent metadata lane receives its own persistent products/output
+buffers. Outputs are cleared inside the timed graph so inactive values remain
+defined. Padding and split use the same backend; this generic operator gain
+does not by itself establish an advantage of splitting. TP2 layer and full
+replay results are still required.
+
+The first real-layer attempt was deliberately rejected by the adapter: the
+loaded model uses FP32 SSM state, shape `[401,24,128,128]`, stride
+`[458752,16384,128,1]`. The preceding operator qualifications use BF16 state.
+Their savings therefore cannot be transferred to the actual default model
+without qualification at its FP32 state precision. The implementation must
+preserve the model's FP32 state, rather than silently convert it to BF16 to
+reuse a successful operator result. `tp2-q4-block-layout-v2.log` retains this
+diagnostic. This attempt produced no layer performance measurement.
 
 The preceding matching recurrence control is approximately 989-999 us, while
 the scoped GDN layer endpoint is about 2709 us. A five-percent GDN improvement
