@@ -1,0 +1,529 @@
+{
+  "date": "2026-10-18",
+  "stage": "isolated native compatibility qualification",
+  "assessment_completed": true,
+  "target_qualification_passed": false,
+  "conclusion": "Native package/extension and D128 constant eager execution pass; actual Q4/D256/GQA6 attention is rejected by the upstream dimension route. Guard-only enablement would violate K L1 slot capacity.",
+  "source_commit": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+  "source_archive_sha256": "ae9570e8bfb601e225edee81d874f336f4252add2a2d080a41193be5462cb2b9",
+  "remote_root": "/workspace/aclgraph-sink-stage1-bec19b8dea1e",
+  "raw_local_evidence_relative_to_parent_workspace": "outputs/thesis_incremental_plan/stage1-evidence",
+  "environment": {
+    "device": "Ascend910B3",
+    "physical_device": 0,
+    "torch": "2.10.0+cpu",
+    "torch_npu": "2.10.0.post4",
+    "cann": "9.1.0",
+    "driver": "24.1.rc3",
+    "stream_core_limit": {
+      "cube_core_num": 20,
+      "vector_core_num": 40
+    }
+  },
+  "native_build": {
+    "command": [
+      "bash",
+      "-o",
+      "pipefail",
+      "build.sh",
+      "--pkg",
+      "--ops=fused_infer_attention_score_v2_sink;fused_infer_attention_score_v2_sink_metadata",
+      "--soc=ascend910b",
+      "--vendor_name=thesis_fia_stage1",
+      "-j4"
+    ],
+    "started_unix": 1792323991.3323748,
+    "state": "completed",
+    "pid": 846674,
+    "attempt": "bounded_inner_make_parallelism",
+    "returncode": 0,
+    "finished_unix": 1792325480.1473572
+  },
+  "artifacts": {
+    "scope": "read-only final artifact inventory; no NPU work",
+    "package": {
+      "path": "source/csrc/build/cann-ops-transformer-thesis_fia_stage1_linux-aarch64.run",
+      "bytes": 19392188,
+      "sha256": "72cc23bc8681b18a031e38397178bc12df3721e610e615567f7a5ed308f3ea09"
+    },
+    "source_files": [
+      {
+        "path": "source/csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling.cpp",
+        "bytes": 2673,
+        "sha256": "9f384cd30a3ffdb86b36588976769093056b27db6bb973bd58f322e033bac8ea"
+      },
+      {
+        "path": "source/csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp",
+        "bytes": 15361,
+        "sha256": "a8c628b253010b14e5a7f855dc964b40fdc5a25c85ef3d64581ae70f4001fa06"
+      },
+      {
+        "path": "source/csrc/attention/fused_infer_attention_score_v2_sink/op_host/fia_tiling_nonquant_sink.cpp",
+        "bytes": 31841,
+        "sha256": "2205041e4d604ba8f006b6b4d2c8418c048f79e315f45fc2f95185149fe65a5a"
+      },
+      {
+        "path": "source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h",
+        "bytes": 61453,
+        "sha256": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041"
+      },
+      {
+        "path": "source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+        "bytes": 68301,
+        "sha256": "600b15942b202996c480a5b978eb56d7045591aeb40012f6e0463d475964ac06"
+      }
+    ],
+    "aicpu_configs": [
+      {
+        "path": "opp/packages/vendors/thesis_fia_stage1_transformer/op_impl/cpu/config/cust_aicpu_kernel.json",
+        "bytes": 437,
+        "sha256": "1127c8287069e1ab1f2a681e76a3dd9c1385eb86e2a8584dd02400333ed09203",
+        "content": {
+          "FusedInferAttentionScoreV2SinkMetadata": {
+            "opInfo": {
+              "computeCost": "100",
+              "engine": "DNN_VM_AICPU",
+              "flagAsync": "False",
+              "flagPartial": "False",
+              "functionName": "RunCpuKernel",
+              "kernelSo": "libfia_v2_sink_aicpu_kernels.so",
+              "opKernelLib": "CUSTAICPUKernel",
+              "userDefined": "True",
+              "workspaceSize": "100"
+            }
+          }
+        }
+      }
+    ],
+    "opapi": {
+      "path": "opp/packages/vendors/thesis_fia_stage1_transformer/op_api/lib/libcust_opapi.so",
+      "bytes": 202672,
+      "sha256": "db876e892f7256ff97ca549cd03d9972b37af4afd48fbe88094778830e76ef6e"
+    },
+    "aicpu_alias": {
+      "path": "opp/packages/vendors/thesis_fia_stage1_transformer/op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so",
+      "bytes": 5375824,
+      "sha256": "f061c392d2e0d7a9a78c91685682b89ef39e419a90aa3115325bcc48a845e66a"
+    },
+    "extension": {
+      "path": "extension-build/thesis_fia_sink_bec19b8dea1e.so",
+      "bytes": 2581832,
+      "sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b"
+    }
+  },
+  "native_source_files_match_pinned_archive": true,
+  "native_source_changes": [
+    {
+      "file": "csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp",
+      "before_sha256": "bffd08092e0c431674f1c361681be58315a714d517d80136a18edb1faf1bbeec",
+      "after_sha256": "a3e4bbeeca240d55d09f8624efe0a83fc5e77c1f692d72f73ee55a0872e9b51d",
+      "old": "#include \"../../common/aicpu/cpu_context_util.h\"",
+      "new": "#include \"../aicpu/cpu_context_util.h\"",
+      "reason": "Use the operator-local, audited AICPU utility header already shipped by this exact commit."
+    }
+  ],
+  "host_adapter_changes": [
+    "Separate Torch dispatcher and C++ namespaces; exact pinned schemas.",
+    "EXEC_NPU_CMD_V1 assigns owning workspace tensor without shadowing and captures ownership by value; eager same-stream only qualified."
+  ],
+  "extension": {
+    "state": "completed",
+    "returncode": 0,
+    "namespace": "thesis_fia_sink_stage1",
+    "library_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+    "schemas": {
+      "npu_fused_infer_attention_score_v2_sink": {
+        "schema": "thesis_fia_sink_stage1::npu_fused_infer_attention_score_v2_sink(Tensor query, Tensor key, Tensor value, *, Tensor? query_rope=None, Tensor? key_rope=None, Tensor? pse_shift=None, Tensor? atten_mask=None, Tensor? actual_seq_qlen=None, Tensor? actual_seq_kvlen=None, Tensor? block_table=None, Tensor? meta_data=None, int num_query_heads=1, int num_key_value_heads=0, float softmax_scale=1., int pre_tokens=2147483647, int next_tokens=2147483647, str input_layout=\"TND\", int sparse_mode=0, int block_size=0, int inner_precise=0, bool return_softmax_lse=False) -> (Tensor, Tensor)",
+        "PrivateUse1": true,
+        "Meta": true
+      },
+      "_npu_fused_infer_attention_score_v2_sink_metadata": {
+        "schema": "thesis_fia_sink_stage1::_npu_fused_infer_attention_score_v2_sink_metadata(int num_heads_q, int num_heads_kv, int head_dim_qk, int head_dim_v, *, Tensor? actual_seq_lengths=None, Tensor? actual_seq_lengths_kv=None, int batch_size=0, int sparse_mode=0, int pre_tokens=2147483647, int next_tokens=2147483647, str input_layout=\"TND\", str input_layout_kv=\"TND\", int sink_num=0, int k_sink_num=0, int rope_head_dim=0, int block_size=0, int aic_core_num=24, int aiv_core_num=48, bool batch_invariant=False) -> Tensor",
+        "PrivateUse1": true,
+        "Meta": true
+      }
+    }
+  },
+  "storage_field_layout_checks": {
+    "scope": "host compile-time field-layout checks only; no NPU operation",
+    "command": [
+      "c++",
+      "-std=c++17",
+      "-fsyntax-only",
+      "-Wno-invalid-offsetof",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-I",
+      "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/include",
+      "-I",
+      "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/include/torch/csrc/api/include",
+      "-I",
+      "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/include",
+      "-I",
+      "/workspace/aclgraph-sink-stage1-bec19b8dea1e/extension-src",
+      "-I",
+      "/usr/local/Ascend/cann-9.1.0/include",
+      "-I",
+      "/usr/local/python3.12.13/include/python3.12",
+      "/workspace/aclgraph-sink-stage1-bec19b8dea1e/storage-abi-check.cpp"
+    ],
+    "returncode": 0,
+    "installed_header": "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/include/torch_npu/csrc/core/NPUStorageImpl.h",
+    "installed_header_sha256": "c4c488410e53760739c32de25dc00bcd53d0d55a55d48247d248671ccb06e9f1",
+    "shim_header_sha256": "407e86014082847bd57812b8b904111c755e7ef5011cd51deed0fdaece643e50",
+    "assertions": [
+      "descriptor sizeof",
+      "descriptor alignof",
+      "storage_sizes_ offset",
+      "npu_format_ offset",
+      "origin_format_ offset",
+      "npu_desc_ offset"
+    ],
+    "limitation": "Field-layout agreement does not prove general private-ABI or graph/stream lifetime safety."
+  },
+  "library_isolation": {
+    "symbols": [
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkV3GetWorkspaceSize",
+        "source": "/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xffffa99b62b0"
+      },
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkV3",
+        "source": "/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xffffa99b5930"
+      },
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkMetadataGetWorkspaceSize",
+        "source": "/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xffffa99c2490"
+      },
+      {
+        "symbol": "aclnnFusedInferAttentionScoreV2SinkMetadata",
+        "source": "/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer/op_api/lib/libcust_opapi.so",
+        "address": "0xffffa99c23b0"
+      }
+    ],
+    "opapi_mappings": [
+      "/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer/op_api/lib/libcust_opapi.so"
+    ],
+    "python_startup_opp": "/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/opp/vendors/fla_npu_transformer:/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/opp/vendors/fla_npu_transformer/op_api/lib:/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer",
+    "effective_opp_before_native_load": "/workspace/aclgraph-sink-stage1-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage1_transformer"
+  },
+  "executed_smoke_script_sha256": "4420f2e62f6bef5b7d4d8d02bb652bae682d9ad6144bd84a97f3dda7d6c7e661",
+  "raw_smoke_state": "failed",
+  "raw_smoke_returncode": 1,
+  "observed_successful_cases": [
+    {
+      "name": "official_layout_d128_gqa4",
+      "query": 8,
+      "query_heads": 4,
+      "kv_heads": 1,
+      "head_dim": 128,
+      "status": "passed",
+      "batch": 1,
+      "kv_length": 516,
+      "page_size": 128,
+      "dtype": "torch.bfloat16",
+      "input_layout": "TND",
+      "input_layout_kv": "BnBsH",
+      "sparse_mode": 0,
+      "query_shape": [
+        8,
+        4,
+        128
+      ],
+      "kv_shape": [
+        5,
+        128,
+        128
+      ],
+      "output_shape": [
+        8,
+        4,
+        128
+      ],
+      "metadata_shape": [
+        1024
+      ],
+      "metadata_dtype": "torch.int32",
+      "metadata_nonzero": 25,
+      "metadata_sha256": "7ea8b5dfe7c5f260225a25af50cc70d596de7191d02f2f66346e2d3e16801502",
+      "output_finite": true,
+      "max_abs_error_from_one": 0.0,
+      "expected_output": 1.0,
+      "rtol": 0.003,
+      "atol": 0.003,
+      "limitation": "Constant noncausal eager smoke only; no graph/dynamic/page-ID/causal/quality/performance qualification"
+    }
+  ],
+  "failed_target": {
+    "dtype": "BF16",
+    "batch": 1,
+    "query_width": 4,
+    "query_heads": 12,
+    "kv_heads": 2,
+    "head_dim": 256,
+    "page_size": 128,
+    "kv_length": 516,
+    "query_layout": "TND",
+    "kv_layout": "BnBsH",
+    "sparse_mode": 0,
+    "name": "target_q4_d256_gqa6",
+    "qualification": "failed",
+    "metadata_checkpoint": "Call, synchronize, dtype/shape/nonzero checks completed before the failing attention call.",
+    "checkpoint_evidence": "Recovered from executed source call order and traceback; raw failed-case JSON did not separately persist this checkpoint.",
+    "attention_failure_stage": "host tiling / GetWorkspaceSize",
+    "python_traceback": "Traceback (most recent call last):\n  File \"/workspace/aclgraph-sink-stage1-bec19b8dea1e/stage1-smoke.py\", line 356, in child\n    status[\"cases\"].append(constant_case(torch, case, core_limit))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/aclgraph-sink-stage1-bec19b8dea1e/stage1-smoke.py\", line 210, in constant_case\n    output, softmax_lse = attention_op(\n                          ^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py\", line 1209, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: call aclnnFusedInferAttentionScoreV2SinkV3 failed\n"
+  },
+  "selected_cann_logs": [
+    {
+      "file": "/root/ascend/log/debug/plog/plog-851986_20261018121604428.log",
+      "selected_lines": [
+        "[ERROR] DRV(851986,python3):2026-10-18-12:16:04.401.793 [devdrv_manager.c:2022][ascend][curpid:851986,851986][drv][devmng][halGetDeviceInfo]halGetDeviceInfo failed. (ret=3; module_type=0; info_type=64).",
+        "[ERROR] OP(851986,python3):2026-10-18-12:16:04.953.273 [kernel_workspace.cpp:167][NNOP][Tiling][851986] errno[-1457544384] OpName:[aclnnFusedInferAttentionScoreV2SinkV3_23_FusedInferAttentionScoreV2Sink] Failed to execute operator aclnnFusedInferAttentionScoreV2SinkV3_23_FusedInferAttentionScoreV2Sink. Reason: Failed to execute tiling.",
+        "[ERROR] OP(851986,python3):2026-10-18-12:16:04.953.357 [kernel_workspace.cpp:849][NNOP][GetWorkspace][851986] errno[-1457544384] OpName:[aclnnFusedInferAttentionScoreV2SinkV3_23_FusedInferAttentionScoreV2Sink] Failed to execute operator aclnnFusedInferAttentionScoreV2SinkV3_23_FusedInferAttentionScoreV2Sink. Reason: Failed to execute tiling.",
+        "[ERROR] OP(851986,python3):2026-10-18-12:16:04.953.374 [kernel_workspace.cpp:100][NNOP][GetWorkspace][851986] errno[561103] OpName:[aclnnFusedInferAttentionScoreV2SinkV3_23_FusedInferAttentionScoreV2Sink] Kernel GetWorkspace failed. opType: 8",
+        "[ERROR] OP(851986,python3):2026-10-18-12:16:04.953.408 [fused_infer_attention_score_v2_sink.cpp:135][NNOP][FusedInferAttentionScoreV2Sink][851986] errno[161002] OpName:[aclnnFusedInferAttentionScoreV2SinkV3_23_FusedInferAttentionScoreV2Sink] FusedInferAttentionScoreV2Sink LaunchAicore failed.",
+        "[ERROR] OP(851986,python3):2026-10-18-12:16:04.953.425 [aclnn_fused_infer_attention_score_v2_sink_v3.cpp:549][NNOP][aclnnFusedInferAttentionScoreV2SinkV3GetWorkspaceSize][851986] errno[561000] OpName:[aclnnFusedInferAttentionScoreV2SinkV3_23] check l0Outputs.AttentionOutOut != nullptr failed.",
+        "[ERROR] OP(851986,python3):2026-10-18-12:16:04.953.432 [op_executor.h:178][NNOP][~UniqueExecutor][851986] errno[561102] OpName:[aclnnFusedInferAttentionScoreV2SinkV3_23] When aclnnFusedInferAttentionScoreV2SinkV3GetWorkspaceSize do success, ReleaseTo(executor) should be called before return."
+      ]
+    },
+    {
+      "file": "/root/ascend/log/run/plog/plog-851986_20261018121554598.log",
+      "selected_lines": [
+        "[INFO] IDEDD(851986,python3):2026-10-18-12:16:04.216.923 [adx_dump_record.cpp:699][tid:852065] start dump thread, remote dump record temp path : /workspace/aclgraph-sink-stage1-bec19b8dea1e/.",
+        "[WARNING] TDT(851986,python3):2026-10-18-12:16:04.232.533 [tsd_util_func.cpp:200][CheckRealPath][tid:851986] Format to realpath failed, inputPath is [/usr/local/Ascend/driver/lib64/driver/sink_file_mutex_0.cfg]",
+        "[INFO] TDT(851986,python3):2026-10-18-12:16:04.234.168 [process_mode_manager.cpp:2169][LoadPackageConfigInfoToDevice][tid:851986] device does not support common sink package config info",
+        "[WARNING] TDT(851986,python3):2026-10-18-12:16:04.234.185 [tsd_util_func.cpp:200][CheckRealPath][tid:851986] Format to realpath failed, inputPath is [/usr/local/Ascend/driver/lib64/driver/sink_file_mutex_0.cfg]",
+        "[WARNING] TDT(851986,python3):2026-10-18-12:16:04.235.304 [tsd_util_func.cpp:200][CheckRealPath][tid:851986] Format to realpath failed, inputPath is [/usr/local/Ascend/driver/lib64/driver/sink_file_mutex_0.cfg]",
+        "[INFO] TDT(851986,python3):2026-10-18-12:16:04.235.308 [process_mode_manager.cpp:2377][LoadPackageToDeviceByConfig][tid:851986] device does not support common sink package config info",
+        "[INFO] TDT(851986,python3):2026-10-18-12:16:04.394.368 [process_mode_manager.cpp:197][OpenProcess][tid:851986] [TsdClient][deviceId=0] [sessionId=1] start hccp and computer process success,whole process spent time as follows:phase1:[1]ms load sink package config to device,phase2:[1]ms load opkernel to device,phase3:[0]ms load sink package to device,phase4:[0]ms send open message to device,phase5:[158]ms receive open message to device,phase6:[0]ms process for adc on host,whole duration:[161]ms"
+      ]
+    },
+    {
+      "file": "/root/ascend/log/run/device-0/device-851986_20261018121605279.log",
+      "selected_lines": [
+        "[WARNING] CCECPU(17216,aicpu_scheduler):2026-10-18-20:16:04.292.991 [ae_kernel_lib_fwk.cc:328][LoadTfSo][tid:17216][AICPU_PROCESSER] load tensorflow so failed, ret is[11002]"
+      ]
+    }
+  ],
+  "source_diagnosis": {
+    "source_commit": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+    "archive_sha256": "ae9570e8bfb601e225edee81d874f336f4252add2a2d080a41193be5462cb2b9",
+    "scope": "Read-only source audit. No source modification, host build or NPU execution by this audit.",
+    "target": {
+      "dtype": "BF16",
+      "batch": 1,
+      "query_width": 4,
+      "query_heads": 12,
+      "kv_heads": 2,
+      "head_dim": 256,
+      "page_size": 128,
+      "kv_length": 516,
+      "query_layout": "TND",
+      "kv_layout": "BnBsH",
+      "sparse_mode": 0
+    },
+    "reported_runtime_checkpoint": "Parent reports D128/GQA4/Q8 constant eager passes with zero error; target metadata synchronization passes but attention fails during host tiling. This audit did not independently execute either.",
+    "direct_rejection_chain": [
+      {
+        "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling.cpp",
+        "line": 32,
+        "fact": "TilingFusedInferAttentionScoreV2Sink calls RouteToFia; false returns GRAPH_FAILED at line35 without a descriptive route-rejection error."
+      },
+      {
+        "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp",
+        "line": 386,
+        "fact": "BF16 matching Q/K and no split RoPE enter GQA branch and return CheckGqaConstrain at line420."
+      },
+      {
+        "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp",
+        "line": 290,
+        "fact": "CheckGqaConstrain requires layout support, CheckGqaDSupport and feature support; failing D check short-circuits."
+      },
+      {
+        "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp",
+        "line": 180,
+        "fact": "CheckGqaDSupport accepts only (Q_D,Q_rope_D,V_D) = (128,0,128),(64,0,64),(128,64,128),(192,0,128),(192,0,192) at lines190-194. (256,0,256) returns false at line198."
+      }
+    ],
+    "why_general_route_inference_was_wrong": [
+      "GENERAL_GQA selection in fia_tiling_nonquant_sink.cpp:215 is reached only after the top-level whitelist route succeeds; template eligibility checks do not override that earlier guard.",
+      "A compiled GENERAL_GQA key exists (104000000030522223 at kernel.cpp:3430), but existence of a key is not an assertion that its storage dimensions support arbitrary D.",
+      "The generic FiaKernelNonQuant class still instantiates FiaBlockCubeNonQuantGqa<FIAT> as matmulService at fia_kernel_nonquant_sink.h:115. It does not switch to the separate FiaBlockCubeNonQuant class for D256."
+    ],
+    "kernel_storage_hazard": {
+      "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+      "slot_constant_line": 345,
+      "slot_elements": 24576,
+      "slot_bytes_bf16": 49152,
+      "array_stride_line": 355,
+      "allocation_line": 784,
+      "mm1_n_split_line": 1123,
+      "mm1_n_split": 128,
+      "copy_function_line": 869,
+      "copy_row_count_line": 897,
+      "copy_d_size_line": 903,
+      "d256_full_tile_elements": 32768,
+      "d256_full_tile_bytes": 65536,
+      "overflow_elements_per_full_k_tile": 8192,
+      "overflow_bytes_per_full_k_tile": 16384,
+      "fact": "For the 516-token target context, MM1 has full128-token N tiles. CopyKToL1 uses aligned subN128 and dDealSize256, requiring32768 BF16 elements in a24576-element KP slot. This overlaps the next slot (or another TPipe region at the last slot). This is a concrete source-level capacity violation if the route guard alone is bypassed.",
+      "conclusion": "Do not treat adding (256,0,256) to CheckGqaDSupport or host-only instrumentation as a safe execution fix. Kernel tile or buffer adaptation is required."
+    },
+    "other_buffers": {
+      "target_effective_m": 24,
+      "target_m_aligned16": 32,
+      "q_l1": {
+        "constant_line": 341,
+        "slot_elements": 49152,
+        "target_elements": 8192,
+        "target_status": "Q4/GQA6 fits the current Q slot; broader q widths do not necessarily fit."
+      },
+      "v_l1_l0b": {
+        "constant_line": 343,
+        "slot_elements": 16384,
+        "capacity_driven_k_split_lines": [
+          1314,
+          1315
+        ],
+        "d256_k_split": 64,
+        "target_tile_elements": 16384,
+        "target_status": "The existing capacity-driven MM2 K split yields64, so V_L1 and L0B are exact-fit at16384 BF16 elements for D256. No unconditional V-buffer enlargement is established for this narrow shape."
+      },
+      "mm2_l0c": {
+        "constant_line": 373,
+        "slot_elements_fp32": 16384,
+        "mm2_m_split_line": 1309,
+        "mm2_n_line": 1395,
+        "target_elements_fp32": 8192,
+        "target_status": "Narrow Q4/GQA6 M=24 (aligned32) fits8192 FP32 elements. A general M128\u00d7D256 tile needs32768 elements, twice the slot. Broad D256 enablement needs M/N retile or larger/restructured buffers."
+      },
+      "vector_ub": {
+        "file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h",
+        "vec2_split_line": 721,
+        "vec2_row_split": 32,
+        "target_status": "Vec2 derives row splitting from32KiB / FP32 / D, giving32 rows for D256. No D256-only UB overflow was found in the inspected narrow path; this is not complete runtime/FD/causal qualification."
+      },
+      "adaptation_boundary": "A narrow no-RoPE Q4/GQA6 port could retile MM1 N to at most96 aligned16 tokens per K slot (64 is conservative), then verify all copy/load/fixpipe paths. It still changes a kernel and requires rebuilt device binaries, bounded canaries and independent numeric tests. General D256 support requires further Q_L1 and MM2_L0C analysis. No adaptation was executed."
+    },
+    "minimum_diagnostic_instrumentation": [
+      "Log decoded Q_D,Q_rope_D,V_D and the layout/feature/D predicate booleans at CheckGqaConstrain before its conjunction, or return an explicit error for D rejection; this host-only diagnostic must leave the rejection active.",
+      "Log entry into TilingFusedInferAttentionScoreV2SinkV3 and FiaTilingNonQuant::DoOpTiling, plus perfMode,key,workspace, to distinguish early route rejection from actual tiler failure.",
+      "Do not run D256 NPU work after a whitelist-only patch. If exploring a kernel port, first enforce tile capacity invariants for Q/K/P/V/L0A/L0B/L0C in the exact narrow geometry and rebuild the selected kernel."
+    ],
+    "source_sha256": {
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling.cpp": "9f384cd30a3ffdb86b36588976769093056b27db6bb973bd58f322e033bac8ea",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fused_infer_attention_score_v2_sink_tiling_v3.cpp": "a8c628b253010b14e5a7f855dc964b40fdc5a25c85ef3d64581ae70f4001fa06",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_host/fia_tiling_nonquant_sink.cpp": "2205041e4d604ba8f006b6b4d2c8418c048f79e315f45fc2f95185149fe65a5a",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h": "600b15942b202996c480a5b978eb56d7045591aeb40012f6e0463d475964ac06",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_flashdecode_sink.h": "b8e55ebd2e93a57ff16c291e169db9b7d764c3089b8f99eb46bb500e84ebe4ad",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp": "e719a4fa20507166633a963d14e4c6656a44b9336135d34af76bbea565b90b49",
+      "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79"
+    }
+  },
+  "raw_evidence_manifest": [
+    {
+      "file": "build-02-status.json",
+      "bytes": 440,
+      "sha256": "ac2936f77bb2a30ec72cf1cc55505f67113c416bd32ad53e3a50ee7313dd0319"
+    },
+    {
+      "file": "build-02.log",
+      "bytes": 92716,
+      "sha256": "62941d3c9e459584fb9e4e1d3997ae72e6002a027b0852b8ca402718274081c5"
+    },
+    {
+      "file": "source-patches.json",
+      "bytes": 561,
+      "sha256": "8aa500ff59ed024f24f0f902cab6716195e303b25b3932ea45582ec509eaa5c1"
+    },
+    {
+      "file": "extension-status.json",
+      "bytes": 5484,
+      "sha256": "e4a294239f0714040d8e8cf4ebd58324bc3cbcac343721439c0ec06026d86e73"
+    },
+    {
+      "file": "extension-source-manifest.json",
+      "bytes": 2736,
+      "sha256": "0cee1cf2a7aaf060dcce7c4b85d1a43a6b4652c72097b43f288ba1737b3c3a44"
+    },
+    {
+      "file": "extension-source.patch",
+      "bytes": 6306,
+      "sha256": "bc50932fcd3703c5fa5e71c1b4149b3f5087743f4ff2e56fcafc67a20a630597"
+    },
+    {
+      "file": "storage-abi-check.json",
+      "bytes": 1389,
+      "sha256": "2113ff462808d5526f3ce4f11ef77c7fb2fd9ce4eebc78ad2d40f704b9e97607"
+    },
+    {
+      "file": "staged-opp-manifest.json",
+      "bytes": 135574,
+      "sha256": "2de8b6814ff78cb25e9a6c6c4af6e21d3342ea9f3959c1a0a4832a3f768d726b"
+    },
+    {
+      "file": "smoke-status.json",
+      "bytes": 8781,
+      "sha256": "cf378fe29fa2d716522dc9dc81adf77b2f153e796103a5a7d004c71d7b063fdd"
+    },
+    {
+      "file": "smoke-failure-selected-logs.json",
+      "bytes": 4360,
+      "sha256": "4a9d8dba3e99982e367f7b3002daa54e263f07aaac7d08c8f0b07fcc0ef9a6a0"
+    },
+    {
+      "file": "final-artifact-inventory.json",
+      "bytes": 2892,
+      "sha256": "2a5e9534a94cb03d031c745b50e8e41c04c616fada91e19de286c45ae4721176"
+    }
+  ],
+  "performance_measured": false,
+  "predicted_npu_speedup": null,
+  "aclgraph_qualified": false,
+  "incremental_native_planner_implemented": false,
+  "full_model_qualified": false,
+  "limitations": [
+    "Constant noncausal B1 eager smoke cannot establish variable-length, causal, page-mapping, canary, inactive-state or graph correctness.",
+    "Stage completion records a target incompatibility, not a passing combined smoke.",
+    "No driver change, system OPP installation, installed extension replacement, model loading or performance test was performed.",
+    "D256 requires a separate kernel/tiling implementation milestone before target graph/planner qualification."
+  ],
+  "saved_smoke_helper_revision": {
+    "cpu_only": true,
+    "npu_work_executed": false,
+    "outside_output_directory_rejected_before_creation": true,
+    "successful_checkpoint_sequence_verified": true,
+    "failed_case_identity_and_metadata_checkpoint_persisted": true,
+    "saved_smoke_before_sha256": "b5d66cb89d4b558a01660b495accabd966c7244ae76b03be2f7588fff28e179a",
+    "saved_smoke_after_sha256": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "original_remote_executed_sha256": "4420f2e62f6bef5b7d4d8d02bb652bae682d9ad6144bd84a97f3dda7d6c7e661",
+    "original_remote_script_modified": false,
+    "patched_saved_smoke_executed_on_npu": false
+  },
+  "saved_repository_tool_hashes": {
+    "aclgraph_fia_sink_stage1_extension.py": "10fd3b4b22f142c1b9575e2c7b960a3c0a908f9e2acb843bcd722da448d22bc4",
+    "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7"
+  },
+  "repository_validation": {
+    "scoped_ruff_check_and_format": "passed",
+    "scoped_py_compile": "passed",
+    "scoped_forbidden_import_and_long_function_checks": "passed",
+    "smoke_cli_help": "passed",
+    "saved_smoke_cpu_helper_checks": "passed",
+    "whole_repository_command": "bash format.sh ci",
+    "whole_repository_ci_passed": false,
+    "whole_repository_exit_code": 1,
+    "whole_repository_limitations": [
+      "Existing codespell/typos findings in unrelated resource probes and vendor sources.",
+      "Existing forbidden direct Triton imports in device_length_decode.py.",
+      "Windows checks lack /bin/bash, shellcheck or a usable python3 launcher for some hooks."
+    ],
+    "whole_repository_ruff_and_markdownlint": "passed",
+    "log_relative_to_parent_workspace": "outputs/thesis_incremental_plan/format-ci-stage1.log",
+    "log_sha256": "1af5418aa3037b16958e52fb1c150763df6a63b048ac7c74ddef71a94116cbe8"
+  }
+}

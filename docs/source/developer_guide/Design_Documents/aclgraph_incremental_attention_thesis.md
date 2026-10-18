@@ -59,12 +59,13 @@ of attention groups and excludes the final endpoint from internal cuts.
 The v4 report pins the preceding source hash; it is not a timing report for
 this final small-group boundary correction.
 
-The current container was inspected through registered Torch operator schemas,
+The initial container inventory inspected registered Torch operator schemas,
 not just `dir(torch.ops)`, which is lazy. Both sink operators, their Python
-wrapper and the three native source directories are absent. The installed
+wrapper and the three native source directories were absent. The installed
 PyTorch and torch_npu versions are 2.10.0+cpu and 2.10.0.post4. Devices 0/1
 were idle during the inventory. This is an installation prerequisite, not a
-new driver-compatibility failure.
+new driver-compatibility failure. The installed extension remains unchanged;
+the subsequent qualification uses a separate dispatcher namespace and OPP.
 
 The pinned native consumer has prefix-connected core ranges: each core starts
 at the previous core's endpoint. It uses the current used-core count to
@@ -73,12 +74,24 @@ cannot be encoded directly. The CPU reference therefore retains contiguous
 current-row work order; exporting valid split-reduction metadata remains a
 separate implementation gate.
 
-The pinned source also has an unresolved AICPU relative include and additional
-potentially missing transitive includes. No native build has run. The target
-Q4/D256/GQA6 shape follows the general GQA route rather than the specialized
-D64/D128 route. A source-derived upper workspace formula at 24 cores is
-145.5 MiB plus library/executor storage; this is not a measured allocation,
-and the 4 KiB metadata size does not describe the total workspace.
+The [first native qualification stage](aclgraph_fia_sink_stage1.md) is now
+complete. An operator-local include correction and isolated host workspace
+ownership repair permit native package/extension builds. On the actual
+910B3, the bounded D128 constant eager case passes. **The target
+Q4/D256/GQA6 fails host tiling:** `CheckGqaDSupport` explicitly excludes D256.
+The actual K L1 slot is also too small for a full D256 block, so bypassing
+that check is unsafe. The earlier inference that a `GENERAL_GQA` branch
+established target eligibility was incorrect and is superseded by this
+source/runtime audit. This failure does not establish a driver problem.
+
+There is no target ACLGraph, native incremental planner or new performance
+qualification. D256 buffer/tiling support is now a prerequisite milestone
+before those experiments. A previously source-derived upper workspace
+formula at 24 cores is 145.5 MiB plus library/executor storage, but that is a
+conditional allocation formula, not evidence of D256 support or a measured
+allocation. The actual device stream reports 20 Cube/40 Vector cores; the
+smoke passes those limits explicitly. The 4 KiB metadata buffer does not
+describe total workspace.
 
 The local inventory is preserved in the parent workspace at
 `outputs/thesis_incremental_plan/sink-remote-inventory.log`. The native source

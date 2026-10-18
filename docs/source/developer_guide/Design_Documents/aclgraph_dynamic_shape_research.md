@@ -31,6 +31,15 @@ baseline rather than the independent contribution. The separate
 membership-aware incremental planning and selective KV-range splitting,
 with explicit related-work boundaries and experiments to falsify it.
 
+The [stage-one native qualification](aclgraph_fia_sink_stage1.md) now has a
+specific result: isolated native build and D128 constant eager execution
+pass, but the actual Q4/D256/GQA6 target is rejected by the pinned host route.
+Its K L1 allocation would also be insufficient if that check were bypassed.
+Target sink integration therefore requires a kernel/tiling adaptation before
+dynamic correctness or performance tests; a generic parser branch is not
+evidence that the target is supported. This finding does not establish a
+driver incompatibility or a scheduling speedup.
+
 ## Existing evidence that constrains the search
 
 - The current public ready-tile full-model control averages 143.474 ms over
