@@ -142,6 +142,9 @@ def selected_contract(report, expected):
             issues.append("selected record is not an object")
             continue
         capacity = item.get("physical_tokens", item.get("capacity"))
+        if any(type(value) is not int for value in (item.get("step"), item.get("batch"), capacity)):
+            issues.append("selected record identity must use exact integer indices")
+            continue
         key = (item.get("step"), item.get("batch"), capacity)
         matches = wanted.get(capacity, ())
         if not any(key == (candidate["step"], candidate["batch"], capacity) for candidate in matches):
@@ -153,7 +156,11 @@ def selected_contract(report, expected):
         issues.append("selected records omit a required representative capacity")
     selected_records = []
     for item in selected:
+        if not isinstance(item, dict):
+            continue
         capacity = item.get("physical_tokens", item.get("capacity"))
+        if any(type(value) is not int for value in (item.get("step"), item.get("batch"), capacity)):
+            continue
         selected_records.append(dict(step=item.get("step"), batch=item.get("batch"), capacity=capacity))
     return selected_records, issues
 
@@ -213,6 +220,11 @@ def collect_samples(report, expected, selected, trials, repeats):
         if not isinstance(sample, dict):
             invalid.append(dict(index=index, reason="sample is not an object"))
             continue
+        if any(
+            type(sample.get(name)) is not int for name in ("trial", "repeat", "step", "batch", "capacity")
+        ) or not isinstance(sample.get("case"), str):
+            invalid.append(dict(index=index, reason="sample identity requires exact integer indices and a case string"))
+            continue
         key = tuple(sample.get(name) for name in ("trial", "repeat", "case", "step"))
         if key not in wanted:
             unexpected.append(dict(index=index, key=list(key)))
@@ -253,6 +265,8 @@ def numeric_qualification(report, selected):
     issues = []
     if not isinstance(checks, list) or len(checks) != len(selected):
         return False, ["checks must cover every selected representative"], []
+    wanted = {(item["step"], item["capacity"]): item for item in selected}
+    seen = set()
     for item in checks:
         if (
             not isinstance(item, dict)
@@ -270,10 +284,20 @@ def numeric_qualification(report, selected):
             qualified = False
             issues.append("numeric control qualification failed")
             continue
+        key = (item.get("step"), item.get("capacity"))
+        if any(type(value) is not int for value in key) or key not in wanted or key in seen:
+            qualified = False
+            issues.append("numeric checks duplicate or omit a selected record")
+            continue
+        seen.add(key)
+        batch = wanted[key]["batch"]
+        expected_rows = {(case, row) for case in CASES for row in {0, batch // 2, batch - 1}}
         rows = item.get("fp32_sampled_rows")
         if (
             not isinstance(rows, list)
-            or {row.get("case") for row in rows} != set(CASES)
+            or len(rows) != len(expected_rows)
+            or any(not isinstance(row, dict) for row in rows)
+            or {(row.get("case"), row.get("row")) for row in rows} != expected_rows
             or any(not finite(row.get("max_abs_error")) for row in rows)
         ):
             qualified = False
@@ -281,17 +305,37 @@ def numeric_qualification(report, selected):
     post = report.get("post_timing_checks")
     if isinstance(post, list) and len(post) == 1:
         post = post[0]
-    if not isinstance(post, dict) or not all(
-        post.get(name) is True
-        for name in (
-            "controls_close",
-            "zero_padding_exact",
-            "resident_queries_unchanged",
-            "exact_descriptors_unchanged",
+    if (
+        not isinstance(post, dict)
+        or not selected
+        or (post.get("step"), post.get("capacity")) != (selected[-1]["step"], selected[-1]["capacity"])
+        or not all(
+            post.get(name) is True
+            for name in (
+                "controls_close",
+                "zero_padding_exact",
+                "resident_queries_unchanged",
+                "exact_descriptors_unchanged",
+            )
         )
     ):
         qualified = False
         issues.append("post-timing qualification failed")
+    else:
+        post_rows = post.get("fp32_sampled_rows")
+        batch = selected[-1]["batch"]
+        expected_rows = {(case, row) for case in CASES for row in {0, batch // 2, batch - 1}}
+        if (
+            type(post.get("private_occurrences")) is not int
+            or post["private_occurrences"] != OCCURRENCES
+            or not isinstance(post_rows, list)
+            or len(post_rows) != len(expected_rows)
+            or any(not isinstance(row, dict) for row in post_rows)
+            or {(row.get("case"), row.get("row")) for row in post_rows} != expected_rows
+            or any(not finite(row.get("max_abs_error")) for row in post_rows)
+        ):
+            qualified = False
+            issues.append("post-timing FP32 evidence or private occurrences missing")
     return qualified, issues, checks
 
 
@@ -376,7 +420,7 @@ def analyze(report, *, trace_path=None, selection_path=None):
     protocol_checks = dict(
         coverage_complete=coverage["complete"] and not schedule_contract(report, expected) and not selected_issues,
         completed_state=report.get("state") == "completed",
-        successful_returncode=report.get("returncode") == 0,
+        successful_returncode=type(report.get("returncode")) is int and report["returncode"] == 0,
         npu_execution=report.get("npu_work_executed") is True,
         performance_measured=report.get("performance_measured") is True,
         expected_case_set=tuple(report.get("cases", ())) == CASES,
@@ -387,6 +431,7 @@ def analyze(report, *, trace_path=None, selection_path=None):
         installed_catalog_matches=selection.get("capture_sizes") == expected["default_capture_sizes"]
         and selection.get("dispatched_tokens") == expected["dispatched_tokens"],
         expected_sample_count=coverage["expected_sample_count"] == len(selected) * trials * repeats * len(CASES),
+        three_trials_five_repeats=trials >= 3 and repeats >= 5,
         formal_representatives=report.get("screen") is not True
         and {item["capacity"] for item in selected} == set(FORMAL_CAPACITIES),
     )
@@ -400,10 +445,10 @@ def analyze(report, *, trace_path=None, selection_path=None):
     screen = report.get("screen") is True
     return dict(
         schema_version=1,
-        state="complete_trace"
+        state="complete_probe"
         if coverage_valid and measured and not screen
         else "complete_screen"
-        if coverage_valid
+        if coverage_valid and measured and screen
         else "partial_or_invalid",
         analysis_valid=coverage_valid,
         protocol_qualified=protocol_qualified,
@@ -420,7 +465,8 @@ def analyze(report, *, trace_path=None, selection_path=None):
         requested_trials=trials,
         requested_repeats=repeats,
         expected_sample_count=coverage["expected_sample_count"],
-        full_trace_measured=coverage_valid and measured and not screen,
+        full_trace_measured=False,
+        bounded_probe_measured=coverage_valid and measured and not screen,
         screen_only=screen,
         summaries=summarize(indexed, selected),
         comparisons={
@@ -441,7 +487,10 @@ def analyze(report, *, trace_path=None, selection_path=None):
             ),
         },
         interpretation=dict(
-            whole_cpu="Measured dynamic whole-plan endpoint including plan construction and copy.",
+            whole_cpu=(
+                "Fixed-record plan rebuild and copy included; strict preflight snapshots exact lengths "
+                "outside timing. Changing-length dynamic maintenance is unmeasured."
+            ),
             whole_oracle="Plan construction and copy excluded; diagnostic only.",
             limitation="Isolated attention chain only; no full-model, serving or end-to-end speedup claim.",
         ),
@@ -460,8 +509,18 @@ def main():
     args = parser.parse_args()
     source = args.input.resolve(strict=True)
     output = args.output.resolve()
+    protected = {
+        source,
+        Path(args.trace or RESULTS_DIRECTORY / "structural-dynamic-trace-v1.json").resolve(),
+        Path(args.selection or RESULTS_DIRECTORY / "q4-tile-full-replay-v8-queue0.rank0.json").resolve(),
+    }
+    if output in protected:
+        parser.error("--output cannot overwrite timing or canonical trace/selection evidence")
     report = analyze(load_json(source), trace_path=args.trace, selection_path=args.selection)
     report["input"] = dict(path=str(source), sha256=sha256(source))
+    projection = load_json(source).get("evidence_projection")
+    if projection is not None:
+        report["input"]["evidence_projection"] = projection
     report["analyzer_sha256"] = sha256(Path(__file__))
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="ascii")

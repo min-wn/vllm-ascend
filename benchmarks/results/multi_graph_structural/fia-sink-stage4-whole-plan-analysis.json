@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "state": "complete_trace",
+  "state": "complete_probe",
   "analysis_valid": true,
   "protocol_qualified": true,
   "issues": [],
@@ -18,6 +18,7 @@
       "installed_catalog_revalidated": true,
       "installed_catalog_matches": true,
       "expected_sample_count": true,
+      "three_trials_five_repeats": true,
       "formal_representatives": true
     },
     "unqualified_checks": []
@@ -64,7 +65,8 @@
   "requested_trials": 3,
   "requested_repeats": 5,
   "expected_sample_count": 240,
-  "full_trace_measured": true,
+  "full_trace_measured": false,
+  "bounded_probe_measured": true,
   "screen_only": false,
   "summaries": {
     "by_case": {
@@ -2481,7 +2483,7 @@
     }
   },
   "interpretation": {
-    "whole_cpu": "Measured dynamic whole-plan endpoint including plan construction and copy.",
+    "whole_cpu": "Fixed-record plan rebuild and copy included; strict preflight snapshots exact lengths outside timing. Changing-length dynamic maintenance is unmeasured.",
     "whole_oracle": "Plan construction and copy excluded; diagnostic only.",
     "limitation": "Isolated attention chain only; no full-model, serving or end-to-end speedup claim."
   },
@@ -2679,7 +2681,18 @@
   },
   "input": {
     "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage4-whole-plan.json",
-    "sha256": "78d47b0cb37f2176527ef90fc0ce63ac7ecfdb22192d0664fedad4c8e6907f28"
+    "sha256": "78d47b0cb37f2176527ef90fc0ce63ac7ecfdb22192d0664fedad4c8e6907f28",
+    "evidence_projection": {
+      "original_report_sha256": "feb90b8fe39df84765b79683df1d9cadee321ab2c03313f2a91e69d70cba5d2e",
+      "original_report_bytes": 8479303,
+      "original_report_parent_workspace_path": "outputs\\thesis_incremental_plan\\stage4-evidence\\stage4-whole-formal-v3\\stage4-whole-plan.json",
+      "timing_samples_preserved_exactly": true,
+      "omitted_fields": [
+        "schedule.owner_pages",
+        "schedule.records: exact descriptor arrays"
+      ],
+      "regeneration": "canonical trace/selection artifacts and stage-four trace helper"
+    }
   },
-  "analyzer_sha256": "8b545220be971fdac2df557d04d0610ed1c8a3dd5f806d4d503882d79d64ab78"
+  "analyzer_sha256": "a54dcf5df348d9a72265899f52456a4501e1a099142b6ff795d9a9a1c2176a26"
 }
