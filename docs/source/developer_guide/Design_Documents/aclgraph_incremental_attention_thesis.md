@@ -1,7 +1,8 @@
 # Thesis proposal: incremental attention plans with selective KV splitting
 
-Status: research proposal, 2026-10-18. There is no new NPU performance result
-for this algorithm. The user permits an ACLGraph optimization without request
+Status: research proposal with stage-three budget evidence, 2026-10-19. There
+is no NPU speedup result for the proposed incremental algorithm. The user
+permits an ACLGraph optimization without request
 splitting and wants an independent graduation-project contribution beyond
 adopting an official PR. Replicating attention or MLP weights is excluded.
 
@@ -93,10 +94,9 @@ unchanged addresses while lengths/pages/data change. This supersedes the
 stage-one target rejection for this explicitly patched prototype; upstream
 unmodified source still rejects D256.
 
-There is no native incremental planner or new performance qualification.
-The graph checks cover small fixed capacities and two shared attention
-occurrences, not all sixteen model layers or the original dynamic model
-trajectory. A previously source-derived upper workspace
+There is no native incremental planner. Stage-two graph checks cover small
+fixed capacities and two shared attention occurrences. A previously
+source-derived upper workspace
 formula at 24 cores is 145.5 MiB plus library/executor storage, but that is a
 conditional allocation formula, not evidence of D256 support or a measured
 allocation. The actual device stream reports 20 Cube/40 Vector cores; the
@@ -107,6 +107,29 @@ The initial inventory is preserved in the parent workspace at
 `outputs/thesis_incremental_plan/sink-remote-inventory.log`. The native source
 audit pins the upstream commit separately from installed capabilities.
 Stage-two evidence is under `outputs/thesis_incremental_plan/stage2-evidence/`.
+
+The [third stage](aclgraph_fia_sink_stage3.md) now measures all 128 original
+dynamic steps, all 17 required default capacities and sixteen private
+synthetic attention occurrences, in five controls and three trials. This is
+an attention-chain experiment, not a complete-model trajectory. Shared sink
+mean wall is 5.328 ms versus 5.621 ms for legacy FIA with sixteen real host
+updates, a 5.222% chain reduction; capacities 496/512 and P95/P99 regress.
+The shared-plan versus attention-only diagnostic differs by only 63.995 us.
+B98 profiling finds one shared metadata producer at 61.221 us, but sixteen
+sink attention kernels total 3997.600 us versus legacy's 3569.238 us. Legacy
+has about 1.325 ms of update waits between its attention kernels. Thus the
+current benefit comes from reducing update supply delay, partly offset by
+slower sink execution and additional preparation. It does not establish an
+independent incremental algorithm gain.
+
+This budget changes the implementation priority. Defer native incremental
+planning as the main speedup source; first strengthen the preparation
+baseline and test merge-aware attention work assignment with identical
+arithmetic. Establish a kernel/complete-occurrence benefit before implementing
+incremental maintenance or integrating the complete model. The third-stage
+document records measured regressions, a no-FD versus selective-FD causal
+experiment and stopping gates. Incremental maintenance remains a conditional
+research hypothesis rather than a promised large improvement.
 
 ## Existing project results and thesis scope
 

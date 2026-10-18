@@ -164,6 +164,12 @@ established by this kernel port alone. The next milestone is to measure
 one shared plan's exposed cost and the attention kernel tail before deciding
 which part of the proposed scheduling algorithm merits native implementation.
 
+That [third-stage measurement](aclgraph_fia_sink_stage3.md) is now complete.
+It qualifies sampled B64..128 attention chains across all default buckets,
+but remains outside complete-model accuracy and performance. The measured
+single shared planner is too small to justify planner-only large speedup;
+the next experimental gate targets preparation and actual attention execution.
+
 Scoped Ruff, Python compilation and project import/function checks pass for
 the saved execution tools. Required `bash format.sh ci` was attempted: Ruff
 and Markdown pass. Existing unrelated spelling/import findings and missing

@@ -1,0 +1,739 @@
+{
+  "scope": {
+    "kind": "diagnostic profile after the formal timing trials",
+    "step": 0,
+    "batch": 98,
+    "physical_tokens": 400,
+    "occurrences": 16,
+    "replays_per_mode": 3,
+    "full_model": false,
+    "end_to_end_serving": false
+  },
+  "sources": {
+    "stage3-profile.json": {
+      "bytes": 1143409,
+      "sha256": "dc08e1e7da174c2cb3df8a96f5eb5f61e0f566881dbf86cb49f76966b3a482f4"
+    },
+    "stage3-budget.json": {
+      "bytes": 8917316,
+      "sha256": "967a7ca18380e1363273564963b0d05cbcb564ef9a7b1e09c384d74e816d2ee3"
+    },
+    "stage3-budget.log": {
+      "bytes": 8133,
+      "sha256": "91d22042548f72fdd5b73999780578065772a78f1dccdd0cfe3bde3a29b6bb3f"
+    }
+  },
+  "completeness": {
+    "profiler_warning": "Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.",
+    "all_expected_labels_present": true,
+    "expected_labels": 15,
+    "observed_labels": 15,
+    "every_label_has_one_hardware_model_completion_notify": true,
+    "all_expected_attention_metadata_zero_update_dma_counts_match": true,
+    "legacy_cpu_update_operator_calls": 48,
+    "legacy_attention_tasks": 48,
+    "legacy_pcie_update_dma_tasks": 48,
+    "assessment": "Expected replay task families and completion markers are present for all 15 labeled replays. The schedule warning is retained: this is sufficient for task-count and coarse duration attribution, not a claim that every profiler record or hardware metric is complete.",
+    "aic_metrics_available": false
+  },
+  "measurement_semantics": [
+    "Only Ascend hardware events carrying Task Type are counted as device tasks; synthesized Computing/Free tracks, NOTIFY_WAIT wrappers, HostToDevice flows and CPU labels are not added to kernel durations.",
+    "Device attention sums contain sequential KERNEL_MIX_AIC executions. Attention envelope includes gaps between those executions and is not pure kernel time.",
+    "Between-attention gaps contain every task between attention executions; for per_layer they include real AICPU metadata computation, while legacy gaps are predominantly update waits. They are not universally idle-device time.",
+    "MEM_WAIT_VALUE duration is a separate queue-wait diagnostic; NOTIFY_WAIT and host synchronization overlap device execution. Do not sum these with kernels into endpoint latency.",
+    "Legacy npu::npu_fused_infer_attention_score CPU durations cover the replay-time update operator calls. Nested aclnn durations are included within those calls and must not be added. graph_task_update_begin/end are not separately timed by these names.",
+    "Profile record_function labels enclose replay and synchronize, excluding prepare; they include profiler overhead and are not the formal wall endpoint.",
+    "Formal queue_span_us includes possible host submission gaps, external waits and update-stream joins. Formal wall_us includes required mode-specific metadata preparation/H2D and final synchronization.",
+    "attention_only has a freshly generated exact plan outside its timed interval; it is a diagnostic ceiling, not an executable dynamic algorithm without planning."
+  ],
+  "profile_mean_by_mode": {
+    "per_layer": {
+      "replays": 3,
+      "attention_tasks_per_replay": 16,
+      "metadata_tasks_per_replay": 16,
+      "mean_attention_duration_sum_us": 4041.248,
+      "mean_metadata_duration_sum_us": 1053.034,
+      "mean_metadata_plus_zero_duration_sum_us": 1070.308,
+      "mean_cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "mean_mem_wait_value_duration_sum_us": 0.0,
+      "mean_attention_task_us": 252.578,
+      "mean_attention_first_to_last_envelope_us": 5061.155,
+      "mean_mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "mean_between_attention_gap_us": 1019.907
+    },
+    "shared": {
+      "replays": 3,
+      "attention_tasks_per_replay": 16,
+      "metadata_tasks_per_replay": 1,
+      "mean_attention_duration_sum_us": 3997.6,
+      "mean_metadata_duration_sum_us": 61.221,
+      "mean_metadata_plus_zero_duration_sum_us": 62.348,
+      "mean_cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "mean_mem_wait_value_duration_sum_us": 0.0,
+      "mean_attention_task_us": 249.85,
+      "mean_attention_first_to_last_envelope_us": 4043.354,
+      "mean_mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "mean_between_attention_gap_us": 45.754
+    },
+    "attention_only": {
+      "replays": 3,
+      "attention_tasks_per_replay": 16,
+      "metadata_tasks_per_replay": 0,
+      "mean_attention_duration_sum_us": 4016.347,
+      "mean_metadata_duration_sum_us": 0.0,
+      "mean_metadata_plus_zero_duration_sum_us": 0.0,
+      "mean_cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "mean_mem_wait_value_duration_sum_us": 0.0,
+      "mean_attention_task_us": 251.022,
+      "mean_attention_first_to_last_envelope_us": 4061.481,
+      "mean_mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "mean_between_attention_gap_us": 45.134
+    },
+    "planner": {
+      "replays": 3,
+      "attention_tasks_per_replay": 0,
+      "metadata_tasks_per_replay": 1,
+      "mean_attention_duration_sum_us": 0.0,
+      "mean_metadata_duration_sum_us": 65.621,
+      "mean_metadata_plus_zero_duration_sum_us": 66.868,
+      "mean_cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "mean_mem_wait_value_duration_sum_us": 0.0
+    },
+    "legacy": {
+      "replays": 3,
+      "attention_tasks_per_replay": 16,
+      "metadata_tasks_per_replay": 0,
+      "mean_attention_duration_sum_us": 3569.238,
+      "mean_metadata_duration_sum_us": 0.0,
+      "mean_metadata_plus_zero_duration_sum_us": 0.0,
+      "mean_cpu_legacy_fia_update_operator_duration_sum_us": 2280.323,
+      "mean_mem_wait_value_duration_sum_us": 1920.871,
+      "mean_attention_task_us": 223.077,
+      "mean_attention_first_to_last_envelope_us": 4963.165,
+      "mean_mem_wait_value_overlap_attention_envelope_us": 1324.879,
+      "mean_between_attention_gap_us": 1393.927
+    }
+  },
+  "profile_per_replay": [
+    {
+      "label": "stage3/per_layer/0",
+      "mode": "per_layer",
+      "repeat": 0,
+      "profiled_host_replay_and_synchronize_label_us": 6847.41,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4051.941,
+      "metadata_tasks": 16,
+      "metadata_duration_sum_us": 1213.484,
+      "metadata_zero_tasks": 16,
+      "metadata_zero_duration_sum_us": 17.86,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 16,
+        "KERNEL_AIVEC": 16,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 5205.884,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 1153.943
+    },
+    {
+      "label": "stage3/per_layer/1",
+      "mode": "per_layer",
+      "repeat": 1,
+      "profiled_host_replay_and_synchronize_label_us": 5544.86,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4027.101,
+      "metadata_tasks": 16,
+      "metadata_duration_sum_us": 974.019,
+      "metadata_zero_tasks": 16,
+      "metadata_zero_duration_sum_us": 17.24,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 16,
+        "KERNEL_AIVEC": 16,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4977.02,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 949.919
+    },
+    {
+      "label": "stage3/per_layer/2",
+      "mode": "per_layer",
+      "repeat": 2,
+      "profiled_host_replay_and_synchronize_label_us": 5519.26,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4044.701,
+      "metadata_tasks": 16,
+      "metadata_duration_sum_us": 971.599,
+      "metadata_zero_tasks": 16,
+      "metadata_zero_duration_sum_us": 16.721,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 16,
+        "KERNEL_AIVEC": 16,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 5000.56,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 955.859
+    },
+    {
+      "label": "stage3/shared/0",
+      "mode": "shared",
+      "repeat": 0,
+      "profiled_host_replay_and_synchronize_label_us": 4639.34,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4016.86,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 58.821,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.1,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4062.041,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 45.181
+    },
+    {
+      "label": "stage3/shared/1",
+      "mode": "shared",
+      "repeat": 1,
+      "profiled_host_replay_and_synchronize_label_us": 4562.1,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4006.62,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 60.141,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.2,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4052.541,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 45.921
+    },
+    {
+      "label": "stage3/shared/2",
+      "mode": "shared",
+      "repeat": 2,
+      "profiled_host_replay_and_synchronize_label_us": 4528.79,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3969.319,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 64.701,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.08,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4015.48,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 46.161
+    },
+    {
+      "label": "stage3/attention_only/0",
+      "mode": "attention_only",
+      "repeat": 0,
+      "profiled_host_replay_and_synchronize_label_us": 4830.45,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4015.44,
+      "metadata_tasks": 0,
+      "metadata_duration_sum_us": 0.0,
+      "metadata_zero_tasks": 0,
+      "metadata_zero_duration_sum_us": 0.0,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4060.481,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 45.041
+    },
+    {
+      "label": "stage3/attention_only/1",
+      "mode": "attention_only",
+      "repeat": 1,
+      "profiled_host_replay_and_synchronize_label_us": 4551.98,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4005.56,
+      "metadata_tasks": 0,
+      "metadata_duration_sum_us": 0.0,
+      "metadata_zero_tasks": 0,
+      "metadata_zero_duration_sum_us": 0.0,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4051.641,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 46.081
+    },
+    {
+      "label": "stage3/attention_only/2",
+      "mode": "attention_only",
+      "repeat": 2,
+      "profiled_host_replay_and_synchronize_label_us": 4517.25,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4028.041,
+      "metadata_tasks": 0,
+      "metadata_duration_sum_us": 0.0,
+      "metadata_zero_tasks": 0,
+      "metadata_zero_duration_sum_us": 0.0,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "attention_first_to_last_envelope_us": 4072.321,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "between_attention_gap_us": 44.28
+    },
+    {
+      "label": "stage3/planner/0",
+      "mode": "planner",
+      "repeat": 0,
+      "profiled_host_replay_and_synchronize_label_us": 643.27,
+      "attention_tasks": 0,
+      "attention_duration_sum_us": 0.0,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 67.661,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.52,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      }
+    },
+    {
+      "label": "stage3/planner/1",
+      "mode": "planner",
+      "repeat": 1,
+      "profiled_host_replay_and_synchronize_label_us": 557.56,
+      "attention_tasks": 0,
+      "attention_duration_sum_us": 0.0,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 60.781,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.2,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      }
+    },
+    {
+      "label": "stage3/planner/2",
+      "mode": "planner",
+      "repeat": 2,
+      "profiled_host_replay_and_synchronize_label_us": 578.87,
+      "attention_tasks": 0,
+      "attention_duration_sum_us": 0.0,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 68.421,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.02,
+      "cpu_legacy_fia_update_calls": 0,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 0.0,
+      "cpu_nested_aclnn_duration_sum_us": 0.0,
+      "legacy_update_pcie_dma_tasks": 0,
+      "legacy_update_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      }
+    },
+    {
+      "label": "stage3/legacy/0",
+      "mode": "legacy",
+      "repeat": 0,
+      "profiled_host_replay_and_synchronize_label_us": 7550.21,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3568.791,
+      "metadata_tasks": 0,
+      "metadata_duration_sum_us": 0.0,
+      "metadata_zero_tasks": 0,
+      "metadata_zero_duration_sum_us": 0.0,
+      "cpu_legacy_fia_update_calls": 16,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 2570.81,
+      "cpu_nested_aclnn_duration_sum_us": 1331.87,
+      "legacy_update_pcie_dma_tasks": 16,
+      "legacy_update_pcie_dma_duration_sum_us": 34.741,
+      "mem_wait_value_tasks": 876,
+      "mem_wait_value_duration_sum_us": 2344.566,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 3,
+        "EVENT_WAIT": 3,
+        "KERNEL_MIX_AIC": 16,
+        "MEM_WAIT_VALUE": 876,
+        "MEM_WRITE_VALUE": 32,
+        "MODEL_EXECUTE": 1,
+        "NOP": 128,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1,
+        "PCIE_DMA_SQE": 16
+      },
+      "attention_first_to_last_envelope_us": 5040.66,
+      "mem_wait_value_overlap_attention_envelope_us": 1400.507,
+      "between_attention_gap_us": 1471.869
+    },
+    {
+      "label": "stage3/legacy/1",
+      "mode": "legacy",
+      "repeat": 1,
+      "profiled_host_replay_and_synchronize_label_us": 6138.45,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3573.631,
+      "metadata_tasks": 0,
+      "metadata_duration_sum_us": 0.0,
+      "metadata_zero_tasks": 0,
+      "metadata_zero_duration_sum_us": 0.0,
+      "cpu_legacy_fia_update_calls": 16,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 2157.71,
+      "cpu_nested_aclnn_duration_sum_us": 1110.67,
+      "legacy_update_pcie_dma_tasks": 16,
+      "legacy_update_pcie_dma_duration_sum_us": 34.821,
+      "mem_wait_value_tasks": 652,
+      "mem_wait_value_duration_sum_us": 1722.714,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 3,
+        "EVENT_WAIT": 3,
+        "KERNEL_MIX_AIC": 16,
+        "MEM_WAIT_VALUE": 652,
+        "MEM_WRITE_VALUE": 32,
+        "MODEL_EXECUTE": 1,
+        "NOP": 128,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1,
+        "PCIE_DMA_SQE": 16
+      },
+      "attention_first_to_last_envelope_us": 4957.239,
+      "mem_wait_value_overlap_attention_envelope_us": 1314.606,
+      "between_attention_gap_us": 1383.607
+    },
+    {
+      "label": "stage3/legacy/2",
+      "mode": "legacy",
+      "repeat": 2,
+      "profiled_host_replay_and_synchronize_label_us": 6089.87,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3565.291,
+      "metadata_tasks": 0,
+      "metadata_duration_sum_us": 0.0,
+      "metadata_zero_tasks": 0,
+      "metadata_zero_duration_sum_us": 0.0,
+      "cpu_legacy_fia_update_calls": 16,
+      "cpu_legacy_fia_update_operator_duration_sum_us": 2112.45,
+      "cpu_nested_aclnn_duration_sum_us": 1085.55,
+      "legacy_update_pcie_dma_tasks": 16,
+      "legacy_update_pcie_dma_duration_sum_us": 34.681,
+      "mem_wait_value_tasks": 642,
+      "mem_wait_value_duration_sum_us": 1695.334,
+      "notify_record_tasks": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 3,
+        "EVENT_WAIT": 3,
+        "KERNEL_MIX_AIC": 16,
+        "MEM_WAIT_VALUE": 642,
+        "MEM_WRITE_VALUE": 32,
+        "MODEL_EXECUTE": 1,
+        "NOP": 128,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1,
+        "PCIE_DMA_SQE": 16
+      },
+      "attention_first_to_last_envelope_us": 4891.597,
+      "mem_wait_value_overlap_attention_envelope_us": 1259.525,
+      "between_attention_gap_us": 1326.306
+    }
+  ],
+  "formal_128_step_three_trial_summary": {
+    "per_layer": {
+      "samples": 384,
+      "wall_us": {
+        "mean_us": 6241.106,
+        "minimum_us": 4776.378,
+        "maximum_us": 11192.531
+      },
+      "queue_span_us": {
+        "mean_us": 5566.704,
+        "minimum_us": 4269.06,
+        "maximum_us": 7038.92
+      },
+      "preparation_enqueue_us": {
+        "mean_us": 594.326,
+        "minimum_us": 433.742,
+        "maximum_us": 4136.395
+      },
+      "submit_join_cpu_us": {
+        "mean_us": 230.072,
+        "minimum_us": 212.291,
+        "maximum_us": 489.912
+      }
+    },
+    "shared": {
+      "samples": 384,
+      "wall_us": {
+        "mean_us": 5327.636,
+        "minimum_us": 3868.544,
+        "maximum_us": 7149.366
+      },
+      "queue_span_us": {
+        "mean_us": 4670.251,
+        "minimum_us": 3315.56,
+        "maximum_us": 6050.46
+      },
+      "preparation_enqueue_us": {
+        "mean_us": 577.583,
+        "minimum_us": 425.702,
+        "maximum_us": 968.723
+      },
+      "submit_join_cpu_us": {
+        "mean_us": 228.088,
+        "minimum_us": 212.301,
+        "maximum_us": 420.212
+      }
+    },
+    "attention_only": {
+      "samples": 384,
+      "wall_us": {
+        "mean_us": 5263.641,
+        "minimum_us": 3746.324,
+        "maximum_us": 7219.406
+      },
+      "queue_span_us": {
+        "mean_us": 4609.785,
+        "minimum_us": 3244.32,
+        "maximum_us": 5995.04
+      },
+      "preparation_enqueue_us": {
+        "mean_us": 567.976,
+        "minimum_us": 423.752,
+        "maximum_us": 691.783
+      },
+      "submit_join_cpu_us": {
+        "mean_us": 231.707,
+        "minimum_us": 217.04,
+        "maximum_us": 330.702
+      }
+    },
+    "planner": {
+      "samples": 384,
+      "wall_us": {
+        "mean_us": 894.65,
+        "minimum_us": 735.553,
+        "maximum_us": 1490.975
+      },
+      "queue_span_us": {
+        "mean_us": 241.461,
+        "minimum_us": 217.1,
+        "maximum_us": 416.7
+      },
+      "preparation_enqueue_us": {
+        "mean_us": 575.767,
+        "minimum_us": 427.622,
+        "maximum_us": 946.953
+      },
+      "submit_join_cpu_us": {
+        "mean_us": 225.507,
+        "minimum_us": 211.83,
+        "maximum_us": 438.282
+      }
+    },
+    "legacy": {
+      "samples": 384,
+      "wall_us": {
+        "mean_us": 5621.203,
+        "minimum_us": 4437.876,
+        "maximum_us": 7119.926
+      },
+      "queue_span_us": {
+        "mean_us": 5102.234,
+        "minimum_us": 4042.18,
+        "maximum_us": 6311.12
+      },
+      "preparation_enqueue_us": {
+        "mean_us": 429.128,
+        "minimum_us": 302.321,
+        "maximum_us": 644.402
+      },
+      "submit_join_cpu_us": {
+        "mean_us": 4891.363,
+        "minimum_us": 3956.404,
+        "maximum_us": 6236.773
+      }
+    }
+  },
+  "causal_budget": {
+    "single_shared_build_plus_zero_profile_mean_us": 62.348,
+    "single_build_fraction_of_shared_attention_percent": 1.5596,
+    "single_build_fraction_of_shared_formal_wall_percent": 1.1703,
+    "formal_shared_minus_attention_only_mean_wall_us": 63.995,
+    "formal_shared_minus_attention_only_mean_queue_span_us": 60.466,
+    "shared_sink_attention_minus_legacy_attention_profile_mean_us": 428.362,
+    "shared_sink_attention_slowdown_relative_to_legacy_percent": 12.0015,
+    "sink_attention_reduction_to_match_legacy_kernel_sum_percent": 10.7155,
+    "formal_shared_vs_legacy_mean_wall_reduction_percent": 5.2225,
+    "formal_shared_vs_per_layer_mean_wall_reduction_percent": 14.6363,
+    "attribution": "Cross-layer plan reuse and elimination of legacy host update handshakes are existing/public mechanisms. These measurements do not establish an incremental-planner or split-parallel algorithm gain."
+  },
+  "next_bottleneck": {
+    "measured": "After sharing one plan, attention execution dominates the sink chain. At B98/400 the sink attention sum is about 0.43 ms slower than legacy, while legacy loses substantially more time to update-fed execution gaps and waits.",
+    "priority": "For a thesis gain beyond the shared-plan baseline, target actual attention critical-path work assignment/split/merge execution. Reduce the current D256 sink kernel cost before expecting incremental plan maintenance alone to produce a material full-model gain.",
+    "planning_limit": "Once sharing is enabled, eliminating one approximately 62 us device build is only about 1.2 percent of this isolated wall endpoint. There is no 16-times build budget left for incremental planning.",
+    "required_localization": "The level-0 trace does not identify Cube versus vector utilization, bandwidth saturation, per-core imbalance, or FD merge cost. Those are unresolved mechanisms, not established bottlenecks; collect one bounded operator-level metric experiment before choosing a kernel rewrite.",
+    "host_update_limit": "Legacy shows real update overhead, but batching/removing its handshakes without preserving exact update ordering is not justified. The device-plan control already demonstrates the public alternative."
+  }
+}
