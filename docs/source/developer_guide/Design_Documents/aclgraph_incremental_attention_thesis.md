@@ -5,6 +5,103 @@ for this algorithm. The user permits an ACLGraph optimization without request
 splitting and wants an independent graduation-project contribution beyond
 adopting an official PR. Replicating attention or MLP weights is excluded.
 
+## Implementation checkpoint
+
+The first CPU reference and independent semantic oracle are implemented in
+`benchmarks/aclgraph_incremental_attention_plan.py`, its immutable types helper
+and `tests/ut/worker/multi_graph/test_aclgraph_incremental_attention_plan.py`.
+The initial 19 tests pass. They check exact work coverage, causal and
+noncausal FP32 split-softmax merging, changing request lifetimes, inactive
+rows, rollback after invalid input, preflight capacity checks, high merge-cost
+rejection in full planning and split scratch bounds. This is not an
+ACLGraph device producer, native metadata exporter or measured attention gain.
+
+The prototype keeps request-local tile templates and prefix costs, patches
+exact tails, constructs current row routing, and repairs contiguous partition
+boundaries within a bounded search radius. It falls back to full boundary
+planning when the cost/imbalance checks reject repair. Both full and incremental
+controls use the same abstract cost model. Its zero default merge cost is an
+optimistic structural ceiling, not a calibrated hardware assumption; nonzero
+fixed-cost sensitivity is reported separately. The Python CPU timing is not
+representative of a future AIV/AICPU implementation.
+
+The first CPU screen exposed a merge-cost defect in local repair: at merge
+charge 16, it retained 1717 split groups across the unchanged 128-step trace
+and scored 298174 abstract cost units, versus 11 groups and 282352 units for
+full planning. Repair used a weak coalesced-unsplit reference and its final
+imbalance check excluded merge cost. A fresh valid no-split quality floor
+and complete-objective acceptance check now reject these expensive repairs.
+The merge-aware v4 screening snapshot reports:
+
+| Policy / merge charge | Full plan cost proxy | Incremental plan cost proxy |
+| --- | ---: | ---: |
+| No split | 281870 | 281474 |
+| Selective split / 0 | 268500 | 269914 |
+| Selective split / 4 | 274840 | 276188 |
+| Selective split / 16 | 282352 | 282374 |
+
+These are sums of abstract critical-core-plus-merge cost units, not device
+times. At charge 16, incremental repair retains 12 split groups but falls
+back to full partitioning on 126 of the 127 post-initial steps. The quality
+guard addresses that counterexample but does not establish an efficient
+incremental scheduler or a universal approximation bound. Recomputing a
+baseline every step consumes the intended maintenance saving; a cheap quality
+bound remains an open algorithmic task.
+
+Single-round Python totals for 128 steps are 602/828 ms for full/incremental
+no-split and 869/931 ms for full/incremental selective split. These are
+implementation diagnostics, not NPU speedup estimates. The report, source
+hashes and fixed merge-charge sensitivity are preserved in the parent
+workspace at `outputs/thesis_incremental_plan/cpu-screen-v4-merge-aware.json`.
+The initial counterexample is preserved in `cpu-screen-v2.json` there.
+A subsequent tested correction caps no-split partition count at the number
+of attention groups and excludes the final endpoint from internal cuts.
+The v4 report pins the preceding source hash; it is not a timing report for
+this final small-group boundary correction.
+
+The current container was inspected through registered Torch operator schemas,
+not just `dir(torch.ops)`, which is lazy. Both sink operators, their Python
+wrapper and the three native source directories are absent. The installed
+PyTorch and torch_npu versions are 2.10.0+cpu and 2.10.0.post4. Devices 0/1
+were idle during the inventory. This is an installation prerequisite, not a
+new driver-compatibility failure.
+
+The pinned native consumer has prefix-connected core ranges: each core starts
+at the previous core's endpoint. It uses the current used-core count to
+select consumers. Arbitrary persistent-request task lists and enable-flag holes
+cannot be encoded directly. The CPU reference therefore retains contiguous
+current-row work order; exporting valid split-reduction metadata remains a
+separate implementation gate.
+
+The pinned source also has an unresolved AICPU relative include and additional
+potentially missing transitive includes. No native build has run. The target
+Q4/D256/GQA6 shape follows the general GQA route rather than the specialized
+D64/D128 route. A source-derived upper workspace formula at 24 cores is
+145.5 MiB plus library/executor storage; this is not a measured allocation,
+and the 4 KiB metadata size does not describe the total workspace.
+
+The local inventory is preserved in the parent workspace at
+`outputs/thesis_incremental_plan/sink-remote-inventory.log`. The native source
+audit pins the upstream commit separately from installed capabilities.
+
+## Existing project results and thesis scope
+
+The existing branch supplies default-bucket dispatch, true FIA host updates,
+request ownership checks, TP2 graph experiments and a fixed dynamic trace.
+Its compact FP32 GDN state logs and ready-tile pipeline are public operator
+improvements that can also accelerate padding. The observed ready-versus-delayed
+complete-model forward/replay reduction is 4.586%, not a proven incremental
+request-split gain and not an online serving result. This experiment covers
+the 64 decoders and final normalization; it does not establish sampler,
+request-queue or complete serving throughput. Full physical-state correctness
+was checked on three continued steps per mode, not all 128 timed steps.
+
+Those artifacts provide an implementation and evaluation foundation. Their
+independent literature novelty and complete qualification would need their
+own review before being presented as thesis contributions. The new thesis
+candidate adds a concrete scheduling algorithm and must compare it against
+full shared-device planning using equivalent attention arithmetic.
+
 ## Research question and proposed contribution
 
 Can a fixed-address ACLGraph maintain an exact, load-balanced attention
