@@ -1,0 +1,2362 @@
+{
+  "status": "qualified_real_prefix_and_complete_eager_q4_not_replay",
+  "requested_phase": "eager",
+  "scope": "all_64_decoders_and_final_norm",
+  "rank": 1,
+  "trace_sha256": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "loader": {
+    "loader": "official_external_launcher_weights_only_direct_hybrid_caches",
+    "model_type": "qwen3_5",
+    "tensor_parallel_size": 2,
+    "decoder_layers": 64,
+    "gdn_layers": 48,
+    "fia_layers": 16,
+    "query_tokens": 4,
+    "weight_dtype": "bfloat16",
+    "ssm_dtype": "float32",
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 2048,
+    "source_sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0"
+  },
+  "selection": {
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "dispatched_tokens": [
+      400,
+      304,
+      288,
+      352,
+      272,
+      496,
+      400,
+      464,
+      464,
+      480,
+      304,
+      320,
+      496,
+      480,
+      448,
+      272,
+      320,
+      384,
+      368,
+      480,
+      352,
+      432,
+      352,
+      480,
+      256,
+      384,
+      384,
+      464,
+      400,
+      512,
+      272,
+      352,
+      352,
+      400,
+      448,
+      384,
+      496,
+      336,
+      416,
+      304,
+      464,
+      464,
+      496,
+      496,
+      512,
+      416,
+      288,
+      496,
+      400,
+      352,
+      416,
+      272,
+      336,
+      256,
+      288,
+      416,
+      464,
+      384,
+      352,
+      336,
+      288,
+      288,
+      512,
+      352,
+      464,
+      304,
+      288,
+      288,
+      416,
+      496,
+      480,
+      304,
+      448,
+      480,
+      512,
+      448,
+      512,
+      432,
+      288,
+      400,
+      288,
+      496,
+      432,
+      432,
+      368,
+      272,
+      464,
+      320,
+      368,
+      368,
+      432,
+      320,
+      336,
+      416,
+      256,
+      336,
+      448,
+      496,
+      272,
+      304,
+      320,
+      432,
+      464,
+      288,
+      272,
+      480,
+      384,
+      416,
+      464,
+      480,
+      448,
+      416,
+      512,
+      512,
+      464,
+      464,
+      368,
+      480,
+      464,
+      416,
+      288,
+      512,
+      304,
+      512,
+      448,
+      368,
+      496,
+      320
+    ],
+    "required_tokens": [
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "config_source": "installed EngineArgs defaults; no capture sizes supplied",
+    "query": 4
+  },
+  "memory": [
+    {
+      "phase": "weights_loaded",
+      "allocated_bytes": 27054494720,
+      "reserved_bytes": 27063746560,
+      "peak_allocated_bytes": 27054494720,
+      "peak_reserved_bytes": 27063746560
+    },
+    {
+      "phase": "all_prefill_caches_allocated",
+      "allocated_bytes": 42601600512,
+      "reserved_bytes": 42624614400,
+      "peak_allocated_bytes": 42601600512,
+      "peak_reserved_bytes": 42624614400
+    },
+    {
+      "phase": "real_prefixes_completed",
+      "allocated_bytes": 42644270592,
+      "reserved_bytes": 42962255872,
+      "peak_allocated_bytes": 42938990592,
+      "peak_reserved_bytes": 42962255872
+    },
+    {
+      "phase": "compact_decode_transition",
+      "allocated_bytes": 44409368064,
+      "reserved_bytes": 44809846784,
+      "peak_allocated_bytes": 44417294336,
+      "peak_reserved_bytes": 44809846784
+    },
+    {
+      "phase": "complete_eager_step",
+      "allocated_bytes": 46062453760,
+      "reserved_bytes": 46240104448,
+      "peak_allocated_bytes": 46158687744,
+      "peak_reserved_bytes": 46240104448
+    }
+  ],
+  "checks": [
+    {
+      "label": "real_layer_cache_counts",
+      "gdn": 48,
+      "fia": 16
+    },
+    {
+      "label": "complete_eager_hidden_finite",
+      "shape": [
+        400,
+        5120
+      ],
+      "dtype": "torch.bfloat16",
+      "bytes": 4096000
+    },
+    {
+      "label": "complete_eager_residual_finite",
+      "shape": [
+        400,
+        5120
+      ],
+      "dtype": "torch.bfloat16",
+      "bytes": 4096000
+    },
+    {
+      "label": "all_layers_visited_once",
+      "visits": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  ],
+  "sources": {
+    "multi_graph_gdn_q4_full_probe.py": "ab94a68cc255f94a95fc3fb938cb0aa56b8bb7fcc0c7a53bf2bfc0aa53efc03d"
+  },
+  "cache_layout": {
+    "gdn": [
+      {
+        "index": 0,
+        "prefix": "language_model.model.layers.0.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 1,
+        "prefix": "language_model.model.layers.1.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 2,
+        "prefix": "language_model.model.layers.2.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 4,
+        "prefix": "language_model.model.layers.4.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 5,
+        "prefix": "language_model.model.layers.5.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 6,
+        "prefix": "language_model.model.layers.6.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 8,
+        "prefix": "language_model.model.layers.8.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 9,
+        "prefix": "language_model.model.layers.9.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 10,
+        "prefix": "language_model.model.layers.10.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 12,
+        "prefix": "language_model.model.layers.12.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 13,
+        "prefix": "language_model.model.layers.13.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 14,
+        "prefix": "language_model.model.layers.14.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 16,
+        "prefix": "language_model.model.layers.16.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 17,
+        "prefix": "language_model.model.layers.17.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 18,
+        "prefix": "language_model.model.layers.18.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 20,
+        "prefix": "language_model.model.layers.20.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 21,
+        "prefix": "language_model.model.layers.21.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 22,
+        "prefix": "language_model.model.layers.22.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 24,
+        "prefix": "language_model.model.layers.24.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 25,
+        "prefix": "language_model.model.layers.25.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 26,
+        "prefix": "language_model.model.layers.26.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 28,
+        "prefix": "language_model.model.layers.28.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 29,
+        "prefix": "language_model.model.layers.29.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 30,
+        "prefix": "language_model.model.layers.30.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 32,
+        "prefix": "language_model.model.layers.32.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 33,
+        "prefix": "language_model.model.layers.33.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 34,
+        "prefix": "language_model.model.layers.34.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 36,
+        "prefix": "language_model.model.layers.36.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 37,
+        "prefix": "language_model.model.layers.37.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 38,
+        "prefix": "language_model.model.layers.38.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 40,
+        "prefix": "language_model.model.layers.40.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 41,
+        "prefix": "language_model.model.layers.41.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 42,
+        "prefix": "language_model.model.layers.42.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 44,
+        "prefix": "language_model.model.layers.44.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 45,
+        "prefix": "language_model.model.layers.45.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 46,
+        "prefix": "language_model.model.layers.46.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 48,
+        "prefix": "language_model.model.layers.48.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 49,
+        "prefix": "language_model.model.layers.49.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 50,
+        "prefix": "language_model.model.layers.50.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 52,
+        "prefix": "language_model.model.layers.52.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 53,
+        "prefix": "language_model.model.layers.53.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 54,
+        "prefix": "language_model.model.layers.54.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 56,
+        "prefix": "language_model.model.layers.56.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 57,
+        "prefix": "language_model.model.layers.57.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 58,
+        "prefix": "language_model.model.layers.58.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 60,
+        "prefix": "language_model.model.layers.60.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 61,
+        "prefix": "language_model.model.layers.61.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      },
+      {
+        "index": 62,
+        "prefix": "language_model.model.layers.62.linear_attn",
+        "base": {
+          "shape": [
+            129,
+            24,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "bytes": 202899456
+        },
+        "conv": {
+          "shape": [
+            129,
+            6,
+            5120
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 7925760
+        }
+      }
+    ],
+    "fia": [
+      {
+        "index": 3,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 7,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 11,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 15,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 19,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 23,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 27,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 31,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 35,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 39,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 43,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 47,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 51,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 55,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 59,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      },
+      {
+        "index": 63,
+        "key": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        },
+        "value": {
+          "shape": [
+            1293,
+            128,
+            2,
+            256
+          ],
+          "dtype": "torch.bfloat16",
+          "bytes": 169476096
+        }
+      }
+    ],
+    "no_dense_four_candidate_ssm": true
+  },
+  "prefix": {
+    "completed_requests": 128,
+    "required_requests": 128,
+    "completed_tokens": 125001,
+    "token_sha256": "02e95a38181a059804a651699edc1617ab4b7f01975a1b808065c0cfd45875e0",
+    "elapsed_seconds": 43.36762538191397,
+    "records": [
+      {
+        "owner": 0,
+        "tokens": 923
+      },
+      {
+        "owner": 1,
+        "tokens": 1186
+      },
+      {
+        "owner": 2,
+        "tokens": 642
+      },
+      {
+        "owner": 3,
+        "tokens": 1448
+      },
+      {
+        "owner": 4,
+        "tokens": 748
+      },
+      {
+        "owner": 5,
+        "tokens": 964
+      },
+      {
+        "owner": 6,
+        "tokens": 626
+      },
+      {
+        "owner": 7,
+        "tokens": 1070
+      },
+      {
+        "owner": 8,
+        "tokens": 1036
+      },
+      {
+        "owner": 9,
+        "tokens": 892
+      },
+      {
+        "owner": 10,
+        "tokens": 612
+      },
+      {
+        "owner": 11,
+        "tokens": 1002
+      },
+      {
+        "owner": 12,
+        "tokens": 770
+      },
+      {
+        "owner": 13,
+        "tokens": 739
+      },
+      {
+        "owner": 14,
+        "tokens": 667
+      },
+      {
+        "owner": 15,
+        "tokens": 967
+      },
+      {
+        "owner": 16,
+        "tokens": 946
+      },
+      {
+        "owner": 17,
+        "tokens": 640
+      },
+      {
+        "owner": 18,
+        "tokens": 709
+      },
+      {
+        "owner": 19,
+        "tokens": 1505
+      },
+      {
+        "owner": 20,
+        "tokens": 512
+      },
+      {
+        "owner": 21,
+        "tokens": 670
+      },
+      {
+        "owner": 22,
+        "tokens": 721
+      },
+      {
+        "owner": 23,
+        "tokens": 862
+      },
+      {
+        "owner": 24,
+        "tokens": 697
+      },
+      {
+        "owner": 25,
+        "tokens": 599
+      },
+      {
+        "owner": 26,
+        "tokens": 577
+      },
+      {
+        "owner": 27,
+        "tokens": 1202
+      },
+      {
+        "owner": 28,
+        "tokens": 747
+      },
+      {
+        "owner": 29,
+        "tokens": 1114
+      },
+      {
+        "owner": 30,
+        "tokens": 711
+      },
+      {
+        "owner": 31,
+        "tokens": 630
+      },
+      {
+        "owner": 32,
+        "tokens": 674
+      },
+      {
+        "owner": 33,
+        "tokens": 1453
+      },
+      {
+        "owner": 34,
+        "tokens": 979
+      },
+      {
+        "owner": 35,
+        "tokens": 1481
+      },
+      {
+        "owner": 36,
+        "tokens": 1517
+      },
+      {
+        "owner": 37,
+        "tokens": 1394
+      },
+      {
+        "owner": 38,
+        "tokens": 916
+      },
+      {
+        "owner": 39,
+        "tokens": 573
+      },
+      {
+        "owner": 40,
+        "tokens": 1529
+      },
+      {
+        "owner": 41,
+        "tokens": 921
+      },
+      {
+        "owner": 42,
+        "tokens": 916
+      },
+      {
+        "owner": 43,
+        "tokens": 556
+      },
+      {
+        "owner": 44,
+        "tokens": 785
+      },
+      {
+        "owner": 45,
+        "tokens": 753
+      },
+      {
+        "owner": 46,
+        "tokens": 1138
+      },
+      {
+        "owner": 47,
+        "tokens": 1340
+      },
+      {
+        "owner": 48,
+        "tokens": 923
+      },
+      {
+        "owner": 49,
+        "tokens": 589
+      },
+      {
+        "owner": 50,
+        "tokens": 528
+      },
+      {
+        "owner": 51,
+        "tokens": 1278
+      },
+      {
+        "owner": 52,
+        "tokens": 1277
+      },
+      {
+        "owner": 53,
+        "tokens": 1426
+      },
+      {
+        "owner": 54,
+        "tokens": 929
+      },
+      {
+        "owner": 55,
+        "tokens": 749
+      },
+      {
+        "owner": 56,
+        "tokens": 668
+      },
+      {
+        "owner": 57,
+        "tokens": 986
+      },
+      {
+        "owner": 58,
+        "tokens": 820
+      },
+      {
+        "owner": 59,
+        "tokens": 898
+      },
+      {
+        "owner": 60,
+        "tokens": 675
+      },
+      {
+        "owner": 61,
+        "tokens": 1247
+      },
+      {
+        "owner": 62,
+        "tokens": 957
+      },
+      {
+        "owner": 63,
+        "tokens": 1351
+      },
+      {
+        "owner": 64,
+        "tokens": 1330
+      },
+      {
+        "owner": 65,
+        "tokens": 872
+      },
+      {
+        "owner": 66,
+        "tokens": 1444
+      },
+      {
+        "owner": 67,
+        "tokens": 1424
+      },
+      {
+        "owner": 68,
+        "tokens": 896
+      },
+      {
+        "owner": 69,
+        "tokens": 1037
+      },
+      {
+        "owner": 70,
+        "tokens": 1290
+      },
+      {
+        "owner": 71,
+        "tokens": 1473
+      },
+      {
+        "owner": 72,
+        "tokens": 1167
+      },
+      {
+        "owner": 73,
+        "tokens": 671
+      },
+      {
+        "owner": 74,
+        "tokens": 556
+      },
+      {
+        "owner": 75,
+        "tokens": 984
+      },
+      {
+        "owner": 76,
+        "tokens": 996
+      },
+      {
+        "owner": 77,
+        "tokens": 598
+      },
+      {
+        "owner": 78,
+        "tokens": 1168
+      },
+      {
+        "owner": 79,
+        "tokens": 786
+      },
+      {
+        "owner": 80,
+        "tokens": 1065
+      },
+      {
+        "owner": 81,
+        "tokens": 1296
+      },
+      {
+        "owner": 82,
+        "tokens": 604
+      },
+      {
+        "owner": 83,
+        "tokens": 1535
+      },
+      {
+        "owner": 84,
+        "tokens": 1323
+      },
+      {
+        "owner": 85,
+        "tokens": 1346
+      },
+      {
+        "owner": 86,
+        "tokens": 1285
+      },
+      {
+        "owner": 87,
+        "tokens": 991
+      },
+      {
+        "owner": 88,
+        "tokens": 1224
+      },
+      {
+        "owner": 89,
+        "tokens": 730
+      },
+      {
+        "owner": 90,
+        "tokens": 1426
+      },
+      {
+        "owner": 91,
+        "tokens": 970
+      },
+      {
+        "owner": 92,
+        "tokens": 829
+      },
+      {
+        "owner": 93,
+        "tokens": 795
+      },
+      {
+        "owner": 94,
+        "tokens": 722
+      },
+      {
+        "owner": 95,
+        "tokens": 1385
+      },
+      {
+        "owner": 96,
+        "tokens": 926
+      },
+      {
+        "owner": 97,
+        "tokens": 808
+      },
+      {
+        "owner": 98,
+        "tokens": 855
+      },
+      {
+        "owner": 99,
+        "tokens": 576
+      },
+      {
+        "owner": 100,
+        "tokens": 611
+      },
+      {
+        "owner": 101,
+        "tokens": 1324
+      },
+      {
+        "owner": 102,
+        "tokens": 850
+      },
+      {
+        "owner": 103,
+        "tokens": 1078
+      },
+      {
+        "owner": 104,
+        "tokens": 1027
+      },
+      {
+        "owner": 105,
+        "tokens": 1294
+      },
+      {
+        "owner": 106,
+        "tokens": 1084
+      },
+      {
+        "owner": 107,
+        "tokens": 1295
+      },
+      {
+        "owner": 108,
+        "tokens": 1211
+      },
+      {
+        "owner": 109,
+        "tokens": 1296
+      },
+      {
+        "owner": 110,
+        "tokens": 924
+      },
+      {
+        "owner": 111,
+        "tokens": 627
+      },
+      {
+        "owner": 112,
+        "tokens": 872
+      },
+      {
+        "owner": 113,
+        "tokens": 1160
+      },
+      {
+        "owner": 114,
+        "tokens": 1112
+      },
+      {
+        "owner": 115,
+        "tokens": 592
+      },
+      {
+        "owner": 116,
+        "tokens": 1169
+      },
+      {
+        "owner": 117,
+        "tokens": 617
+      },
+      {
+        "owner": 118,
+        "tokens": 1445
+      },
+      {
+        "owner": 119,
+        "tokens": 927
+      },
+      {
+        "owner": 120,
+        "tokens": 941
+      },
+      {
+        "owner": 121,
+        "tokens": 770
+      },
+      {
+        "owner": 122,
+        "tokens": 989
+      },
+      {
+        "owner": 123,
+        "tokens": 1242
+      },
+      {
+        "owner": 124,
+        "tokens": 1321
+      },
+      {
+        "owner": 125,
+        "tokens": 622
+      },
+      {
+        "owner": 126,
+        "tokens": 819
+      },
+      {
+        "owner": 127,
+        "tokens": 1039
+      }
+    ],
+    "full_real_model": true
+  }
+}

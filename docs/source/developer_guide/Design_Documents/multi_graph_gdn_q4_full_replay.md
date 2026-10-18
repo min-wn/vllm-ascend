@@ -202,3 +202,52 @@ consumers until explicitly implemented and costed. This manual benchmark owner
 does not establish production KV-manager support. Native/layer qualification
 alone proves none of the full-model gates; retain failures and keep the goal
 active until the complete scope is demonstrated.
+
+## Allocation and coherent eager integration evidence
+
+The complete-model allocation and eager integration gates now run on the
+existing TP2 910B setup. These results do not establish replay speedup:
+
+| Gate | Observed result |
+| --- | --- |
+| Installed default dispatcher | 17 required buckets, 256..512 tokens, no supplied capture sizes |
+| All real cache allocations | 48 GDN bases/conv and 16 independent FIA K/V pairs |
+| Decode allocation, rank zero | 44,366,697,984 bytes allocated, approximately 41.32 GiB |
+| Coherent complete-model prefixes | 128 requests, 125001 tokens, all 64 decoders and final norm |
+| Prefix token SHA256 | `02e95a38181a059804a651699edc1617ab4b7f01975a1b808065c0cfd45875e0` |
+| First complete Q4 eager step | Real B98 padded to default 400 tokens, hidden/residual finite |
+| Eager allocated/peak, rank zero | 46,062,453,760 / 46,158,687,744 bytes |
+
+Raw rank reports are
+[allocation rank zero](../../../../benchmarks/results/multi_graph_structural/gdn-q4-full-allocation-v1.rank0.json),
+[allocation rank one](../../../../benchmarks/results/multi_graph_structural/gdn-q4-full-allocation-v1.rank1.json),
+[eager rank zero](../../../../benchmarks/results/multi_graph_structural/gdn-q4-full-eager-v2.rank0.json)
+and [eager rank one](../../../../benchmarks/results/multi_graph_structural/gdn-q4-full-eager-v2.rank1.json).
+The exact deployed sources for the eager result are archived remotely under
+`/workspace/multi-graph-results/q4-full-eager-v2-tested-source/`; their hashes
+were recorded before replacing deployment with the next replay experiment.
+
+The implementation is split into `multi_graph_gdn_q4_full_loader.py` (default
+catalog and weights-only executor), `multi_graph_gdn_q4_full_metadata.py`
+(real allocations, immutable trace, official prefix/decode metadata), and
+`multi_graph_gdn_q4_full_probe.py` (complete forward and staged qualification).
+The multilevel registry accepts opaque compact handles only and installs every
+real GDN output-projection hook. Prefix execution keeps the official prefill
+operators and real per-layer caches; no synthetic hidden prefix is copied
+across layers or requests.
+
+For exclusive graph execution, each layer explicitly reserves one widest-bucket
+product/output/ID workspace and one deferred staging bank. All default buckets
+use leading views; per-lane streams/events remain separate. This does not
+permit concurrent invocations of the same layer state. Snapshot/restore visits
+shared staging once, and stages complete canonical/conv/FIA state on CPU without
+duplicating full trajectories in device memory.
+
+The next `--phase replay` path captures both equally optimized compact padding
+and request-range pipeline variants. Each complete graph must register exactly
+16 distinct FIA providers. Every replay resolves true host lengths and updates
+all registered task groups, and includes output masking and commit joins.
+Repeated eager/replay controls include complete physical state/staging and
+paused/null ownership audits. The current initial qualification subset is an
+integration gate: it does not replace full-trajectory candidate, continued-state
+and numerical assessment. No complete-model latency reduction is claimed yet.

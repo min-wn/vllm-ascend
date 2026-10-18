@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Explicit benchmark-only compact SSM ownership for one real TP2 GDN layer.
+"""Explicit benchmark-only compact SSM ownership for real TP2 GDN layers.
 
 The supplied dense cache is an initialization source, never a current-state
 consumer after import. Official convolution stays with the caller. Host lifecycle
@@ -16,6 +16,20 @@ from multi_graph_gdn_q4_backend import load_extension
 from multi_graph_gdn_q4_log_probe import request_pipeline_operations
 
 
+class CompactSSMHandle:
+    """Opaque registry identity, deliberately without any Tensor interface."""
+
+    __slots__ = ()
+
+
+def _snapshot_tensor(torch, tensor, destination):
+    if destination is None:
+        return tensor.clone()
+    if torch.device(destination).type != "cpu":
+        raise ValueError("snapshot destination must be CPU or the default live device")
+    return tensor.to(device="cpu", copy=True)
+
+
 @dataclass(frozen=True)
 class Q4LogSnapshot:
     tensors: tuple
@@ -24,6 +38,13 @@ class Q4LogSnapshot:
     initialized: tuple
     last_step: int
     pending: tuple | None
+
+
+@dataclass(frozen=True)
+class CompactRegistrySnapshot:
+    states: tuple
+    staging: tuple
+    registry_identity: tuple
 
 
 class Q4LogState:
@@ -54,6 +75,7 @@ class Q4LogState:
         ):
             raise ValueError("one initial accepted count in 1..4 per declared request required")
         self.dense_state = dense_state
+        self.handle = None
         self.request_candidate_slots = candidates
         self.initial_accepted = accepted
         self.dense_identity = (dense_state.data_ptr(), tuple(dense_state.shape), tuple(dense_state.stride()))
@@ -77,10 +99,68 @@ class Q4LogState:
         self.pending = None
         self._export = None
         self._snapshot_identity = (self.dense_identity, candidates, accepted)
+        self._base_identity = self._current_base_identity()
 
-    def snapshot(self):
+    @classmethod
+    def from_base(cls, torch, base, request_candidate_slots):
+        """Adopt a coherently initialized FP32 base without any dense source.
+
+        Row zero is the preserved null state. Request owner i uses base row
+        i+1 and the four explicit metadata candidate IDs supplied by the caller.
+        Convolution is independently allocated and retains those candidate IDs.
+        """
+        candidates = tuple(tuple(slots) for slots in request_candidate_slots)
+        if (
+            not isinstance(base, torch.Tensor)
+            or base.dtype != torch.float32
+            or base.ndim != 4
+            or base.shape != (len(candidates) + 1, 24, 128, 128)
+            or base.stride()[1:] != (16384, 128, 1)
+            or base.stride(0) < 24 * 16384
+            or not 1 <= len(candidates) <= 128
+            or any(len(slots) != 4 for slots in candidates)
+        ):
+            raise ValueError("direct compact ownership requires FP32 [owners+1,24,128,128] and explicit quartets")
+        flat = tuple(slot for slots in candidates for slot in slots)
+        if any(isinstance(slot, bool) or not isinstance(slot, int) or slot < 1 for slot in flat) or len(
+            set(flat)
+        ) != len(flat):
+            raise ValueError("candidate slots must be unique positive non-null integers")
+        state = cls.__new__(cls)
+        state.torch, state.base = torch, base
+        state.dense_state = state.dense_identity = None
+        state.handle = CompactSSMHandle()
+        state.request_candidate_slots = candidates
+        state.initial_accepted = (1,) * len(candidates)
+        state.logs = torch.zeros((len(candidates) + 1, 24, 1056), dtype=torch.float32, device=base.device)
+        state.valid = torch.zeros((len(candidates) + 1, 24, 8), dtype=torch.int32, device=base.device)
+        lookup = [-1] * (max(flat) + 1)
+        lookup[0] = 0
+        for owner, slots in enumerate(candidates, start=1):
+            for slot in slots:
+                lookup[slot] = owner
+        state.device_owner_lookup = torch.tensor(lookup, dtype=torch.int32, device=base.device)
+        state.mutable_tensors = (state.base, state.logs, state.valid)
+        state.generations = [0] * len(candidates)
+        state.initialized = [True] * len(candidates)
+        state.last_step, state.pending = -1, None
+        state._export = None
+        state._snapshot_identity = (state.handle, candidates)
+        state._base_identity = state._current_base_identity()
+        return state
+
+    def _current_base_identity(self):
+        return (
+            self.base.data_ptr(),
+            tuple(self.base.shape),
+            tuple(self.base.stride()),
+            self.base.dtype,
+            self.base.device,
+        )
+
+    def snapshot(self, destination=None):
         return Q4LogSnapshot(
-            tensors=tuple(tensor.clone() for tensor in self.mutable_tensors),
+            tensors=tuple(_snapshot_tensor(self.torch, tensor, destination) for tensor in self.mutable_tensors),
             state_identity=self._snapshot_identity,
             generations=tuple(self.generations),
             initialized=tuple(self.initialized),
@@ -88,14 +168,26 @@ class Q4LogState:
             pending=self.pending,
         )
 
-    def restore(self, snapshot):
+    def _validate_snapshot(self, snapshot):
         if not isinstance(snapshot, Q4LogSnapshot) or snapshot.state_identity != self._snapshot_identity:
             raise ValueError("snapshot belongs to a different compact cache")
+        if (
+            len(snapshot.generations) != len(self.generations)
+            or len(snapshot.initialized) != len(self.initialized)
+            or any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in snapshot.generations)
+            or any(not isinstance(value, bool) for value in snapshot.initialized)
+        ):
+            raise ValueError("snapshot lifecycle contract changed")
         if len(snapshot.tensors) != len(self.mutable_tensors) or any(
-            actual.shape != saved.shape or actual.dtype != saved.dtype or actual.device != saved.device
+            actual.shape != saved.shape
+            or actual.dtype != saved.dtype
+            or (actual.device != saved.device and saved.device.type != "cpu")
             for actual, saved in zip(self.mutable_tensors, snapshot.tensors, strict=True)
         ):
             raise ValueError("snapshot tensor contract changed")
+
+    def restore(self, snapshot):
+        self._validate_snapshot(snapshot)
         for target, saved in zip(self.mutable_tensors, snapshot.tensors, strict=True):
             target.copy_(saved)
         self.generations[:] = snapshot.generations
@@ -156,12 +248,45 @@ class Q4LogBackend:
         self.state, self.log_module, self.product_module = state, log_module, product_module
         self.deferred_module = deferred_module
         self.buffers = {}
+        self._exclusive_buffers = None
+        self._exclusive_capacity = None
         self.calls = 0
         self.sources = None
         self.original = None
         self._pending_commit = None
         self._failed = False
         self.mode = mode
+
+    def reserve_exclusive_capacity(self, max_batch=128):
+        """Reserve one workspace for metadata lanes that never execute together.
+
+        The caller promises that eager invocations and captured graphs sharing
+        this backend never overlap and join all commits before the next use.
+        Per-lane streams/events remain distinct; request halves within a single
+        invocation use disjoint product/output ranges and unique state owners.
+        Reservation must precede every recurrence and cannot be resized later.
+        """
+        if isinstance(max_batch, bool) or not isinstance(max_batch, int) or not 1 <= max_batch <= 128:
+            raise ValueError("exclusive compact capacity must be an integer in 1..128")
+        if self._exclusive_buffers is not None or self.buffers or self.calls or self._pending_commit is not None:
+            raise RuntimeError("reserve exclusive compact workspace exactly once before any recurrence")
+        if self._failed:
+            raise RuntimeError("failed compact state transaction cannot reserve workspace")
+        torch, device = self.state.torch, self.state.base.device
+        reserved = dict(
+            products=torch.empty((max_batch, 24, 128, 8), dtype=torch.float32, device=device),
+            output=torch.zeros((max_batch * 4, 24, 128), dtype=torch.bfloat16, device=device),
+            ids=torch.empty((max_batch * 4,), dtype=torch.int32, device=device),
+        )
+        if self.deferred_module is not None:
+            reserved.update(new_logs=torch.zeros_like(self.state.logs), new_valid=torch.zeros_like(self.state.valid))
+        self._exclusive_buffers, self._exclusive_capacity = reserved, max_batch
+        return self
+
+    def _staging_buffers(self):
+        if self._exclusive_buffers is not None:
+            return {None: self._exclusive_buffers} if "new_logs" in self._exclusive_buffers else {}
+        return {identity: lane for identity, lane in self.buffers.items() if "new_logs" in lane}
 
     @property
     def mode(self):
@@ -188,14 +313,20 @@ class Q4LogBackend:
             raise ValueError("compact backend refuses non-spec or implicit dense-state fallback")
         if set(kwargs) - {"num_accepted_tokens", "actual_seq_lengths", "ssm_state_indices", "g", "beta", "scale"}:
             raise ValueError("compact backend refuses unknown recurrence options")
-        if initial_state is not self.state.dense_state:
-            raise ValueError("recurrence must identify the explicitly registered dense initialization source")
-        if (
-            initial_state.data_ptr(),
-            tuple(initial_state.shape),
-            tuple(initial_state.stride()),
-        ) != self.state.dense_identity:
-            raise ValueError("registered dense cache storage or layout changed")
+        if self.state.handle is not None:
+            if initial_state is not self.state.handle:
+                raise ValueError("recurrence must use its exact registered compact SSM handle")
+        else:
+            if initial_state is not self.state.dense_state:
+                raise ValueError("recurrence must identify the explicitly registered dense initialization source")
+            if (
+                initial_state.data_ptr(),
+                tuple(initial_state.shape),
+                tuple(initial_state.stride()),
+            ) != self.state.dense_identity:
+                raise ValueError("registered dense cache storage or layout changed")
+        if self.state._current_base_identity() != self.state._base_identity:
+            raise ValueError("compact base storage, precision or layout changed")
         batch = accepted.numel()
         sequence, ids = kwargs.get("actual_seq_lengths"), kwargs.get("ssm_state_indices")
         gate, beta = kwargs.get("g"), kwargs.get("beta")
@@ -222,13 +353,23 @@ class Q4LogBackend:
             raise ValueError("contiguous inputs and metadata on the compact state device required")
         if self.mode in ("serial", "pipeline", "deferred_pipeline") and batch < 2:
             raise ValueError("two-range compact modes require at least two captured requests")
+        if self._exclusive_capacity is not None and batch > self._exclusive_capacity:
+            raise ValueError("captured requests exceed the reserved exclusive compact capacity")
         identity = (sequence.data_ptr(), ids.data_ptr(), accepted.data_ptr(), batch)
         if identity not in self.buffers:
-            self.buffers[identity] = dict(
-                products=torch.empty((batch, 24, 128, 8), dtype=torch.float32, device=query.device),
-                output=torch.zeros_like(value),
-                ids=torch.empty_like(ids),
-            )
+            if self._exclusive_buffers is None:
+                self.buffers[identity] = dict(
+                    products=torch.empty((batch, 24, 128, 8), dtype=torch.float32, device=query.device),
+                    output=torch.zeros_like(value),
+                    ids=torch.empty_like(ids),
+                )
+            else:
+                reserved = self._exclusive_buffers
+                self.buffers[identity] = dict(
+                    products=reserved["products"][:batch],
+                    output=reserved["output"][: batch * 4],
+                    ids=reserved["ids"][: batch * 4],
+                )
         buffers = self.buffers[identity]
         products, output, compact_ids = (buffers[name] for name in ("products", "output", "ids"))
 
@@ -267,9 +408,10 @@ class Q4LogBackend:
 
         if self.mode.startswith("deferred_"):
             if "new_logs" not in buffers:
+                reserved = self._exclusive_buffers
                 buffers.update(
-                    new_logs=torch.zeros_like(self.state.logs),
-                    new_valid=torch.zeros_like(self.state.valid),
+                    new_logs=reserved["new_logs"] if reserved is not None else torch.zeros_like(self.state.logs),
+                    new_valid=reserved["new_valid"] if reserved is not None else torch.zeros_like(self.state.valid),
                     commit_stream=torch.npu.Stream(),
                     solve_ready=torch.npu.Event(enable_timing=False),
                     commit_done=torch.npu.Event(enable_timing=False),
@@ -414,6 +556,7 @@ class Q4LogBackend:
         self.state.torch.npu.synchronize()
 
     def describe(self):
+        scratch = [self._exclusive_buffers] if self._exclusive_buffers is not None else self.buffers.values()
         return dict(
             backend="experimental_explicit_q4_log_state",
             mode=self.mode,
@@ -424,11 +567,19 @@ class Q4LogBackend:
             compact_state_bytes=sum(t.numel() * t.element_size() for t in self.state.mutable_tensors),
             scratch_bytes=sum(
                 t.numel() * t.element_size()
-                for lane in self.buffers.values()
+                for lane in scratch
                 for key, t in lane.items()
                 if key in ("products", "output", "ids", "new_logs", "new_valid")
             ),
-            dense_initialization_source_becomes_stale=True,
+            exclusive_workspace_capacity=self._exclusive_capacity,
+            exclusive_workspace_contract=(
+                "caller guarantees metadata lanes and captured graphs never overlap; commits joined before reuse"
+                if self._exclusive_buffers is not None
+                else None
+            ),
+            dense_initialization_source_becomes_stale=self.state.dense_state is not None,
+            dense_initialization_source_retained=self.state.dense_state is not None,
+            opaque_compact_handle=self.state.handle is not None,
             non_spec_and_fallback="rejected",
             all_prefix_export="explicit diagnostic only; not included in recurrence",
             device_metadata_value_validation=False,
@@ -457,6 +608,232 @@ class Q4LogBackend:
             yield self.original
         finally:
             gdn.recurrent_gated_delta_rule = self
+
+
+class CompactSSMRegistry:
+    """Exact-handle dispatcher for a manually owned full hybrid benchmark.
+
+    This registry does not modify the production KV manager or implement dense
+    consumers. The caller binds each real conv tensor and opaque SSM handle,
+    refreshes declared metadata, and joins all commits at the model endpoint.
+    """
+
+    def __init__(self):
+        self.entries = []
+        self.backends = {}
+        self.calls = 0
+        self._installed = False
+
+    def register(self, handle, backend, out_proj, name=None):
+        if self._installed:
+            raise RuntimeError("cannot change an installed compact registry")
+        if (
+            type(handle) is not CompactSSMHandle
+            or backend.state.handle is not handle
+            or backend.state.dense_state is not None
+        ):
+            raise ValueError("register an exact direct-base compact handle and its backend")
+        if handle in self.backends or any(backend is entry[1] or out_proj is entry[2] for entry in self.entries):
+            raise ValueError("compact handle, backend and output projection must each have one owner")
+        if not callable(getattr(out_proj, "register_forward_pre_hook", None)):
+            raise ValueError("compact layer needs a real output projection hook interface")
+        name = str(name) if name is not None else f"gdn_{len(self.entries)}"
+        if any(name == entry[3] for entry in self.entries):
+            raise ValueError("compact layer names must be unique")
+        for _, previous, _, _ in self.entries:
+            if previous.state.base.device != backend.state.base.device:
+                raise ValueError("all compact layers in one registry must share a device")
+            for tensor in backend.state.mutable_tensors:
+                for old in previous.state.mutable_tensors:
+
+                    def span(value):
+                        elements = (
+                            (value.shape[0] - 1) * value.stride(0) + 24 * 128 * 128
+                            if value.ndim == 4
+                            else value.numel()
+                        )
+                        return value.data_ptr(), value.data_ptr() + elements * value.element_size()
+
+                    left, right = span(tensor), span(old)
+                    if left[0] < right[1] and right[0] < left[1]:
+                        raise ValueError("different GDN layers must not alias compact state storage")
+        self.entries.append((handle, backend, out_proj, name))
+        self.backends[handle] = backend
+        return backend
+
+    def __call__(self, query, key, value, initial_state, **kwargs):
+        if type(initial_state) is not CompactSSMHandle or initial_state not in self.backends:
+            raise ValueError("unknown compact handle or unexpected dense Tensor fallback")
+        if kwargs.get("num_accepted_tokens") is None:
+            raise ValueError("multilayer compact dispatcher refuses non-spec execution")
+        result = self.backends[initial_state](query, key, value, initial_state, **kwargs)
+        self.calls += 1
+        return result
+
+    @property
+    def mode(self):
+        modes = {backend.mode for _, backend, _, _ in self.entries}
+        if len(modes) > 1:
+            raise RuntimeError("registered compact layers have inconsistent execution modes")
+        return next(iter(modes), None)
+
+    @mode.setter
+    def mode(self, mode):
+        if any(backend._pending_commit is not None for _, backend, _, _ in self.entries):
+            raise RuntimeError("join all compact commits before changing registry mode")
+        if mode not in ("padding", "serial", "pipeline", "deferred_serial", "deferred_overlap", "deferred_pipeline"):
+            raise ValueError("unknown compact backend execution mode")
+        if mode.startswith("deferred_") and any(backend.deferred_module is None for _, backend, _, _ in self.entries):
+            raise ValueError("every compact layer needs the deferred extension")
+        for _, backend, _, _ in self.entries:
+            backend.mode = mode
+
+    def finish_pending_commits(self):
+        # Validate every hook before joining any state transaction, so a missing
+        # projection cannot silently be turned into a different execution path.
+        if any(
+            backend._pending_commit is not None and not backend._pending_commit["launched"]
+            for _, backend, _, _ in self.entries
+        ):
+            raise RuntimeError("a registered GDN output projection did not launch its pending commit")
+        return sum(backend.finish_pending_commit() for _, backend, _, _ in self.entries)
+
+    def _require_joined(self):
+        if any(backend._pending_commit is not None for _, backend, _, _ in self.entries):
+            raise RuntimeError("all compact commits must be joined before snapshots or lifecycle changes")
+
+    def prepare_step(self, step_id, request_ids, accepted, generations=None):
+        self._require_joined()
+        requests, accepted = tuple(request_ids), tuple(accepted)
+        generations = tuple(generations) if generations is not None else None
+        previous = [backend.state.pending for _, backend, _, _ in self.entries]
+        try:
+            for _, backend, _, _ in self.entries:
+                backend.state.prepare_step(step_id, requests, accepted, generations)
+        except BaseException:
+            for (_, backend, _, _), pending in zip(self.entries, previous, strict=True):
+                backend.state.pending = pending
+            raise
+
+    def finish_step(self, step_id):
+        self._require_joined()
+        if (
+            isinstance(step_id, bool)
+            or not isinstance(step_id, int)
+            or any(
+                backend.state.pending is None or backend.state.pending[0] != step_id
+                for _, backend, _, _ in self.entries
+            )
+        ):
+            raise RuntimeError("every compact layer must have the matching host transaction")
+        for _, backend, _, _ in self.entries:
+            backend.state.finish_step(step_id)
+
+    def snapshot(self, destination=None):
+        self._require_joined()
+        states, staging = [], []
+        for _, backend, _, _ in self.entries:
+            states.append(backend.state.snapshot(destination=destination))
+            staging.append(
+                tuple(
+                    (
+                        identity,
+                        _snapshot_tensor(backend.state.torch, lane["new_logs"], destination),
+                        _snapshot_tensor(backend.state.torch, lane["new_valid"], destination),
+                    )
+                    for identity, lane in backend._staging_buffers().items()
+                )
+            )
+        return CompactRegistrySnapshot(tuple(states), tuple(staging), tuple(self.backends))
+
+    def restore(self, snapshot):
+        self._require_joined()
+        if (
+            not isinstance(snapshot, CompactRegistrySnapshot)
+            or snapshot.registry_identity != tuple(self.backends)
+            or len(snapshot.states) != len(self.entries)
+            or len(snapshot.staging) != len(self.entries)
+        ):
+            raise ValueError("snapshot belongs to a different compact registry")
+        for (_, backend, _, _), state, staging in zip(self.entries, snapshot.states, snapshot.staging, strict=True):
+            backend.state._validate_snapshot(state)
+            buffers = backend._staging_buffers()
+            for identity, logs, valid in staging:
+                if identity not in buffers:
+                    raise ValueError("snapshot staging lane is no longer registered")
+                lane = buffers[identity]
+                for target, saved in ((lane["new_logs"], logs), (lane["new_valid"], valid)):
+                    if (
+                        target.shape != saved.shape
+                        or target.dtype != saved.dtype
+                        or (target.device != saved.device and saved.device.type != "cpu")
+                    ):
+                        raise ValueError("snapshot staging tensor contract changed")
+        for (_, backend, _, _), state, staging in zip(self.entries, snapshot.states, snapshot.staging, strict=True):
+            backend.state.restore(state)
+            saved_lanes = {identity: (logs, valid) for identity, logs, valid in staging}
+            for identity, lane in backend._staging_buffers().items():
+                if identity in saved_lanes:
+                    lane["new_logs"].copy_(saved_lanes[identity][0])
+                    lane["new_valid"].copy_(saved_lanes[identity][1])
+                else:
+                    # A coherent-prefix snapshot can precede graph capture and
+                    # allocation of scratch. New inactive staging starts empty.
+                    lane["new_logs"].zero_()
+                    lane["new_valid"].zero_()
+
+    def describe(self):
+        return dict(
+            registry="experimental_exact_compact_handle_registry",
+            layers=len(self.entries),
+            observed_python_calls=self.calls,
+            graph_replay_calls_are_not_counted=True,
+            production_kv_manager_support=False,
+            layer_backends=[dict(name=name, **backend.describe()) for _, backend, _, name in self.entries],
+        )
+
+
+@contextmanager
+def installed_log_registry(registry):
+    """Install exact-handle dispatch and every GDN projection readiness hook."""
+    import vllm_ascend.ops.gdn as gdn
+
+    if not isinstance(registry, CompactSSMRegistry) or not registry.entries or registry._installed:
+        raise ValueError("install a nonempty compact registry exactly once")
+    registry._require_joined()
+    original = gdn.recurrent_gated_delta_rule
+    hooks = []
+    counts = [backend.calls for _, backend, _, _ in registry.entries]
+    registry._installed = True
+    try:
+        for _, backend, projection, _ in registry.entries:
+
+            def launch_commit(module, inputs, backend=backend):
+                backend.launch_pending_commit()
+
+            hooks.append(projection.register_forward_pre_hook(launch_commit))
+        gdn.recurrent_gated_delta_rule = registry
+        yield registry
+        registry._require_joined()
+        if any(backend.calls == count for (_, backend, _, _), count in zip(registry.entries, counts, strict=True)):
+            raise RuntimeError("a registered compact GDN layer was never called")
+    finally:
+        try:
+            # Each layer has independent base/log ownership; drain every known
+            # transaction even when an earlier layer's cleanup reports failure.
+            error = None
+            for _, backend, _, _ in registry.entries:
+                try:
+                    backend._cleanup_pending_commit()
+                except BaseException as exception:
+                    error = error or exception
+            if error is not None:
+                raise error
+        finally:
+            for hook in reversed(hooks):
+                hook.remove()
+            gdn.recurrent_gated_delta_rule = original
+            registry._installed = False
 
 
 @contextmanager

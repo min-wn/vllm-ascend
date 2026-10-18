@@ -4,6 +4,7 @@
 import importlib.util
 import sys
 from contextlib import contextmanager
+from dataclasses import replace
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -59,18 +60,22 @@ class TorchWithNPU:
         return getattr(torch, name)
 
 
-def fixture_state(module, *, accepted=(2, 4)):
+def fixture_state(module, *, accepted=(2, 4), direct=False):
     # Deliberately shuffled, noncontiguous quartets; division by four is wrong.
     slots = [[7, 2, 9, 4], [1, 8, 5, 10]]
     dense = torch.arange(11, dtype=torch.float32).view(11, 1, 1, 1).expand(11, 24, 128, 128).clone()
     dense.add_(0.0001)
     api = TorchWithNPU()
-    state = module.Q4LogState(api, dense, slots, initial_accepted=list(accepted))
+    if direct:
+        selected = [0, *(quartet[count - 1] for quartet, count in zip(slots, accepted, strict=True))]
+        state = module.Q4LogState.from_base(api, dense[selected], slots)
+    else:
+        state = module.Q4LogState(api, dense, slots, initial_accepted=list(accepted))
     return state, dense, slots, api
 
 
-def fixture_backend(module, mode="padding", deferred=False):
-    state, dense, slots, api = fixture_state(module)
+def fixture_backend(module, mode="padding", deferred=False, direct=False):
+    state, dense, slots, api = fixture_state(module, direct=direct)
     calls = []
 
     def products(base, query, key, sequence, ids, accepted, output, cores, start, stop):
@@ -163,7 +168,7 @@ def fixture_backend(module, mode="padding", deferred=False):
         ssm_state_indices=torch.tensor(slots, dtype=torch.int32).flatten(),
         num_accepted_tokens=torch.tensor([2, 4], dtype=torch.int32),
     )
-    return backend, state, dense, calls, (query, key, value, dense), kwargs, api
+    return backend, state, dense, calls, (query, key, value, state.handle if direct else dense), kwargs, api
 
 
 def test_initial_import_uses_exact_selected_quartet_and_preserves_null(log_backend):
@@ -682,3 +687,296 @@ def test_installed_backend_suspends_official_and_restores_on_failure(log_backend
     with pytest.raises(RuntimeError, match="never called"), log_backend.installed_log_backend(state, library, library):
         pass
     assert gdn.recurrent_gated_delta_rule is original
+
+
+def test_direct_base_adopts_exact_fp32_storage_and_keeps_handle_opaque(log_backend):
+    storage = torch.empty((3, 24 * 128 * 128 + 128), dtype=torch.float32)
+    base = storage[:, : 24 * 128 * 128].view(3, 24, 128, 128)
+    base.copy_(torch.arange(3).view(3, 1, 1, 1))
+    slots = [[7, 2, 9, 4], [1, 8, 5, 10]]
+    state = log_backend.Q4LogState.from_base(torch, base, slots)
+    assert state.base is base and state.base.data_ptr() == storage.data_ptr()
+    assert state.dense_state is None and state.dense_identity is None
+    assert state.initial_accepted == (1, 1)
+    assert state.device_owner_lookup.tolist() == [0, 2, 1, -1, 1, 2, -1, 1, 2, 1, 2]
+    assert not state.logs.count_nonzero() and not state.valid.count_nonzero()
+    assert type(state.handle) is log_backend.CompactSSMHandle
+    for attribute in ("shape", "dtype", "device", "data_ptr", "clone"):
+        with pytest.raises(AttributeError):
+            getattr(state.handle, attribute)
+    with pytest.raises(TypeError):
+        state.handle[0]
+
+
+@pytest.mark.parametrize("bad", ["dtype", "shape", "stride", "empty", "quartet", "zero", "negative", "bool", "alias"])
+def test_direct_base_rejects_ambiguous_layout_or_candidate_ownership(log_backend, bad):
+    base = torch.empty((3, 24, 128, 128))
+    slots = [[7, 2, 9, 4], [1, 8, 5, 10]]
+    if bad == "dtype":
+        base = base.bfloat16()
+    elif bad == "shape":
+        base = base[:2]
+    elif bad == "stride":
+        base = base.transpose(-1, -2)
+    elif bad == "empty":
+        slots = []
+    elif bad == "quartet":
+        slots[0].pop()
+    elif bad in ("zero", "negative", "bool"):
+        slots[0][0] = {"zero": 0, "negative": -1, "bool": True}[bad]
+    else:
+        slots[1][0] = slots[0][0]
+    with pytest.raises(ValueError):
+        log_backend.Q4LogState.from_base(torch, base, slots)
+
+
+@pytest.mark.parametrize("foreign", ["dense", "base", "handle"])
+def test_direct_backend_requires_exact_handle_without_dense_fallback(log_backend, foreign):
+    backend, state, dense, calls, args, kwargs, _ = fixture_backend(log_backend, direct=True)
+    wrong = {"dense": dense, "base": state.base, "handle": log_backend.CompactSSMHandle()}[foreign]
+    with pytest.raises(ValueError, match="exact registered compact SSM handle"):
+        backend(*args[:3], wrong, **kwargs)
+    assert not calls
+    backend(*args, **kwargs)
+    report = backend.describe()
+    assert report["opaque_compact_handle"]
+    assert not report["dense_initialization_source_retained"]
+    assert not report["dense_initialization_source_becomes_stale"]
+
+
+def test_direct_backend_detects_replaced_base_storage(log_backend):
+    backend, state, _, calls, args, kwargs, _ = fixture_backend(log_backend, direct=True)
+    state.base = state.base.clone()
+    with pytest.raises(ValueError, match="base storage"):
+        backend(*args, **kwargs)
+    assert not calls
+
+
+def fixture_registry(module, *, mode="deferred_overlap"):
+    fixtures = [fixture_backend(module, mode, deferred=True, direct=True) for _ in range(2)]
+    registry = module.CompactSSMRegistry()
+    projections = [torch.nn.Identity(), torch.nn.Identity()]
+    for index, (fixture, projection) in enumerate(zip(fixtures, projections, strict=True)):
+        backend, state = fixture[:2]
+        registry.register(state.handle, backend, projection, name=f"layer_{index}")
+    return registry, fixtures, projections
+
+
+def execute_registry_step(registry, fixtures, projections):
+    outputs = []
+    for fixture, projection in zip(fixtures, projections, strict=True):
+        _, _, _, _, args, kwargs, _ = fixture
+        outputs.append(registry(*args, **kwargs))
+        projection(outputs[-1])
+    return outputs
+
+
+def test_multilayer_registry_routes_exact_handles_and_hooks_each_projection(log_backend, monkeypatch):
+    registry, fixtures, projections = fixture_registry(log_backend)
+    gdn, original = install_fixture_modules(log_backend, monkeypatch, fixtures[0][0])
+    before = [fixture[1].snapshot() for fixture in fixtures]
+    with log_backend.installed_log_registry(registry) as active:
+        assert active is registry and gdn.recurrent_gated_delta_rule is registry
+        registry.prepare_step(4, [1, 0], [4, 2], generations=[0, 0])
+        outputs = execute_registry_step(registry, fixtures, projections)
+        assert outputs[0].data_ptr() != outputs[1].data_ptr()
+        assert registry.finish_pending_commits() == 2
+        registry.finish_step(4)
+        for fixture, saved in zip(fixtures, before, strict=True):
+            backend, state, _, calls, _, _, api = fixture
+            assert [call[0] for call in calls] == ["products", "solve", "commit"]
+            assert api.npu.events == ["record", "wait", "record", "wait"]
+            assert backend.calls == 1 and state.generations == [1, 1]
+            assert torch.equal(state.base[1:], saved.tensors[0][1:] + 1)
+        assert registry.calls == 2 and registry.describe()["layers"] == 2
+        with pytest.raises(RuntimeError, match="installed compact registry"):
+            registry.register(fixtures[0][1].handle, fixtures[0][0], projections[0])
+    assert gdn.recurrent_gated_delta_rule is original and not registry._installed
+    assert all(not projection._forward_pre_hooks for projection in projections)
+
+
+@pytest.mark.parametrize("bad", ["unknown", "dense", "non_spec"])
+def test_multilayer_registry_rejects_foreign_or_nonspec_calls(log_backend, bad):
+    registry, fixtures, _ = fixture_registry(log_backend)
+    _, _, dense, calls, args, kwargs, _ = fixtures[0]
+    args = list(args)
+    if bad == "unknown":
+        args[3] = log_backend.CompactSSMHandle()
+    elif bad == "dense":
+        args[3] = dense
+    else:
+        kwargs.pop("num_accepted_tokens")
+    with pytest.raises(ValueError):
+        registry(*args, **kwargs)
+    assert not calls and registry.calls == 0
+
+
+@pytest.mark.parametrize("duplicate", ["handle", "projection", "name", "storage", "dense", "foreign"])
+def test_registry_registration_enforces_independent_layer_ownership(log_backend, duplicate):
+    registry, fixtures, projections = fixture_registry(log_backend)
+    backend, state, _, _, _, _, _ = fixture_backend(log_backend, direct=duplicate != "dense", deferred=True)
+    handle, projection, name = state.handle, torch.nn.Identity(), "extra"
+    if duplicate == "handle":
+        backend, state = fixtures[0][:2]
+        handle = state.handle
+    elif duplicate == "projection":
+        projection = projections[0]
+    elif duplicate == "name":
+        name = "layer_0"
+    elif duplicate == "storage":
+        state.base = fixtures[0][1].base
+        state.mutable_tensors = (state.base, state.logs, state.valid)
+    elif duplicate == "foreign":
+        handle = log_backend.CompactSSMHandle()
+    with pytest.raises(ValueError):
+        registry.register(handle, backend, projection, name=name)
+    assert len(registry.entries) == 2
+
+
+def test_registry_cpu_snapshot_restores_canonical_staging_and_host_generations(log_backend):
+    registry, fixtures, _ = fixture_registry(log_backend, mode="deferred_serial")
+    for fixture in fixtures:
+        backend, _, _, _, args, kwargs, _ = fixture
+        backend(*args, **kwargs)
+    registry.prepare_step(7, [1], [4], generations=[0])
+    saved = registry.snapshot(destination="cpu")
+    addresses = [tuple(tensor.data_ptr() for tensor in fixture[1].mutable_tensors) for fixture in fixtures]
+    for fixture in fixtures:
+        backend, state = fixture[:2]
+        for tensor in state.mutable_tensors:
+            tensor.add_(13)
+        for lane in backend.buffers.values():
+            lane["new_logs"].fill_(31)
+            lane["new_valid"].fill_(1)
+    registry.finish_step(7)
+    registry.restore(saved)
+    for index, fixture in enumerate(fixtures):
+        backend, state = fixture[:2]
+        assert state.pending == saved.states[index].pending
+        assert state.generations == [0, 0] and state.last_step == -1
+        assert addresses[index] == tuple(tensor.data_ptr() for tensor in state.mutable_tensors)
+        for target, source in zip(state.mutable_tensors, saved.states[index].tensors, strict=True):
+            assert source.device.type == "cpu" and target.data_ptr() != source.data_ptr()
+            assert torch.equal(target, source)
+        for identity, logs, valid in saved.staging[index]:
+            lane = backend.buffers[identity]
+            assert torch.equal(lane["new_logs"], logs) and torch.equal(lane["new_valid"], valid)
+
+
+def test_registry_precapture_cpu_snapshot_zeroes_new_staging_lanes_on_restore(log_backend):
+    registry, fixtures, _ = fixture_registry(log_backend, mode="deferred_serial")
+    saved = registry.snapshot(destination="cpu")
+    for fixture in fixtures:
+        backend, _, _, _, args, kwargs, _ = fixture
+        backend(*args, **kwargs)
+    assert all(backend.buffers for _, backend, _, _ in registry.entries)
+    registry.restore(saved)
+    for fixture, initial in zip(fixtures, saved.states, strict=True):
+        backend, state = fixture[:2]
+        assert all(
+            torch.equal(target, source) for target, source in zip(state.mutable_tensors, initial.tensors, strict=True)
+        )
+        for lane in backend.buffers.values():
+            assert not lane["new_logs"].count_nonzero() and not lane["new_valid"].count_nonzero()
+
+
+@pytest.mark.parametrize("bad", ["registry", "state", "staging"])
+def test_registry_restore_prevalidates_all_layers_before_mutating_any(log_backend, bad):
+    registry, fixtures, _ = fixture_registry(log_backend, mode="deferred_serial")
+    for fixture in fixtures:
+        backend, _, _, _, args, kwargs, _ = fixture
+        backend(*args, **kwargs)
+    saved = registry.snapshot(destination="cpu")
+    if bad == "registry":
+        saved = replace(saved, registry_identity=(log_backend.CompactSSMHandle(),))
+    elif bad == "state":
+        bad_state = replace(saved.states[1], tensors=saved.states[1].tensors[:2])
+        saved = replace(saved, states=(saved.states[0], bad_state))
+    else:
+        identity, logs, valid = saved.staging[1][0]
+        saved = replace(saved, staging=(saved.staging[0], ((identity, logs[:1], valid),)))
+    for fixture in fixtures:
+        for tensor in fixture[1].mutable_tensors:
+            tensor.add_(8)
+    before = [[tensor.clone() for tensor in fixture[1].mutable_tensors] for fixture in fixtures]
+    with pytest.raises(ValueError):
+        registry.restore(saved)
+    for fixture, expected in zip(fixtures, before, strict=True):
+        assert all(
+            torch.equal(target, source) for target, source in zip(fixture[1].mutable_tensors, expected, strict=True)
+        )
+
+
+def test_registry_lifecycle_prepare_failure_rolls_back_prior_layers(log_backend):
+    registry, fixtures, _ = fixture_registry(log_backend)
+    fixtures[1][1].generations[0] = 3
+    with pytest.raises(ValueError, match="stale or future"):
+        registry.prepare_step(0, [0], [1], generations=[0])
+    assert all(fixture[1].pending is None for fixture in fixtures)
+    fixtures[1][1].generations[0] = 0
+    registry.prepare_step(0, [0], [1])
+    fixtures[1][1].pending = None
+    with pytest.raises(RuntimeError, match="every compact layer"):
+        registry.finish_step(0)
+    assert fixtures[0][1].generations == [0, 0]
+
+
+def test_registry_missing_projection_prevents_partial_joins_and_drains_on_exit(log_backend, monkeypatch):
+    registry, fixtures, projections = fixture_registry(log_backend)
+    gdn, original = install_fixture_modules(log_backend, monkeypatch, fixtures[0][0])
+    with pytest.raises(RuntimeError, match="did not launch"), log_backend.installed_log_registry(registry):
+        for fixture in fixtures:
+            registry(*fixture[4], **fixture[5])
+        projections[0](fixtures[0][0].buffers[next(iter(fixtures[0][0].buffers))]["output"])
+        with pytest.raises(RuntimeError, match="joined"):
+            registry.snapshot(destination="cpu")
+        with pytest.raises(RuntimeError, match="joined"):
+            registry.prepare_step(0, [0], [1])
+        with pytest.raises(RuntimeError, match="join all"):
+            registry.mode = "padding"
+        registry.finish_pending_commits()
+    assert gdn.recurrent_gated_delta_rule is original and not registry._installed
+    assert all(fixture[0]._pending_commit is None and fixture[0]._failed for fixture in fixtures)
+    assert all([call[0] for call in fixture[3]] == ["products", "solve", "commit"] for fixture in fixtures)
+    assert all(not projection._forward_pre_hooks for projection in projections)
+
+
+def test_registry_requires_every_registered_layer_to_execute(log_backend, monkeypatch):
+    registry, fixtures, projections = fixture_registry(log_backend, mode="padding")
+    gdn, original = install_fixture_modules(log_backend, monkeypatch, fixtures[0][0])
+    with pytest.raises(RuntimeError, match="never called"), log_backend.installed_log_registry(registry):
+        registry(*fixtures[0][4], **fixtures[0][5])
+    assert gdn.recurrent_gated_delta_rule is original
+    assert all(not projection._forward_pre_hooks for projection in projections)
+
+
+def test_registry_removes_partial_hook_installation_on_setup_failure(log_backend, monkeypatch):
+    registry, fixtures, projections = fixture_registry(log_backend)
+    gdn, original = install_fixture_modules(log_backend, monkeypatch, fixtures[0][0])
+
+    def fail_hook(hook):
+        raise RuntimeError("projection setup failed")
+
+    monkeypatch.setattr(projections[1], "register_forward_pre_hook", fail_hook)
+    with pytest.raises(RuntimeError, match="projection setup failed"), log_backend.installed_log_registry(registry):
+        pass
+    assert gdn.recurrent_gated_delta_rule is original and not registry._installed
+    assert not projections[0]._forward_pre_hooks
+
+
+def test_registry_cleanup_continues_after_one_layer_reports_failure(log_backend, monkeypatch):
+    registry, fixtures, projections = fixture_registry(log_backend)
+    gdn, original = install_fixture_modules(log_backend, monkeypatch, fixtures[0][0])
+    cleanup = fixtures[0][0]._cleanup_pending_commit
+
+    def fail_after_cleanup():
+        cleanup()
+        raise RuntimeError("first cleanup failed")
+
+    monkeypatch.setattr(fixtures[0][0], "_cleanup_pending_commit", fail_after_cleanup)
+    with pytest.raises(RuntimeError, match="first cleanup failed"), log_backend.installed_log_registry(registry):
+        execute_registry_step(registry, fixtures, projections)
+        raise RuntimeError("model endpoint failed")
+    assert gdn.recurrent_gated_delta_rule is original and not registry._installed
+    assert all(fixture[0]._pending_commit is None and fixture[0]._failed for fixture in fixtures)
+    assert all(not projection._forward_pre_hooks for projection in projections)
