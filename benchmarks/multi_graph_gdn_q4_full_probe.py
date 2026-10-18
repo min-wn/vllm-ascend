@@ -61,6 +61,41 @@ def latency_statistics(samples):
     )
 
 
+def replay_attribution(means, *, tile_enabled):
+    """Do not credit a full-bucket kernel pipeline to request-graph splitting."""
+    if tile_enabled:
+        expected = {"deferred_overlap", "deferred_tile_separate", "deferred_tile_delayed", "deferred_tile_ready"}
+        variant = "deferred_tile_ready"
+        public_modes = expected
+        scope = "public_full_bucket_kernel_pipeline"
+    else:
+        expected = {"deferred_overlap", "deferred_pipeline"}
+        variant = "deferred_pipeline"
+        public_modes = {"deferred_overlap"}
+        scope = "request_range_pipeline_without_strongest_tile_padding_control"
+    if set(means) != expected or any(not 0 < value < float("inf") for value in means.values()):
+        raise ValueError("attribution requires exactly the declared controls and finite positive latencies")
+    public_baseline = min(sorted(public_modes), key=means.__getitem__)
+    control = min(sorted(expected - {variant}), key=means.__getitem__)
+    return dict(
+        scope=scope,
+        measured_variant=variant,
+        algorithm_control=control,
+        algorithm_reduction_percent=100 * (1 - means[variant] / means[control]),
+        public_padding_modes=sorted(public_modes),
+        fastest_public_padding=public_baseline,
+        split_parallel_candidate=None,
+        split_incremental_reduction_percent=None,
+        split_attribution_proven=False,
+        limitation=(
+            "Ready consumption runs in one native solve over the whole legal bucket, inside one full-model graph; "
+            "padding can use it unchanged. The ready/delayed difference is a public kernel pipeline benefit."
+            if tile_enabled
+            else "The range-pipeline comparison does not include the public ready-tile padding kernel."
+        ),
+    )
+
+
 def verify_fia_tasks(graph, layer_names):
     expected = set(layer_names)
     actual = [getattr(task.provider, "layer_name", None) for task in graph.tasks]
@@ -110,9 +145,9 @@ def restore_complete(torch, bundle, registry, saved):
     torch.npu.synchronize()
 
 
-def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, vocabulary, report):
+def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, vocabulary, report, *, checkpoint):
     """Full default-bucket graphs; real FIA updates and all state joins included."""
-    from multi_graph_gdn_q4_full_checks import verify_untouched_owners
+    from multi_graph_gdn_q4_full_stream_audit import StreamingCheckpoint
     from vllm.distributed.parallel_state import get_world_group
 
     from vllm_ascend.compilation.updatable_graph import ContextSource, UpdatableGraph
@@ -152,6 +187,20 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
     # Keep the shared graph allocator on one capture stream across buckets.
     capture_root, update_stream = torch.npu.Stream(), torch.npu.Stream()
     capture_start = time.perf_counter()
+    # Finish all shape initialization before any graph capture. This also
+    # keeps subsequent captures free of intervening eager model launches.
+    for mode in modes:
+        registry.mode = mode
+        for capacity in sorted(frames, reverse=True):
+            index = selection["dispatched_tokens"].index(capacity)
+            frame = prepare(trace.steps[index], capacity)
+            restore_complete(torch, bundle, registry, initial)
+            capture_root.wait_stream(main)
+            with torch.npu.stream(capture_root):
+                for _ in range(2):
+                    forward(frame, tokens[capacity], registry=registry)
+                    torch.npu.synchronize()
+            print(f"rank={dist.get_rank()} full-model warmup mode={mode} tokens={capacity}", flush=True)
     for mode in modes:
         registry.mode = mode
         for capacity in sorted(frames, reverse=True):
@@ -159,12 +208,6 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             frame = prepare(trace.steps[index], capacity)
             restore_complete(torch, bundle, registry, initial)
             root, update = capture_root, update_stream
-            root.wait_stream(main)
-            with torch.npu.stream(root):
-                for _ in range(2):
-                    forward(frame, tokens[capacity], registry=registry)
-            torch.npu.synchronize()
-            restore_complete(torch, bundle, registry, initial)
             print(f"rank={dist.get_rank()} full-model capture begin mode={mode} tokens={capacity}", flush=True)
             dist.barrier(group=cpu_group)
             root.wait_stream(main)
@@ -194,6 +237,8 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         ),
     )
     report["memory"].append(memory_record(torch, "all_required_default_graphs_captured"))
+    report["status"] = "all_default_graphs_captured_replay_unqualified"
+    checkpoint()
 
     def replay(entry, frame):
         tasks = entry["graph"].resolve_tasks(ContextSource(frame.mapping))
@@ -206,39 +251,62 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         entry["updated"].record(entry["update"])
         entry["root"].wait_event(entry["updated"])
 
-    def state_exact(expected, label):
-        from multi_graph_gdn_q4_full_checks import compare_complete_snapshots
-
-        actual = complete_snapshot(torch, bundle, registry)
-        compare_complete_snapshots(torch, actual, expected, label)
-        del actual
-
     # Same-mode eager/graph controls keep different floating point algorithms
     # separate. Continue from the complete preceding step, including paused IDs.
+    candidate_scratch = torch.empty((129, 4, 24, 128, 128), dtype=torch.float32, device=bundle.device)
+
+    def check_candidates(scratch, label):
+        for item in bundle.gdn_entries:
+            item_backend = registry.backends[item.state.handle]
+            item_backend.deferred_module.export_candidates(item.state.base, item.state.logs, item.state.valid, scratch)
+            if not torch.isfinite(scratch).all().item():
+                raise AssertionError(f"{label}/layer{item.index}: nonfinite logical candidate")
+            if torch.count_nonzero(scratch[0]).item():
+                raise AssertionError(f"{label}/layer{item.index}: nonzero null candidate")
+
     for mode in modes:
         registry.mode = mode
         restore_complete(torch, bundle, registry, initial)
+        audit = StreamingCheckpoint(torch, initial)
         for index in range(args.qualification_steps):
             step, capacity = trace.steps[index], selection["dispatched_tokens"][index]
-            before = complete_snapshot(torch, bundle, registry)
+            registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
             frame = prepare(step, capacity)
             eager = tuple(value.cpu() for value in forward(frame, tokens[capacity], registry=registry))
             torch.npu.synchronize()
-            expected = complete_snapshot(torch, bundle, registry)
-            verify_untouched_owners(torch, before, expected, step["request_ids"], bundle.pages, f"{mode}/step{index}")
-            restore_complete(torch, bundle, registry, before)
+            registry.finish_step(step["step"])
+            eager_audit = audit.capture_eager_and_restore(
+                bundle, registry, step["request_ids"], label=f"{mode}/step{index}"
+            )
+            torch.npu.synchronize()
+            registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
             frame = prepare(step, capacity)
             replay(entries[mode, capacity], frame)
             torch.npu.synchronize()
+            registry.finish_step(step["step"])
             for name, actual, wanted in zip(
                 ("hidden", "residual"), entries[mode, capacity]["output"], eager, strict=True
             ):
                 torch.testing.assert_close(actual.cpu(), wanted, rtol=0, atol=0, msg=f"{mode}/step{index}/{name}")
                 if not torch.isfinite(actual).all().item():
                     raise RuntimeError(f"nonfinite full-model replay endpoint {mode}/step{index}/{name}")
-            state_exact(expected, f"{mode}/step{index}")
-            report["checks"].append(dict(label="complete_same_schedule_eager_replay_exact", mode=mode, step=index))
-            del before, expected, eager
+            replay_audit = audit.compare_replay(bundle, registry, label=f"{mode}/step{index}")
+            check_candidates(candidate_scratch, f"{mode}/step{index}")
+            report["checks"].append(
+                dict(
+                    label="complete_same_schedule_eager_replay_exact",
+                    mode=mode,
+                    step=index,
+                    eager_audit=eager_audit,
+                    replay_audit=replay_audit,
+                )
+            )
+            report["status"] = "partial_continued_replay_qualification_not_a_performance_result"
+            checkpoint()
+            print(f"rank={dist.get_rank()} full-model qualified mode={mode} step={index}", flush=True)
+            del eager
+        del audit
+    del candidate_scratch
     samples = []
     for trial in range(args.trials):
         for mode in modes if trial % 2 == 0 else reversed(modes):
@@ -267,13 +335,15 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
                         critical_rank_us=critical.item(),
                     )
                 )
+            report.update(status="partial_complete_replay_timing_not_a_goal_result", samples=samples)
+            checkpoint()
     latency = {
         mode: latency_statistics([item["critical_rank_us"] for item in samples if item["mode"] == mode])
         for mode in modes
     }
     means = {mode: latency[mode]["mean_us"] for mode in modes}
-    padding_modes = tuple(mode for mode in modes if mode != candidate)
-    baseline = min(padding_modes, key=lambda mode: means[mode])
+    attribution = replay_attribution(means, tile_enabled=args.tile_extension is not None)
+    baseline = attribution["algorithm_control"]
     paired_trials = []
     for trial in range(args.trials):
         times = {
@@ -283,7 +353,7 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             for mode in modes
         }
         paired_trials.append(
-            dict(trial=trial, mean_us=times, reduction_percent=100 * (1 - times[candidate] / times[baseline]))
+            dict(trial=trial, mean_us=times, algorithm_reduction_percent=100 * (1 - times[candidate] / times[baseline]))
         )
     report.update(
         status="measured_complete_replay_pending_full_correctness_audit",
@@ -291,9 +361,10 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         mean_critical_rank_us=means,
         latency=latency,
         paired_trials=paired_trials,
-        baseline=baseline,
-        candidate=candidate,
-        mean_reduction_percent=100 * (1 - means[candidate] / means[baseline]),
+        attribution=attribution,
+        algorithm_control=baseline,
+        measured_variant=candidate,
+        algorithm_reduction_percent=attribution["algorithm_reduction_percent"],
         same_kernel_readiness_reduction_percent=(
             100 * (1 - means[candidate] / means["deferred_tile_delayed"]) if args.tile_extension is not None else None
         ),
@@ -474,16 +545,24 @@ def experiment(args, trace, runner, model, config):
         deferred = load_extension("gdn_q4_log_deferred", args.deferred_extension)
         tile = load_extension("gdn_q4_tile_pipeline", args.tile_extension) if args.tile_extension is not None else None
         registry = CompactSSMRegistry()
+        # Complete-model invocations are exclusive; ordered commits from
+        # different layers can share one side stream instead of binding the
+        # entire stream pool separately in every captured bucket.
+        shared_commit_stream = torch.npu.Stream()
         for item in bundle.gdn_entries:
             backend = Q4LogBackend(
                 item.state, log, products, "deferred_overlap", deferred_module=deferred, tile_module=tile
             )
-            backend.reserve_exclusive_capacity(max_batch=max(args.selection["required_tokens"]) // 4)
+            backend.reserve_exclusive_capacity(
+                max_batch=max(args.selection["required_tokens"]) // 4, commit_stream=shared_commit_stream
+            )
             registry.register(item.state.handle, backend, item.gdn.out_proj)
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
         if args.phase == "replay":
             with installed_log_registry(registry):
-                replay_trajectories(args, torch, dist, bundle, factory, registry, forward, vocabulary, report)
+                replay_trajectories(
+                    args, torch, dist, bundle, factory, registry, forward, vocabulary, report, checkpoint=save
+                )
             save()
             return report
         step = trace.steps[0]

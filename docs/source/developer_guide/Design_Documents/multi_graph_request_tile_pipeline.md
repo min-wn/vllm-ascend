@@ -1,5 +1,23 @@
 # Request-tile producer/consumer pipeline for compact Q4
 
+## Attribution correction after full-bucket integration
+
+The current ready-tile implementation is a **public padding optimization**.
+`Q4LogBackend` calls `tile_module.solve` once for the complete legal bucket.
+The producer and consumer exchange device flags inside that single mixed
+kernel, and the complete model is captured as one graph. No independently
+scheduled request graph is necessary to obtain the measured local benefit.
+Consequently, the retained 20.55% recurrence and 6.00% strongest-control
+real-layer improvements establish a kernel pipeline benefit, not a
+split-specific advantage. Earlier investment language below describes the
+candidate's original motivation and must not override this attribution.
+
+Give this ready-tile kernel to padding before evaluating another request-split
+candidate. A ready/delayed pair establishes the value of early tile consumption
+within the kernel; it does not establish that multiple request graphs are
+required. The [revised objective](multi_graph_split_optimization_objective.md)
+requires both that counterfactual and a complete-model causal comparison.
+
 ## Objective and attribution
 
 Only request-splitting gains count. Compact state, deferred accepted-state commit,

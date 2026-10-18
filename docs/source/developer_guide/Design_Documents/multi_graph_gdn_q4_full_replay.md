@@ -251,3 +251,63 @@ Repeated eager/replay controls include complete physical state/staging and
 paused/null ownership audits. The current initial qualification subset is an
 integration gate: it does not replace full-trajectory candidate, continued-state
 and numerical assessment. No complete-model latency reduction is claimed yet.
+
+## Capture qualification failures and continued audit
+
+The first whole-model graph experiments have not produced a valid timing
+result. V5 captured seven default buckets from 512 down to 416 tokens, then
+stopped progressing in the next eager warmup. Worker processes remained live,
+device cores were idle and repeated Python traces ended in native host
+submission calls. After preserving evidence, the experiment was terminated.
+The source/native evidence is retained at
+`/workspace/multi-graph-results/q4-full-v5-stall-native-evidence/`.
+
+Native run logs showed 33 capture streams per graph. Inspection of the installed
+`libtorch_npu.so` confirmed a modulo pool with default 32 streams, so separate
+Python Stream objects do not guarantee distinct native streams. V6 explicitly
+shared one accepted-state commit stream across all layers and metadata lanes.
+Its captured stream range fell to four, but the next eager warmup still stopped
+after the first graph. This falsifies stream proliferation as a sufficient
+explanation. No driver defect or undocumented device stream limit is asserted.
+V6 evidence and exact deployed sources are preserved at
+`/workspace/multi-graph-results/q4-full-v6-shared-stream-stall-native-evidence/`.
+
+V7 changes setup order independently: complete all eager shape/mode warmups
+before beginning any graph capture. This is a diagnostic of eager/capture
+interleaving, not a performance optimization. The shared commit stream and all
+setup repairs apply identically to padding and request-tile candidates.
+
+V7 still stopped in the second eager bucket, before any `StreamBeginCapture`
+or `StreamEndCapture` appeared in either rank's native log. Eager-after-capture
+execution is therefore not necessary for this failure. Evidence and exact
+sources are retained in
+`/workspace/multi-graph-results/q4-full-v7-prewarm-stall-native-evidence/`.
+
+V8 applies the installed `TASK_QUEUE_ENABLE=0` setting to the entire process,
+with `TRITON_ENABLE_TASKQUEUE` left unchanged. This closes the torch_npu host
+task queue; it is not a split optimization or a driver change. Both ranks
+completed all 68 mode/bucket warmups and all 68 complete-model graph captures.
+This isolates a useful software workaround without proving the native cause
+of the earlier stalls. At this checkpoint, replay correctness and performance
+remain unqualified. The installed headers and live observation are archived in
+`/workspace/multi-graph-results/q4-full-v8-queue0-live-evidence/`.
+
+The full-bucket `deferred_tile_ready` mode is now explicitly classified as
+public padding: its single mixed kernel does not require request-graph
+splitting. Report the fastest of all four tile-enabled modes as the public
+padding baseline, and label ready-versus-delayed improvements as algorithm
+comparisons. A positive comparison must not populate a split-incremental
+speedup or satisfy the structural goal. Existing raw reports retain their
+original field names and are not rewritten.
+
+The continued correctness path now includes actual host prepare/finish lifecycle
+for both eager and replay. `multi_graph_gdn_q4_full_stream_audit.py` keeps one
+mutable CPU checkpoint in addition to the immutable trial initial state. It
+copies at most 1M elements at a time, audits paused/null and finite values,
+restores old device bytes and records the eager result in that same checkpoint.
+Replay then compares every canonical/staging/conv/FIA byte and host generation
+against it. Signed zero differences are rejected. A single reusable native
+candidate export allocation is shared across all 48 layers to check every
+owner/prefix for nonfinite values and null writes; it is never cached per layer.
+The configured step count must cover the full 128-step trace before this audit
+can establish complete trajectory correctness.

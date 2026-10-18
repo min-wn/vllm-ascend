@@ -129,6 +129,128 @@ def test_fia_task_gate_does_not_accept_a_self_consistent_incomplete_layer_catalo
         module.verify_fia_tasks(fia_graph(sorted(set(names))), names)
 
 
+def fixture_cache_bindings():
+    conv, base, key, value = (torch.zeros(2, 3) for _ in range(4))
+    handle = object()
+    return SimpleNamespace(
+        gdn_entries=[
+            SimpleNamespace(
+                index=0,
+                conv=conv,
+                base=base,
+                state=SimpleNamespace(handle=handle),
+                gdn=SimpleNamespace(kv_cache=(conv, handle)),
+            )
+        ],
+        fia_entries=[
+            SimpleNamespace(
+                index=3,
+                key=key,
+                value=value,
+                backend=SimpleNamespace(kv_cache=(key, value)),
+                impl=SimpleNamespace(key_cache=key, value_cache=value),
+            )
+        ],
+    )
+
+
+def test_cache_binding_identity_retains_addresses_and_opaque_handle_identity():
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    bundle = fixture_cache_bindings()
+    gdn, fia = bundle.gdn_entries[0], bundle.fia_entries[0]
+    expected = (
+        ((gdn.conv.data_ptr(), gdn.base.data_ptr(), id(gdn.state.handle)),),
+        ((fia.key.data_ptr(), fia.value.data_ptr()),),
+    )
+    assert module.cache_binding_identity(bundle) == expected
+    for tensor in (gdn.conv, gdn.base, fia.key, fia.value):
+        tensor.add_(7)
+    assert module.cache_binding_identity(bundle) == expected
+
+
+@pytest.mark.parametrize("field", ["conv", "handle"])
+def test_cache_binding_identity_rejects_gdn_declared_owner_replacement(field):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    bundle = fixture_cache_bindings()
+    item = bundle.gdn_entries[0]
+    if field == "conv":
+        item.gdn.kv_cache = (item.conv.clone(), item.state.handle)
+    else:
+        item.gdn.kv_cache = (item.conv, object())
+    with pytest.raises(RuntimeError, match="GDN layer 0.*declared conv/compact handle"):
+        module.cache_binding_identity(bundle)
+
+
+@pytest.mark.parametrize("target,field", [("backend", "key"), ("backend", "value"), ("impl", "key"), ("impl", "value")])
+def test_cache_binding_identity_rejects_independently_rebound_fia_consumers(target, field):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    bundle = fixture_cache_bindings()
+    item = bundle.fia_entries[0]
+    replacement = getattr(item, field).clone()
+    if target == "backend":
+        item.backend.kv_cache = (replacement, item.value) if field == "key" else (item.key, replacement)
+    else:
+        setattr(item.impl, f"{field}_cache", replacement)
+    with pytest.raises(RuntimeError, match="FIA layer 3 cache binding changed"):
+        module.cache_binding_identity(bundle)
+
+
+@pytest.mark.parametrize("owner,field", [("gdn", "conv"), ("gdn", "base"), ("fia", "key"), ("fia", "value")])
+def test_cache_binding_identity_changes_if_same_bound_tensor_gets_new_storage(owner, field):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    bundle = fixture_cache_bindings()
+    before = module.cache_binding_identity(bundle)
+    item = bundle.gdn_entries[0] if owner == "gdn" else bundle.fia_entries[0]
+    tensor = getattr(item, field)
+    # Tensor identity alone cannot protect graph pointers after storage rebinding.
+    replacement = torch.zeros_like(tensor)
+    assert replacement.data_ptr() != tensor.data_ptr()
+    tensor.set_(replacement)
+    after = module.cache_binding_identity(bundle)
+    assert after != before
+    if owner == "gdn":
+        assert item.gdn.kv_cache[0] is item.conv and item.gdn.kv_cache[1] is item.state.handle
+    else:
+        assert item.backend.kv_cache[0] is item.key and item.impl.key_cache is item.key
+        assert item.backend.kv_cache[1] is item.value and item.impl.value_cache is item.value
+
+
+def test_cache_binding_identity_changes_after_coherent_compact_handle_replacement():
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    bundle = fixture_cache_bindings()
+    before = module.cache_binding_identity(bundle)
+    item = bundle.gdn_entries[0]
+    item.state.handle = object()
+    item.gdn.kv_cache = (item.conv, item.state.handle)
+    assert module.cache_binding_identity(bundle) != before
+
+
+def test_latency_statistics_reports_exact_order_statistics_without_mutating_samples():
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    samples = list(range(100, -1, -1))
+    original = samples.copy()
+    assert module.latency_statistics(samples) == dict(mean_us=50, p50_us=50, p95_us=95, p99_us=99)
+    assert samples == original
+
+
+@pytest.mark.parametrize(
+    "samples,expected",
+    [
+        ([200, 0, 100], dict(mean_us=100, p50_us=100, p95_us=190, p99_us=198)),
+        ([17], dict(mean_us=17, p50_us=17, p95_us=17, p99_us=17)),
+    ],
+)
+def test_latency_statistics_interpolates_tails_and_accepts_single_sample(samples, expected):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    assert module.latency_statistics(samples) == expected
+
+
+def test_latency_statistics_rejects_missing_samples():
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    with pytest.raises(ValueError, match="nonempty"):
+        module.latency_statistics([])
+
+
 class SnapshotDeviceTensor:
     """Small CPU storage that enforces the accelerator snapshot transfer API."""
 
@@ -235,3 +357,102 @@ def test_complete_restore_restores_canonical_conv_and_fia_in_place_then_synchron
     ]
     assert addresses == [tensor.data_ptr() for tensor in tensors]
     assert all(torch.equal(tensor.value, original) for tensor, original in zip(tensors, before, strict=True))
+
+
+def test_replay_attribution_keeps_large_ready_kernel_gain_in_public_padding_baseline():
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    means = dict(
+        deferred_overlap=120,
+        deferred_tile_separate=110,
+        deferred_tile_delayed=100,
+        deferred_tile_ready=80,
+    )
+    original = means.copy()
+    result = module.replay_attribution(means, tile_enabled=True)
+    assert result["scope"] == "public_full_bucket_kernel_pipeline"
+    assert result["measured_variant"] == "deferred_tile_ready"
+    assert result["algorithm_control"] == "deferred_tile_delayed"
+    assert result["algorithm_reduction_percent"] == pytest.approx(20)
+    assert result["public_padding_modes"] == sorted(means)
+    assert result["fastest_public_padding"] == "deferred_tile_ready"
+    assert result["split_parallel_candidate"] is None
+    assert result["split_incremental_reduction_percent"] is None
+    assert result["split_attribution_proven"] is False
+    assert "padding can use it unchanged" in result["limitation"]
+    assert means == original
+
+
+@pytest.mark.parametrize("fastest", ["deferred_overlap", "deferred_tile_separate", "deferred_tile_delayed"])
+def test_replay_attribution_selects_fastest_public_padding_even_when_ready_is_slower(fastest):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    means = dict(
+        deferred_tile_ready=80,
+        deferred_tile_delayed=100,
+        deferred_tile_separate=110,
+        deferred_overlap=120,
+    )
+    means[fastest] = 75
+    result = module.replay_attribution(means, tile_enabled=True)
+    assert result["fastest_public_padding"] == fastest
+    assert result["algorithm_control"] == fastest
+    assert result["algorithm_reduction_percent"] == pytest.approx(100 * (1 - 80 / 75))
+    assert set(result["public_padding_modes"]) == set(means)
+    assert "deferred_tile_ready" in result["public_padding_modes"]
+    assert result["split_incremental_reduction_percent"] is None
+    assert result["split_attribution_proven"] is False
+
+
+def test_replay_attribution_without_tile_control_cannot_prove_large_range_pipeline_gain():
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    result = module.replay_attribution(dict(deferred_overlap=100, deferred_pipeline=70), tile_enabled=False)
+    assert result["scope"] == "request_range_pipeline_without_strongest_tile_padding_control"
+    assert result["measured_variant"] == "deferred_pipeline"
+    assert result["algorithm_control"] == "deferred_overlap"
+    assert result["algorithm_reduction_percent"] == pytest.approx(30)
+    assert result["public_padding_modes"] == ["deferred_overlap"]
+    assert result["fastest_public_padding"] == "deferred_overlap"
+    assert result["split_parallel_candidate"] is None
+    assert result["split_incremental_reduction_percent"] is None
+    assert result["split_attribution_proven"] is False
+    assert "does not include the public ready-tile padding kernel" in result["limitation"]
+
+
+@pytest.mark.parametrize("tile_enabled", [False, True])
+@pytest.mark.parametrize("change", ["missing", "extra"])
+def test_replay_attribution_rejects_incomplete_or_undeclared_controls(tile_enabled, change):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    means = (
+        dict(deferred_overlap=120, deferred_tile_separate=110, deferred_tile_delayed=100, deferred_tile_ready=80)
+        if tile_enabled
+        else dict(deferred_overlap=100, deferred_pipeline=80)
+    )
+    if change == "missing":
+        means.pop("deferred_overlap")
+    else:
+        means["undeclared_faster_algorithm"] = 1
+    with pytest.raises(ValueError, match="exactly the declared controls"):
+        module.replay_attribution(means, tile_enabled=tile_enabled)
+
+
+@pytest.mark.parametrize(
+    "tile_enabled,invalid_mode",
+    [
+        (False, "deferred_overlap"),
+        (False, "deferred_pipeline"),
+        (True, "deferred_overlap"),
+        (True, "deferred_tile_separate"),
+        (True, "deferred_tile_delayed"),
+        (True, "deferred_tile_ready"),
+    ],
+)
+@pytest.mark.parametrize("invalid_latency", [float("nan"), float("inf"), -float("inf"), 0, -1])
+def test_replay_attribution_rejects_invalid_latency_in_any_control(tile_enabled, invalid_mode, invalid_latency):
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    means = (
+        dict(deferred_overlap=120, deferred_tile_separate=110, deferred_tile_delayed=100, deferred_tile_ready=80)
+        if tile_enabled
+        else dict(deferred_overlap=100, deferred_pipeline=80)
+    )
+    means[invalid_mode] = invalid_latency
+    with pytest.raises(ValueError, match="finite positive latencies"):
+        module.replay_attribution(means, tile_enabled=tile_enabled)

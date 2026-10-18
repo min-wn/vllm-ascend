@@ -261,6 +261,7 @@ class Q4LogBackend:
         self.buffers = {}
         self._exclusive_buffers = None
         self._exclusive_capacity = None
+        self._exclusive_commit_stream = None
         self.calls = 0
         self.sources = None
         self.original = None
@@ -268,13 +269,15 @@ class Q4LogBackend:
         self._failed = False
         self.mode = mode
 
-    def reserve_exclusive_capacity(self, max_batch=128):
+    def reserve_exclusive_capacity(self, max_batch=128, commit_stream=None):
         """Reserve one workspace for metadata lanes that never execute together.
 
         The caller promises that eager invocations and captured graphs sharing
         this backend never overlap and join all commits before the next use.
-        Per-lane streams/events remain distinct; request halves within a single
-        invocation use disjoint product/output ranges and unique state owners.
+        A supplied commit stream is shared by all metadata lanes and may also
+        serve independent layers in the same scope. Their readiness/completion
+        events remain distinct. Without it each lane allocates its own stream.
+        Request halves use disjoint product/output ranges and unique owners.
         Reservation must precede every recurrence and cannot be resized later.
         """
         if isinstance(max_batch, bool) or not isinstance(max_batch, int) or not 1 <= max_batch <= 128:
@@ -292,6 +295,7 @@ class Q4LogBackend:
         if self.deferred_module is not None:
             reserved.update(new_logs=torch.zeros_like(self.state.logs), new_valid=torch.zeros_like(self.state.valid))
         self._exclusive_buffers, self._exclusive_capacity = reserved, max_batch
+        self._exclusive_commit_stream = commit_stream
         return self
 
     def _staging_buffers(self):
@@ -425,7 +429,11 @@ class Q4LogBackend:
                 buffers.update(
                     new_logs=reserved["new_logs"] if reserved is not None else torch.zeros_like(self.state.logs),
                     new_valid=reserved["new_valid"] if reserved is not None else torch.zeros_like(self.state.valid),
-                    commit_stream=torch.npu.Stream(),
+                    commit_stream=(
+                        self._exclusive_commit_stream
+                        if self._exclusive_commit_stream is not None
+                        else torch.npu.Stream()
+                    ),
                     solve_ready=torch.npu.Event(enable_timing=False),
                     commit_done=torch.npu.Event(enable_timing=False),
                 )
@@ -631,6 +639,7 @@ class Q4LogBackend:
                 if key in ("products", "output", "ids", "new_logs", "new_valid")
             ),
             exclusive_workspace_capacity=self._exclusive_capacity,
+            exclusive_commit_stream_shared=self._exclusive_commit_stream is not None,
             exclusive_workspace_contract=(
                 "caller guarantees metadata lanes and captured graphs never overlap; commits joined before reuse"
                 if self._exclusive_buffers is not None

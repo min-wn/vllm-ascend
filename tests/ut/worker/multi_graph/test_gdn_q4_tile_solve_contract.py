@@ -6,10 +6,10 @@ change recurrence math or state publication. Device qualification remains
 necessary to test transport visibility and eager/replay determinism.
 """
 
-import re
 from pathlib import Path
 
 import pytest
+import regex as re
 
 BENCHMARKS = Path(__file__).resolve().parents[4] / "benchmarks"
 BASELINE = BENCHMARKS / "multi_graph_gdn_q4_log_deferred_kernel" / "q4_log_deferred_kernel.cpp"
