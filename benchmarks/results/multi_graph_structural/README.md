@@ -72,9 +72,27 @@ correctness checks. They do not establish a TP2 decoder performance win.
   and deferred commit. Fixed request-range products/solve overlap adds
   2.64% in the complete real GDN layer; this remains below the final goal.
 - `structural-dynamic-trace-v1.json`: predeclared 128-step random request
-  trajectory. This is an input manifest; it has not yet been executed by an
-  integrated engine benchmark. Its canonical `trace_digest` is
+  trajectory. V8 now executes all steps in complete-model replay timing;
+  only the first three continued steps per mode have full state audits.
+  This is not a serving-engine benchmark. Its canonical `trace_digest` is
   `0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524`.
+- `q4-tile-full-replay-v8-queue0.rank0.json` and `.rank1.json`: all 64 real
+  decoders, 17 default buckets, all 16 true FIA updates, three 128-step trials
+  and initial three-step continued-state audits. Ready-tile public padding is
+  143.474 ms mean, 4.586% below delayed. Raw legacy candidate labels do not
+  establish splitting; complete correctness remains unqualified.
+- `gdn-q4-full-replay-v8-analysis.json`: independent rank-max and statistics
+  audit, raw hashes, corrected public-padding attribution and explicit missing
+  full-trajectory correctness/split evidence. The companion
+  `q4-tile-full-replay-v8-source-manifest.json` identifies the tested sources
+  and native libraries, which predate later reporting/checkpoint edits.
+- `hybrid-owner-capacity-audit-v1.json`: stable request ownership over the fixed
+  trace, default equal-owner buckets and 2.904% additional aggregate capacity.
+- `hybrid-owner-dense-v1-smoke.json` and `hybrid-owner-dense-v2.json`: frozen
+  recurrence cut with actual owner GDN projections, original full-row TP MLP
+  and all AG/RS/exit costs. Two profiles pass 60 hard checks per rank. The
+  three-GDN screening budget is negative; these are not connected-layer or
+  full-model measurements and do not justify further short-block integration.
 
 The compact recurrence experiments use one NPU, capacity 100, live batches
 97-99, four query tokens, and uniform accepted counts. They do not implement

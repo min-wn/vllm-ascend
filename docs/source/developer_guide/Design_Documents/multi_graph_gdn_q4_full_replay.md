@@ -311,3 +311,44 @@ candidate export allocation is shared across all 48 layers to check every
 owner/prefix for nonfinite values and null writes; it is never cached per layer.
 The configured step count must cover the full 128-step trace before this audit
 can establish complete trajectory correctness.
+
+## V8 complete-model timing and public baseline
+
+With the shared commit stream, all-shape prewarm and common host-queue setting,
+V8 finished all 68 complete-model captures and three alternating-order trials
+of the immutable 128-step trajectory. Both ranks pass three continued eager/
+replay steps per mode, checking hidden/residual, every physical state byte,
+all logical candidate finite/null values and paused owners. This qualifies
+12 mode/step pairs per rank, not the complete 128-step correctness trajectory.
+
+The 1536 timing records include CPU preparation, H2D, all 16 true FIA update
+providers, every real decoder and state join. Per sample, take the maximum of
+the two ranks before calculating the following statistics:
+
+| Public full-bucket mode | Mean, ms | P95, ms | P99, ms |
+| --- | ---: | ---: | ---: |
+| Deferred compact padding | 150.669 | 185.519 | 186.230 |
+| Separate paired consumer | 163.317 | 201.959 | 203.422 |
+| Mixed delayed consumer | 150.369 | 185.466 | 186.355 |
+| Mixed ready consumer | 143.474 | 175.599 | 176.618 |
+
+Ready versus delayed is a public algorithm improvement of **4.586%**, with
+paired trial reductions of 4.412%, 4.702% and 4.642%. Ready is itself the
+fastest available public padding baseline. There is no separately measured
+request-split candidate in this experiment, so its split-incremental benefit
+is unproven. It neither satisfies the 5% goal nor proves full correctness.
+
+Rank-zero peak allocated/reserved memory is 47,367,791,104 / 48,012,197,888
+bytes, including the untimed reusable candidate audit buffer. These shared
+process peaks cannot establish per-mode additional memory. Capture setup,
+coherent prefix initialization and CPU checkpoint audits are outside timing.
+
+Raw reports retain the pre-correction `candidate` and `baseline` field names:
+`q4-tile-full-replay-v8-queue0.rank0.json` and `.rank1.json` under
+`benchmarks/results/multi_graph_structural/`. The separate
+`gdn-q4-full-replay-v8-analysis.json` verifies both ranks' sample maxima and
+statistics, preserves raw-report hashes and applies the corrected attribution.
+Exact tested Python sources are archived at
+`/workspace/multi-graph-results/q4-full-v8-queue0-tested-source/`; the companion
+manifest records those hashes and all four native library hashes. Do not
+replace that tested source with the later checkpoint/reporting revisions.

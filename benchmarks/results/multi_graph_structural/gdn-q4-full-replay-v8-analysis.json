@@ -1,0 +1,154 @@
+{
+  "status": "public_kernel_full_model_timing_not_split_goal_completion",
+  "raw_reports": {
+    "q4-tile-full-replay-v8-queue0.rank0.json": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba",
+    "q4-tile-full-replay-v8-queue0.rank1.json": "cdfce28bb2cc0648148f38f31a1b498e414e8f04ea625913fb4e916f44cb39d6"
+  },
+  "measured_source_sha256": "46f714411f763ffdf41af1b3e4b795f2440661c7e42b359341fb1a4913421065",
+  "analysis_source_sha256": "1111bd8106daa8ec1205671e9adc0ba2e01c9273996c53d4b32ddf3a1fc6b8f3",
+  "attribution_function_source_sha256": "b5a81ba1f561b1613c15a225b945724bd36992f0bf352678927406e1441e9e50",
+  "trace_sha256": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "sample_count": 1536,
+  "paired_trials": [
+    {
+      "trial": 0,
+      "mean_us": {
+        "deferred_overlap": 150858.5555,
+        "deferred_tile_separate": 163303.5037734375,
+        "deferred_tile_delayed": 150170.5983515625,
+        "deferred_tile_ready": 143544.322921875
+      },
+      "reduction_percent": 4.412498519966491
+    },
+    {
+      "trial": 1,
+      "mean_us": {
+        "deferred_overlap": 150576.1376328125,
+        "deferred_tile_separate": 163305.2680390625,
+        "deferred_tile_delayed": 150508.9062109375,
+        "deferred_tile_ready": 143431.809515625
+      },
+      "reduction_percent": 4.702111571652767
+    },
+    {
+      "trial": 2,
+      "mean_us": {
+        "deferred_overlap": 150570.83578125,
+        "deferred_tile_separate": 163340.865296875,
+        "deferred_tile_delayed": 150428.8411015625,
+        "deferred_tile_ready": 143446.539046875
+      },
+      "reduction_percent": 4.641597983177547
+    }
+  ],
+  "mean_critical_rank_us": {
+    "deferred_overlap": 150668.50963802083,
+    "deferred_tile_separate": 163316.545703125,
+    "deferred_tile_delayed": 150369.4485546875,
+    "deferred_tile_ready": 143474.223828125
+  },
+  "latency": {
+    "deferred_overlap": {
+      "mean_us": 150668.50963802083,
+      "p50_us": 150220.85700000002,
+      "p95_us": 185518.951,
+      "p99_us": 186230.1599
+    },
+    "deferred_tile_separate": {
+      "mean_us": 163316.545703125,
+      "p50_us": 163385.59850000002,
+      "p95_us": 201958.67414999998,
+      "p99_us": 203421.70067000002
+    },
+    "deferred_tile_delayed": {
+      "mean_us": 150369.4485546875,
+      "p50_us": 149666.2345,
+      "p95_us": 185465.65999999997,
+      "p99_us": 186355.4509
+    },
+    "deferred_tile_ready": {
+      "mean_us": 143474.223828125,
+      "p50_us": 143211.44650000002,
+      "p95_us": 175599.01885,
+      "p99_us": 176618.0908
+    }
+  },
+  "attribution": {
+    "scope": "public_full_bucket_kernel_pipeline",
+    "measured_variant": "deferred_tile_ready",
+    "algorithm_control": "deferred_tile_delayed",
+    "algorithm_reduction_percent": 4.585522386919438,
+    "public_padding_modes": [
+      "deferred_overlap",
+      "deferred_tile_delayed",
+      "deferred_tile_ready",
+      "deferred_tile_separate"
+    ],
+    "fastest_public_padding": "deferred_tile_ready",
+    "split_parallel_candidate": null,
+    "split_incremental_reduction_percent": null,
+    "split_attribution_proven": false,
+    "limitation": "Ready consumption runs in one native solve over the whole legal bucket, inside one full-model graph; padding can use it unchanged. The ready/delayed difference is a public kernel pipeline benefit."
+  },
+  "qualified_continuous_steps_per_mode": 3,
+  "required_continuous_steps_per_mode": 128,
+  "complete_correctness_proven": false,
+  "complete_goal_achieved": false,
+  "environment": {
+    "TASK_QUEUE_ENABLE": 0,
+    "HCCL_DETERMINISTIC": true,
+    "devices": [
+      0,
+      1
+    ]
+  },
+  "memory": [
+    {
+      "phase": "weights_loaded",
+      "allocated_bytes": 27054494720,
+      "reserved_bytes": 27063746560,
+      "peak_allocated_bytes": 27054494720,
+      "peak_reserved_bytes": 27063746560
+    },
+    {
+      "phase": "all_prefill_caches_allocated",
+      "allocated_bytes": 42601600512,
+      "reserved_bytes": 42624614400,
+      "peak_allocated_bytes": 42601600512,
+      "peak_reserved_bytes": 42624614400
+    },
+    {
+      "phase": "real_prefixes_completed",
+      "allocated_bytes": 42644270592,
+      "reserved_bytes": 42962255872,
+      "peak_allocated_bytes": 42938990592,
+      "peak_reserved_bytes": 42962255872
+    },
+    {
+      "phase": "compact_decode_transition",
+      "allocated_bytes": 45797027328,
+      "reserved_bytes": 46051360768,
+      "peak_allocated_bytes": 45797027328,
+      "peak_reserved_bytes": 46051360768
+    },
+    {
+      "phase": "all_required_default_graphs_captured",
+      "allocated_bytes": 46316788224,
+      "reserved_bytes": 46961524736,
+      "peak_allocated_bytes": 46632641024,
+      "peak_reserved_bytes": 46961524736
+    },
+    {
+      "phase": "complete_dynamic_trials",
+      "allocated_bytes": 46317443584,
+      "reserved_bytes": 48012197888,
+      "peak_allocated_bytes": 47367791104,
+      "peak_reserved_bytes": 48012197888
+    }
+  ],
+  "limitations": [
+    "The raw measured source predates the attribution correction; its candidate/baseline field names are legacy.",
+    "All modes are public full-bucket kernel controls. No request-graph splitting candidate is measured.",
+    "Three continued steps per mode are qualified; timing all 128 steps does not prove full correctness."
+  ]
+}

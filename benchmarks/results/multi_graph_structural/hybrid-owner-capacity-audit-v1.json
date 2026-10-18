@@ -1,0 +1,2283 @@
+{
+  "sources": {
+    "trace_sha256": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+    "catalog_report": "/vllm-workspace/vllm-ascend/benchmarks/results/multi_graph_structural/gdn-q4-full-allocation-v1.rank0.json",
+    "catalog_report_sha256": "20ae2cb9cedb59fb4c93efddb6e65048ca3fbe171f15ee0e79ab241cdd4f336e",
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ]
+  },
+  "audit": {
+    "ownership": "global_request_id modulo two; no state migration on row compaction",
+    "protocol": "equal-count AllGather/ReduceScatter; step selects the larger legal owner bucket on both ranks",
+    "total_padding_capacity_tokens": 50688,
+    "total_hybrid_capacity_tokens": 52160,
+    "total_capacity_increase_percent": 2.9040404040403978,
+    "fixed_maximum_capacity_increase_percent": 29.292929292929305,
+    "required_owner_tokens": [
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256
+    ],
+    "worst_capacity_step": {
+      "step": 53,
+      "batch": 64,
+      "owner_live_requests": [
+        37,
+        27
+      ],
+      "padding_tokens": 256,
+      "individually_rounded_owner_tokens": [
+        152,
+        112
+      ],
+      "equal_owner_tokens": 152,
+      "hybrid_mlp_tokens": 304,
+      "work_capacity_ratio": 1.1875,
+      "same_total_unequal_pair_exists": false
+    },
+    "same_total_unequal_pair_steps": 107,
+    "steps": [
+      {
+        "step": 0,
+        "batch": 98,
+        "owner_live_requests": [
+          49,
+          49
+        ],
+        "padding_tokens": 400,
+        "individually_rounded_owner_tokens": [
+          200,
+          200
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 1,
+        "batch": 73,
+        "owner_live_requests": [
+          31,
+          42
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          128,
+          168
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.105263157894737,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 2,
+        "batch": 69,
+        "owner_live_requests": [
+          38,
+          31
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          152,
+          128
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0555555555555556,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 3,
+        "batch": 87,
+        "owner_live_requests": [
+          44,
+          43
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          176,
+          176
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 4,
+        "batch": 66,
+        "owner_live_requests": [
+          34,
+          32
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          136,
+          128
+        ],
+        "equal_owner_tokens": 136,
+        "hybrid_mlp_tokens": 272,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 5,
+        "batch": 124,
+        "owner_live_requests": [
+          63,
+          61
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          256,
+          248
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.032258064516129,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 6,
+        "batch": 99,
+        "owner_live_requests": [
+          53,
+          46
+        ],
+        "padding_tokens": 400,
+        "individually_rounded_owner_tokens": [
+          216,
+          184
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.08,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 7,
+        "batch": 115,
+        "owner_live_requests": [
+          58,
+          57
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          232,
+          232
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 8,
+        "batch": 115,
+        "owner_live_requests": [
+          56,
+          59
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          224,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 9,
+        "batch": 118,
+        "owner_live_requests": [
+          59,
+          59
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          240,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 10,
+        "batch": 73,
+        "owner_live_requests": [
+          32,
+          41
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          128,
+          168
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.105263157894737,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 11,
+        "batch": 80,
+        "owner_live_requests": [
+          43,
+          37
+        ],
+        "padding_tokens": 320,
+        "individually_rounded_owner_tokens": [
+          176,
+          152
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.1,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 12,
+        "batch": 124,
+        "owner_live_requests": [
+          63,
+          61
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          256,
+          248
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.032258064516129,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 13,
+        "batch": 119,
+        "owner_live_requests": [
+          58,
+          61
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          232,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0333333333333334,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 14,
+        "batch": 111,
+        "owner_live_requests": [
+          53,
+          58
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          216,
+          232
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0357142857142858,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 15,
+        "batch": 67,
+        "owner_live_requests": [
+          34,
+          33
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          136,
+          136
+        ],
+        "equal_owner_tokens": 136,
+        "hybrid_mlp_tokens": 272,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 16,
+        "batch": 80,
+        "owner_live_requests": [
+          41,
+          39
+        ],
+        "padding_tokens": 320,
+        "individually_rounded_owner_tokens": [
+          168,
+          160
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.05,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 17,
+        "batch": 93,
+        "owner_live_requests": [
+          48,
+          45
+        ],
+        "padding_tokens": 384,
+        "individually_rounded_owner_tokens": [
+          192,
+          184
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 18,
+        "batch": 90,
+        "owner_live_requests": [
+          45,
+          45
+        ],
+        "padding_tokens": 368,
+        "individually_rounded_owner_tokens": [
+          184,
+          184
+        ],
+        "equal_owner_tokens": 184,
+        "hybrid_mlp_tokens": 368,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 19,
+        "batch": 120,
+        "owner_live_requests": [
+          58,
+          62
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          232,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0333333333333334,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 20,
+        "batch": 85,
+        "owner_live_requests": [
+          42,
+          43
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          168,
+          176
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 21,
+        "batch": 108,
+        "owner_live_requests": [
+          55,
+          53
+        ],
+        "padding_tokens": 432,
+        "individually_rounded_owner_tokens": [
+          224,
+          216
+        ],
+        "equal_owner_tokens": 224,
+        "hybrid_mlp_tokens": 448,
+        "work_capacity_ratio": 1.037037037037037,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 22,
+        "batch": 87,
+        "owner_live_requests": [
+          40,
+          47
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          160,
+          192
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0909090909090908,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 23,
+        "batch": 118,
+        "owner_live_requests": [
+          60,
+          58
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          240,
+          232
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 24,
+        "batch": 64,
+        "owner_live_requests": [
+          33,
+          31
+        ],
+        "padding_tokens": 256,
+        "individually_rounded_owner_tokens": [
+          136,
+          128
+        ],
+        "equal_owner_tokens": 136,
+        "hybrid_mlp_tokens": 272,
+        "work_capacity_ratio": 1.0625,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 25,
+        "batch": 95,
+        "owner_live_requests": [
+          45,
+          50
+        ],
+        "padding_tokens": 384,
+        "individually_rounded_owner_tokens": [
+          184,
+          200
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0416666666666667,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 26,
+        "batch": 93,
+        "owner_live_requests": [
+          49,
+          44
+        ],
+        "padding_tokens": 384,
+        "individually_rounded_owner_tokens": [
+          200,
+          176
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0416666666666667,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 27,
+        "batch": 113,
+        "owner_live_requests": [
+          56,
+          57
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          224,
+          232
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 28,
+        "batch": 100,
+        "owner_live_requests": [
+          50,
+          50
+        ],
+        "padding_tokens": 400,
+        "individually_rounded_owner_tokens": [
+          200,
+          200
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 29,
+        "batch": 128,
+        "owner_live_requests": [
+          64,
+          64
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 30,
+        "batch": 67,
+        "owner_live_requests": [
+          35,
+          32
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          144,
+          128
+        ],
+        "equal_owner_tokens": 144,
+        "hybrid_mlp_tokens": 288,
+        "work_capacity_ratio": 1.0588235294117647,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 31,
+        "batch": 86,
+        "owner_live_requests": [
+          41,
+          45
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          168,
+          184
+        ],
+        "equal_owner_tokens": 184,
+        "hybrid_mlp_tokens": 368,
+        "work_capacity_ratio": 1.0454545454545454,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 32,
+        "batch": 88,
+        "owner_live_requests": [
+          43,
+          45
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          176,
+          184
+        ],
+        "equal_owner_tokens": 184,
+        "hybrid_mlp_tokens": 368,
+        "work_capacity_ratio": 1.0454545454545454,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 33,
+        "batch": 98,
+        "owner_live_requests": [
+          51,
+          47
+        ],
+        "padding_tokens": 400,
+        "individually_rounded_owner_tokens": [
+          208,
+          192
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.04,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 34,
+        "batch": 109,
+        "owner_live_requests": [
+          57,
+          52
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          232,
+          208
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0357142857142858,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 35,
+        "batch": 93,
+        "owner_live_requests": [
+          46,
+          47
+        ],
+        "padding_tokens": 384,
+        "individually_rounded_owner_tokens": [
+          184,
+          192
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 36,
+        "batch": 121,
+        "owner_live_requests": [
+          59,
+          62
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          240,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 37,
+        "batch": 83,
+        "owner_live_requests": [
+          44,
+          39
+        ],
+        "padding_tokens": 336,
+        "individually_rounded_owner_tokens": [
+          176,
+          160
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0476190476190477,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 38,
+        "batch": 101,
+        "owner_live_requests": [
+          47,
+          54
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          192,
+          216
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0384615384615385,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 39,
+        "batch": 73,
+        "owner_live_requests": [
+          37,
+          36
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          152,
+          144
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 40,
+        "batch": 115,
+        "owner_live_requests": [
+          56,
+          59
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          224,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 41,
+        "batch": 114,
+        "owner_live_requests": [
+          60,
+          54
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          240,
+          216
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 42,
+        "batch": 121,
+        "owner_live_requests": [
+          59,
+          62
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          240,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 43,
+        "batch": 123,
+        "owner_live_requests": [
+          62,
+          61
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          248,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 44,
+        "batch": 126,
+        "owner_live_requests": [
+          62,
+          64
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          248,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 45,
+        "batch": 103,
+        "owner_live_requests": [
+          53,
+          50
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          216,
+          200
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0384615384615385,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 46,
+        "batch": 72,
+        "owner_live_requests": [
+          35,
+          37
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          144,
+          152
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0555555555555556,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 47,
+        "batch": 121,
+        "owner_live_requests": [
+          62,
+          59
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          248,
+          240
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 48,
+        "batch": 100,
+        "owner_live_requests": [
+          48,
+          52
+        ],
+        "padding_tokens": 400,
+        "individually_rounded_owner_tokens": [
+          192,
+          208
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.04,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 49,
+        "batch": 87,
+        "owner_live_requests": [
+          40,
+          47
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          160,
+          192
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0909090909090908,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 50,
+        "batch": 101,
+        "owner_live_requests": [
+          49,
+          52
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          200,
+          208
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 51,
+        "batch": 65,
+        "owner_live_requests": [
+          36,
+          29
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          144,
+          120
+        ],
+        "equal_owner_tokens": 144,
+        "hybrid_mlp_tokens": 288,
+        "work_capacity_ratio": 1.0588235294117647,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 52,
+        "batch": 81,
+        "owner_live_requests": [
+          41,
+          40
+        ],
+        "padding_tokens": 336,
+        "individually_rounded_owner_tokens": [
+          168,
+          160
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 53,
+        "batch": 64,
+        "owner_live_requests": [
+          37,
+          27
+        ],
+        "padding_tokens": 256,
+        "individually_rounded_owner_tokens": [
+          152,
+          112
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.1875,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 54,
+        "batch": 72,
+        "owner_live_requests": [
+          38,
+          34
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          152,
+          136
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0555555555555556,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 55,
+        "batch": 103,
+        "owner_live_requests": [
+          53,
+          50
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          216,
+          200
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0384615384615385,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 56,
+        "batch": 115,
+        "owner_live_requests": [
+          57,
+          58
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          232,
+          232
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 57,
+        "batch": 93,
+        "owner_live_requests": [
+          44,
+          49
+        ],
+        "padding_tokens": 384,
+        "individually_rounded_owner_tokens": [
+          176,
+          200
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0416666666666667,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 58,
+        "batch": 86,
+        "owner_live_requests": [
+          44,
+          42
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          176,
+          168
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 59,
+        "batch": 84,
+        "owner_live_requests": [
+          44,
+          40
+        ],
+        "padding_tokens": 336,
+        "individually_rounded_owner_tokens": [
+          176,
+          160
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0476190476190477,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 60,
+        "batch": 69,
+        "owner_live_requests": [
+          37,
+          32
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          152,
+          128
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0555555555555556,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 61,
+        "batch": 72,
+        "owner_live_requests": [
+          32,
+          40
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          128,
+          160
+        ],
+        "equal_owner_tokens": 160,
+        "hybrid_mlp_tokens": 320,
+        "work_capacity_ratio": 1.1111111111111112,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 62,
+        "batch": 127,
+        "owner_live_requests": [
+          64,
+          63
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 63,
+        "batch": 86,
+        "owner_live_requests": [
+          44,
+          42
+        ],
+        "padding_tokens": 352,
+        "individually_rounded_owner_tokens": [
+          176,
+          168
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 64,
+        "batch": 113,
+        "owner_live_requests": [
+          59,
+          54
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          240,
+          216
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 65,
+        "batch": 75,
+        "owner_live_requests": [
+          33,
+          42
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          136,
+          168
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.105263157894737,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 66,
+        "batch": 72,
+        "owner_live_requests": [
+          38,
+          34
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          152,
+          136
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0555555555555556,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 67,
+        "batch": 69,
+        "owner_live_requests": [
+          33,
+          36
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          136,
+          144
+        ],
+        "equal_owner_tokens": 144,
+        "hybrid_mlp_tokens": 288,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 68,
+        "batch": 101,
+        "owner_live_requests": [
+          52,
+          49
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          208,
+          200
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 69,
+        "batch": 124,
+        "owner_live_requests": [
+          63,
+          61
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          256,
+          248
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.032258064516129,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 70,
+        "batch": 117,
+        "owner_live_requests": [
+          57,
+          60
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          232,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 71,
+        "batch": 74,
+        "owner_live_requests": [
+          38,
+          36
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          152,
+          144
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 72,
+        "batch": 112,
+        "owner_live_requests": [
+          57,
+          55
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          232,
+          224
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0357142857142858,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 73,
+        "batch": 120,
+        "owner_live_requests": [
+          60,
+          60
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          240,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 74,
+        "batch": 126,
+        "owner_live_requests": [
+          63,
+          63
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 75,
+        "batch": 110,
+        "owner_live_requests": [
+          53,
+          57
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          216,
+          232
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0357142857142858,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 76,
+        "batch": 128,
+        "owner_live_requests": [
+          64,
+          64
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 77,
+        "batch": 105,
+        "owner_live_requests": [
+          52,
+          53
+        ],
+        "padding_tokens": 432,
+        "individually_rounded_owner_tokens": [
+          208,
+          216
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 78,
+        "batch": 71,
+        "owner_live_requests": [
+          35,
+          36
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          144,
+          144
+        ],
+        "equal_owner_tokens": 144,
+        "hybrid_mlp_tokens": 288,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 79,
+        "batch": 99,
+        "owner_live_requests": [
+          48,
+          51
+        ],
+        "padding_tokens": 400,
+        "individually_rounded_owner_tokens": [
+          192,
+          208
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.04,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 80,
+        "batch": 72,
+        "owner_live_requests": [
+          41,
+          31
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          168,
+          128
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.1666666666666667,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 81,
+        "batch": 124,
+        "owner_live_requests": [
+          62,
+          62
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          248,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 82,
+        "batch": 107,
+        "owner_live_requests": [
+          55,
+          52
+        ],
+        "padding_tokens": 432,
+        "individually_rounded_owner_tokens": [
+          224,
+          208
+        ],
+        "equal_owner_tokens": 224,
+        "hybrid_mlp_tokens": 448,
+        "work_capacity_ratio": 1.037037037037037,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 83,
+        "batch": 106,
+        "owner_live_requests": [
+          54,
+          52
+        ],
+        "padding_tokens": 432,
+        "individually_rounded_owner_tokens": [
+          216,
+          208
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 84,
+        "batch": 89,
+        "owner_live_requests": [
+          44,
+          45
+        ],
+        "padding_tokens": 368,
+        "individually_rounded_owner_tokens": [
+          176,
+          184
+        ],
+        "equal_owner_tokens": 184,
+        "hybrid_mlp_tokens": 368,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 85,
+        "batch": 68,
+        "owner_live_requests": [
+          39,
+          29
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          160,
+          120
+        ],
+        "equal_owner_tokens": 160,
+        "hybrid_mlp_tokens": 320,
+        "work_capacity_ratio": 1.1764705882352942,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 86,
+        "batch": 116,
+        "owner_live_requests": [
+          56,
+          60
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          224,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 87,
+        "batch": 80,
+        "owner_live_requests": [
+          40,
+          40
+        ],
+        "padding_tokens": 320,
+        "individually_rounded_owner_tokens": [
+          160,
+          160
+        ],
+        "equal_owner_tokens": 160,
+        "hybrid_mlp_tokens": 320,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 88,
+        "batch": 92,
+        "owner_live_requests": [
+          49,
+          43
+        ],
+        "padding_tokens": 368,
+        "individually_rounded_owner_tokens": [
+          200,
+          176
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0869565217391304,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 89,
+        "batch": 90,
+        "owner_live_requests": [
+          48,
+          42
+        ],
+        "padding_tokens": 368,
+        "individually_rounded_owner_tokens": [
+          192,
+          168
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0434782608695652,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 90,
+        "batch": 105,
+        "owner_live_requests": [
+          50,
+          55
+        ],
+        "padding_tokens": 432,
+        "individually_rounded_owner_tokens": [
+          200,
+          224
+        ],
+        "equal_owner_tokens": 224,
+        "hybrid_mlp_tokens": 448,
+        "work_capacity_ratio": 1.037037037037037,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 91,
+        "batch": 78,
+        "owner_live_requests": [
+          34,
+          44
+        ],
+        "padding_tokens": 320,
+        "individually_rounded_owner_tokens": [
+          136,
+          176
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.1,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 92,
+        "batch": 84,
+        "owner_live_requests": [
+          43,
+          41
+        ],
+        "padding_tokens": 336,
+        "individually_rounded_owner_tokens": [
+          176,
+          168
+        ],
+        "equal_owner_tokens": 176,
+        "hybrid_mlp_tokens": 352,
+        "work_capacity_ratio": 1.0476190476190477,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 93,
+        "batch": 104,
+        "owner_live_requests": [
+          53,
+          51
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          216,
+          208
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0384615384615385,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 94,
+        "batch": 64,
+        "owner_live_requests": [
+          32,
+          32
+        ],
+        "padding_tokens": 256,
+        "individually_rounded_owner_tokens": [
+          128,
+          128
+        ],
+        "equal_owner_tokens": 128,
+        "hybrid_mlp_tokens": 256,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 95,
+        "batch": 84,
+        "owner_live_requests": [
+          38,
+          46
+        ],
+        "padding_tokens": 336,
+        "individually_rounded_owner_tokens": [
+          152,
+          184
+        ],
+        "equal_owner_tokens": 184,
+        "hybrid_mlp_tokens": 368,
+        "work_capacity_ratio": 1.0952380952380953,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 96,
+        "batch": 112,
+        "owner_live_requests": [
+          57,
+          55
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          232,
+          224
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0357142857142858,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 97,
+        "batch": 124,
+        "owner_live_requests": [
+          61,
+          63
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          248,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.032258064516129,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 98,
+        "batch": 66,
+        "owner_live_requests": [
+          33,
+          33
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          136,
+          136
+        ],
+        "equal_owner_tokens": 136,
+        "hybrid_mlp_tokens": 272,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 99,
+        "batch": 76,
+        "owner_live_requests": [
+          42,
+          34
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          168,
+          136
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.105263157894737,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 100,
+        "batch": 77,
+        "owner_live_requests": [
+          37,
+          40
+        ],
+        "padding_tokens": 320,
+        "individually_rounded_owner_tokens": [
+          152,
+          160
+        ],
+        "equal_owner_tokens": 160,
+        "hybrid_mlp_tokens": 320,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 101,
+        "batch": 107,
+        "owner_live_requests": [
+          54,
+          53
+        ],
+        "padding_tokens": 432,
+        "individually_rounded_owner_tokens": [
+          216,
+          216
+        ],
+        "equal_owner_tokens": 216,
+        "hybrid_mlp_tokens": 432,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 102,
+        "batch": 115,
+        "owner_live_requests": [
+          58,
+          57
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          232,
+          232
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 103,
+        "batch": 70,
+        "owner_live_requests": [
+          35,
+          35
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          144,
+          144
+        ],
+        "equal_owner_tokens": 144,
+        "hybrid_mlp_tokens": 288,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 104,
+        "batch": 68,
+        "owner_live_requests": [
+          31,
+          37
+        ],
+        "padding_tokens": 272,
+        "individually_rounded_owner_tokens": [
+          128,
+          152
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.1176470588235294,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 105,
+        "batch": 118,
+        "owner_live_requests": [
+          61,
+          57
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          248,
+          232
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0333333333333334,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 106,
+        "batch": 94,
+        "owner_live_requests": [
+          46,
+          48
+        ],
+        "padding_tokens": 384,
+        "individually_rounded_owner_tokens": [
+          184,
+          192
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 107,
+        "batch": 103,
+        "owner_live_requests": [
+          52,
+          51
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          208,
+          208
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 108,
+        "batch": 115,
+        "owner_live_requests": [
+          59,
+          56
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          240,
+          224
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 109,
+        "batch": 119,
+        "owner_live_requests": [
+          60,
+          59
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          240,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 110,
+        "batch": 110,
+        "owner_live_requests": [
+          55,
+          55
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          224,
+          224
+        ],
+        "equal_owner_tokens": 224,
+        "hybrid_mlp_tokens": 448,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 111,
+        "batch": 101,
+        "owner_live_requests": [
+          50,
+          51
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          200,
+          208
+        ],
+        "equal_owner_tokens": 208,
+        "hybrid_mlp_tokens": 416,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 112,
+        "batch": 128,
+        "owner_live_requests": [
+          64,
+          64
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 113,
+        "batch": 128,
+        "owner_live_requests": [
+          64,
+          64
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 114,
+        "batch": 113,
+        "owner_live_requests": [
+          57,
+          56
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          232,
+          224
+        ],
+        "equal_owner_tokens": 232,
+        "hybrid_mlp_tokens": 464,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 115,
+        "batch": 116,
+        "owner_live_requests": [
+          57,
+          59
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          232,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 116,
+        "batch": 92,
+        "owner_live_requests": [
+          49,
+          43
+        ],
+        "padding_tokens": 368,
+        "individually_rounded_owner_tokens": [
+          200,
+          176
+        ],
+        "equal_owner_tokens": 200,
+        "hybrid_mlp_tokens": 400,
+        "work_capacity_ratio": 1.0869565217391304,
+        "same_total_unequal_pair_exists": false
+      },
+      {
+        "step": 117,
+        "batch": 119,
+        "owner_live_requests": [
+          58,
+          61
+        ],
+        "padding_tokens": 480,
+        "individually_rounded_owner_tokens": [
+          232,
+          248
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0333333333333334,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 118,
+        "batch": 114,
+        "owner_live_requests": [
+          55,
+          59
+        ],
+        "padding_tokens": 464,
+        "individually_rounded_owner_tokens": [
+          224,
+          240
+        ],
+        "equal_owner_tokens": 240,
+        "hybrid_mlp_tokens": 480,
+        "work_capacity_ratio": 1.0344827586206897,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 119,
+        "batch": 102,
+        "owner_live_requests": [
+          56,
+          46
+        ],
+        "padding_tokens": 416,
+        "individually_rounded_owner_tokens": [
+          224,
+          184
+        ],
+        "equal_owner_tokens": 224,
+        "hybrid_mlp_tokens": 448,
+        "work_capacity_ratio": 1.0769230769230769,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 120,
+        "batch": 70,
+        "owner_live_requests": [
+          33,
+          37
+        ],
+        "padding_tokens": 288,
+        "individually_rounded_owner_tokens": [
+          136,
+          152
+        ],
+        "equal_owner_tokens": 152,
+        "hybrid_mlp_tokens": 304,
+        "work_capacity_ratio": 1.0555555555555556,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 121,
+        "batch": 126,
+        "owner_live_requests": [
+          64,
+          62
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          248
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 122,
+        "batch": 74,
+        "owner_live_requests": [
+          34,
+          40
+        ],
+        "padding_tokens": 304,
+        "individually_rounded_owner_tokens": [
+          136,
+          160
+        ],
+        "equal_owner_tokens": 160,
+        "hybrid_mlp_tokens": 320,
+        "work_capacity_ratio": 1.0526315789473684,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 123,
+        "batch": 126,
+        "owner_live_requests": [
+          63,
+          63
+        ],
+        "padding_tokens": 512,
+        "individually_rounded_owner_tokens": [
+          256,
+          256
+        ],
+        "equal_owner_tokens": 256,
+        "hybrid_mlp_tokens": 512,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 124,
+        "batch": 110,
+        "owner_live_requests": [
+          54,
+          56
+        ],
+        "padding_tokens": 448,
+        "individually_rounded_owner_tokens": [
+          216,
+          224
+        ],
+        "equal_owner_tokens": 224,
+        "hybrid_mlp_tokens": 448,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 125,
+        "batch": 92,
+        "owner_live_requests": [
+          44,
+          48
+        ],
+        "padding_tokens": 368,
+        "individually_rounded_owner_tokens": [
+          176,
+          192
+        ],
+        "equal_owner_tokens": 192,
+        "hybrid_mlp_tokens": 384,
+        "work_capacity_ratio": 1.0434782608695652,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 126,
+        "batch": 121,
+        "owner_live_requests": [
+          61,
+          60
+        ],
+        "padding_tokens": 496,
+        "individually_rounded_owner_tokens": [
+          248,
+          240
+        ],
+        "equal_owner_tokens": 248,
+        "hybrid_mlp_tokens": 496,
+        "work_capacity_ratio": 1.0,
+        "same_total_unequal_pair_exists": true
+      },
+      {
+        "step": 127,
+        "batch": 77,
+        "owner_live_requests": [
+          35,
+          42
+        ],
+        "padding_tokens": 320,
+        "individually_rounded_owner_tokens": [
+          144,
+          168
+        ],
+        "equal_owner_tokens": 168,
+        "hybrid_mlp_tokens": 336,
+        "work_capacity_ratio": 1.05,
+        "same_total_unequal_pair_exists": true
+      }
+    ]
+  }
+}
