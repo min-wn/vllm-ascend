@@ -1,174 +1,148 @@
-# FIA sink graph-catalog context bridge
+# FIA sink 图目录上下文对照实验
 
-Status: four-process bounded diagnostic completed, 2026-10-19. All eighty
-timings and 144 sampled FP32 rows pass the independent evidence audit.
-This is a context screen, not a new scheduling algorithm or complete model
-performance experiment.
+状态：四个独立进程的限定范围诊断已于 2026-10-19 完成。全部八十次计时和
+144 行 FP32 抽样对照通过独立证据审计。这是一项执行上下文筛查，不是新的
+调度算法，也不是完整模型的性能实验。
 
-## Motivation
+## 实验动机
 
-The [current-consumer diagnostic](aclgraph_fia_sink_consumer_diagnostic.md)
-repeats the original step0/B98/capacity400 and step29/B128/capacity512.
-Whole-row reduces wall by 9.418%/10.095% against upstream there. The complete
-Stage 7 chronological descriptor trace improves only 1.788%; even the same
-two records improve only 1.184%/0.332% in that trace context. Exact Q/K/V,
-frame queries and all native plan words match across those experiments.
-Record-frequency weighting therefore cannot explain the discrepancy alone.
+[当前注意力执行算子诊断](aclgraph_fia_sink_consumer_diagnostic.md)重复执行原始的
+step0/B98/capacity400 和 step29/B128/capacity512 两条记录。其中，whole
+策略（按完整请求/注意力头归属进行调度，下文也称 whole-row）相比 upstream 策略（官方上游调度）
+分别缩短了 9.418%/10.095% 的墙钟时间。然而，完整第 7 阶段的按时间顺序
+描述符轨迹仅改善 1.788%；即使只看同样的两条记录，在该轨迹上下文中的改善
+也只有 1.184%/0.332%。这些实验的 Q/K/V、逐帧查询和全部原生执行计划字均
+精确一致。因此，仅凭记录出现频率的权重差异，无法解释这一差距。
 
-The earlier experiments also differ in graph catalogs, capture allocations,
-warmup and replay history, process/time conditions and working set. A larger
-reserved allocation is not evidence that memory bytes caused the difference.
-Before changing kernel arithmetic, separate catalog construction/retention
-context from the repeated two-record execution protocol.
+此前实验还存在图目录、捕获时的内存分配、预热与图回放历史、进程和运行时段条件、
+工作集等差异。较大的预留内存并不能证明差距由内存字节数引起。在修改内核
+算术之前，应先将图目录的构建与保留上下文，同两条记录的重复执行协议区分开来。
 
-## Fixed four-process screen
+## 固定的四进程筛查
 
-Run upstream with two buckets, whole with two, upstream with seventeen and
-whole with seventeen, in that order, on NPU0 only. Each is a fresh process
-with sixteen private resident attention occurrences, seed1703 and the same
-isolated vendor/extension provenance as the previous diagnostic. This single
-four-cell block is a mechanism screen and cannot estimate robust process
-drift. Repeated samples are not independent fresh-process replications.
+仅在 NPU0 上，按以下顺序运行：upstream 两个桶、whole 两个桶、upstream
+十七个桶、whole 十七个桶。每组都启动新进程，保留十六个私有且常驻的注意力
+算子实例，使用 seed1703，并沿用前一项诊断所使用的隔离算子包和扩展来源。
+这一个四组实验块用于筛查机制，无法可靠估计进程间漂移。重复采样也不等同于
+相互独立的新进程复现实验。
 
-The two-bucket catalog is `[400, 512]`. The seventeen-bucket catalog retains
-the original chronological first-use order:
+两桶图目录为 `[400, 512]`。十七桶图目录保留原始轨迹中首次使用的时间顺序：
 
 ```text
 400,304,288,352,272,496,464,480,320,448,384,368,432,256,512,336,416
 ```
 
-Every bucket uses its original first-use descriptor and an independent graph
-pool, with all owners alive until the experiment ends. Keep the installed
-default catalog and canonical trace unchanged. Do not introduce new sizes.
-Capture/preflight of unused buckets belongs to the declared setup context;
-unused graphs are not additionally replayed during the common measured
-protocol.
+每个桶均使用其原始首次使用描述符和独立的图内存池，全部所有者对象保留到
+实验结束。已安装的默认图目录和标准轨迹保持不变，不引入新的尺寸。未使用桶
+的图捕获和预检查属于已声明的初始化上下文；在共同的计时协议中，不额外图回放
+这些未使用的图。
 
-Graph capture records operations without executing them. Unused graph
-metadata/output contents are therefore not semantically initialized. Catalog
-validation checks their storage addresses, exact device descriptors and the
-independently executed eager preflight plan, without reading unexecuted graph
-output bytes. The two measured records acquire valid graph plans through
-their ordinary qualification/replay path; their post-check reads those actual
-plans. Setup still includes the retained consumer's eager warm operations.
+图捕获只记录操作，不执行操作。因此，未使用图的元数据和输出内容尚未按其
+语义完成初始化。图目录校验检查这些图的存储地址、精确的设备端描述符，以及
+另行实际执行的即时模式预检查计划，不读取从未执行过的图输出字节。参与计时
+的两条记录通过正常的资格检查与图回放路径获得有效图计划，后置检查读取的就是
+这些实际计划。初始化过程仍包含原有注意力执行算子的即时模式预热操作。
 
-All four processes use exactly the original consumer diagnostic's trial-zero
-record order, five warmups and ten observations per record. Only step0 and
-step29 participate in pre/post correctness qualification and measured
-replay. There are eighty total timings and 144 sampled FP32 row comparisons.
-No profiler runs are needed. Preparation, required H2D, the native producer,
-replay and final completion remain inside the same complete wall endpoint.
-Catalog setup and validation are outside timing in both controls.
+四个进程都严格使用原注意力执行算子诊断的第零轮记录顺序，每条记录预热五次、观测
+十次。只有 step0 和 step29 参与计时前后的正确性资格检查及计时图回放。总计
+八十次计时和 144 行 FP32 抽样比较，不运行性能分析器。准备、必要的 H2D、
+原生计划生成器、图回放和最终完成等待，仍全部计入同一个完整墙钟计时区间。
+两种对照中的图目录初始化与校验均不计入计时。
 
-## Attribution and correctness gates
+## 归因与正确性门槛
 
-- Preserve every source, trace, vendor/extension hash, graph pool/address and
-  capture-order record; keep all outputs and private caches independently owned.
-- Full resident Q/K/V, mask and every catalog bucket's query bytes must remain
-  unchanged. For the two common records, query bytes match across all four
-  processes; same-policy full native plans must match across catalogs.
-- Both common records retain finite outputs across all sixteen occurrences,
-  exact KV0 zeros, real ordered page/tail reference gathers, read-only exact
-  descriptors and stable pointers. Preserve full 1024-word plans before and
-  after measurement. Whole-row retains complete physical coverage and no FD.
-- Report pinned descriptor preparation counts separately: measured buckets
-  have seventeen step copies each (pre/post, five warmups, ten observations);
-  unused buckets have setup only and no hidden step replay.
-- Preserve all eighty wall observations and the fixed record schedule. Pair
-  by policy/catalog, repeat and original step; do not silently rotate records
-  according to cell index.
+- 保留全部源码、轨迹、算子包和扩展哈希、图内存池及地址、捕获顺序记录；
+  所有输出和私有缓存都必须由各自独立的对象持有。
+- 完整常驻 Q/K/V、掩码和每个图目录桶的查询字节必须保持不变。两个共同记录
+  的查询字节在四个进程中必须一致；同一策略的完整原生执行计划必须跨图目录一致。
+- 两个共同记录的十六个算子实例都必须保持有限输出、KV0 精确零值、真实有序
+  的页和尾段参考读取、只读且精确的描述符，以及稳定的指针。保留计时前后完整的
+  1024 字执行计划。完整请求/注意力头归属策略必须保留完整物理覆盖范围，且不使用 FD。
+- 单独报告页锁定内存中描述符的准备次数：计时桶各有十七次步骤拷贝，包括前后检查、
+  五次预热和十次观测；未使用桶仅有初始化操作，没有隐含的步骤图回放。
+- 保留全部八十次墙钟观测和固定记录顺序。按策略、图目录、重复序号和原始步骤
+  配对，不得按实验组索引暗中轮换记录。
 
-## Interpretation fixed before measurement
+## 测量前确定的解释边界
 
-Compare whole/upstream wall differences independently for each catalog,
-then the difference of those policy differences. Keep per-capacity and all
-raw observations. Do not use profiling durations or earlier runs as extra
-samples for this screen.
+分别比较每种图目录下 whole 与 upstream 的墙钟时间差，再比较两种图目录下
+策略差值的变化。保留各容量的结果和全部原始观测，不将性能分析时长或此前运行
+作为本次筛查的额外样本。
 
-If the seventeen-bucket repeated-record result retains the large reduction,
-catalog count/construction alone is insufficient; the next control is
-chronological replay history. If it collapses, catalog construction/retention
-context matters, but this does not distinguish allocation placement, capture
-history, device state or memory capacity. An unstable or marginal effect
-requires a reversed block before any stronger conclusion. No outcome
-establishes full-model gain, split superiority or algorithmic novelty.
+如果十七桶条件下重复执行记录仍保留较大改善，则仅凭图目录数量和构建过程
+不足以解释差距，下一项对照应检查按时间顺序的图回放历史。如果收益塌缩，则说明
+图目录构建与保留上下文有影响，但仍无法区分内存分配位置、捕获历史、设备状态
+和内存容量的作用。效果不稳定或接近噪声时，必须先反转实验块顺序，再作更强的
+判断。任何结果都不能确立完整模型收益、切分优于 padding（填充），或算法新颖性。
 
-The kernel candidate remains separate: retain running output in UB under
-the whole-head ownership/lifetime contract, with explicit slot and UB-budget
-checks. This bridge does not implement or validate that change.
+内核候选方案单独处理：在完整注意力头归属与生命周期约束下，将运行中的输出累加量
+保留在 UB 中，并显式检查槽位与 UB 预算。本项上下文对照实验既不实现、也不
+验证这一改动。
 
-## Observed result
+## 观测结果
 
-All four selected processes complete with identical frozen source. The same
-private base Q/K/V and common-bucket queries match across all cells. Same-policy
-complete native plans match across catalogs. No unused captured graph is
-replayed. Pre/post qualification passes all sixteen outputs for finite values
-and KV0 zeros; 144 sampled FP32 rows have maximum absolute error
-0.00029981881380081177. NPU0 is idle after completion.
+四个选定进程均完成运行，使用完全相同且已冻结的源码。所有实验组的私有基础
+Q/K/V 和共同桶查询均一致；同一策略的完整原生执行计划跨图目录一致。没有
+图回放任何未使用的已捕获图。计时前后的资格检查确认十六个输出均为有限值、
+KV0 均为精确零值；144 行 FP32 抽样的最大绝对误差为
+0.00029981881380081177。完成后 NPU0 空闲。
 
-| Catalog | Original record | Upstream wall us | Whole wall us | Saved us | Reduction |
+| 图目录桶数 | 原始记录 | upstream 墙钟时间（微秒） | whole 墙钟时间（微秒） | 节省时间（微秒） | 缩短比例 |
 | --- | --- | ---: | ---: | ---: | ---: |
 | 2 | step0/B98/capacity400 | 4930.206 | 4630.140 | 300.067 | 6.086% |
 | 2 | step29/B128/capacity512 | 6283.276 | 5943.937 | 339.340 | 5.401% |
 | 17 | step0/B98/capacity400 | 4836.580 | 4469.990 | 366.590 | 7.580% |
 | 17 | step29/B128/capacity512 | 6082.302 | 5576.469 | 505.833 | 8.316% |
 
-Each row contains ten observations per policy. Capacity denotes physical
-Q4 tokens: capacity400 has 100 physical requests, and capacity512 has 128.
-Both catalogs retain the original capture sizes and physical padding.
+每行每种策略均包含十次观测。容量表示 Q4 的物理词元数：capacity400
+对应 100 个物理请求，capacity512 对应 128 个。两种图目录均保留原始捕获
+尺寸和物理填充。
 
-The larger catalog allocates/reserves 6,789,984,256/11,632,902,144 bytes,
-versus 5,669,344,768/6,400,507,904 for two buckets, matching the earlier
-experiment footprints. The policy difference increases by 66.523 us at
-capacity400 and 166.494 us at capacity512 in this block. This does not
-support catalog count or retained allocation size alone as the explanation
-for Stage 7's much smaller observed gain. It does not prove a benefit from
-more graphs: cell order, process conditions and allocation context remain
-confounded, and each cell has only one fresh process.
+较大图目录的已分配/预留内存为 6,789,984,256/11,632,902,144 字节，两桶
+条件则为 5,669,344,768/6,400,507,904 字节，与此前实验的内存占用一致。
+在本实验块中，两种策略的时间差在 capacity400 下增加 66.523 微秒，在
+capacity512 下增加 166.494 微秒。这一结果不支持仅用图目录数量或保留的
+内存分配量解释第 7 阶段观测到的明显较小收益。它也不能证明更多图带来收益：
+实验组顺序、进程条件与内存分配上下文仍然混杂，而且每组只有一个新进程。
 
-The concurrent two-bucket gains are also smaller than the previous
-9.418%/10.095%, so the historical magnitude is not stable across runs.
-Seventeen buckets do not collapse to Stage 7's same-record 1.184%/0.332%
-in this repeated-record protocol. Chronological descriptor/replay history
-and process/device drift remain unresolved. A future narrow history control
-must keep the seventeen-bucket catalog and its capture order fixed, alter
-only the intervening replay sequence and preserve every current descriptor.
-This experiment does not establish either history or frequency as the cause.
+本轮两桶条件下的收益也小于此前的 9.418%/10.095%，说明历史收益幅度在
+不同运行之间并不稳定。在本次重复记录协议中，十七桶结果没有塌缩到第 7 阶段
+相同记录的 1.184%/0.332%。按时间顺序的描述符与图回放历史，以及进程和设备
+漂移的影响仍未查明。后续若做小范围历史对照，必须固定十七桶图目录及其捕获
+顺序，仅改变中间穿插的图回放序列，并保留每个当前描述符。本实验不能将历史
+或频率中的任何一项确立为原因。
 
-The practical decision is to stop treating graph-memory size as a confirmed
-bottleneck. The measured consumer execution gap and explicit workspace
-accumulation round trips remain a concrete, separately testable kernel
-target. Required preparation and native planning stay inside every endpoint.
-Stage 7's 1.788% complete dynamic-descriptor-trace result, including its
-negative round and P99, remains the applicable dynamic-trace evidence.
+据此，实际决策是不再把图内存大小视为已确认的瓶颈。测得的注意力执行算子执行差距
+和显式工作区累加往返，仍是具体且可单独验证的内核优化目标。必要准备与原生
+计划生成仍须计入每个计时区间。第 7 阶段完整动态描述符轨迹的 1.788% 结果，
+包括其中的退化轮次和 P99，仍是适用于动态轨迹的证据。
 
-## Audit, failed attempt and reproduction
+## 审计、失败尝试与复现
 
-The selected `catalog-bridge-v2` bundle contains 52 raw files. An independent
-stdlib audit performs 27,731 assertions over source/native identity, exact
-trace reconstruction, all eighty samples, 144 FP32 row identities, 130 full
-plan payloads and descriptor/address/byte contracts. Only 24 of those plan
-checks refer to actual captured-producer replay output; the others identify
-executed eager preflight explicitly. The source tests contain 23 probe and
-19 suite cases; scoped Ruff, spelling and Markdown checks pass. Full-repository
-CI still has retained vendor/raw-log spelling, pre-existing Triton import and
-Windows hook/tooling failures; the original log is saved.
+选定的 `catalog-bridge-v2` 证据包包含 52 个原始文件。独立的 Python 标准库
+审计对源码与原生组件身份、精确轨迹重建、全部八十次样本、144 行 FP32
+抽样身份、130 份完整计划载荷，以及描述符、地址和字节约束执行了 27,731 项
+断言。其中只有 24 项计划检查针对实际的已捕获计划生成器图回放输出，其余
+均明确标为已经执行的即时模式预检查。源码测试包含 23 个探针用例和 19 个
+实验套件用例；定向 Ruff、拼写和 Markdown 检查均通过。全仓 CI 仍存在已保留
+算子包和原始日志的拼写问题、既有 Triton 导入问题，以及 Windows 钩子与工具
+失败，原始日志已保存。
 
-The initial `catalog-bridge-v1` attempt failed before any timed sample because
-its audit tried to interpret unexecuted graph metadata. Its raw reports and
-exact source are retained under `failed-premeasurement-v1/`. The validation
-fix adds no extra graph replay and changes no frozen preparation, consumer,
-producer or timing helper. No failed-attempt sample enters the table.
+最初的 `catalog-bridge-v1` 尝试在任何计时采样发生之前就失败了，原因是
+审计试图解释尚未执行的图元数据。该次原始报告和精确源码保存在
+`failed-premeasurement-v1/` 中。校验修复没有增加额外图图回放，也没有改变
+任何已冻结的准备、注意力执行算子、计划生成器或计时辅助函数。表中未纳入任何
+失败尝试的样本。
 
-Saved repository artifacts:
+已保存的仓库产物：
 
-- `benchmarks/results/multi_graph_structural/fia-sink-catalog-bridge-v1/`:
-  raw suite/reports, deployed source, manifests, failed attempt and audit snapshot.
-- `fia-sink-catalog-bridge-analysis.json`: complete qualified audit and summaries.
-- `fia-sink-catalog-bridge-protocol-review.json`: the predeclared independent
-  design review and limits on causal interpretation.
-- `fia-sink-catalog-bridge-checks.json`: code hashes, tests and quality results.
+- `benchmarks/results/multi_graph_structural/fia-sink-catalog-bridge-v1/`：
+  原始实验套件和报告、已部署源码、清单、失败尝试和审计快照。
+- `fia-sink-catalog-bridge-analysis.json`：完整资格审计与汇总。
+- `fia-sink-catalog-bridge-protocol-review.json`：测量前声明的独立设计评审，
+  以及因果解释的边界。
+- `fia-sink-catalog-bridge-checks.json`：代码哈希、测试和质量检查结果。
 
-The audit snapshot accepts the collected `catalog-bridge-suite.json` and an
-explicit `--repo` checkout path; choose a new `--output` outside manifested
-raw evidence. No NPU is needed to reproduce its checks and numerical summary.
+审计快照接收所收集的 `catalog-bridge-suite.json` 和显式的 `--repo` 仓库
+检出路径；应将新的 `--output` 指定到清单登记的原始证据目录之外。复现其
+检查与数值汇总不需要 NPU。

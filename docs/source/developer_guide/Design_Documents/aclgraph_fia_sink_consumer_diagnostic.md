@@ -1,404 +1,343 @@
-# Current FIA consumer bottleneck diagnostic
+# 当前 FIA 注意力执行算子的瓶颈诊断
 
-Status: six-process bounded measurement and two independent analyses completed,
-2026-10-19. This is a small prerequisite diagnostic, not Stage 8 full-model
-integration or a replacement result for the frozen Stage 7 trace.
-The isolated running-O source patch and both macro builds are now complete;
-the four-cell `v3` runtime comparison and independent audit are complete.
-The bounded result below does not establish a stable gain. A Chinese overview is available in the
-[current scheme explanation](aclgraph_dynamic_shape_current_scheme_zh.md).
-The subsequent reversed whole-policy pair does not reproduce the running-O
-gain: wall means regress by 0.548%/1.462% at capacity400/512. The patch remains
-an isolated correctness-qualified candidate and does not enter full-model
-integration as an established optimization.
+状态：六进程的小规模测量与两份独立分析已于 2026-10-19 完成。
+这是一个前置诊断小实验，不是第 8 阶段的完整模型接入，也不替代已冻结的第 7 阶段动态轨迹结果。
+隔离的 running-O（运行中输出累加值）源码补丁及两个宏配置的构建现已完成；
+四组 `v3` 运行时对照与独立审计也已完成。
+下述有限实验结果没有证明稳定收益。中文总览见
+[当前方案说明](aclgraph_dynamic_shape_current_scheme_zh.md)。
+随后对 whole 策略反转执行顺序的配对实验没有复现 running-O 收益：
+完整耗时均值分别退化 0.548%/1.462%（capacity400/512）。
+该补丁仍是一个通过本轮正确性资格检查的隔离候选实现，不能作为已证实的优化进入完整模型接入。
 
-## Question
+## 要回答的问题
 
-Stage 7 whole-row assignment saves 89.354 us over sixteen attention occurrences
-on the complete descriptor trace. At capacity512 the saving is only 15.090 us.
-The earlier Stage 3 profile found a slower sink consumer than legacy FIA, but
-that single-point measurement preceded the current whole-row implementation.
-It cannot establish the current residual consumer gap or its cause.
+第 7 阶段的完整请求/注意力头归属策略在完整描述符轨迹的十六次注意力执行中节省了 89.354 us。
+但在 capacity512 上只节省了 15.090 us。
+更早的第 3 阶段性能剖析发现，sink 注意力执行算子比原有 FIA 更慢，
+但那次单点测量早于当前的完整请求/注意力头归属实现，不能用来确定当前剩余的算子执行差距及其原因。
 
-Re-measure the present consumers at two original records before changing
-kernel dataflow or starting a larger real-model integration.
+因此，在修改算子数据流或开始更大规模的真实模型接入之前，
+先使用两条原始记录，重新测量当前的注意力执行算子。
 
-## Fixed small experiment
+## 固定的小实验
 
-| Item | Declared contract |
+| 项目 | 预先声明的约束 |
 | --- | --- |
-| Records | First original capacity400 record, step0/B98; first capacity512 record, step29/B128. |
-| Shapes | BF16 Q4/TND, Q12/KV2/D256, page128, sparse3; original default catalog. |
-| Inputs | Sixteen private resident synthetic Q/K/V occurrences, seed1703, original exact lengths and owner pages. |
-| Controls | `upstream` sink, `whole` sink, `legacy` FIA with all real host graph-task updates. |
-| Process rounds | Upstream/whole/legacy, then legacy/whole/upstream; six fresh processes, sequential on NPU0. |
-| Per process | Five warmups and ten unprofiled observations per record. Three separate profiler replays per record. |
-| Counts | 120 unprofiled timings; 36 profiler labels and 576 attention executions. |
-| Scope | Two synthetic attention-chain records; no complete trace, loaded model, serving or split-versus-padding claim. |
+| 记录 | 第一条原始 capacity400 记录，step0/B98；第一条 capacity512 记录，step29/B128。 |
+| 形状 | BF16 Q4/TND、Q12/KV2/D256、page128、sparse3；使用原始默认图容量集合。 |
+| 输入 | 十六组独立、常驻设备的合成 Q/K/V，seed1703，保留原始精确长度与页面归属。 |
+| 对照 | `upstream` sink（上游原生策略）、`whole` sink（完整请求/注意力头归属策略）、`legacy` FIA（原有路径，保留全部真实主机端图任务更新）。 |
+| 进程轮次 | 先 upstream/whole/legacy，再 legacy/whole/upstream；六个新进程依次在 NPU0 上运行。 |
+| 每个进程 | 每条记录预热五次，进行十次不开启性能剖析的观测；另外执行三次独立的性能剖析图回放。 |
+| 数量 | 120 次不开启性能剖析的计时；36 个性能剖析标签，共 576 次注意力执行。 |
+| 范围 | 两条合成注意力链记录；不代表完整动态轨迹、已加载模型、服务性能或切分相对 padding 的收益。 |
 
-Policy order is reversed in the second round, but two rounds do not establish
-stable process-level statistics. Preserve every timing, including regressions.
-Do not add capture sizes, remove physical padding or change request ownership.
+第二轮反转策略顺序，但仅两轮不足以建立稳定的进程级统计结论。
+保留每一次计时，包括退化样本。不新增图捕获容量，不移除物理 padding，也不改变请求归属。
 
-Each bucket owns a separate graph pool. All controls use persistent pinned
-preparation and retain real current metadata. Sink uploads current device KV
-lengths and page routing; legacy uploads page routing and uses its true host
-length update interface. Do not add useless legacy length H2D to manufacture
-identical work. Report required copies explicitly and include their costs.
+每个图容量桶使用独立的图内存池。全部对照都使用持久的锁页内存进行准备，并保留当前真实元数据。
+sink 上传当前设备端 KV 长度和页面路由；legacy 上传页面路由，并使用其真实的主机端长度更新接口。
+不能为了制造完全相同的工作量而给 legacy 增加无用的长度 H2D。
+应明确报告各路径必需的拷贝，并将其开销计入结果。
 
-The full wall endpoint includes preparation, necessary copies, native planning
-or every legacy update, graph replay and final completion. Queue events include
-dependency waits and host submission gaps; queue span is not pure kernel time.
+完整耗时的计时边界包括准备、必要拷贝、原生计划生成或每次 legacy 更新、图回放及最终完成等待。
+队列事件包含依赖等待和主机端提交间隙，队列跨度不等于纯算子时间。
 
-## Correctness and identity gates
+## 正确性与一致性检查
 
-Qualification before and after timing checks every private output for finite
-values and exact KV0 padding zeros, stable addresses, exact read-only length
-and page descriptors, and unchanged resident inputs. Compare three live rows
-at occurrences zero, seven and fifteen with the independent FP32 reference.
-The page gather uses the real ordered prefix, retaining duplicate IDs and
-the exact final-page tail. There are 216 sampled row comparisons across the
-six processes; timed observations are not each independently FP32 checked.
+计时前后的资格检查会验证每组独立输出均为有限值、KV0 padding 输出严格为零，
+并验证地址稳定、只读长度和页面描述符精确一致、常驻输入未变。
+在第零、第七和第十五次注意力执行处，分别选取三个有效行，与独立 FP32 参考实现比较。
+页面收集使用真实的有序前缀，保留重复页面 ID 和最后一页的精确有效尾部。
+六个进程合计进行 216 次抽样行比较；并非每个计时样本都单独进行 FP32 参考检查。
 
-Sink qualification retains all 1024 plan words and current exact base fields.
-Whole-row additionally requires complete physical coverage and zero FD fields.
-Legacy instead records registered tasks and actual update execution counts;
-registration alone is not evidence that replay ran the updates.
-Actual task auditing wraps only pre/post qualification. Unprofiled timings
-and profiler replays call the original update method without per-task Python
-proxies, list comparisons or counters. Profiler task counts independently
-check those uninstrumented replays.
+sink 的资格检查保留全部 1024 个计划字和当前精确基础字段。
+完整请求/注意力头归属策略还要求完整覆盖物理范围，并要求 FD 字段全部为零。
+legacy 则记录已注册任务和实际更新执行次数；仅完成注册不能证明图回放期间执行了更新。
+实际任务审计只包裹计时前后的资格检查。
+不开启性能剖析的计时及性能剖析图回放均调用原始更新方法，
+不引入逐任务 Python 代理、列表比较或计数器。
+性能剖析中的任务计数会独立检查这些未插桩的图回放。
 
-Complete Q/K/V, mask and actual bucket query hashes must match across control
-processes. Both sink controls use the same qualified consumer, extension and
-non-policy native artifacts. Only the selected AICPU policy differs. Legacy
-keeps its original consumer and update interface. No installed OPP is changed.
+不同对照进程的完整 Q/K/V、掩码和实际图容量桶查询张量哈希必须一致。
+两个 sink 对照使用相同、已通过资格检查的注意力执行算子、扩展和非策略相关原生构建产物，
+只有所选 AICPU 策略不同。legacy 保留其原始注意力执行算子和更新接口。
+不修改任何已安装的 OPP。
 
-## Profiling and decision
+## 性能剖析与决策标准
 
-Profiler replays are outside unprofiled timing. Retain the original Chrome
-trace, labels, hashes, task identities and hardware completion evidence.
-Complete preparation before each labeled replay so table H2D cannot be
-mistaken for legacy update DMA. The label encloses replay and final join;
-unprofiled wall still includes all required preparation and copies.
-Interpret only groups with the expected sixteen attention executions and
-control-specific producer/update tasks. A trace warning remains part of the
-evidence, even when expected tasks are present.
+性能剖析图回放不计入常规计时。保留原始 Chrome 轨迹、标签、哈希、任务身份和硬件完成证据。
+每次带标签的图回放之前先完成全部准备，避免将表数据 H2D 误认为 legacy 更新 DMA。
+标签包围图回放和最终完成等待；不开启性能剖析的完整耗时仍包含所有必需的准备和拷贝。
+只解释包含预期十六次注意力执行及相应对照计划生成/更新任务的分组。
+即使预期任务均存在，轨迹中的警告仍须作为证据保留。
 
-For each control and capacity report:
+对每种对照和容量，报告：
 
-- Unprofiled complete wall, preparation, submission and queue span.
-- Hardware attention duration sum and first-start to last-end interval.
-- Gaps between attention tasks and overlapping `MEM_WAIT_VALUE` waits.
-- Native producer/clear tasks or real legacy CPU updates and update DMA tasks.
+- 不开启性能剖析的完整耗时、准备时间、提交时间和队列跨度。
+- 硬件注意力执行时长之和，以及从首次开始到最后结束的时间区间。
+- 注意力任务之间的间隙，以及与其重叠的 `MEM_WAIT_VALUE` 等待。
+- 原生计划生成/清理任务，或真实 legacy CPU 更新与更新 DMA 任务。
 
-Hardware sums, CPU intervals and waits can overlap and must not be added to
-reconstruct wall latency. Profiler overhead prevents using profiled label time
-as an unprofiled performance result. The two-record result does not replace
-the Stage 7 canonical frequency-weighted comparison.
+硬件时长之和、CPU 区间和等待可以互相重叠，不能将其相加以重建完整延迟。
+性能剖析自身的开销也使标签时长不能作为不开启性能剖析时的性能结果。
+两条记录的结果不能替代第 7 阶段按规范轨迹频率加权的对照。
 
-If the current whole-row consumer still has a material execution deficit,
-collect the device metrics needed to distinguish core imbalance, Cube/Vector
-pipeline and memory effects before selecting a D256 kernel rewrite. A duration
-trace alone cannot identify MM1/MM2 or FD merge as the bottleneck. If the deficit
-does not remain, or the complete-endpoint budget is too small, keep whole-row
-as a baseline and stop expanding this kernel route. A real-model critical-path
-budget remains necessary before claiming end-to-end headroom.
+如果当前完整请求/注意力头归属策略的注意力执行算子仍有明显执行劣势，应先收集所需设备指标，
+区分核心负载不均衡、Cube/Vector 流水线和内存因素，再选择是否重写 D256 算子。
+仅凭时长轨迹不能认定 MM1/MM2 或 FD 合并是瓶颈。
+如果执行劣势不再存在，或完整计时边界内的可优化预算过小，
+则保留完整请求/注意力头归属策略作为基线，停止扩大这条算子路线。
+在声称存在端到端优化空间之前，仍需分析真实模型的关键路径预算。
 
-## Observed result
+## 观测结果
 
-The selected `bounded-v2` run completed all six processes, 120 unprofiled
-timings and 36 profiler replays. There are twenty wall observations per
-mode/capacity and six profiled replays per mode/capacity. These repeated
-samples belong to only two process rounds; they are not twenty independent
-process trials. All results below include both rounds.
+选定的 `bounded-v2` 运行完成了全部六个进程、120 次常规计时和 36 次性能剖析图回放。
+每种模式/容量有二十个完整耗时观测、六次性能剖析图回放。
+这些重复样本只来自两轮进程运行，并不等于二十次独立的进程试验。
+下述结果均包含两轮数据。
 
-| Capacity | Upstream wall us | Whole wall us | Legacy wall us | Whole vs upstream | Whole vs legacy |
+| 容量 | upstream 完整耗时 us | whole 完整耗时 us | legacy 完整耗时 us | whole 相对 upstream | whole 相对 legacy |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 400 | 4808.460 | 4355.576 | 5354.357 | 9.418% lower | 18.654% lower |
-| 512 | 6085.394 | 5471.080 | 6088.965 | 10.095% lower | 10.148% lower |
+| 400 | 4808.460 | 4355.576 | 5354.357 | 降低 9.418% | 降低 18.654% |
+| 512 | 6085.394 | 5471.080 | 6088.965 | 降低 10.095% | 降低 10.148% |
 
-Whole improves all twenty matched observations against either control at
-both capacities. Its upstream-relative reductions by process round are
-7.215%/11.525% at capacity400 and 7.141%/12.895% at capacity512. Upstream
-and legacy at capacity512 are effectively tied in this bounded sample,
-and the sign of their comparison changes between rounds.
+两个容量下，whole 相对任一对照的二十个配对观测都更快。
+按进程轮次分别计算，相对 upstream 的降幅为 7.215%/11.525%（capacity400），
+以及 7.141%/12.895%（capacity512）。
+在这个有限样本中，capacity512 的 upstream 和 legacy 基本持平，
+而且两轮之间的比较方向发生了变化。
 
-The separate hardware profiles localize the remaining attention-chain cost:
+独立的硬件性能剖析定位了注意力链剩余开销：
 
-| Capacity | Upstream attention sum us | Whole attention sum us | Legacy attention sum us | Whole minus legacy |
+| 容量 | upstream 注意力时长之和 us | whole 注意力时长之和 us | legacy 注意力时长之和 us | whole 减 legacy |
 | --- | ---: | ---: | ---: | ---: |
-| 400 | 4216.108 | 3783.756 | 3514.050 | 269.705 us, 7.675% |
-| 512 | 5489.833 | 4869.984 | 4499.837 | 370.147 us, 8.226% |
+| 400 | 4216.108 | 3783.756 | 3514.050 | 269.705 us，7.675% |
+| 512 | 5489.833 | 4869.984 | 4499.837 | 370.147 us，8.226% |
 
-Each sum contains sixteen hardware attention executions. Whole-row producer
-time is 74.128/112.112 us, and the inter-attention gap sum is only
-37.711/37.444 us at capacity400/512. Native assignment changes reduce the
-upstream attention sum by 432.352/619.849 us, while producer duration changes
-by -5.020/+6.550 us. This points toward consumer execution rather than a
-large remaining producer or inter-kernel scheduling budget. The residual
-legacy gap is a measured comparison target, not a promise that all of it
-can be recovered: the consumer implementations and tiling differ.
+每个总和均包含十六次硬件注意力执行。
+完整请求/注意力头归属策略的计划生成器耗时为 74.128/112.112 us，
+注意力任务间隙之和仅为 37.711/37.444 us（capacity400/512）。
+原生任务分配修改使相对 upstream 的注意力时长之和减少 432.352/619.849 us，
+而计划生成器时长变化为 -5.020/+6.550 us。
+这些结果将重点指向注意力执行算子，而非剩余的大量计划生成或算子间调度预算。
+与 legacy 的剩余差距是实测对照目标，不能保证全部可以追回，
+因为注意力执行算子的实现与 tiling 不同。
 
-Legacy profiles contain all 192 real CPU updates and 192 update DMA tasks.
-Their mean per-replay CPU update sums are 1780.600/2126.285 us, while the
-attention gap sums are 1020.530/1040.548 us. Those intervals overlap device
-work and waits; they are neither additive wall components nor a direct
-estimate of the adoption speedup. Sink profiles contain all 24 producers
-and 24 clear tasks. Both controls retain the original consumer/native
-artifact identity contracts.
+legacy 性能剖析包含全部 192 次真实 CPU 更新和 192 个更新 DMA 任务。
+每次图回放的 CPU 更新时长之和均值为 1780.600/2126.285 us，
+注意力任务间隙之和为 1020.530/1040.548 us。
+这些区间与设备工作及等待重叠，既不能作为可相加的完整耗时分量，
+也不能直接用于估算采用 sink 的加速比。
+sink 性能剖析包含全部 24 个计划生成任务和 24 个清理任务。
+两种对照都保留原始注意力执行算子/原生构建产物的一致性约束。
 
-The formal analyzer and a separate stdlib auditor pass all task counts,
-raw-file hashes and cross-process input identities. The 216 sampled FP32
-rows pass with maximum absolute error 0.00029981881380081177. All
-qualification-time 128 legacy task applications are independently retained;
-measured legacy updates remain uninstrumented. These correctness passes
-do not reference-check each timed replay individually.
+正式分析器和独立的标准库审计器均通过了全部任务计数、原始文件哈希及跨进程输入一致性检查。
+216 个 FP32 抽样行全部通过，最大绝对误差为 0.00029981881380081177。
+资格检查期间的全部 128 次 legacy 任务应用均独立留存；测量期间的 legacy 更新仍未插桩。
+这些正确性检查没有对每次计时图回放逐一进行参考校验。
 
-## Small hardware-counter follow-up
+## 小规模硬件计数器后续实验
 
-Two additional fresh processes profile whole and legacy once per bucket,
-with `ProfilerLevel.Level1`, `AiCMetrics.PipeUtilization` and text export.
-The thin wrapper changes profiler configuration, preserving the frozen
-probe and its preparation/update/qualification implementations. All 64
-attention records have valid counters; 72 additional FP32 rows and all
-input, descriptor and address checks pass. The device is idle afterward.
-These four replays are separate from the 120 formal wall observations.
+额外启动两个新进程，对每个图容量桶分别执行一次 whole 和 legacy 性能剖析，
+使用 `ProfilerLevel.Level1`、`AiCMetrics.PipeUtilization` 和文本导出。
+轻量包装只改变性能剖析配置，保留冻结的探针及其准备、更新和资格检查实现。
+全部 64 条注意力记录都有有效计数器；额外 72 个 FP32 抽样行，
+以及全部输入、描述符和地址检查均通过。结束后设备空闲。
+这四次图回放独立于正式的 120 个完整耗时观测。
 
-| Capacity | Mode | Mean kernel us | MAC time us | Vector scalar time us | AIC MTE2 time us |
+| 容量 | 模式 | 算子均值 us | MAC 时间 us | Vector 标量时间 us | AIC MTE2 时间 us |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 400 | Whole | 246.983 | 33.715 | 84.608 | 180.525 |
-| 400 | Legacy | 221.452 | 31.470 | 54.702 | 154.894 |
-| 512 | Whole | 320.904 | 47.473 | 102.219 | 240.193 |
-| 512 | Legacy | 284.126 | 44.121 | 75.851 | 212.205 |
+| 400 | whole | 246.983 | 33.715 | 84.608 | 180.525 |
+| 400 | legacy | 221.452 | 31.470 | 54.702 | 154.894 |
+| 512 | whole | 320.904 | 47.473 | 102.219 | 240.193 |
+| 512 | legacy | 284.126 | 44.121 | 75.851 | 212.205 |
 
-Values are equally weighted means over sixteen occurrences in one replay,
-not system utilization or individual-core measurements. MAC time increases
-by only 2.245/3.352 us per operator, while Vector scalar and AIC MTE2
-increase by 29.907/26.368 us and 25.631/27.988 us. AIC fixpipe time also
-increases by 16.923/21.354 us. These concurrent pipeline durations must not
-be added. The evidence prioritizes descriptor/control, paged-copy and
-pipeline organization as source-inspection targets; it does not isolate
-a source loop, prove HBM saturation or establish recoverable savings.
+这些数值是单次图回放中十六次执行的等权均值，不是系统利用率，也不是单个核心的测量值。
+每个算子的 MAC 时间只增加 2.245/3.352 us，
+而 Vector 标量时间和 AIC MTE2 时间分别增加 29.907/26.368 us 和 25.631/27.988 us。
+AIC fixpipe 时间也增加 16.923/21.354 us。
+这些并发流水线时长不能相加。
+证据支持优先检查描述符/控制、分页拷贝和流水线组织的源码，
+但还不能定位某一个源码循环、证明 HBM 饱和或确定可追回的耗时。
 
-The [official counter definitions][counters] describe `cube_utilization`
-using summed cycles, frequency, core count and task duration; this is not
-MAC/FLOPS utilization. Cycle-to-time conversion also depends on frequency.
-The first three whole/capacity512 records have atypical derived core times;
-all remain in the result. One replay cannot separate startup, frequency and
-counter transients or establish a stable causal effect. Preserve per-record
-metrics and raw cycles rather than relying only on averaged ratios.
+[官方计数器定义][counters]使用累计周期、频率、核心数和任务时长描述 `cube_utilization`，
+该指标不等于 MAC/FLOPS 利用率。周期到时间的换算也依赖频率。
+whole/capacity512 的前三条记录存在异常的派生核心时间，但全部保留在结果中。
+一次图回放无法区分启动、频率和计数器瞬态，也无法建立稳定的因果结论。
+应保留逐条指标和原始周期，不能只依赖平均比值。
 
-The first metrics wrapper failed before capture because replacing `Popen`
-with a function broke a library subclass. The retained successful wrapper
-uses a compatible subclass. That failed attempt contains no performance
-sample and remains separately identifiable in the evidence archive.
+第一个指标包装器在图捕获前失败，原因是用函数替换 `Popen` 破坏了某个库的子类继承。
+留存的成功包装器改用兼容子类。失败尝试不含性能样本，并在证据归档中单独标识。
 
 [counters]: https://www.hiascend.com/doc_center/source/en/CANNCommunityEdition/900/devaids/Profiling/atlasprofiling_16_0067.html
 
-## First consumer ablation target
+## 第一个注意力执行算子消融目标
 
-Read-only inspection of pinned `bec19b8dea1e` identifies a concrete candidate
-in `fia_block_vec_nonquant_sink.h::DealBmm2ResBaseBlock`:
+对固定版本 `bec19b8dea1e` 的只读检查，在
+`fia_block_vec_nonquant_sink.h::DealBmm2ResBaseBlock` 中找到一个具体候选点：
 
-- Lines 752-755 read the new MM2 partial from `mm2ResGm`.
-- Lines 760-792 read the previous running output from `vec2ResGm`, rescale it
-  with the current softmax factor and add the new partial.
-- Lines 820-831 copy each non-final result through another UB queue and write
-  it back to `vec2ResGm` for the next S2 iteration.
+- 第 752-755 行从 `mm2ResGm` 读取新的 MM2 局部结果。
+- 第 760-792 行从 `vec2ResGm` 读取上一次运行中输出，用当前 softmax 因子重新缩放，再加上新的局部结果。
+- 第 820-831 行将每个非末轮结果经过另一个 UB 队列拷贝，再写回 `vec2ResGm`，供下一次 S2 迭代使用。
 
-The isolated consumer variant now implements running FP32 output residency
-in UB under the complete request/head lifetime contract. It retains the MM2
-producer workspace handoff, softmax arithmetic, exact lengths, page routing
-and final output format. Whole-row/no-FD ownership provides a useful lifetime
-contract, but source and compile checks alone do not establish runtime safety.
+隔离的注意力执行算子变体现已在完整请求/注意力头生命周期约束下，实现运行中 FP32 输出驻留 UB。
+它保留 MM2 生成方的工作区交接、softmax 算术、精确长度、页面路由和最终输出格式。
+完整请求/注意力头归属且无 FD 的条件提供了有用的生命周期约束，
+但仅通过源码和编译检查还不能证明运行时安全。
 
-`SetMSplitInfo` splits the Q4/GQA6 M=24 rows at a sixteen-row boundary:
-the two AIV sides own sixteen/eight rows, requiring 16/8 KiB of FP32 running
-output at D256. The patch budgets the heavier side, not an assumed 12/12 KiB
-split, reclaiming 16 KiB from the existing output queue rather than increasing
-the 184 KiB static UB total. The existing three-task pipeline can keep
-different heads in flight. The Vec2 state therefore checks actual owner,
-geometry and consecutive loop/S2 identity before reuse, with spill and event
-protection on the guarded path. A blindly reused accumulator is incorrect.
-The original consumer path remains for unsupported geometry, FD or an
-unqualified ownership/lifetime transition. The bounded runtime checks below
-qualify the two selected records, not every supported source branch.
+`SetMSplitInfo` 在十六行边界处切分 Q4/GQA6 的 M=24 行：
+两侧 AIV 分别负责十六/八行，分别需要 16/8 KiB 的 FP32 运行中输出空间（D256）。
+补丁按负载更重的一侧做预算，而不是假设 12/12 KiB 平分；
+从现有输出队列回收 16 KiB，不增加 184 KiB 的静态 UB 总量。
+现有三任务流水线可能同时有不同注意力头在途，
+因此 Vec2 状态在复用之前检查真实归属、几何形状和连续的 loop/S2 身份，
+并在受保护路径中提供回写和事件保护。盲目复用累加器会产生错误。
+不支持的几何形状、FD 或不符合资格的归属/生命周期转换仍走原始注意力执行路径。
+下述有限运行时检查只验证两条选定记录，不覆盖源码支持的每个分支。
 
-A smaller prerequisite ablation can test removing the UB-to-UB staging copy
-while retaining GM accumulation, provided the MTE3 completion protects the
-source buffer lifetime. It must not be presented as equivalent to retaining
-the full running output on chip. Compare the same two original records,
-all pre/post correctness gates and complete wall, with profiles separated.
-Keep a change only if its unprofiled endpoint improves and its affected
-pipeline/task evidence agrees; counter ratios alone are not an acceptance
-criterion. The separate remove-staging-only variant is not implemented.
-The running-O variant and its macro-disabled source control have both passed
-AscendC compilation; this is not a correctness or speedup result.
+也可以先做一个更小的前置消融：保留 GM 累加，仅移除 UB 到 UB 的暂存拷贝，
+前提是 MTE3 完成事件能保护源缓冲区生命周期。
+不能将其描述成与完整运行中输出驻留片上等价。
+仍需使用相同的两条原始记录、全部计时前后正确性检查和完整耗时边界，性能剖析单独进行。
+只有常规完整耗时改善，且受影响流水线/任务的证据一致，才保留修改；
+不能只用计数器比值作为接受标准。单独移除暂存拷贝的变体尚未实现。
+running-O 变体和关闭该宏的源码对照均已通过 AscendC 编译；这不代表正确性或加速结果。
 
-The current source-ablation binaries compile only the two selected tiling
-keys `104000000010222223` and `104000000010322223`. The build tool requires
-the actual `kernelList` key set to match the selection exactly, allowing
-duplicate AIC/AIV entries for one key. These are restricted experimental
-binaries, not a replacement package qualified for arbitrary shapes or all
-fallback templates. The four `v3` cells cross upstream/whole producer with
-macro-disabled/enabled consumer using the same two original records. Dynamic
-chronological replay, full-model integration and split-over-padding performance
-remain unvalidated for this patch. The GM running-output round trips are a
-source-level target, not a measured proof that GM bandwidth is the bottleneck.
+当前源码消融二进制只编译两个选定 tiling key：
+`104000000010222223` 和 `104000000010322223`。
+构建工具要求实际 `kernelList` 的 key 集合与所选集合完全一致，
+允许一个 key 对应重复的 AIC/AIV 条目。
+这些是受限的实验二进制，不是已针对任意形状或全部回退模板完成资格验证的替代软件包。
+四组 `v3` 实验交叉对照 upstream/whole 计划生成器和关闭/开启宏的注意力执行算子，
+使用相同的两条原始记录。
+该补丁尚未验证按时间顺序的动态图回放、完整模型接入或切分相对 padding 的性能。
+GM 运行中输出的往返是源码层面的目标，不能作为 GM 带宽已被证明是瓶颈的依据。
 
-Eligibility must follow the actual native ownership, geometry and lifetime
-contract, not the producer's policy name. If an upstream plan satisfies the
-same consumer conditions, it receives the same fast path. Compare both
-policies with the best legal consumer; otherwise a consumer-only improvement
-would be falsely attributed to the whole-row assignment. The combined result
-must separate consumer benefit, assignment benefit and their interaction.
+是否适用快路径必须取决于真实原生归属、几何形状和生命周期约束，而非计划生成器的策略名称。
+如果 upstream 计划满足相同的执行算子条件，它也应使用相同快路径。
+两种策略都应与其合法条件下的最佳执行算子比较，
+否则会将仅来自执行算子的改善错误归因于完整请求/注意力头归属策略。
+组合结果必须分开报告执行算子收益、分配策略收益及二者的交互作用。
 
-On-chip online-softmax accumulation is established attention practice, not
-a new algorithm claim. Our potential contribution would be its guarded
-realization under the current A2 whole-head native ownership and task/UB
-constraints, with evidence against the same upstream consumer. This is not
-yet a benefit unique to graph splitting or a demonstrated thesis-level
-novelty result.
+片上在线 softmax 累加是注意力计算的已有实践，不能宣称为新算法。
+我们潜在的贡献是在当前 A2 完整注意力头原生归属、任务和 UB 约束下，
+带保护地实现这一机制，并与使用相同执行算子的 upstream 比较。
+这还不是图切分独有的收益，也尚未证明达到毕设层面的创新性。
 
-### Bounded running-O source-ablation result
+### running-O 源码消融的小规模结果
 
-The selected `v3` run completes four fresh processes, eighty unprofiled
-timings and 144 sampled FP32 row comparisons. Each policy/capacity/variant
-has ten timings; there is only one fresh process per cell. The macro-disabled
-control and resident variant use the same patched source, restricted tiling
-keys and frozen preparation/replay protocol. Profiling is separate, with one
-replay per capacity in each process.
+选定的 `v3` 运行完成了四个新进程、八十次常规计时和 144 次 FP32 抽样行比较。
+每个策略/容量/变体有十次计时；每组配置只有一个新进程。
+关闭宏的对照与驻留变体使用相同的已打补丁源码、受限 tiling key 和冻结的准备/图回放协议。
+性能剖析单独进行，每个进程对每个容量执行一次剖析图回放。
 
-| Policy | Capacity | Control wall us | Resident wall us | Mean reduction | Profile attention sum saved us |
+| 策略 | 容量 | 对照完整耗时 us | 驻留变体完整耗时 us | 均值降幅 | 剖析中注意力时长之和节省 us |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Upstream | 400 | 4517.510 | 4357.540 | 3.541% | 101.742 |
-| Upstream | 512 | 5673.378 | 5543.449 | 2.290% | 127.862 |
-| Whole | 400 | 4250.731 | 4186.756 | 1.505% | 49.021 |
-| Whole | 512 | 5609.524 | 5311.093 | 5.320% | 73.001 |
+| upstream | 400 | 4517.510 | 4357.540 | 3.541% | 101.742 |
+| upstream | 512 | 5673.378 | 5543.449 | 2.290% | 127.862 |
+| whole | 400 | 4250.731 | 4186.756 | 1.505% | 49.021 |
+| whole | 512 | 5609.524 | 5311.093 | 5.320% | 73.001 |
 
-The whole/capacity512 control includes a 7896.423 us wall spike. All ten
-observations remain in its mean. Its median is 5362.9825 us versus
-5309.507 us resident, a reduction of about 0.997%. The 5.320% mean is
-therefore an unstable summary of this cell; the separate single profile
-shows only 73.001 us saved across sixteen attention kernels. Profile sums,
-host intervals and wall timings cannot be substituted for one another.
-Fixed process order, addresses, frequency and temperature remain confounded;
-the observations do not establish stable process-level speedup.
+whole/capacity512 对照包含一次 7896.423 us 的完整耗时尖峰，
+其均值保留全部十个观测。
+其中位数为 5362.9825 us，驻留变体中位数为 5309.507 us，降幅约 0.997%。
+因此，5.320% 的均值并不能稳定概括这组配置；
+独立的单次性能剖析仅显示十六个注意力算子合计节省 73.001 us。
+性能剖析时长之和、主机端时间区间和完整耗时不能互相替代。
+固定进程顺序、地址、频率和温度仍存在混杂，观测不足以建立稳定的进程级加速结论。
 
-The independent raw audit passes 5393 assertions over 92 manifested files,
-including all timings, 24 complete plan checks and private input identities.
-Within each policy and capacity, all sixteen complete output hashes match
-bitwise across macros and pre/post qualification, and all 1024 plan words
-remain unchanged. The separate 144 FP32 sampled rows pass with maximum
-absolute error 0.00029981881380081177. The full-output hash equality is an
-observed identity, not an inference from those samples; qualification is
-separate from the timed replays. NPU0 is idle afterward.
+独立原始数据审计执行了 5393 项断言，全部通过，覆盖清单中的 92 个文件，
+涵盖所有计时、24 次完整计划检查和独立输入的一致性。
+在每个策略和容量内，开启/关闭宏及计时前后资格检查中的十六组完整输出哈希全部逐位一致，
+全部 1024 个计划字也保持不变。
+独立的 144 个 FP32 抽样行通过，最大绝对误差为 0.00029981881380081177。
+完整输出哈希相等是直接观测的一致性，不是根据抽样推断的结论；
+资格检查与计时图回放分开进行。结束后 NPU0 空闲。
 
-This screen observes a modest consumer benefit, including on upstream's
-eligible heads. It does not show a large effect unique to whole-row ownership,
-prove GM bandwidth saturation or isolate all eliminated running-output bytes
-as measured HBM traffic. The affected source/plan and profile evidence support
-further bounded validation; they do not establish a dynamic-trace, full-model,
-serving or graph-splitting gain. On-chip accumulation remains established
-practice, and the same legal fast consumer remains available to both policies.
+这次筛选观察到适度的执行算子收益，upstream 中符合条件的注意力头也能获得收益。
+它没有显示完整请求/注意力头归属独有的大幅收益，没有证明 GM 带宽饱和，
+也没有将省去的运行中输出字节全部识别为实测 HBM 流量。
+相关源码、计划和性能剖析证据支持进一步的小规模验证，
+但尚未建立动态轨迹、完整模型、服务或图切分收益。
+片上累加仍属于已有实践，两种策略仍可使用同一个合法快路径执行算子。
 
-### Reversed whole-policy pair
+### whole 策略的反向配对实验
 
-A second two-process screen reuses the exact `v3` binaries and frozen probe,
-running control then resident to reverse the original whole-pair order.
-It preserves all forty timings, the same two original records and independent
-pre/post qualification. No compile, arithmetic or input change is introduced.
+第二次双进程筛选复用完全相同的 `v3` 二进制和冻结探针，
+先运行对照，再运行驻留变体，以反转原 whole 配对的执行顺序。
+保留全部四十次计时、相同的两条原始记录及独立的计时前后资格检查。
+没有引入编译、算术或输入修改。
 
-| Capacity | Control mean us | Resident mean us | Mean reduction | Median reduction | Profile attention sum saved us |
+| 容量 | 对照均值 us | 驻留变体均值 us | 均值降幅 | 中位数降幅 | 剖析中注意力时长之和节省 us |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 400 | 4248.401 | 4271.701 | -0.548% | -0.723% | 4.841 |
 | 512 | 5333.839 | 5411.841 | -1.462% | -1.331% | -56.381 |
 
-The gain does not reproduce; negative reductions mean regression. Keep both
-screens separately and do not treat replay samples as independent process
-replicates. This is insufficient evidence to promote the resident consumer
-to full-model integration or call its earlier favorable values stable.
-The exact reverse-pair evidence is stored separately under
-`fia-sink-running-o-v1/confirmation/`.
+收益没有复现，负降幅表示退化。两次筛选应分开保留，
+不能将重复图回放样本视为独立的进程重复试验。
+现有证据不足以将驻留执行算子推进完整模型接入，也不能将此前有利的数值称为稳定收益。
+反向配对的精确证据单独存放在 `fia-sink-running-o-v1/confirmation/` 下。
 
-Actual descriptor lengths imply 193.34/271.27 MB of logical K/V reads per
-attention occurrence versus 13.27/18.97 MB of logically avoidable whole-policy
-running-output workspace reads/writes. These are source/shape work counts,
-not measured HBM bytes or a latency model. They reinforce the need to inspect
-larger paged-K/V movement, layout conversion and Cube/Vector handoff before
-expanding the resident-output experiment.
+根据真实描述符长度，每次注意力执行的逻辑 K/V 读取量为 193.34/271.27 MB，
+而 whole 策略在逻辑上可避免的运行中输出工作区读写量为 13.27/18.97 MB。
+这些是源码/形状层面的工作量计数，不是实测 HBM 字节数，也不是延迟模型。
+它们进一步说明，在扩大输出驻留实验之前，
+应检查规模更大的分页 K/V 搬运、布局转换以及 Cube/Vector 交接。
 
-## Why this does not supersede Stage 7
+## 为什么这些结果不能替代第 7 阶段
 
-The chronological Stage 7 result remains a 1.788% observed mean reduction,
-including its regressing round and P99. Repeating two fixed records here
-does not establish dynamic-shape robustness or full-model benefit.
+第 7 阶段按时间顺序执行的结果仍是观测到的均值降低 1.788%，
+同时保留其中退化的轮次和 P99。
+在这里重复执行两条固定记录，不能证明动态形状下的稳健性或完整模型收益。
 
-The exact resident Q/K/V, bucket query bytes and complete native plans for
-step0 and step29 match Stage 7. Nevertheless, Stage 7 captured seventeen
-bucket graphs and executed the chronological trace; this diagnostic captures
-two and repeatedly executes one record. Last-capture allocated/reserved
-memory is approximately 6.79/11.63 GB versus 5.67/6.40 GB. Process conditions,
-warmup, ordering, allocation and working-set behavior also differ. Even the
-same record has a different observed reduction, so trace-frequency weighting
-alone cannot explain the discrepancy. Graph footprint is a candidate
-confounder, not an established cause. Preserve this unresolved discrepancy
-when interpreting the favorable point result.
+step0 和 step29 的精确常驻 Q/K/V、图容量桶查询张量字节和完整原生计划均与第 7 阶段一致。
+但第 7 阶段捕获十七个容量桶图并按时间顺序执行轨迹；本诊断仅捕获两个图，并重复执行一条记录。
+最后一次捕获后的已分配/预留内存约为 6.79/11.63 GB，对比本实验的 5.67/6.40 GB。
+进程条件、预热、执行顺序、分配和工作集行为也不同。
+即使同一条记录，观测降幅也不同，因此仅凭轨迹频率加权无法解释差异。
+图内存占用是可能的混杂因素，而非已确定的原因。
+解释有利的单点结果时，必须保留这一尚未解决的差异。
 
-The first launcher run, `bounded-v1`, was interrupted after a source-format
-validation issue in its description string. The value was retained while
-splitting the source line. Its completed and partial reports remain in a
-separate directory; none contributes to the selected six-process result.
+第一次启动运行 `bounded-v1` 因描述字符串的源码格式校验问题而中断。
+后续将源码行拆分，同时保留了原值。
+该次已完成及部分完成的报告保留在独立目录，均不计入选定的六进程结果。
 
-The next decision needs an allocation/order control and a narrowly scoped
-consumer source ablation, rather than a larger model matrix. The minimum
-context control captures and retains all seventeen Stage 7 bucket graphs
-but uses exactly this two-record repeated protocol, alongside a same-session
-two-bucket reference. Upstream/whole crossed with two/seventeen buckets
-requires four fresh processes and eighty timings. A reduced gain would
-implicate catalog construction/retention context, not prove a memory-byte
-cause. An unchanged gain would leave chronological replay history as the
-next control. The [completed bridge](aclgraph_fia_sink_catalog_bridge.md)
-observes 6.086%/5.401% with two buckets and 7.580%/8.316% with seventeen.
-The gain does not collapse with the larger resident catalog in this screen;
-neither memory-byte causality nor historical magnitude stability is proved.
+下一步决策需要控制内存分配/执行顺序，并做范围受限的执行算子源码消融，
+而非扩大模型测试矩阵。
+最小上下文对照应捕获并保留第 7 阶段全部十七个容量桶图，
+但严格沿用这里的两条记录重复协议，并配合同一会话中的双容量桶参考。
+upstream/whole 与两/十七个容量桶交叉对照，需要四个新进程、八十次计时。
+如果收益缩小，只能说明图容量集合的构造/保留上下文有关，不能证明内存字节数是原因。
+如果收益不变，下一项对照仍是按时间顺序图回放的历史影响。
+[已完成的桥接实验](aclgraph_fia_sink_catalog_bridge.md)在两个容量桶下观察到 6.086%/5.401%，
+在十七个容量桶下观察到 7.580%/8.316%。
+这次筛选中，更大的常驻图容量集合没有导致收益塌缩；
+但仍未证明内存字节数的因果关系，也未证明历史收益幅度稳定。
 
-Only a qualified consumer change with exposed real-model headroom would
-justify expanding the conditional Stage 8 integration.
+只有通过资格检查的执行算子修改，并且真实模型存在可利用空间时，
+才有理由扩大有条件的第 8 阶段接入。
 
-## Existing-work boundary
+## 与已有工作的边界
 
-Plan/run, device lengths and shared plans are existing mechanisms. This
-diagnostic evaluates the current guarded native assignment and adapted
-consumer; it adds no native incremental planner, new attention arithmetic,
-multi-stream algorithm or literature novelty claim. Keep legacy-to-sink
-adoption effects separate from upstream-to-whole policy effects.
+计划生成/执行分离、设备端长度和共享计划均是已有机制。
+本诊断评估的是当前带保护的原生任务分配及适配后的注意力执行算子；
+没有新增原生增量计划生成器、注意力算术、多流算法，也不宣称文献层面的创新。
+应将从 legacy 改用 sink 的效果，与从 upstream 改为 whole 的策略效果分开。
 
-See [Stage 7](aclgraph_fia_sink_stage7.md), the
-[contribution audit](aclgraph_fia_sink_contribution_scope.md) and the
-[conditional model-integration protocol](aclgraph_fia_sink_stage8_protocol.md).
+另见[第 7 阶段](aclgraph_fia_sink_stage7.md)、
+[贡献范围审计](aclgraph_fia_sink_contribution_scope.md)和
+[有条件的模型接入协议](aclgraph_fia_sink_stage8_protocol.md)。
 
-## Saved evidence
+## 已保存的证据
 
-- `benchmarks/results/multi_graph_structural/fia-sink-consumer-v1/` contains
-  the selected suite, raw reports/traces, exact deployed sources and the
-  separately retained interrupted run.
-- `fia-sink-consumer-analysis.json` contains the qualified formal analysis,
-  including both process rounds and all unprofiled/profile groups.
-- `fia-sink-consumer-independent-audit.json` records the separate raw-byte,
-  update, FP32, input-identity and hardware-task audit.
-- `fia-sink-consumer-stage7-identity.json` records the same-record input/plan
-  comparison and the differing graph allocation footprints.
-- `fia-sink-consumer-stage7-review.json` independently checks the identity
-  comparison across all saved process rounds and specifies the bridge control.
-- `fia-sink-consumer-metrics-analysis.json` retains all 64 per-occurrence
-  counter records. `fia-sink-consumer-v1/metrics/` preserves the lossless raw
-  archive/manifest, the four CSVs, wrapper/configuration and post-run check.
-- `fia-sink-running-o-v1/` retains the selected `v3` four-cell reports,
-  restricted builds, raw profiles, manifests and source snapshots under
-  `benchmarks/results/multi_graph_structural/`.
-- `fia-sink-running-o-independent-audit.json` records the separate raw-file,
-  key inventory, plan, output identity, FP32 and timing audit.
-- `fia-sink-running-o-primary-recompute.json` independently recomputes the
-  wall summaries, retained extrema, contrasts and complete-output identities.
+- `benchmarks/results/multi_graph_structural/fia-sink-consumer-v1/` 包含选定实验套件、原始报告/轨迹、精确部署源码及单独保留的中断运行。
+- `fia-sink-consumer-analysis.json` 包含通过资格检查的正式分析，涵盖两轮进程和全部常规计时/性能剖析分组。
+- `fia-sink-consumer-independent-audit.json` 记录独立的原始字节、更新、FP32、输入一致性及硬件任务审计。
+- `fia-sink-consumer-stage7-identity.json` 记录同一条记录的输入/计划对照，以及不同的图内存分配占用。
+- `fia-sink-consumer-stage7-review.json` 独立检查全部已保存进程轮次的一致性对照，并规定桥接实验的控制条件。
+- `fia-sink-consumer-metrics-analysis.json` 保留全部 64 条逐次执行计数器记录。`fia-sink-consumer-v1/metrics/` 保存无损原始归档/清单、四份 CSV、包装器/配置和运行后检查。
+- `fia-sink-running-o-v1/` 保留选定的 `v3` 四组报告、受限构建、原始性能剖析、清单和源码快照，位于 `benchmarks/results/multi_graph_structural/` 下。
+- `fia-sink-running-o-independent-audit.json` 记录独立的原始文件、key 清单、计划、输出一致性、FP32 和计时审计。
+- `fia-sink-running-o-primary-recompute.json` 独立重算完整耗时汇总、保留的极值、各项对照及完整输出一致性。
