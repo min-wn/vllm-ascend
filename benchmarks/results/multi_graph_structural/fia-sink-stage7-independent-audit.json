@@ -1,0 +1,2586 @@
+{
+  "independent_audit_passed": true,
+  "formal_protocol_qualified": true,
+  "screen_prefix_only": false,
+  "issues": [],
+  "audited_counts": {
+    "samples": 3072,
+    "pairs": 1536,
+    "qualification_steps": 2048,
+    "fp32_rows": 6144
+  },
+  "expected_counts": {
+    "samples": 3072,
+    "pairs": 1536,
+    "qualification_steps": 2048,
+    "fp32_rows": 6144
+  },
+  "overall": {
+    "pairs": 1536,
+    "upstream_mean_us": 4996.9773235677085,
+    "whole_mean_us": 4907.62283984375,
+    "upstream_minus_whole_mean_us": 89.35448372395834,
+    "reduction_percent": 1.7881706867575202,
+    "whole_faster_count": 1283,
+    "whole_slower_count": 253
+  },
+  "per_round": [
+    {
+      "trial": 0,
+      "pairs": 384,
+      "upstream_mean_us": 5115.424643229167,
+      "whole_mean_us": 5015.290744791667,
+      "upstream_minus_whole_mean_us": 100.13389843749998,
+      "reduction_percent": 1.957489464145237,
+      "whole_faster_count": 322,
+      "whole_slower_count": 62
+    },
+    {
+      "trial": 1,
+      "pairs": 384,
+      "upstream_mean_us": 4905.102369791667,
+      "whole_mean_us": 4802.916958333333,
+      "upstream_minus_whole_mean_us": 102.18541145833335,
+      "reduction_percent": 2.0832472750751863,
+      "whole_faster_count": 354,
+      "whole_slower_count": 30
+    },
+    {
+      "trial": 2,
+      "pairs": 384,
+      "upstream_mean_us": 5043.272184895834,
+      "whole_mean_us": 5049.1736484375,
+      "upstream_minus_whole_mean_us": -5.901463541666648,
+      "reduction_percent": -0.11701655840311422,
+      "whole_faster_count": 232,
+      "whole_slower_count": 152
+    },
+    {
+      "trial": 3,
+      "pairs": 384,
+      "upstream_mean_us": 4924.110096354167,
+      "whole_mean_us": 4763.1100078125,
+      "upstream_minus_whole_mean_us": 161.00008854166668,
+      "reduction_percent": 3.269628123483101,
+      "whole_faster_count": 375,
+      "whole_slower_count": 9
+    }
+  ],
+  "per_capacity": [
+    {
+      "capacity": 256,
+      "pairs": 36,
+      "upstream_mean_us": 3722.63375,
+      "whole_mean_us": 3610.4695833333335,
+      "upstream_minus_whole_mean_us": 112.16416666666667,
+      "reduction_percent": 3.0130325516622922,
+      "whole_faster_count": 35,
+      "whole_slower_count": 1
+    },
+    {
+      "capacity": 272,
+      "pairs": 84,
+      "upstream_mean_us": 3813.5630833333335,
+      "whole_mean_us": 3646.923047619048,
+      "upstream_minus_whole_mean_us": 166.64003571428572,
+      "reduction_percent": 4.369667737831939,
+      "whole_faster_count": 83,
+      "whole_slower_count": 1
+    },
+    {
+      "capacity": 288,
+      "pairs": 132,
+      "upstream_mean_us": 4016.462212121212,
+      "whole_mean_us": 3896.497128787879,
+      "upstream_minus_whole_mean_us": 119.96508333333334,
+      "reduction_percent": 2.9868346071150094,
+      "whole_faster_count": 129,
+      "whole_slower_count": 3
+    },
+    {
+      "capacity": 304,
+      "pairs": 84,
+      "upstream_mean_us": 4143.831988095238,
+      "whole_mean_us": 3995.3852857142856,
+      "upstream_minus_whole_mean_us": 148.4467023809524,
+      "reduction_percent": 3.582353309869296,
+      "whole_faster_count": 81,
+      "whole_slower_count": 3
+    },
+    {
+      "capacity": 320,
+      "pairs": 72,
+      "upstream_mean_us": 4424.943402777778,
+      "whole_mean_us": 4236.407680555555,
+      "upstream_minus_whole_mean_us": 188.53572222222226,
+      "reduction_percent": 4.260748783902368,
+      "whole_faster_count": 63,
+      "whole_slower_count": 9
+    },
+    {
+      "capacity": 336,
+      "pairs": 60,
+      "upstream_mean_us": 4448.184916666667,
+      "whole_mean_us": 4352.777016666667,
+      "upstream_minus_whole_mean_us": 95.4079,
+      "reduction_percent": 2.144872611804452,
+      "whole_faster_count": 54,
+      "whole_slower_count": 6
+    },
+    {
+      "capacity": 352,
+      "pairs": 96,
+      "upstream_mean_us": 4423.71825,
+      "whole_mean_us": 4309.6864375000005,
+      "upstream_minus_whole_mean_us": 114.03181249999993,
+      "reduction_percent": 2.577736782852297,
+      "whole_faster_count": 90,
+      "whole_slower_count": 6
+    },
+    {
+      "capacity": 368,
+      "pairs": 72,
+      "upstream_mean_us": 4851.50725,
+      "whole_mean_us": 4756.146236111111,
+      "upstream_minus_whole_mean_us": 95.36101388888886,
+      "reduction_percent": 1.965595617504001,
+      "whole_faster_count": 61,
+      "whole_slower_count": 11
+    },
+    {
+      "capacity": 384,
+      "pairs": 72,
+      "upstream_mean_us": 4745.280555555555,
+      "whole_mean_us": 4624.335652777778,
+      "upstream_minus_whole_mean_us": 120.94490277777776,
+      "reduction_percent": 2.548740824948297,
+      "whole_faster_count": 67,
+      "whole_slower_count": 5
+    },
+    {
+      "capacity": 400,
+      "pairs": 72,
+      "upstream_mean_us": 4854.2619583333335,
+      "whole_mean_us": 4759.4402361111115,
+      "upstream_minus_whole_mean_us": 94.82172222222232,
+      "reduction_percent": 1.9533705233900995,
+      "whole_faster_count": 65,
+      "whole_slower_count": 7
+    },
+    {
+      "capacity": 416,
+      "pairs": 108,
+      "upstream_mean_us": 5227.1260740740745,
+      "whole_mean_us": 5153.066324074074,
+      "upstream_minus_whole_mean_us": 74.05975000000004,
+      "reduction_percent": 1.4168349672552885,
+      "whole_faster_count": 91,
+      "whole_slower_count": 17
+    },
+    {
+      "capacity": 432,
+      "pairs": 72,
+      "upstream_mean_us": 5354.134861111111,
+      "whole_mean_us": 5310.763513888889,
+      "upstream_minus_whole_mean_us": 43.371347222222276,
+      "reduction_percent": 0.8100533204205034,
+      "whole_faster_count": 50,
+      "whole_slower_count": 22
+    },
+    {
+      "capacity": 448,
+      "pairs": 84,
+      "upstream_mean_us": 5560.33594047619,
+      "whole_mean_us": 5484.3006904761905,
+      "upstream_minus_whole_mean_us": 76.03524999999998,
+      "reduction_percent": 1.367457844525277,
+      "whole_faster_count": 64,
+      "whole_slower_count": 20
+    },
+    {
+      "capacity": 464,
+      "pairs": 156,
+      "upstream_mean_us": 5638.3355,
+      "whole_mean_us": 5584.448865384616,
+      "upstream_minus_whole_mean_us": 53.88663461538462,
+      "reduction_percent": 0.9557188396359991,
+      "whole_faster_count": 116,
+      "whole_slower_count": 40
+    },
+    {
+      "capacity": 480,
+      "pairs": 108,
+      "upstream_mean_us": 5742.717611111111,
+      "whole_mean_us": 5693.352777777778,
+      "upstream_minus_whole_mean_us": 49.36483333333334,
+      "reduction_percent": 0.8596075355998942,
+      "whole_faster_count": 81,
+      "whole_slower_count": 27
+    },
+    {
+      "capacity": 496,
+      "pairs": 120,
+      "upstream_mean_us": 5867.790958333333,
+      "whole_mean_us": 5822.915416666667,
+      "upstream_minus_whole_mean_us": 44.87554166666666,
+      "reduction_percent": 0.764777443254607,
+      "whole_faster_count": 90,
+      "whole_slower_count": 30
+    },
+    {
+      "capacity": 512,
+      "pairs": 108,
+      "upstream_mean_us": 6213.743527777778,
+      "whole_mean_us": 6198.653925925926,
+      "upstream_minus_whole_mean_us": 15.089601851851866,
+      "reduction_percent": 0.24284236683402927,
+      "whole_faster_count": 63,
+      "whole_slower_count": 45
+    }
+  ],
+  "slower_counterexamples": [
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 29,
+      "capacity": 512,
+      "upstream": 5946.433,
+      "whole": 5956.624,
+      "delta": -10.190999999999804
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 70,
+      "capacity": 480,
+      "upstream": 5869.223,
+      "whole": 5897.674,
+      "delta": -28.451000000000022
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 6166.365,
+      "whole": 6191.904,
+      "delta": -25.53900000000067
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 81,
+      "capacity": 496,
+      "upstream": 6132.224,
+      "whole": 6138.464,
+      "delta": -6.239999999999782
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5510.382,
+      "whole": 5510.462,
+      "delta": -0.08000000000083674
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5471.282,
+      "whole": 5549.902,
+      "delta": -78.61999999999989
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 97,
+      "capacity": 496,
+      "upstream": 6260.264,
+      "whole": 6273.535,
+      "delta": -13.27099999999973
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 111,
+      "capacity": 416,
+      "upstream": 5460.902,
+      "whole": 5476.832,
+      "delta": -15.930000000000291
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 113,
+      "capacity": 512,
+      "upstream": 6584.286,
+      "whole": 6606.816,
+      "delta": -22.529999999999745
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 115,
+      "capacity": 464,
+      "upstream": 6112.864,
+      "whole": 6124.994,
+      "delta": -12.13000000000011
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 117,
+      "capacity": 480,
+      "upstream": 6292.025,
+      "whole": 6299.694,
+      "delta": -7.6690000000007785
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 121,
+      "capacity": 512,
+      "upstream": 6554.255,
+      "whole": 6559.526,
+      "delta": -5.270999999999731
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6531.355,
+      "whole": 6630.096,
+      "delta": -98.74099999999999
+    },
+    {
+      "trial": 0,
+      "repeat": 0,
+      "step": 126,
+      "capacity": 496,
+      "upstream": 6408.936,
+      "whole": 6414.385,
+      "delta": -5.449000000000524
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 29,
+      "capacity": 512,
+      "upstream": 5918.604,
+      "whole": 5919.813,
+      "delta": -1.2089999999998327
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 34,
+      "capacity": 448,
+      "upstream": 5285.53,
+      "whole": 5291.12,
+      "delta": -5.5900000000001455
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 50,
+      "capacity": 416,
+      "upstream": 5105.88,
+      "whole": 5159.331,
+      "delta": -53.45100000000002
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 81,
+      "capacity": 496,
+      "upstream": 6102.914,
+      "whole": 6120.984,
+      "delta": -18.07000000000062
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5468.072,
+      "whole": 5513.532,
+      "delta": -45.460000000000036
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5480.802,
+      "whole": 5576.781,
+      "delta": -95.97900000000027
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 109,
+      "capacity": 480,
+      "upstream": 6097.204,
+      "whole": 6145.154,
+      "delta": -47.95000000000073
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 112,
+      "capacity": 512,
+      "upstream": 6641.616,
+      "whole": 6652.247,
+      "delta": -10.631000000000313
+    },
+    {
+      "trial": 0,
+      "repeat": 1,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6596.256,
+      "whole": 6625.917,
+      "delta": -29.661000000000058
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 0,
+      "capacity": 400,
+      "upstream": 4747.699,
+      "whole": 4807.549,
+      "delta": -59.850000000000364
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 8,
+      "capacity": 464,
+      "upstream": 5342.661,
+      "whole": 5376.811,
+      "delta": -34.149999999999636
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 9,
+      "capacity": 480,
+      "upstream": 5439.351,
+      "whole": 5452.811,
+      "delta": -13.460000000000036
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 14,
+      "capacity": 448,
+      "upstream": 5207.7,
+      "whole": 5223.861,
+      "delta": -16.161000000000058
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 19,
+      "capacity": 480,
+      "upstream": 5659.163,
+      "whole": 6921.927,
+      "delta": -1262.7640000000001
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 20,
+      "capacity": 352,
+      "upstream": 4339.897,
+      "whole": 5004.06,
+      "delta": -664.1630000000005
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 21,
+      "capacity": 432,
+      "upstream": 5131.63,
+      "whole": 5221.661,
+      "delta": -90.03099999999995
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 27,
+      "capacity": 464,
+      "upstream": 5392.251,
+      "whole": 5427.471,
+      "delta": -35.219999999999345
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 29,
+      "capacity": 512,
+      "upstream": 5894.734,
+      "whole": 5964.313,
+      "delta": -69.57899999999972
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 32,
+      "capacity": 352,
+      "upstream": 4402.737,
+      "whole": 4480.058,
+      "delta": -77.32099999999991
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 38,
+      "capacity": 416,
+      "upstream": 4999.46,
+      "whole": 5062.0,
+      "delta": -62.539999999999964
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 40,
+      "capacity": 464,
+      "upstream": 5532.762,
+      "whole": 5615.293,
+      "delta": -82.53099999999995
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 41,
+      "capacity": 464,
+      "upstream": 5505.892,
+      "whole": 5591.112,
+      "delta": -85.22000000000025
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 42,
+      "capacity": 496,
+      "upstream": 5833.923,
+      "whole": 6571.735,
+      "delta": -737.8119999999999
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 43,
+      "capacity": 496,
+      "upstream": 5847.103,
+      "whole": 5877.923,
+      "delta": -30.81999999999971
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 44,
+      "capacity": 512,
+      "upstream": 6003.453,
+      "whole": 6017.894,
+      "delta": -14.440999999999804
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 45,
+      "capacity": 416,
+      "upstream": 5146.03,
+      "whole": 5149.31,
+      "delta": -3.280000000000655
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 55,
+      "capacity": 416,
+      "upstream": 5227.831,
+      "whole": 5237.261,
+      "delta": -9.430000000000291
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 64,
+      "capacity": 464,
+      "upstream": 5653.882,
+      "whole": 5654.843,
+      "delta": -0.9610000000002401
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 69,
+      "capacity": 496,
+      "upstream": 6089.424,
+      "whole": 6091.544,
+      "delta": -2.119999999999891
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 70,
+      "capacity": 480,
+      "upstream": 5851.293,
+      "whole": 5895.133,
+      "delta": -43.840000000000146
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 6158.134,
+      "whole": 6198.294,
+      "delta": -40.159999999999854
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 76,
+      "capacity": 512,
+      "upstream": 6298.065,
+      "whole": 6298.785,
+      "delta": -0.7200000000002547
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 79,
+      "capacity": 400,
+      "upstream": 5209.671,
+      "whole": 5218.151,
+      "delta": -8.479999999999563
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5474.141,
+      "whole": 5557.232,
+      "delta": -83.09100000000035
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 86,
+      "capacity": 464,
+      "upstream": 5886.993,
+      "whole": 5888.783,
+      "delta": -1.7899999999999636
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5447.501,
+      "whole": 5528.562,
+      "delta": -81.0609999999997
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 91,
+      "capacity": 320,
+      "upstream": 4381.687,
+      "whole": 4398.297,
+      "delta": -16.609999999999673
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 95,
+      "capacity": 336,
+      "upstream": 4670.059,
+      "whole": 4684.058,
+      "delta": -13.998999999999796
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 96,
+      "capacity": 448,
+      "upstream": 5812.583,
+      "whole": 5823.983,
+      "delta": -11.400000000000546
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 97,
+      "capacity": 496,
+      "upstream": 6227.435,
+      "whole": 6258.994,
+      "delta": -31.558999999999287
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 107,
+      "capacity": 416,
+      "upstream": 5602.672,
+      "whole": 5624.092,
+      "delta": -21.420000000000073
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 110,
+      "capacity": 448,
+      "upstream": 5900.363,
+      "whole": 5906.514,
+      "delta": -6.15099999999984
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 112,
+      "capacity": 512,
+      "upstream": 6575.646,
+      "whole": 6608.256,
+      "delta": -32.61000000000058
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 115,
+      "capacity": 464,
+      "upstream": 6077.993,
+      "whole": 6148.775,
+      "delta": -70.78199999999924
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 118,
+      "capacity": 464,
+      "upstream": 6038.154,
+      "whole": 6050.604,
+      "delta": -12.449999999999818
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 121,
+      "capacity": 512,
+      "upstream": 6561.196,
+      "whole": 6568.336,
+      "delta": -7.140000000000327
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6534.676,
+      "whole": 6675.976,
+      "delta": -141.29999999999927
+    },
+    {
+      "trial": 0,
+      "repeat": 2,
+      "step": 126,
+      "capacity": 496,
+      "upstream": 6424.055,
+      "whole": 6452.145,
+      "delta": -28.090000000000146
+    },
+    {
+      "trial": 1,
+      "repeat": 0,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5287.969,
+      "whole": 5304.62,
+      "delta": -16.65099999999984
+    },
+    {
+      "trial": 1,
+      "repeat": 0,
+      "step": 86,
+      "capacity": 464,
+      "upstream": 5669.841,
+      "whole": 5961.934,
+      "delta": -292.09299999999985
+    },
+    {
+      "trial": 1,
+      "repeat": 0,
+      "step": 87,
+      "capacity": 320,
+      "upstream": 4399.316,
+      "whole": 4629.969,
+      "delta": -230.65300000000025
+    },
+    {
+      "trial": 1,
+      "repeat": 0,
+      "step": 88,
+      "capacity": 368,
+      "upstream": 4815.748,
+      "whole": 4824.299,
+      "delta": -8.551000000000386
+    },
+    {
+      "trial": 1,
+      "repeat": 0,
+      "step": 102,
+      "capacity": 464,
+      "upstream": 5722.221,
+      "whole": 5747.473,
+      "delta": -25.252000000000407
+    },
+    {
+      "trial": 1,
+      "repeat": 1,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 5936.002,
+      "whole": 5939.264,
+      "delta": -3.2619999999997162
+    },
+    {
+      "trial": 1,
+      "repeat": 1,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5272.539,
+      "whole": 5318.721,
+      "delta": -46.18199999999979
+    },
+    {
+      "trial": 1,
+      "repeat": 1,
+      "step": 86,
+      "capacity": 464,
+      "upstream": 5696.031,
+      "whole": 5795.303,
+      "delta": -99.27199999999993
+    },
+    {
+      "trial": 1,
+      "repeat": 1,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5267.53,
+      "whole": 5292.681,
+      "delta": -25.15099999999984
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 35,
+      "capacity": 384,
+      "upstream": 4917.408,
+      "whole": 6037.234,
+      "delta": -1119.826
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 36,
+      "capacity": 496,
+      "upstream": 5617.08,
+      "whole": 5637.572,
+      "delta": -20.49200000000019
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 40,
+      "capacity": 464,
+      "upstream": 5366.579,
+      "whole": 5389.941,
+      "delta": -23.36200000000008
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 43,
+      "capacity": 496,
+      "upstream": 5615.17,
+      "whole": 5680.842,
+      "delta": -65.67199999999957
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 70,
+      "capacity": 480,
+      "upstream": 5626.08,
+      "whole": 5638.362,
+      "delta": -12.282000000000153
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 76,
+      "capacity": 512,
+      "upstream": 6079.232,
+      "whole": 6087.544,
+      "delta": -8.311999999999898
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 78,
+      "capacity": 288,
+      "upstream": 4024.584,
+      "whole": 5189.82,
+      "delta": -1165.2359999999999
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 79,
+      "capacity": 400,
+      "upstream": 4965.538,
+      "whole": 5027.42,
+      "delta": -61.88200000000052
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 80,
+      "capacity": 288,
+      "upstream": 3913.244,
+      "whole": 3954.976,
+      "delta": -41.73199999999997
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 81,
+      "capacity": 496,
+      "upstream": 5901.932,
+      "whole": 5914.194,
+      "delta": -12.262000000000626
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5276.369,
+      "whole": 5324.281,
+      "delta": -47.91200000000026
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5301.779,
+      "whole": 5354.441,
+      "delta": -52.66199999999935
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 95,
+      "capacity": 336,
+      "upstream": 4514.576,
+      "whole": 4520.728,
+      "delta": -6.152000000000044
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 97,
+      "capacity": 496,
+      "upstream": 6014.572,
+      "whole": 6093.204,
+      "delta": -78.6319999999996
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 105,
+      "capacity": 480,
+      "upstream": 5856.542,
+      "whole": 5887.584,
+      "delta": -31.04199999999946
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 112,
+      "capacity": 512,
+      "upstream": 6230.763,
+      "whole": 6373.495,
+      "delta": -142.73199999999997
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 113,
+      "capacity": 512,
+      "upstream": 6279.273,
+      "whole": 6340.275,
+      "delta": -61.0019999999995
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 115,
+      "capacity": 464,
+      "upstream": 5828.551,
+      "whole": 5876.653,
+      "delta": -48.10199999999986
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 119,
+      "capacity": 416,
+      "upstream": 5293.749,
+      "whole": 5372.212,
+      "delta": -78.46300000000065
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6281.093,
+      "whole": 6348.785,
+      "delta": -67.69200000000001
+    },
+    {
+      "trial": 1,
+      "repeat": 2,
+      "step": 126,
+      "capacity": 496,
+      "upstream": 6124.782,
+      "whole": 6125.964,
+      "delta": -1.181999999999789
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 29,
+      "capacity": 512,
+      "upstream": 5917.302,
+      "whole": 5953.612,
+      "delta": -36.3100000000004
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 32,
+      "capacity": 352,
+      "upstream": 4433.096,
+      "whole": 4463.367,
+      "delta": -30.27100000000064
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 34,
+      "capacity": 448,
+      "upstream": 5334.559,
+      "whole": 5371.289,
+      "delta": -36.72999999999956
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 38,
+      "capacity": 416,
+      "upstream": 5030.018,
+      "whole": 5053.439,
+      "delta": -23.421000000000276
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 51,
+      "capacity": 272,
+      "upstream": 3744.114,
+      "whole": 3906.784,
+      "delta": -162.67000000000007
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 58,
+      "capacity": 352,
+      "upstream": 4531.727,
+      "whole": 4553.727,
+      "delta": -22.0
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 69,
+      "capacity": 496,
+      "upstream": 6103.842,
+      "whole": 6109.932,
+      "delta": -6.0900000000001455
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 70,
+      "capacity": 480,
+      "upstream": 5866.792,
+      "whole": 5920.002,
+      "delta": -53.210000000000036
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 73,
+      "capacity": 480,
+      "upstream": 5924.271,
+      "whole": 6001.772,
+      "delta": -77.5010000000002
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 6184.672,
+      "whole": 7722.838,
+      "delta": -1538.1660000000002
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 75,
+      "capacity": 448,
+      "upstream": 5627.451,
+      "whole": 5694.57,
+      "delta": -67.11899999999969
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 77,
+      "capacity": 432,
+      "upstream": 5381.309,
+      "whole": 5406.02,
+      "delta": -24.71100000000024
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 79,
+      "capacity": 400,
+      "upstream": 5168.519,
+      "whole": 5216.259,
+      "delta": -47.73999999999978
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 81,
+      "capacity": 496,
+      "upstream": 6101.062,
+      "whole": 6144.522,
+      "delta": -43.460000000000036
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5483.89,
+      "whole": 5527.65,
+      "delta": -43.75999999999931
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 86,
+      "capacity": 464,
+      "upstream": 5878.571,
+      "whole": 5910.261,
+      "delta": -31.69000000000051
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 87,
+      "capacity": 320,
+      "upstream": 4509.536,
+      "whole": 4512.557,
+      "delta": -3.020999999999731
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5532.6,
+      "whole": 5541.641,
+      "delta": -9.040999999999258
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 92,
+      "capacity": 336,
+      "upstream": 4574.167,
+      "whole": 4577.527,
+      "delta": -3.3599999999996726
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 94,
+      "capacity": 256,
+      "upstream": 3790.424,
+      "whole": 7166.166,
+      "delta": -3375.742
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 96,
+      "capacity": 448,
+      "upstream": 5781.491,
+      "whole": 5818.302,
+      "delta": -36.810999999999694
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 97,
+      "capacity": 496,
+      "upstream": 6268.173,
+      "whole": 6307.763,
+      "delta": -39.590000000000146
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 102,
+      "capacity": 464,
+      "upstream": 5942.892,
+      "whole": 5980.172,
+      "delta": -37.279999999999745
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 105,
+      "capacity": 480,
+      "upstream": 6080.962,
+      "whole": 6108.882,
+      "delta": -27.919999999999163
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 106,
+      "capacity": 384,
+      "upstream": 5123.509,
+      "whole": 5136.579,
+      "delta": -13.069999999999709
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 109,
+      "capacity": 480,
+      "upstream": 6026.212,
+      "whole": 6120.093,
+      "delta": -93.8809999999994
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 110,
+      "capacity": 448,
+      "upstream": 5853.951,
+      "whole": 5893.811,
+      "delta": -39.85999999999967
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 112,
+      "capacity": 512,
+      "upstream": 6538.774,
+      "whole": 6612.124,
+      "delta": -73.34999999999945
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 113,
+      "capacity": 512,
+      "upstream": 6536.974,
+      "whole": 6747.555,
+      "delta": -210.58100000000013
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 114,
+      "capacity": 464,
+      "upstream": 5894.142,
+      "whole": 6092.413,
+      "delta": -198.27099999999973
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 115,
+      "capacity": 464,
+      "upstream": 6003.352,
+      "whole": 6171.332,
+      "delta": -167.98000000000047
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 117,
+      "capacity": 480,
+      "upstream": 6177.262,
+      "whole": 6280.473,
+      "delta": -103.21100000000024
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6509.024,
+      "whole": 6632.894,
+      "delta": -123.86999999999989
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 125,
+      "capacity": 368,
+      "upstream": 5118.799,
+      "whole": 5146.339,
+      "delta": -27.539999999999964
+    },
+    {
+      "trial": 2,
+      "repeat": 0,
+      "step": 126,
+      "capacity": 496,
+      "upstream": 6345.373,
+      "whole": 6401.414,
+      "delta": -56.04100000000017
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 6,
+      "capacity": 400,
+      "upstream": 4765.487,
+      "whole": 4797.498,
+      "delta": -32.01099999999951
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 9,
+      "capacity": 480,
+      "upstream": 5374.89,
+      "whole": 5480.26,
+      "delta": -105.36999999999989
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 14,
+      "capacity": 448,
+      "upstream": 5153.299,
+      "whole": 5192.189,
+      "delta": -38.89000000000033
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 18,
+      "capacity": 368,
+      "upstream": 4424.826,
+      "whole": 4472.457,
+      "delta": -47.63100000000031
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 27,
+      "capacity": 464,
+      "upstream": 5358.45,
+      "whole": 5581.801,
+      "delta": -223.35100000000057
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 29,
+      "capacity": 512,
+      "upstream": 5942.242,
+      "whole": 5997.032,
+      "delta": -54.789999999999964
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 36,
+      "capacity": 496,
+      "upstream": 5788.591,
+      "whole": 5797.711,
+      "delta": -9.11999999999989
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 40,
+      "capacity": 464,
+      "upstream": 5516.03,
+      "whole": 5520.82,
+      "delta": -4.789999999999964
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 43,
+      "capacity": 496,
+      "upstream": 5806.242,
+      "whole": 5859.961,
+      "delta": -53.71900000000005
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 44,
+      "capacity": 512,
+      "upstream": 5948.211,
+      "whole": 5968.772,
+      "delta": -20.560999999999694
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 49,
+      "capacity": 352,
+      "upstream": 4584.417,
+      "whole": 4609.617,
+      "delta": -25.199999999999818
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 50,
+      "capacity": 416,
+      "upstream": 5080.458,
+      "whole": 5656.711,
+      "delta": -576.2530000000006
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 52,
+      "capacity": 336,
+      "upstream": 4336.086,
+      "whole": 4375.876,
+      "delta": -39.789999999999964
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 55,
+      "capacity": 416,
+      "upstream": 5170.969,
+      "whole": 5173.149,
+      "delta": -2.180000000000291
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 56,
+      "capacity": 464,
+      "upstream": 5591.191,
+      "whole": 5591.761,
+      "delta": -0.5700000000006185
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 57,
+      "capacity": 384,
+      "upstream": 4893.328,
+      "whole": 4933.428,
+      "delta": -40.099999999999454
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 58,
+      "capacity": 352,
+      "upstream": 4494.266,
+      "whole": 4594.067,
+      "delta": -99.80100000000039
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 62,
+      "capacity": 512,
+      "upstream": 6193.642,
+      "whole": 6247.603,
+      "delta": -53.96100000000024
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 64,
+      "capacity": 464,
+      "upstream": 5596.471,
+      "whole": 5660.82,
+      "delta": -64.34900000000016
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 70,
+      "capacity": 480,
+      "upstream": 5783.801,
+      "whole": 5907.081,
+      "delta": -123.27999999999975
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 72,
+      "capacity": 448,
+      "upstream": 5640.66,
+      "whole": 5673.821,
+      "delta": -33.16100000000006
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 73,
+      "capacity": 480,
+      "upstream": 5872.691,
+      "whole": 6192.502,
+      "delta": -319.8110000000006
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 6130.403,
+      "whole": 6292.683,
+      "delta": -162.27999999999975
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 75,
+      "capacity": 448,
+      "upstream": 5561.79,
+      "whole": 5645.021,
+      "delta": -83.23099999999977
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 76,
+      "capacity": 512,
+      "upstream": 6311.653,
+      "whole": 6392.033,
+      "delta": -80.38000000000011
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 77,
+      "capacity": 432,
+      "upstream": 5309.3,
+      "whole": 5421.66,
+      "delta": -112.35999999999967
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 79,
+      "capacity": 400,
+      "upstream": 5149.749,
+      "whole": 5181.329,
+      "delta": -31.579999999999927
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 81,
+      "capacity": 496,
+      "upstream": 6095.443,
+      "whole": 6245.243,
+      "delta": -149.80000000000018
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5452.2,
+      "whole": 5587.84,
+      "delta": -135.64000000000033
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 83,
+      "capacity": 432,
+      "upstream": 5463.75,
+      "whole": 5497.8,
+      "delta": -34.05000000000018
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 84,
+      "capacity": 368,
+      "upstream": 4888.878,
+      "whole": 4973.738,
+      "delta": -84.86000000000058
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 86,
+      "capacity": 464,
+      "upstream": 5873.391,
+      "whole": 5946.931,
+      "delta": -73.53999999999996
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 87,
+      "capacity": 320,
+      "upstream": 4536.356,
+      "whole": 4552.576,
+      "delta": -16.220000000000255
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 88,
+      "capacity": 368,
+      "upstream": 4965.508,
+      "whole": 4968.328,
+      "delta": -2.8200000000006185
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5460.77,
+      "whole": 5547.05,
+      "delta": -86.27999999999975
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 91,
+      "capacity": 320,
+      "upstream": 4364.186,
+      "whole": 4379.286,
+      "delta": -15.100000000000364
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 92,
+      "capacity": 336,
+      "upstream": 4560.747,
+      "whole": 4656.957,
+      "delta": -96.21000000000004
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 93,
+      "capacity": 416,
+      "upstream": 5442.02,
+      "whole": 5523.26,
+      "delta": -81.23999999999978
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 96,
+      "capacity": 448,
+      "upstream": 5753.871,
+      "whole": 5879.311,
+      "delta": -125.4399999999996
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 97,
+      "capacity": 496,
+      "upstream": 6275.823,
+      "whole": 6275.973,
+      "delta": -0.1499999999996362
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 99,
+      "capacity": 304,
+      "upstream": 4333.556,
+      "whole": 4401.626,
+      "delta": -68.07000000000062
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 100,
+      "capacity": 320,
+      "upstream": 4416.796,
+      "whole": 4437.816,
+      "delta": -21.019999999999527
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 102,
+      "capacity": 464,
+      "upstream": 5898.921,
+      "whole": 6010.172,
+      "delta": -111.2509999999993
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 105,
+      "capacity": 480,
+      "upstream": 6010.072,
+      "whole": 6202.283,
+      "delta": -192.21100000000024
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 106,
+      "capacity": 384,
+      "upstream": 5119.108,
+      "whole": 5163.149,
+      "delta": -44.04100000000017
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 107,
+      "capacity": 416,
+      "upstream": 5579.561,
+      "whole": 5755.031,
+      "delta": -175.47000000000025
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 108,
+      "capacity": 464,
+      "upstream": 5869.791,
+      "whole": 6448.034,
+      "delta": -578.2429999999995
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 109,
+      "capacity": 480,
+      "upstream": 6076.572,
+      "whole": 6200.873,
+      "delta": -124.30099999999948
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 110,
+      "capacity": 448,
+      "upstream": 5847.201,
+      "whole": 5921.781,
+      "delta": -74.57999999999993
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 111,
+      "capacity": 416,
+      "upstream": 5454.819,
+      "whole": 5535.84,
+      "delta": -81.02099999999973
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 112,
+      "capacity": 512,
+      "upstream": 6534.423,
+      "whole": 6689.004,
+      "delta": -154.58100000000013
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 113,
+      "capacity": 512,
+      "upstream": 6542.704,
+      "whole": 6672.364,
+      "delta": -129.65999999999985
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 114,
+      "capacity": 464,
+      "upstream": 5894.651,
+      "whole": 5998.012,
+      "delta": -103.36099999999988
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 115,
+      "capacity": 464,
+      "upstream": 5983.612,
+      "whole": 6168.143,
+      "delta": -184.53099999999995
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 116,
+      "capacity": 368,
+      "upstream": 5086.758,
+      "whole": 5147.489,
+      "delta": -60.73099999999977
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 117,
+      "capacity": 480,
+      "upstream": 6221.633,
+      "whole": 6337.943,
+      "delta": -116.3100000000004
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 118,
+      "capacity": 464,
+      "upstream": 5998.692,
+      "whole": 6103.253,
+      "delta": -104.5609999999997
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 119,
+      "capacity": 416,
+      "upstream": 5491.43,
+      "whole": 5556.22,
+      "delta": -64.78999999999996
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 120,
+      "capacity": 288,
+      "upstream": 4163.575,
+      "whole": 4168.675,
+      "delta": -5.100000000000364
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 121,
+      "capacity": 512,
+      "upstream": 6516.504,
+      "whole": 6649.424,
+      "delta": -132.92000000000007
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 122,
+      "capacity": 304,
+      "upstream": 4424.506,
+      "whole": 4448.776,
+      "delta": -24.269999999999527
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6498.504,
+      "whole": 6729.684,
+      "delta": -231.1800000000003
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 124,
+      "capacity": 448,
+      "upstream": 5865.882,
+      "whole": 5993.442,
+      "delta": -127.5600000000004
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 125,
+      "capacity": 368,
+      "upstream": 5156.269,
+      "whole": 5213.489,
+      "delta": -57.219999999999345
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 126,
+      "capacity": 496,
+      "upstream": 6289.883,
+      "whole": 6569.214,
+      "delta": -279.33100000000013
+    },
+    {
+      "trial": 2,
+      "repeat": 1,
+      "step": 127,
+      "capacity": 320,
+      "upstream": 4549.467,
+      "whole": 4643.017,
+      "delta": -93.55000000000018
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 7,
+      "capacity": 464,
+      "upstream": 5291.459,
+      "whole": 5524.9,
+      "delta": -233.4409999999998
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 8,
+      "capacity": 464,
+      "upstream": 5324.86,
+      "whole": 5346.02,
+      "delta": -21.160000000000764
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 9,
+      "capacity": 480,
+      "upstream": 5375.599,
+      "whole": 5393.87,
+      "delta": -18.27099999999973
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 29,
+      "capacity": 512,
+      "upstream": 5894.282,
+      "whole": 5908.641,
+      "delta": -14.358999999999469
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 34,
+      "capacity": 448,
+      "upstream": 5255.199,
+      "whole": 5291.719,
+      "delta": -36.52000000000044
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 40,
+      "capacity": 464,
+      "upstream": 5491.47,
+      "whole": 5519.491,
+      "delta": -28.02099999999973
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 41,
+      "capacity": 464,
+      "upstream": 5427.62,
+      "whole": 5428.48,
+      "delta": -0.8599999999996726
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 42,
+      "capacity": 496,
+      "upstream": 5781.031,
+      "whole": 5842.061,
+      "delta": -61.029999999999745
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 44,
+      "capacity": 512,
+      "upstream": 5944.451,
+      "whole": 6004.842,
+      "delta": -60.39099999999962
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 47,
+      "capacity": 496,
+      "upstream": 5799.061,
+      "whole": 5840.741,
+      "delta": -41.68000000000029
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 55,
+      "capacity": 416,
+      "upstream": 5176.819,
+      "whole": 5193.028,
+      "delta": -16.208999999999833
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 62,
+      "capacity": 512,
+      "upstream": 6165.202,
+      "whole": 6203.613,
+      "delta": -38.41100000000006
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 64,
+      "capacity": 464,
+      "upstream": 5602.501,
+      "whole": 7525.437,
+      "delta": -1922.9359999999997
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 65,
+      "capacity": 304,
+      "upstream": 4251.125,
+      "whole": 4265.325,
+      "delta": -14.199999999999818
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 69,
+      "capacity": 496,
+      "upstream": 6055.772,
+      "whole": 6066.802,
+      "delta": -11.029999999999745
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 70,
+      "capacity": 480,
+      "upstream": 5792.111,
+      "whole": 5874.112,
+      "delta": -82.0010000000002
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 73,
+      "capacity": 480,
+      "upstream": 5877.701,
+      "whole": 6013.902,
+      "delta": -136.20100000000002
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 6134.983,
+      "whole": 6244.983,
+      "delta": -110.0
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 75,
+      "capacity": 448,
+      "upstream": 5552.95,
+      "whole": 5576.54,
+      "delta": -23.590000000000146
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 76,
+      "capacity": 512,
+      "upstream": 6263.492,
+      "whole": 6325.053,
+      "delta": -61.560999999999694
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 77,
+      "capacity": 432,
+      "upstream": 5302.619,
+      "whole": 5350.429,
+      "delta": -47.8100000000004
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 79,
+      "capacity": 400,
+      "upstream": 5112.609,
+      "whole": 5222.959,
+      "delta": -110.34999999999945
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 81,
+      "capacity": 496,
+      "upstream": 6111.822,
+      "whole": 6133.292,
+      "delta": -21.470000000000255
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 82,
+      "capacity": 432,
+      "upstream": 5430.03,
+      "whole": 5574.911,
+      "delta": -144.8810000000003
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 84,
+      "capacity": 368,
+      "upstream": 4836.838,
+      "whole": 4904.808,
+      "delta": -67.97000000000025
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 86,
+      "capacity": 464,
+      "upstream": 5870.082,
+      "whole": 5877.672,
+      "delta": -7.589999999999236
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 88,
+      "capacity": 368,
+      "upstream": 4963.438,
+      "whole": 4987.878,
+      "delta": -24.4399999999996
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 90,
+      "capacity": 432,
+      "upstream": 5458.11,
+      "whole": 5558.3,
+      "delta": -100.19000000000051
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 91,
+      "capacity": 320,
+      "upstream": 4407.426,
+      "whole": 6504.494,
+      "delta": -2097.0679999999993
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 92,
+      "capacity": 336,
+      "upstream": 4552.527,
+      "whole": 4566.937,
+      "delta": -14.409999999999854
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 93,
+      "capacity": 416,
+      "upstream": 5434.49,
+      "whole": 5438.08,
+      "delta": -3.5900000000001455
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 96,
+      "capacity": 448,
+      "upstream": 5736.23,
+      "whole": 5760.921,
+      "delta": -24.691000000000713
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 97,
+      "capacity": 496,
+      "upstream": 6214.342,
+      "whole": 6230.493,
+      "delta": -16.15100000000075
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 102,
+      "capacity": 464,
+      "upstream": 5878.401,
+      "whole": 5973.802,
+      "delta": -95.40099999999984
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 105,
+      "capacity": 480,
+      "upstream": 6034.492,
+      "whole": 6039.022,
+      "delta": -4.529999999999745
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 108,
+      "capacity": 464,
+      "upstream": 5928.211,
+      "whole": 5953.212,
+      "delta": -25.001000000000204
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 109,
+      "capacity": 480,
+      "upstream": 6015.452,
+      "whole": 6071.652,
+      "delta": -56.19999999999982
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 110,
+      "capacity": 448,
+      "upstream": 5822.091,
+      "whole": 5864.031,
+      "delta": -41.9399999999996
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 112,
+      "capacity": 512,
+      "upstream": 6481.894,
+      "whole": 6632.644,
+      "delta": -150.75
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 113,
+      "capacity": 512,
+      "upstream": 6554.724,
+      "whole": 6619.295,
+      "delta": -64.57099999999991
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 115,
+      "capacity": 464,
+      "upstream": 6046.272,
+      "whole": 6061.382,
+      "delta": -15.109999999999673
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 116,
+      "capacity": 368,
+      "upstream": 5054.059,
+      "whole": 5080.728,
+      "delta": -26.66899999999987
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 117,
+      "capacity": 480,
+      "upstream": 6182.452,
+      "whole": 6293.003,
+      "delta": -110.55099999999948
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 118,
+      "capacity": 464,
+      "upstream": 5979.181,
+      "whole": 5995.912,
+      "delta": -16.731000000000677
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 119,
+      "capacity": 416,
+      "upstream": 5462.54,
+      "whole": 5467.789,
+      "delta": -5.248999999999796
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 121,
+      "capacity": 512,
+      "upstream": 6464.294,
+      "whole": 6552.954,
+      "delta": -88.65999999999985
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6501.954,
+      "whole": 6635.974,
+      "delta": -134.02000000000044
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 124,
+      "capacity": 448,
+      "upstream": 5864.462,
+      "whole": 5885.902,
+      "delta": -21.4399999999996
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 125,
+      "capacity": 368,
+      "upstream": 5123.158,
+      "whole": 5150.059,
+      "delta": -26.90099999999984
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 126,
+      "capacity": 496,
+      "upstream": 6338.773,
+      "whole": 7703.908,
+      "delta": -1365.1350000000002
+    },
+    {
+      "trial": 2,
+      "repeat": 2,
+      "step": 127,
+      "capacity": 320,
+      "upstream": 4537.757,
+      "whole": 4711.047,
+      "delta": -173.28999999999996
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 8,
+      "capacity": 464,
+      "upstream": 5146.569,
+      "whole": 5183.215,
+      "delta": -36.64599999999973
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 69,
+      "capacity": 496,
+      "upstream": 5889.852,
+      "whole": 5911.361,
+      "delta": -21.509000000000015
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 74,
+      "capacity": 512,
+      "upstream": 5947.133,
+      "whole": 5949.361,
+      "delta": -2.2280000000000655
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 105,
+      "capacity": 480,
+      "upstream": 5858.962,
+      "whole": 6186.282,
+      "delta": -327.3199999999997
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 106,
+      "capacity": 384,
+      "upstream": 4968.489,
+      "whole": 4976.784,
+      "delta": -8.295000000000073
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 108,
+      "capacity": 464,
+      "upstream": 5668.672,
+      "whole": 5688.939,
+      "delta": -20.267000000000735
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 109,
+      "capacity": 480,
+      "upstream": 5856.262,
+      "whole": 6145.462,
+      "delta": -289.2000000000007
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 110,
+      "capacity": 448,
+      "upstream": 5660.981,
+      "whole": 5730.319,
+      "delta": -69.33800000000065
+    },
+    {
+      "trial": 3,
+      "repeat": 1,
+      "step": 123,
+      "capacity": 512,
+      "upstream": 6302.744,
+      "whole": 6314.614,
+      "delta": -11.86999999999989
+    }
+  ],
+  "full_descriptor_trace_measured": true,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "split_parallel_vs_padding_measured": false,
+  "qualification_scope": "Separate chronological pre/post passes; three rows of one rotating occurrence per step. This audit checks recorded evidence and does not rerun tensor reference mathematics.",
+  "statistical_scope": "Four independent process blocks for formal mode; trace steps/passes are nested observations. All timings retained. No confidence interval or causal component attribution.",
+  "endpoint": "Pinned preparation + required H2D + shared native producer + sequential private attention + final join.",
+  "input": {
+    "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\stage7-suite.json",
+    "sha256": "b60231d2f6ef54d20373ea5dcccdb6d3039a0186e9550509d640b7f47a95b94c"
+  },
+  "raw_reports": [
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-00-upstream\\stage7-dynamic-probe.json",
+      "sha256": "deb439d6e6ec5dd68b4f678fbd43c46116617687a34423726b7eab7752c0565d"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-00-whole\\stage7-dynamic-probe.json",
+      "sha256": "703a6228014f8a0ddef4497ffc8589bbcd3634e5be2d0cdd9da9863e3f01c6fb"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-01-whole\\stage7-dynamic-probe.json",
+      "sha256": "033d16e8120ec568d538e3e97310eb796112ec5d70e0e937dc3e3c26e063615a"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-01-upstream\\stage7-dynamic-probe.json",
+      "sha256": "aac9f4d19c91f62dc969f1fede248401f649133bdda8c4bcf6c67d965d38973b"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-02-upstream\\stage7-dynamic-probe.json",
+      "sha256": "cedb18c7600d02df97cb067b7b65f78dc4189dadaf01f4b0546dec7e38fd6bed"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-02-whole\\stage7-dynamic-probe.json",
+      "sha256": "80bb95b661a3ee76684cc88b988734720be107bbd240ca5e9ff596eea9b58446"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-03-whole\\stage7-dynamic-probe.json",
+      "sha256": "d173b9e86ade85eed39669468454506b3f586dc7ce0d9372d7de4c610bc8e8e1"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-stage7-v1\\round-03-upstream\\stage7-dynamic-probe.json",
+      "sha256": "1ed5a750afed8fd8da678946c7bb02498146cbd35b5aac60b4be74bb4f240589"
+    }
+  ],
+  "canonical_sources": {
+    "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\structural-dynamic-trace-v1.json": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\q4-tile-full-replay-v8-queue0.rank0.json": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba"
+  },
+  "audited_runtime_sources": {
+    "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+    "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+    "aclgraph_fia_sink_stage3_trace.py": "e99f60febf234336569a3ca5f0b1176eacadf89851c5b20b065b389693d85aa5",
+    "aclgraph_fia_sink_stage3_budget.py": "a71e01920680a7a0449f6e041bb49ddf5e5dccc3c583d3b9c1d35ead336a09ca",
+    "aclgraph_fia_sink_stage3_legacy.py": "406562489d9f97d1cf995dabf28fe4977396f24d8060295698940f462f3428a1",
+    "aclgraph_fia_sink_stage4_prepare.py": "21a723a09a3bc4e2949e3292c5e9c9756bdcbb5d293853c68cd569a7093f1072",
+    "aclgraph_fia_sink_stage4_whole_plan.py": "10d095369cde48cef0538249b2806d0db7ca655fddb208d2819019bf5294e7b8",
+    "aclgraph_fia_sink_stage4_whole_probe.py": "07bd3396584b5370719eac51743d95c8263556c92c66d25e0705236a2e9c2902",
+    "aclgraph_fia_sink_stage5_gate.py": "88088520c4e961fe1441423f01397204290dd59ee5bda7e9a00c9ec6ac2069e2",
+    "aclgraph_fia_sink_stage6_probe.py": "4c47e5b1797a589c931e38c5da29b06a47bce6ff782596fb44160cf64de04141",
+    "aclgraph_fia_sink_stage6_suite.py": "2818dcf7d2e60360b42ac599f7b3fc71413523c5b04948779abc8fde79952eb5",
+    "aclgraph_fia_sink_stage7_probe.py": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+    "aclgraph_fia_sink_stage7_suite.py": "8d2eec1702bf897f265dab85544145568d55c1cc361bafc708fb50411f32cd76"
+  },
+  "audit_script_sha256": "60578e354eaf490b5387222e23be68f33b509bc3d0906bb1a6b01c33aba64490"
+}

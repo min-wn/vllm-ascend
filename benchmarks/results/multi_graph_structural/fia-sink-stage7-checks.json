@@ -1,0 +1,89 @@
+{
+  "files": {
+    "benchmarks/aclgraph_fia_sink_stage7_probe.py": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+    "benchmarks/aclgraph_fia_sink_stage7_suite.py": "8d2eec1702bf897f265dab85544145568d55c1cc361bafc708fb50411f32cd76",
+    "benchmarks/aclgraph_fia_sink_stage7_analyze.py": "383641730f7e7308d35222db292602fb135b1c17440f9fc4118ce38daccd6569",
+    "tests/ut/worker/multi_graph/test_fia_sink_stage7_probe.py": "faf4b7ccd1b1fdbdeb52378f7088ec1f85fb002a9821640f7734e289f3e66110",
+    "tests/ut/worker/multi_graph/test_fia_sink_stage7_suite.py": "f65fa1e3a7426aebf226df837352873e4720ea9ad6a0d6491f81fdf0eb6909c5",
+    "tests/ut/worker/multi_graph/test_fia_sink_stage7_analyze.py": "49211d49ef586762a2d6b067251feb094839fdf85d3177b44d2b5a0a91824595",
+    "docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_stage7.md": "70cc4f7eb66504446721de0b590b7cefa8497384f329aa9586b6793c465989b8",
+    "docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_stage8_protocol.md": "5b7b1202063c7818e56e33aaddeff0d4d45460151abd8a05b0df48e1d6e9bd65",
+    "docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_contribution_scope.md": "452b6b6b14343933fa6d538727f68032f0cb92d16cb374cbaacefb2bcc08e33d",
+    "docs/source/developer_guide/Design_Documents/aclgraph_incremental_attention_thesis.md": "e6b99d656d0e4e602852a5a71b81cfe7030119098f5757133c788970f780abec"
+  },
+  "checks": [
+    {
+      "check": "codespell",
+      "returncode": 0,
+      "output": "codespell................................................................Passed\n"
+    },
+    {
+      "check": "typos",
+      "returncode": 0,
+      "output": "typos....................................................................Passed\n"
+    },
+    {
+      "check": "markdownlint",
+      "returncode": 0,
+      "output": "markdownlint.............................................................Passed\n"
+    },
+    {
+      "check": "check_forbidden_imports.py",
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "check": "check_boolean_context_manager.py",
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "check": "check_long_functions.py",
+      "returncode": 0,
+      "output": ""
+    }
+  ],
+  "unit_tests": {
+    "passed": 62,
+    "failed": 0,
+    "command": "python -m pytest --noconftest tests/ut/worker/multi_graph/test_fia_sink_stage7_analyze.py tests/ut/worker/multi_graph/test_fia_sink_stage7_probe.py tests/ut/worker/multi_graph/test_fia_sink_stage7_suite.py --basetemp ../../outputs/p7all -q",
+    "observed_runtime_seconds": 28.02
+  },
+  "full_repository_ci": {
+    "command": "bash format.sh ci",
+    "returncode": 1,
+    "raw_log_sha256": "0c873e043a82b094f9c8e5cbb2f932ca74ca9aa2f851ed1f08e3643d39922f9a",
+    "existing_failures": [
+      "Unchanged vendor/source and verbatim native diagnostic spelling, including raw logs archived by this stage",
+      "device_length_decode.py direct Triton imports",
+      "Windows hooks cannot find /bin/bash/shellcheck/python3"
+    ],
+    "raw_log_path": "fia-sink-stage7-v1/format-ci.log"
+  },
+  "scope": "checks only; not performance evidence",
+  "native_screen": {
+    "passed": true,
+    "raw_samples": 16,
+    "step_checks": 32,
+    "fp32_rows": 96
+  },
+  "native_formal": {
+    "protocol_qualified": true,
+    "independent_audit_passed": true,
+    "raw_samples": 3072,
+    "paired_samples": 1536,
+    "separate_step_checks": 2048,
+    "sampled_fp32_rows": 6144,
+    "raw_payloads": 2184
+  },
+  "independent_statistics_match": {
+    "overall": true,
+    "all_17_capacities": true,
+    "all_4_rounds": true
+  },
+  "staged_long_function_check": {
+    "returncode": 0,
+    "correction": "Required fixture docstring added before initial source commit; runtime unchanged."
+  },
+  "result_scope": "Fixed synthetic resident Q/K/V; complete chronological dynamic descriptor trace; sixteen sequential attention occurrences. No full-model, split-versus-padding, sampler or serving gain."
+}

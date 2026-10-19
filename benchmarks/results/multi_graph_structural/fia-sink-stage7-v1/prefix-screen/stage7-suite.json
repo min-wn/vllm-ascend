@@ -1,0 +1,122 @@
+{
+  "state": "completed",
+  "started_unix": 1792380919.9115207,
+  "design": {
+    "policies": [
+      "upstream",
+      "whole"
+    ],
+    "capacities": [
+      272,
+      288,
+      304,
+      352,
+      400,
+      464,
+      496
+    ],
+    "occurrences": 1,
+    "rounds": 1,
+    "repeats": 1,
+    "step_count": 8,
+    "process_orders": [
+      [
+        "upstream",
+        "whole"
+      ]
+    ],
+    "screen": true,
+    "seed": 1703,
+    "step_order": "unchanged chronological canonical prefix",
+    "qualification_passes": 2,
+    "reference_rows_per_step": 3,
+    "reference_occurrence": "step % occurrences",
+    "warmup_passes_per_repeat": 1
+  },
+  "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "scope": "synthetic attention-chain full chronological descriptor trace; fixed resident Q/K/V",
+  "probe_sha256": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+  "runs": [
+    {
+      "trial": 0,
+      "policy": "upstream",
+      "process_order_index": 0,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-tools-screen-v1/aclgraph_fia_sink_stage7_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-screen-v1/round-00-upstream",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-tools-screen-v1/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-tools-screen-v1/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--policy",
+        "upstream",
+        "--trial",
+        "0",
+        "--repeats",
+        "1",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800",
+        "--screen"
+      ],
+      "launched_unix": 1792380919.9125626,
+      "report_path": "round-00-upstream/stage7-dynamic-probe.json",
+      "pid": 72519,
+      "returncode": 0,
+      "finished_unix": 1792380971.102631,
+      "report_sha256": "428afa075614cef9b695c45dbeaa5d9a197392680b18c19ce4f3b64934c3b650"
+    },
+    {
+      "trial": 0,
+      "policy": "whole",
+      "process_order_index": 1,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-tools-screen-v1/aclgraph_fia_sink_stage7_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-screen-v1/round-00-whole",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-tools-screen-v1/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage7-tools-screen-v1/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--policy",
+        "whole",
+        "--trial",
+        "0",
+        "--repeats",
+        "1",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800",
+        "--screen"
+      ],
+      "launched_unix": 1792380971.1308875,
+      "report_path": "round-00-whole/stage7-dynamic-probe.json",
+      "pid": 181171,
+      "returncode": 0,
+      "finished_unix": 1792381024.3764467,
+      "report_sha256": "aa84f1274986e083c5499927a8ca552abcb58416f9814bd6814b6e8db8d10a0a"
+    }
+  ],
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "returncode": 0,
+  "finished_unix": 1792381024.4054036
+}

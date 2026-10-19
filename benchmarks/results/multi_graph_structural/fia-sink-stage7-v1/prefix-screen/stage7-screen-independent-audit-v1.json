@@ -1,0 +1,154 @@
+{
+  "independent_audit_passed": true,
+  "formal_protocol_qualified": false,
+  "screen_prefix_only": true,
+  "issues": [],
+  "audited_counts": {
+    "samples": 16,
+    "pairs": 8,
+    "qualification_steps": 32,
+    "fp32_rows": 96
+  },
+  "expected_counts": {
+    "samples": 16,
+    "pairs": 8,
+    "qualification_steps": 32,
+    "fp32_rows": 96
+  },
+  "overall": {
+    "pairs": 8,
+    "upstream_mean_us": 765.711,
+    "whole_mean_us": 718.542625,
+    "upstream_minus_whole_mean_us": 47.16837500000001,
+    "reduction_percent": 6.160075407039995,
+    "whole_faster_count": 8,
+    "whole_slower_count": 0
+  },
+  "per_round": [
+    {
+      "trial": 0,
+      "pairs": 8,
+      "upstream_mean_us": 765.711,
+      "whole_mean_us": 718.542625,
+      "upstream_minus_whole_mean_us": 47.16837500000001,
+      "reduction_percent": 6.160075407039995,
+      "whole_faster_count": 8,
+      "whole_slower_count": 0
+    }
+  ],
+  "per_capacity": [
+    {
+      "capacity": 272,
+      "pairs": 1,
+      "upstream_mean_us": 672.812,
+      "whole_mean_us": 616.632,
+      "upstream_minus_whole_mean_us": 56.180000000000064,
+      "reduction_percent": 8.350029428726012,
+      "whole_faster_count": 1,
+      "whole_slower_count": 0
+    },
+    {
+      "capacity": 288,
+      "pairs": 1,
+      "upstream_mean_us": 694.552,
+      "whole_mean_us": 643.352,
+      "upstream_minus_whole_mean_us": 51.200000000000045,
+      "reduction_percent": 7.3716582775659765,
+      "whole_faster_count": 1,
+      "whole_slower_count": 0
+    },
+    {
+      "capacity": 304,
+      "pairs": 1,
+      "upstream_mean_us": 735.732,
+      "whole_mean_us": 710.893,
+      "upstream_minus_whole_mean_us": 24.838999999999942,
+      "reduction_percent": 3.376093468817442,
+      "whole_faster_count": 1,
+      "whole_slower_count": 0
+    },
+    {
+      "capacity": 352,
+      "pairs": 1,
+      "upstream_mean_us": 739.662,
+      "whole_mean_us": 692.102,
+      "upstream_minus_whole_mean_us": 47.56000000000006,
+      "reduction_percent": 6.429963956509872,
+      "whole_faster_count": 1,
+      "whole_slower_count": 0
+    },
+    {
+      "capacity": 400,
+      "pairs": 2,
+      "upstream_mean_us": 789.0925,
+      "whole_mean_us": 749.613,
+      "upstream_minus_whole_mean_us": 39.47950000000003,
+      "reduction_percent": 5.003152355395601,
+      "whole_faster_count": 2,
+      "whole_slower_count": 0
+    },
+    {
+      "capacity": 464,
+      "pairs": 1,
+      "upstream_mean_us": 823.682,
+      "whole_mean_us": 781.883,
+      "upstream_minus_whole_mean_us": 41.79899999999998,
+      "reduction_percent": 5.074652596511758,
+      "whole_faster_count": 1,
+      "whole_slower_count": 0
+    },
+    {
+      "capacity": 496,
+      "pairs": 1,
+      "upstream_mean_us": 881.063,
+      "whole_mean_us": 804.253,
+      "upstream_minus_whole_mean_us": 76.80999999999995,
+      "reduction_percent": 8.717878290201716,
+      "whole_faster_count": 1,
+      "whole_slower_count": 0
+    }
+  ],
+  "slower_counterexamples": [],
+  "full_descriptor_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "split_parallel_vs_padding_measured": false,
+  "qualification_scope": "Separate chronological pre/post passes; three rows of one rotating occurrence per step. This audit checks recorded evidence and does not rerun tensor reference mathematics.",
+  "statistical_scope": "Four independent process blocks for formal mode; trace steps/passes are nested observations. All timings retained. No confidence interval or causal component attribution.",
+  "endpoint": "Pinned preparation + required H2D + shared native producer + sequential private attention + final join.",
+  "input": {
+    "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\stage7-evidence-screen-v1\\stage7-suite.json",
+    "sha256": "cf6bd8f4f0d2c244f63f3bddd2b8d75cb944dfe9b5502210447ff4a2162614bc"
+  },
+  "raw_reports": [
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\stage7-evidence-screen-v1\\round-00-upstream\\stage7-dynamic-probe.json",
+      "sha256": "428afa075614cef9b695c45dbeaa5d9a197392680b18c19ce4f3b64934c3b650"
+    },
+    {
+      "path": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\stage7-evidence-screen-v1\\round-00-whole\\stage7-dynamic-probe.json",
+      "sha256": "aa84f1274986e083c5499927a8ca552abcb58416f9814bd6814b6e8db8d10a0a"
+    }
+  ],
+  "canonical_sources": {
+    "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\structural-dynamic-trace-v1.json": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\q4-tile-full-replay-v8-queue0.rank0.json": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba"
+  },
+  "audited_runtime_sources": {
+    "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+    "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+    "aclgraph_fia_sink_stage3_trace.py": "e99f60febf234336569a3ca5f0b1176eacadf89851c5b20b065b389693d85aa5",
+    "aclgraph_fia_sink_stage3_budget.py": "a71e01920680a7a0449f6e041bb49ddf5e5dccc3c583d3b9c1d35ead336a09ca",
+    "aclgraph_fia_sink_stage3_legacy.py": "406562489d9f97d1cf995dabf28fe4977396f24d8060295698940f462f3428a1",
+    "aclgraph_fia_sink_stage4_prepare.py": "21a723a09a3bc4e2949e3292c5e9c9756bdcbb5d293853c68cd569a7093f1072",
+    "aclgraph_fia_sink_stage4_whole_plan.py": "10d095369cde48cef0538249b2806d0db7ca655fddb208d2819019bf5294e7b8",
+    "aclgraph_fia_sink_stage4_whole_probe.py": "07bd3396584b5370719eac51743d95c8263556c92c66d25e0705236a2e9c2902",
+    "aclgraph_fia_sink_stage5_gate.py": "88088520c4e961fe1441423f01397204290dd59ee5bda7e9a00c9ec6ac2069e2",
+    "aclgraph_fia_sink_stage6_probe.py": "4c47e5b1797a589c931e38c5da29b06a47bce6ff782596fb44160cf64de04141",
+    "aclgraph_fia_sink_stage6_suite.py": "2818dcf7d2e60360b42ac599f7b3fc71413523c5b04948779abc8fde79952eb5",
+    "aclgraph_fia_sink_stage7_probe.py": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+    "aclgraph_fia_sink_stage7_suite.py": "8d2eec1702bf897f265dab85544145568d55c1cc361bafc708fb50411f32cd76"
+  },
+  "audit_script_sha256": "60578e354eaf490b5387222e23be68f33b509bc3d0906bb1a6b01c33aba64490"
+}

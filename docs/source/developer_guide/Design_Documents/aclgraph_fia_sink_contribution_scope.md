@@ -36,7 +36,7 @@ must not be described as the first cost-based attention scheduler.
 | Guarded whole-row producer | The consumer already accepts legal complete-head endpoints and no-FD output. | Stage 5 reuses native costs, partitions complete `(request, KV head)` atoms by contiguous minimax, constructs a fresh zero-FD candidate, validates it before publication and falls back to upstream on failure. | Independent native policy code; no first-ever whole-row/no-FD claim. |
 | CPU incremental prototype | Request-local templates, exact tails, boundary repair, merge-cost checks and fallback are implemented in Python. | This is the proposed maintenance algorithm, distinct from the native whole-row rebuild. | CPU oracle/UT evidence only; no native incremental exporter, device repair or NPU speedup. |
 | Stage 6 evaluation | Same consumer, four default buckets, private synthetic Q/K/V, one producer and sixteen sequential consumers. | Required preparation, native producer, replay and joins are included in a matched policy comparison. | Bounded attention-chain evidence, not a loaded model or split/padding comparison. |
-| Stage 7 evaluation | Original 128-step descriptor trace, seventeen buckets and separate pre/post qualification. | Checks the native policy under chronological membership/length/page changes. | Formal experiment remains in progress at this snapshot; do not publish its planned counts as completed results. |
+| Stage 7 evaluation | Completed original 128-step descriptor trace, seventeen buckets and separate pre/post qualification. | Measures native policy under chronological membership/length/page changes, with both formal and independent audits passing. | Observed producer-inclusive attention-chain mean reduction of 1.788171%; one round and overall P99 regress. No loaded-model or split/padding comparison. |
 | Stage 8 protocol | Existing TP2 real-model harness provides real QKV/cache/GDN state. | Planned `legacy_pad`/`upstream_sink_pad`/`whole_sink_pad` integration isolates adoption from native policy. | Protocol only; no implemented model integration or measured gain. |
 
 ## Exact native-policy difference
@@ -70,7 +70,9 @@ relevant implementation differences from the pinned search.
 ## Relationship to existing work
 
 The following conclusions and original URLs come from the existing repository
-research record. No new web review or priority claim is added here.
+research record. A focused primary-source recheck on 2026-10-19 confirmed the
+FlashInfer paper, the pinned balanced-GQA README and the pinned official sink
+wrapper. This is not a comprehensive new literature or priority search.
 
 | Work | Previously verified mechanism | Consequence for our claim |
 | --- | --- | --- |
@@ -84,6 +86,22 @@ research record. No new web review or priority claim is added here.
 None of these citations establishes that our exact implementation is novel.
 A publication-level comparison must still check closer variants of
 whole-row policies, FD tradeoffs and incremental partition maintenance.
+
+The [FlashInfer paper, Algorithm 1 and Sections 3.3-3.4][flashinfer-paper], is
+particularly close: it forms KV chunks, orders them by length and assigns
+them to CTA queues. Its CPU plan is refreshed per step and reused across
+compatible layers; graph capture covers execution. Our present native policy
+instead keeps complete ordered request/head atoms and exports contiguous
+endpoints to the retained A2 consumer. This is a concrete implementation
+difference, not evidence that either whole-row scheduling or plan reuse is new.
+
+The pinned [balanced-GQA implementation][cake] is a closer device-scheduling
+reference: one persistent launch reads device lengths, assigns work tickets
+and merges split results. Its fixed SM100/SM103, D128, GQA8 and page16 route
+differs from our A2/D256/GQA6/page128 qualification. We retain a separate AICPU
+producer and the existing consumer, not its kernel-owned ticket scheduler.
+These hardware and ABI differences motivate separate evaluation; they do
+not by themselves establish an algorithmic novelty claim.
 
 ## Results that can be written now
 
@@ -103,10 +121,24 @@ AB/BA blocks retain process/time drift, and repeated samples are not
 independent process trials. Both complete-row assignment and FD removal
 change together, so the result does not isolate FD merge duration.
 
+Stage 7 completes all 3072 observations and 1536 matched pairs over the
+chronological trace. Wall mean falls from 4996.977324 to 4907.622840 us,
+an 89.354484 us or 1.788171% reduction, with 1283 wins and 253 losses.
+Its four round reductions are 1.957489%, 2.083247%, -0.117017% and 3.269628%.
+All seventeen bucket means improve, but capacity512 gains only 0.242842%.
+Overall P99 regresses from 6550.212150 to 6631.752200 us; capacity256 P99
+regresses from 4025.352650 to 5977.988800 us with 36 observations per policy.
+The formal analyzer and independent audit both pass. Separate correctness
+passes contain 2048 step checks, 2184 full payload checks and 6144 sampled
+FP32 row comparisons, with maximum absolute error 0.0003158003091812134.
+Timed samples are not individually reference-qualified. The result remains
+a synthetic attention trace, not a full model, serving or split-over-padding
+result, and its process blocks retain possible time/process drift.
+
 The CPU incremental prototype may be discussed as a tested hypothesis with
 merge-cost counterexamples and fallback diagnostics. It has no native NPU
-implementation. Stage 7 must be updated from completed raw evidence;
-Stage 8 must be implemented and qualified before any real-model claim.
+implementation. Stage 8 must be implemented and qualified before any
+real-model claim.
 The existing CPU screen records that a high merge charge caused fallback on
 126 of 127 later steps and that the Python incremental path was slower than
 its full-plan control. These are negative prototype observations, not
@@ -125,9 +157,12 @@ measurements of a future native implementation.
 
 ## Remaining attribution gates
 
-Complete and independently analyze Stage 7 before broadening performance
-claims. Then follow Stage 8's three-step integration screen, one continued
-128-step qualification per control and formal three-control measurement.
+The next gate is Stage 8's three-step real-model integration screen and a
+critical-path headroom measurement. Establish whether the optimized attention
+work is exposed in the real TP2 model; the Stage 7 chain saving is not a
+promised complete-forward saving. Only after a sound integration and useful
+headroom should the experiment proceed to one continued 128-step model
+qualification per control and later formal three-control measurement.
 Retain true KV writes, all model state, critical-rank communication, producer,
 preparation, output-copy and final-join costs.
 
@@ -150,9 +185,13 @@ A future split path must give padding the same best sink policy.
 - [Stage 5 native gate](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage5-native-gate.json)
 - [Stage 6 raw bundle](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage6-v1/stage6-suite.json)
 - [Stage 6 analysis](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage6-analysis.json)
+- [Stage 7 raw bundle](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-v1/stage7-suite.json)
+- [Stage 7 analysis](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-analysis.json)
+- [Stage 7 independent audit](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-independent-audit.json)
 
 [sink]: https://github.com/vllm-project/vllm-ascend/pull/15336
 [flashinfer]: https://proceedings.mlsys.org/paper_files/paper/2025/hash/dbf02b21d77409a2db30e56866a8ab3a-Abstract-Conference.html
+[flashinfer-paper]: https://proceedings.mlsys.org/paper_files/paper/2025/file/dbf02b21d77409a2db30e56866a8ab3a-Paper-Conference.pdf
 [flashinfer-api]: https://docs.flashinfer.ai/api/attention.html
 [cake]: https://github.com/flashinfer-ai/flashinfer/blob/759163ee4787a920c3c83998ecf6d1b61f327c3a/flashinfer/experimental/balanced_gqa_decode/README.md
 [flex]: https://pytorch.org/blog/flexattention-for-inference/

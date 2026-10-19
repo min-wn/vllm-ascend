@@ -1,0 +1,37 @@
+{
+  "audit_script_sha256": "60578e354eaf490b5387222e23be68f33b509bc3d0906bb1a6b01c33aba64490",
+  "python_compile_passed": true,
+  "screen_report_sha256": "234d1969346726c6ed27debf3b91e39334464835aa1e49564995befa23ccca09",
+  "real_screen_independent_audit_passed": true,
+  "fault_injections": [
+    {
+      "mutation": "current_metadata_stale",
+      "rejected": true
+    },
+    {
+      "mutation": "timing_chronology",
+      "rejected": true
+    },
+    {
+      "mutation": "oracle_page_order",
+      "rejected": true
+    },
+    {
+      "mutation": "post_cache_bytes",
+      "rejected": true
+    },
+    {
+      "mutation": "copy_lifetime",
+      "rejected": true
+    },
+    {
+      "mutation": "wall_endpoint",
+      "rejected": true
+    },
+    {
+      "mutation": "runtime_source",
+      "rejected": true
+    }
+  ],
+  "fault_protocol": "Each mutation was applied independently to a temporary copy of the real screen whole raw report; report hashes were recomputed so rejection tested field semantics rather than a stale report hash. Original evidence was preserved."
+}

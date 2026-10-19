@@ -1,5 +1,10 @@
 # Experiment evidence and source hashes must survive Windows checkout filters.
 /benchmarks/aclgraph_fia_sink_stage*.py text eol=lf
+/tests/ut/worker/multi_graph/test_fia_sink_stage7_*.py text eol=lf
+/docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_stage7.md text eol=lf
+/docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_stage8_protocol.md text eol=lf
+/docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_contribution_scope.md text eol=lf
+/docs/source/developer_guide/Design_Documents/aclgraph_incremental_attention_thesis.md text eol=lf
 /benchmarks/multi_graph_gdn_q4_full_metadata.py text eol=lf
 /benchmarks/multi_graph_gdn_q4_full_loader.py text eol=lf
 /benchmarks/multi_graph_dynamic_trace.py text eol=lf
@@ -9,4 +14,5 @@
 /benchmarks/results/multi_graph_structural/fia-sink-stage6-v1/** -text whitespace=cr-at-eol
 /benchmarks/results/multi_graph_structural/fia-sink-stage6-*.json -text whitespace=cr-at-eol
 /benchmarks/results/multi_graph_structural/fia-sink-stage7-v1/** -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/fia-sink-stage7-v1/format-ci.log whitespace=cr-at-eol,-blank-at-eof
 /benchmarks/results/multi_graph_structural/fia-sink-stage7-*.json -text whitespace=cr-at-eol

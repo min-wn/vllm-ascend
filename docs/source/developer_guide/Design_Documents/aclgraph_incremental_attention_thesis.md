@@ -1,7 +1,7 @@
 # Thesis proposal: incremental attention plans with selective KV splitting
 
-Status: research proposal with native whole-row stage-six evidence and a
-stage-seven chronological experiment in progress, 2026-10-19. There is no
+Status: research proposal with completed native whole-row stage-six and
+stage-seven attention-chain evidence, 2026-10-19. There is no
 NPU speedup result for the proposed incremental algorithm. The user
 permits an ACLGraph optimization without request
 splitting and wants an independent graduation-project contribution beyond
@@ -166,19 +166,50 @@ complete-row assignment and FD removal under the bounded workload. It does
 not isolate FD merge cost, establish an incremental-planning gain, compare
 against padding, or demonstrate full-model or split-multistream acceleration.
 
-The [seventh stage](aclgraph_fia_sink_stage7.md) is now running the unchanged
+The [seventh stage](aclgraph_fia_sink_stage7.md) completes the unchanged
 128-step chronological descriptor trace. It retains all 17 required default
 capacities, independent per-bucket graph pools, 16 sequential private
 attention occurrences and fixed synthetic resident Q/K/V. True per-step
 lengths and owner pages are refreshed inside the producer-inclusive endpoint.
-The predeclared formal protocol has three timed passes per process and four
-AB/BA process rounds, plus separate complete pre/post qualification passes.
-Its performance and independent protocol-audit results are pending; planned
-sample counts are not completed evidence. The next decision gate is this
-complete dynamic descriptor trace. Real model-state integration follows only
-after a positive, qualified result, with its own correctness and performance
-checks. Full-model replay, a matched padding control and serving throughput
-remain unmeasured for this native whole-row policy.
+The formal protocol executes three timed passes per process in four AB/BA
+process rounds, plus separate complete pre/post qualification passes. All
+3072 observations and 1536 matched pairs are retained. Both the formal
+analyzer and an independent audit pass. Wall mean falls from 4996.977324 us
+upstream to 4907.622840 us whole-row, an 89.354484 us or 1.788171% reduction;
+1283 pairs improve and 253 regress. The four round reductions are 1.957489%,
+2.083247%, -0.117017% and 3.269628%. All seventeen bucket means improve,
+but capacity512 improves only 0.242842%.
+
+The full-trace mean effect is smaller than the four-record Stage 6 result.
+Overall wall P99 rises from 6550.212150 to 6631.752200 us. Capacity256 P99
+rises from 4025.352650 to 5977.988800 us over 36 observations per policy;
+the retained tail counterexample prevents a general tail-improvement claim.
+The separate correctness passes complete 2048 step checks, 2184 full metadata
+payload checks including capture preflight, and 6144 sampled FP32 row
+comparisons. Maximum sampled absolute error is 0.0003158003091812134.
+These are separate qualification passes, not a reference check of every
+timed sample or every live output element.
+
+The [raw suite](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-v1/stage7-suite.json),
+[formal analysis](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-analysis.json)
+and [independent audit](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-independent-audit.json)
+support an observed producer-inclusive mean reduction on this synthetic
+dynamic attention trace. Four process blocks do not turn 1536 repeated
+pairs into independent trials, and AB/BA does not eliminate time/process
+drift. This is not a loaded-model trajectory, serving result or evidence that
+split parallelism beats padding.
+
+The next gate is the [Stage 8](aclgraph_fia_sink_stage8_protocol.md)
+three-step real-model integration screen, together with a critical-path
+headroom check: measure whether this attention work is exposed in the real
+TP2 model and how much complete-forward time could be affected. The
+89.354484 us chain reduction is not a promised model reduction. Proceed to
+continued model qualification and the later three-control formal measurement
+only after that screen establishes a sound integration and useful headroom.
+Full-model replay, a matched padding control and serving throughput remain
+unmeasured for this native policy. Native incremental planning is still
+unimplemented; standard contiguous minimax and whole-row/no-FD mechanisms
+are not claimed as first inventions.
 
 ## Existing project results and thesis scope
 

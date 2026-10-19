@@ -1,9 +1,11 @@
 # FIA sink stage 7: chronological dynamic-trace native policy comparison
 
-Status: the protocol, probe and CPU contract tests are implemented. Native
-screening and the formal fresh-process experiment are in progress; formal
-measurements and independent protocol qualification are pending. Counts in
-the protocol section describe the planned experiment, not completed evidence.
+Status: the complete chronological descriptor-trace experiment and both
+protocol audits are complete. All eight fresh-process runs pass the declared
+checks. Whole-row assignment reduces the producer-inclusive wall mean by
+1.788% over 1536 matched pairs; three process rounds improve and one regresses.
+Overall wall P99 regresses. This is a sequential synthetic attention-chain
+result, not a full-model, split-versus-padding or serving-level speedup.
 
 ## Question and comparison boundary
 
@@ -26,8 +28,8 @@ policy alone:
 Each graph contains one metadata producer followed by 16 sequential private
 attention occurrences. These occurrences share current descriptors, but each
 owns private Q/K/V. They are not concurrent streams, a split full model, or
-request-graph splitting. A positive result would support this native policy
-on a complete dynamic descriptor trace; it would not establish superiority
+request-graph splitting. The result supports this native policy on the
+declared complete dynamic descriptor trace. It does not establish superiority
 over padding or an end-to-end split-parallel inference improvement.
 
 The policy changes complete-row assignment and FD removal together. The
@@ -62,7 +64,9 @@ The configured AICPU dispatch name and selected native library hash are
 verified before Torch initialization. Every process report retains source
 hashes, the extension hash, vendor inventory, loaded-symbol provenance and
 the final native-library mappings. The stage-six capture and native-policy
-helpers remain unchanged.
+helpers remain unchanged. The deployed source snapshot is commit
+`7f73f2c08`, with probe SHA256
+`ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604`.
 
 ## Predeclared chronological protocol
 
@@ -90,7 +94,7 @@ shuffles or groups records by capacity. A separate chronological qualification
 pass follows all timing. At each step the pinned descriptor source remains
 owned until the final device join, then becomes available for the next fill.
 
-| Planned formal quantity | Count |
+| Predeclared and observed formal quantity | Count |
 | --- | ---: |
 | Fresh policy processes | 8 |
 | Timed passes per process | 3 |
@@ -231,36 +235,171 @@ python benchmarks/aclgraph_fia_sink_stage7_analyze.py \
   --output benchmarks/results/multi_graph_structural/fia-sink-stage7-analysis.json
 ```
 
-The formal destination names in this example are reserved for completed
-evidence. They do not imply that those results currently exist or pass.
-The analyzer must qualify source/native provenance, original record order,
+The analyzer qualifies source/native provenance, original record order,
 input matching, captures, all pre/post checks, per-pass warmup and complete
-timing pairs before a performance result is accepted. Outliers and negative
-results remain in the aggregate. Reductions compare matched aggregate times,
-not the mean of per-sample percentage ratios. AB/BA order reduces imbalance
-without eliminating process drift.
+timing pairs before accepting a performance comparison. The separate audit
+reconstructs canonical ownership, exact lengths, pages and capacity dispatch
+from the original trace and archived selection without importing the runtime
+or the main analyzer. Both formal audits pass without reported issues.
+Outliers and negative results remain in the aggregate. Reductions compare
+matched aggregate times, not the mean of per-sample percentage ratios.
+AB/BA order reduces imbalance without eliminating process drift.
 
-## Results pending
+Repository evidence is preserved at these locations:
 
-The formal result is not available yet. This section must be updated from
-the completed suite and independent analysis before making a stage-seven
-performance claim. Required result fields are:
+- [Formal suite and all eight relative raw process reports](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-v1/stage7-suite.json),
+  including launch/finish identity, raw byte hashes and process logs.
+- [Protocol audit and paired statistics](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-analysis.json),
+  including every matched sample and slower counterexamples.
+- [Independent formal audit](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage7-independent-audit.json),
+  with independently reconstructed descriptor semantics and aggregate results.
 
-- Formal source snapshot, suite path, raw report hashes, analyzer path and
-  protocol qualification status, including any reported issues.
-- Observed timing/pair counts and correctness counts against the declared
-  3072 observations, 1536 pairs, 2048 checks and 6144 FP32 samples.
-- Complete wall and queue means for both policies, matched absolute and
-  percentage differences, wins/losses and every process-round result.
-- Per-capacity and transition-group means, pass-start behavior, retained
-  outliers and tail regressions, with sample-count limits stated.
-- Sampled FP32 maximum error, complete input/query/mask identity matches,
-  descriptor stability and any repeatability diagnostics that differ.
+The suite report SHA256 is
+`b60231d2f6ef54d20373ea5dcccdb6d3039a0186e9550509d640b7f47a95b94c`.
+The deployed directory is `stage7-tools-formal-v1` inside the isolated root.
+The analyzer and independent audit agree on the complete observation counts,
+paired wall means, every process round and every capacity.
 
-The next gate depends on that result. A passing complete descriptor-trace
-comparison would justify evaluating an integration with real model state;
-it would not establish that integration's gain in advance. A failed or
-regressing comparison requires preserving the evidence and investigating
-the affected states before broadening scope. Full-model replay, a matched
-padding control and serving-level measurements retain separate correctness
-and attribution requirements.
+## Complete descriptor-trace results
+
+All 3072 timed observations are retained, yielding 1536 matched
+`(round, repeat, step)` pairs. Whole-row wall time is lower in 1283 pairs
+and higher in 253, with no equal pairs. Positive reduction means `whole`
+is lower; all quantities below include the declared preparation and native
+producer endpoint rather than subtracting an estimated planner cost.
+
+| Endpoint mean | Upstream, ms | Whole-row, ms | Upstream minus whole, ms | Reduction |
+| --- | ---: | ---: | ---: | ---: |
+| Complete wall | 4.996977 | 4.907623 | 0.089354 | 1.788% |
+| Replay queue span | 4.719516 | 4.626271 | 0.093245 | 1.976% |
+| Preparation enqueue | 0.210809 | 0.215181 | -0.004372 | -2.074% |
+| Host submission interval | 0.210657 | 0.204284 | 0.006373 | 3.025% |
+
+The host and queue quantities overlap and must not be added together. The
+complete wall mean improves by 89.354484 us. Its P50 falls from 5.013780 ms
+to 4.933561 ms, but P95 changes from 6.216767 ms to 6.217488 ms and P99
+regresses from 6.550212 ms to 6.631752 ms. A mean improvement is therefore
+not evidence of a tail-latency improvement.
+
+Every round has 384 matched pairs:
+
+| Round | Order | Upstream wall mean, ms | Whole-row wall mean, ms | Reduction | Whole faster / slower |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 0 | Upstream, whole | 5.115425 | 5.015291 | 1.957% | 322 / 62 |
+| 1 | Whole, upstream | 4.905102 | 4.802917 | 2.083% | 354 / 30 |
+| 2 | Upstream, whole | 5.043272 | 5.049174 | -0.117% | 232 / 152 |
+| 3 | Whole, upstream | 4.924110 | 4.763110 | 3.270% | 375 / 9 |
+
+Three rounds improve and round two regresses by 5.901464 us. Only four
+process rounds are available, with repeated dependent observations inside
+each round. These results do not establish a universal or stable gain across
+process conditions. The complete paired records remain available for
+examining process/time drift instead of removing unfavorable samples.
+
+All 17 original capacities have positive aggregate wall differences, with
+unequal weights set by their frequency in the unchanged trace:
+
+| Physical capacity | Pairs | Upstream mean, ms | Whole-row mean, ms | Reduction | Whole faster / slower |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 256 | 36 | 3.722634 | 3.610470 | 3.013% | 35 / 1 |
+| 272 | 84 | 3.813563 | 3.646923 | 4.370% | 83 / 1 |
+| 288 | 132 | 4.016462 | 3.896497 | 2.987% | 129 / 3 |
+| 304 | 84 | 4.143832 | 3.995385 | 3.582% | 81 / 3 |
+| 320 | 72 | 4.424943 | 4.236408 | 4.261% | 63 / 9 |
+| 336 | 60 | 4.448185 | 4.352777 | 2.145% | 54 / 6 |
+| 352 | 96 | 4.423718 | 4.309686 | 2.578% | 90 / 6 |
+| 368 | 72 | 4.851507 | 4.756146 | 1.966% | 61 / 11 |
+| 384 | 72 | 4.745281 | 4.624336 | 2.549% | 67 / 5 |
+| 400 | 72 | 4.854262 | 4.759440 | 1.953% | 65 / 7 |
+| 416 | 108 | 5.227126 | 5.153066 | 1.417% | 91 / 17 |
+| 432 | 72 | 5.354135 | 5.310764 | 0.810% | 50 / 22 |
+| 448 | 84 | 5.560336 | 5.484301 | 1.367% | 64 / 20 |
+| 464 | 156 | 5.638336 | 5.584449 | 0.956% | 116 / 40 |
+| 480 | 108 | 5.742718 | 5.693353 | 0.860% | 81 / 27 |
+| 496 | 120 | 5.867791 | 5.822915 | 0.765% | 90 / 30 |
+| 512 | 108 | 6.213744 | 6.198654 | 0.243% | 63 / 45 |
+
+The largest capacities expose a smaller aggregate benefit, reaching only
+15.089602 us at capacity512. These are descriptive results of current
+lengths, row composition and process conditions, not evidence that capacity
+alone causes the difference. Capacity256 P99 also worsens from 4.025353 ms
+to 5.977989 ms with only 36 observations per policy. Small capacity groups
+cannot establish stable P99 behavior.
+
+The transition grouping preserves pass starts separately:
+
+| Transition class | Pairs | Upstream mean, ms | Whole-row mean, ms | Reduction | Whole faster / slower |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `pass_start` | 12 | 4.665015 | 4.609778 | 1.184% | 11 / 1 |
+| `capacity_transition` | 1392 | 4.990342 | 4.899921 | 1.812% | 1162 / 230 |
+| `same_capacity` | 132 | 5.097128 | 5.015914 | 1.593% | 110 / 22 |
+
+The original trace has 116 within-pass capacity changes and 11 within-pass
+same-capacity transitions, plus its separate pass-start boundary. Their
+timed multiplicities are 12 per canonical step across four rounds and three
+passes. Membership, lengths and pages can change without a capacity change;
+the `same_capacity` group is not a static-input control.
+
+The largest retained wall loss is round two, repeat zero, step94 at
+capacity256: whole-row is 3375.742 us slower even though its queue span is
+52.260 us lower. That disagreement illustrates why queue duration alone
+cannot establish complete-endpoint improvement or identify the cause of a
+wall outlier. No outlier is excluded from these means or percentiles.
+
+## Correctness outcomes and interpretation
+
+All 2048 chronological qualification step checks and all 6144 sampled FP32
+row comparisons pass. Maximum sampled absolute error is
+`0.0003158003091812134`, within `rtol=0.03`, `atol=0.003`. All private outputs
+are finite; physical KV0 outputs are exact zero; current exact descriptors
+remain read-only and input/output/metadata addresses remain stable.
+
+The retained metadata evidence contains 2184 complete 1024-word payloads:
+136 standalone pre-capture payloads and 2048 pre/post step payloads. Every
+whole-row payload passes the full structural no-FD contract. Current exact
+base fields are checked for every qualification step under both policies.
+The audits report no same-step pre/post differences among 1024 output-hash
+pairs or among 1024 metadata-hash pairs. This is repeatability within each
+process; different steps need not have different plan hashes, and policy
+outputs are accepted numerically rather than required to match bitwise.
+
+Complete Q/K/V and mask identities match across policy processes and remain
+unchanged after execution. All 17 buckets' query clones match their base
+prefixes after capture and retain their bytes through qualification and
+timing. These checks qualify the declared fixed synthetic data and current
+descriptor routing; they do not turn it into a real KV-update or generated
+token trajectory. The sampled FP32 checks are separate from timing, not an
+individual correctness check of all 3072 timed observations.
+
+The complete-trace reduction is 1.788%, compared with the stage-six bounded
+four-record reduction of 5.665%. The accepted observed benefit is narrower
+than that earlier bounded result. The two experiments have different record
+and capacity weights, temporal order, warmup/repeat protocols and process
+conditions. Their aggregate difference is not a controlled causal estimate
+of a degradation caused solely by dynamic transitions or broader sizes.
+The useful performance claim is the internal matched comparison in this
+stage, including its negative round, outliers and tail behavior.
+
+The scoped Stage7 CPU regression reports 62 passing tests. Markdown and
+spelling checks pass for this document. Whole-repository CI was attempted;
+its existing unrelated failures remain recorded in the task checks, so this
+stage does not claim a clean complete-repository CI run.
+
+## Next gate
+
+Stage eight should begin with a narrow real-model integration correctness
+gate and a complete latency budget. It must map the qualified metadata
+producer and unchanged consumer onto real Q/K/V generation and cache writes,
+audit continued hidden/residual and physical states, and preserve exact
+lengths, default buckets and original TP ownership. A bounded initial
+integration must establish that the required operator interface and graph
+workspace contract remain valid before timing a large model matrix.
+
+The budget must include real descriptor preparation, native planning,
+attention, any synchronization or adaptation cost and the final model join.
+An attention-chain saving of 89.354484 us cannot simply be multiplied across
+model layers or declared as end-to-end gain. Only after correctness passes
+and the measured budget shows a useful exposed saving should evaluation
+broaden to complete dynamic model replay and a matched padding control.
+Serving throughput remains a later endpoint with separate correctness and
+attribution requirements.
