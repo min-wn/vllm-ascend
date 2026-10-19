@@ -25,6 +25,16 @@ def test_legal_pair_uses_only_catalog_and_whole_requests():
         module.legal_pair(400, [198, 202, 400])
 
 
+def test_shape_screen_rejects_custom_graph_sizes(monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[4] / "benchmarks"))
+    from aclgraph_core_join_shape_probe import cases
+
+    catalog = [64, 128, 152, 176, 200, 240, 304, 400]
+    assert cases(catalog) == [(304,), (152, 152), (128, 176), (64, 240), (400,), (200, 200)]
+    with pytest.raises(ValueError, match="default Q4"):
+        cases([n for n in catalog if n != 176])
+
+
 def test_only_disjoint_adjacent_fia_gdn_pairs_are_accepted():
     module = load()
     layers = [
@@ -163,3 +173,41 @@ def test_full_trace_checks_attention_count_and_modified_boundaries(monkeypatch, 
     path.write_text(json.dumps(events))
     with pytest.raises(ValueError, match="inventory"):
         analyze_trace(path, "split_barrier", [3])
+
+
+def test_profile_supplement_cannot_be_reported_as_qualified_timing(monkeypatch, tmp_path):
+    import json
+
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[4] / "benchmarks"))
+    import aclgraph_full_core_join_analysis as analysis
+
+    (tmp_path / "results").mkdir()
+    (tmp_path / "launch.json").write_text(json.dumps(dict(sources={})))
+    modes = ["padding", "split_barrier", "split_early"]
+    report = dict(
+        status="profile_only_complete_not_qualified_or_timed",
+        split_schedule=dict(modes=modes, boundaries=[3]),
+        selection={},
+        prefix=dict(completed_requests=128),
+        capture=dict(fia_tasks_per_graph=16),
+        profiles=[dict(mode=m, step=1, batch=73, capacity=304, path=m, sha256="test") for m in modes],
+    )
+    monkeypatch.setattr(analysis, "analyze_trace", lambda *args: dict(sha256="test"))
+
+    def save():
+        for rank in (0, 1):
+            (tmp_path / "results" / f"diagnostic.rank{rank}.json").write_text(json.dumps(report))
+
+    save()
+    assert len(analysis.analyze_profile_supplement(tmp_path)["traces"]) == 6
+    with pytest.raises(ValueError, match="incomplete full-model"):
+        analysis.analyze(tmp_path)
+    report["samples"] = [dict(device_us=1)]
+    save()
+    with pytest.raises(ValueError, match="without timing"):
+        analysis.analyze_profile_supplement(tmp_path)
+    del report["samples"]
+    report["profiles"].pop()
+    save()
+    with pytest.raises(ValueError, match="control mode"):
+        analysis.analyze_profile_supplement(tmp_path)

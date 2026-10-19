@@ -164,7 +164,7 @@ def replay_trajectories(
         else ("deferred_overlap", "deferred_pipeline")
     )
     candidate = "deferred_tile_ready" if args.tile_extension is not None else "deferred_pipeline"
-    diagnostic = args.phase == "diagnostic"
+    diagnostic = args.phase in ("diagnostic", "profile")
     steps = trace.steps[: args.diagnostic_steps] if diagnostic else trace.steps
     capacities = sorted(set(selection["dispatched_tokens"][: len(steps)]))
     if diagnostic:
@@ -279,6 +279,41 @@ def replay_trajectories(
         entry["graph"].update(entry["update"], tasks)
         entry["updated"].record(entry["update"])
         entry["root"].wait_event(entry["updated"])
+
+    def collect_profiles():
+        from aclgraph_full_path_profile import profile_replays
+
+        selected = getattr(args, "profile_steps", None)
+        if selected is None and schedule is not None:
+            selected = [0]
+        return profile_replays(
+            args,
+            torch,
+            dist,
+            registry,
+            steps,
+            selection,
+            entries,
+            prepare,
+            replay,
+            restore=lambda: restore_complete(torch, bundle, registry, initial),
+            cpu_group=cpu_group,
+            modes=modes,
+            select_mode=select_mode,
+            selected_indices=selected,
+        )
+
+    if args.phase == "profile":
+        report.update(
+            status="profile_only_pending_not_qualified_or_timed",
+            complete_goal_achieved=False,
+            correctness_limitations="profile supplement only; no new eager/replay state qualification or timing trials",
+        )
+        checkpoint()
+        report["profiles"] = collect_profiles()
+        report["status"] = "profile_only_complete_not_qualified_or_timed"
+        checkpoint()
+        return
 
     # Same-mode eager/graph controls keep different floating point algorithms
     # separate. Continue from the complete preceding step, including paused IDs.
@@ -402,8 +437,6 @@ def replay_trajectories(
     }
     means = {mode: latency[mode]["mean_us"] for mode in modes}
     if diagnostic:
-        from aclgraph_full_path_profile import profile_replays
-
         report.update(
             status="diagnostic_timing_complete_profiles_pending",
             samples=samples,
@@ -413,22 +446,7 @@ def replay_trajectories(
             correctness_limitations="only the declared continued qualification steps are fully state-audited",
         )
         checkpoint()
-        report["profiles"] = profile_replays(
-            args,
-            torch,
-            dist,
-            registry,
-            steps,
-            selection,
-            entries,
-            prepare,
-            replay,
-            restore=lambda: restore_complete(torch, bundle, registry, initial),
-            cpu_group=cpu_group,
-            modes=modes,
-            select_mode=select_mode,
-            selected_indices=[0] if schedule is not None else None,
-        )
+        report["profiles"] = collect_profiles()
         report["status"] = (
             "split_full_model_diagnostic_complete_not_serving"
             if schedule is not None
@@ -664,7 +682,7 @@ def experiment(args, trace, runner, model, config):
             )
             registry.register(item.state.handle, backend, item.gdn.out_proj)
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
-        if args.phase in ("replay", "diagnostic"):
+        if args.phase in ("replay", "diagnostic", "profile"):
             schedule_context = nullcontext(None)
             if getattr(args, "split_boundaries", None):
                 from aclgraph_full_core_join import CoreJoinSchedule
@@ -725,7 +743,12 @@ def main():
         type=Path,
         default=Path(__file__).parent / "results/multi_graph_structural/structural-dynamic-trace-v1.json",
     )
-    parser.add_argument("--phase", choices=("allocation", "prefix", "eager", "replay", "diagnostic"), default="eager")
+    parser.add_argument(
+        "--phase", choices=("allocation", "prefix", "eager", "replay", "diagnostic", "profile"), default="eager"
+    )
+    parser.add_argument(
+        "--profile-steps", type=int, nargs="+", help="profile selected indices while replaying preceding steps"
+    )
     parser.add_argument("--split-boundaries", type=int, nargs="+")
     parser.add_argument("--packed-join", action="store_true")
     parser.add_argument("--dense-nz", action="store_true", help="same decoder NZ weights for all controls")
@@ -753,11 +776,17 @@ def main():
         parser.error("at least two paired trials and 2..128 continued qualification steps required")
     if not 1 <= args.audit_scan_elements <= 1 << 24:
         parser.error("audit scan chunk must be in 1..16777216 elements")
-    if args.phase == "diagnostic" and (
+    if args.phase in ("diagnostic", "profile") and (
         args.tile_extension is None or not args.qualification_steps <= args.diagnostic_steps <= 128
     ):
         parser.error("diagnostic requires the public ready-tile kernel and qualification_steps <= steps <= 128")
-    if args.split_boundaries and args.phase != "diagnostic":
+    if args.profile_steps is not None:
+        from aclgraph_full_path_profile import validate_profile_indices
+
+        if args.phase not in ("diagnostic", "profile"):
+            parser.error("profile steps require diagnostic or profile phase")
+        validate_profile_indices(args.profile_steps, args.diagnostic_steps)
+    if args.split_boundaries and args.phase not in ("diagnostic", "profile"):
         parser.error("split boundaries currently require the bounded diagnostic phase")
     if args.packed_join and not args.split_boundaries:
         parser.error("packed join requires split boundaries")

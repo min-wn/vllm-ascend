@@ -1,0 +1,65 @@
+{
+  "scope": "per-rank four-boundary profiler sums, not unprofiled full-model latency",
+  "rows": [
+    {
+      "rank": 0,
+      "mode": "padding",
+      "down_gemm_us": 654.453125,
+      "input_projection_us": 717.0543749999999,
+      "input_overlap_last_ar_us": 0.0,
+      "down_b_overlap_first_ar_us": 0.0,
+      "down_output_copy_us": 0.0,
+      "closed_boundary_profile_span_us": 4003.281
+    },
+    {
+      "rank": 0,
+      "mode": "split_barrier",
+      "down_gemm_us": 868.897375,
+      "input_projection_us": 933.738375,
+      "input_overlap_last_ar_us": 0.0,
+      "down_b_overlap_first_ar_us": 365.246375,
+      "down_output_copy_us": 49.920875,
+      "closed_boundary_profile_span_us": 4410.108
+    },
+    {
+      "rank": 0,
+      "mode": "split_early",
+      "down_gemm_us": 845.736875,
+      "input_projection_us": 967.319625,
+      "input_overlap_last_ar_us": 373.168,
+      "down_b_overlap_first_ar_us": 341.946875,
+      "down_output_copy_us": 69.0215,
+      "closed_boundary_profile_span_us": 3989.58
+    },
+    {
+      "rank": 1,
+      "mode": "padding",
+      "down_gemm_us": 639.4000000000001,
+      "input_projection_us": 718.78,
+      "input_overlap_last_ar_us": 0.0,
+      "down_b_overlap_first_ar_us": 0.0,
+      "down_output_copy_us": 0.0,
+      "closed_boundary_profile_span_us": 4043.96
+    },
+    {
+      "rank": 1,
+      "mode": "split_barrier",
+      "down_gemm_us": 881.22,
+      "input_projection_us": 932.46,
+      "input_overlap_last_ar_us": 0.0,
+      "down_b_overlap_first_ar_us": 381.64,
+      "down_output_copy_us": 50.68,
+      "closed_boundary_profile_span_us": 4437.74
+    },
+    {
+      "rank": 1,
+      "mode": "split_early",
+      "down_gemm_us": 898.26,
+      "input_projection_us": 980.6,
+      "input_overlap_last_ar_us": 373.28,
+      "down_b_overlap_first_ar_us": 397.88,
+      "down_output_copy_us": 72.98,
+      "closed_boundary_profile_span_us": 4025.2200000000003
+    }
+  ]
+}

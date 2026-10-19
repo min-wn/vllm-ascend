@@ -28,7 +28,8 @@ def test_two_steps_do_not_profile_the_last_step_twice():
     assert module().profile_indices(2) == [0, 1]
 
 
-def test_profile_replays_preserves_continuity_and_real_update(monkeypatch, tmp_path):
+@pytest.mark.parametrize("selected", [None, [1]])
+def test_profile_replays_preserves_continuity_and_real_update(monkeypatch, tmp_path, selected):
     events = []
 
     @contextmanager
@@ -71,12 +72,22 @@ def test_profile_replays_preserves_continuity_and_real_update(monkeypatch, tmp_p
         lambda entry, frame: events.append(("replay", frame)),
         restore=lambda: events.append("restore"),
         cpu_group="gloo",
+        selected_indices=selected,
     )
     assert events[0] == "restore" and events.count("restore") == 1
     assert [e for e in events if isinstance(e, tuple) and e[0] == "replay"] == [("replay", i) for i in range(6)]
-    assert [r["step"] for r in records] == [0, 1, 5]
+    assert [r["step"] for r in records] == ([0, 1, 5] if selected is None else selected)
     assert events.count("sync") == 6
     for i in range(6):
         assert events.index(("prepare", i)) < events.index(("replay", i)) < events.index(("finish", i))
-    assert events.index("profile_start") < events.index(("prepare", 0))
-    assert events.index(("finish", 0)) < events.index("profile_end")
+    first = 0 if selected is None else selected[0]
+    assert events.index("profile_start") < events.index(("prepare", first))
+    assert events.index(("finish", first)) < events.index("profile_end")
+    if first == 1:
+        assert events.index(("finish", 0)) < events.index("profile_start")
+
+
+@pytest.mark.parametrize("selected", [[], [-1], [2], [True], [0.0], [1, 1]])
+def test_invalid_selected_indices(selected):
+    with pytest.raises(ValueError, match="profile indices"):
+        module().validate_profile_indices(selected, 2)

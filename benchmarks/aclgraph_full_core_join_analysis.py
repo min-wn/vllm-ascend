@@ -142,6 +142,46 @@ def analyze_trace(path, mode, boundaries):
     )
 
 
+def analyze_profile_supplement(root):
+    """Profile-only evidence must never enter the qualified latency analyzer."""
+    reports = [json.loads((root / "results" / f"diagnostic.rank{rank}.json").read_bytes()) for rank in (0, 1)]
+    manifest = json.loads((root / "launch.json").read_bytes())
+    for source, wanted in manifest["sources"].items():
+        if hashlib.sha256((root / "sources" / Path(source).name).read_bytes()).hexdigest() != wanted:
+            raise ValueError("source hash mismatch")
+    if (
+        reports[0]["split_schedule"] != reports[1]["split_schedule"]
+        or reports[0]["selection"] != reports[1]["selection"]
+    ):
+        raise ValueError("rank configuration mismatch")
+    traces, identities = [], []
+    for rank, report in enumerate(reports):
+        if report["status"] != "profile_only_complete_not_qualified_or_timed" or report.get("samples"):
+            raise ValueError("require completed profile-only supplement without timing samples")
+        if report["prefix"]["completed_requests"] != 128 or report["capture"]["fia_tasks_per_graph"] != 16:
+            raise ValueError("missing complete prefix or real FIA tasks")
+        identity = [(p["mode"], p["step"], p["batch"], p["capacity"]) for p in report["profiles"]]
+        if not identity or len(set(identity)) != len(identity):
+            raise ValueError("missing or repeated profiles")
+        identities.append(identity)
+        for profile in report["profiles"]:
+            result = analyze_trace(
+                root / "results" / Path(profile["path"]).name, profile["mode"], report["split_schedule"]["boundaries"]
+            )
+            if result["sha256"] != profile["sha256"]:
+                raise ValueError("trace hash mismatch")
+            traces.append(dict(rank=rank, mode=profile["mode"], step=profile["step"], **result))
+    if identities[0] != identities[1]:
+        raise ValueError("rank profile selection mismatch")
+    modes = set(reports[0]["split_schedule"]["modes"])
+    for step in {i[1] for i in identities[0]}:
+        if {i[0] for i in identities[0] if i[1] == step} != modes:
+            raise ValueError("missing profile control mode")
+    return dict(
+        scope="profile-only supplement; no new state qualification or unprofiled speedup evidence", traces=traces
+    )
+
+
 def analyze(root):
     reports = [json.loads((root / "results" / f"diagnostic.rank{rank}.json").read_bytes()) for rank in (0, 1)]
     if any(r["status"] != "split_full_model_diagnostic_complete_not_serving" for r in reports):
@@ -223,7 +263,8 @@ def analyze(root):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
+    parser.add_argument("--profile-only", action="store_true")
     args = parser.parse_args()
-    result = analyze(args.root)
+    result = analyze_profile_supplement(args.root) if args.profile_only else analyze(args.root)
     (args.root / "analysis.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    print(json.dumps(result["per_step"], indent=2))
+    print(json.dumps(result.get("per_step", {"scope": result["scope"], "traces": len(result["traces"])}), indent=2))

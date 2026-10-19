@@ -1,0 +1,1877 @@
+{
+  "scope": "profile-only supplement; no new state qualification or unprofiled speedup evidence",
+  "traces": [
+    {
+      "rank": 0,
+      "mode": "padding",
+      "step": 1,
+      "file": "diagnostic.padding.step1.rank0.trace.json",
+      "sha256": "d589ecdffe1b953555c8f6ae1175b27e21032a6d8f94dee997d6d8b87aafa707",
+      "counts": {
+        "matmul": 304,
+        "all_reduce": 129,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 163.56325,
+          "input_projection_us": 181.803625,
+          "last_down_ar_us": 196.424,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 14.00025,
+          "body_kernel_us": 640.23275,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 1007.221,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 20.6205
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.161
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 16.84025
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.9
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 14.00025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 7.80025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.440125
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 12.02025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 31.260625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.48025
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.760375
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 181.803625
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.08025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.62025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 242.44475
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 156.943125,
+          "input_projection_us": 186.26375,
+          "last_down_ar_us": 195.744,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 14.04025,
+          "body_kernel_us": 639.712875,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 998.84,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 20.500375
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.701
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.000375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.64
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 14.04025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.06025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.72025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.92025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.9205
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.600125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.600375
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 186.26375
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 13.50025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.44025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.804875
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 166.103375,
+          "input_projection_us": 167.983375,
+          "last_down_ar_us": 196.404,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 14.54025,
+          "body_kernel_us": 622.0525,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 991.92,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 19.660375
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.221
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 16.940375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.98
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 14.54025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.32025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.50025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.520125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.9005
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.120125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.9605
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 167.983375
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.00025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.42025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.984875
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 167.843375,
+          "input_projection_us": 181.003625,
+          "last_down_ar_us": 195.684,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 13.24025,
+          "body_kernel_us": 634.852625,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 1005.3,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 20.360375
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.621
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 16.640375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.58
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 13.24025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 7.900125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.680125
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.82025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.920625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.42025
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.820375
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 181.003625
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.12025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.74025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.98475
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "mode": "split_barrier",
+      "step": 1,
+      "file": "diagnostic.split_barrier.step1.rank0.trace.json",
+      "sha256": "a0dba1c5525f0ab0a910ed0108d6488aad53598a37f87eaf7d7f141ac399fa8a",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 227.684625,
+          "input_projection_us": 236.144625,
+          "last_down_ar_us": 112.942,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 38.08075,
+          "body_kernel_us": 729.93475,
+          "down_output_copy_us": 12.180125,
+          "closed_boundary_profile_span_us": 1104.842,
+          "down_b_overlap_first_ar_us": 97.182,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 34.00075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.181
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.060375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.800125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 38.08075
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.400125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.90025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 12.06025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.480625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.480125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.080375
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 236.144625
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.04025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.680375
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 239.54475
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 191.90375,
+          "input_projection_us": 238.684625,
+          "last_down_ar_us": 112.302,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 37.96075,
+          "body_kernel_us": 730.014625,
+          "down_output_copy_us": 12.340125,
+          "closed_boundary_profile_span_us": 1091.682,
+          "down_b_overlap_first_ar_us": 80.320625,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 32.580625
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 50.581
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.020375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.36025
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.96075
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 7.920125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.84025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.70025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.1805
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.38025
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.08025
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 238.684625
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.240375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.68025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 239.80475
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 231.564625,
+          "input_projection_us": 221.484375,
+          "last_down_ar_us": 111.923,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 39.940875,
+          "body_kernel_us": 726.2745,
+          "down_output_copy_us": 12.940375,
+          "closed_boundary_profile_span_us": 1103.602,
+          "down_b_overlap_first_ar_us": 99.582,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 32.52075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 56.941125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.800375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 4.1
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 39.940875
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.200125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.16025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 12.30025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 31.500625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.320125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.72025
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 221.484375
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 13.84025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.80025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.644875
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 217.744375,
+          "input_projection_us": 237.42475,
+          "last_down_ar_us": 112.702,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 36.70075,
+          "body_kernel_us": 730.49475,
+          "down_output_copy_us": 12.46025,
+          "closed_boundary_profile_span_us": 1109.982,
+          "down_b_overlap_first_ar_us": 88.16175,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 31.900625
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 48.361
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.30025
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.500125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 36.70075
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 7.96025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.04025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.80025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 31.720625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.400125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.84025
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 237.42475
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.160375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.70025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.684875
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "mode": "split_early",
+      "step": 1,
+      "file": "diagnostic.split_early.step1.rank0.trace.json",
+      "sha256": "fef861dd8a849206665d56ba1c619219af70b3920a6df7e488c3dc46c018c026",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 217.40425,
+          "input_projection_us": 247.065,
+          "last_down_ar_us": 114.402,
+          "input_overlap_last_ar_us": 92.402,
+          "concat_us": 37.32075,
+          "body_kernel_us": 745.995,
+          "down_output_copy_us": 17.2605,
+          "closed_boundary_profile_span_us": 1004.18,
+          "down_b_overlap_first_ar_us": 86.14175,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 38.08075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 50.481
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.180375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.64
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.32075
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.00025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.76025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.86025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.280625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.460125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.14025
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 247.065
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.50025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.900375
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.32475
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 191.643875,
+          "input_projection_us": 244.525,
+          "last_down_ar_us": 115.402,
+          "input_overlap_last_ar_us": 95.262,
+          "concat_us": 37.780625,
+          "body_kernel_us": 744.055,
+          "down_output_copy_us": 16.78025,
+          "closed_boundary_profile_span_us": 987.82,
+          "down_b_overlap_first_ar_us": 79.601625,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 36.14075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 53.261125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.340375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.6
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.780625
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 7.960125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.00025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 12.460125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.10075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.260125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.880375
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 244.525
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 13.86025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.48025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.404875
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 210.72425,
+          "input_projection_us": 232.16475,
+          "last_down_ar_us": 114.202,
+          "input_overlap_last_ar_us": 92.002,
+          "concat_us": 38.72075,
+          "body_kernel_us": 736.894625,
+          "down_output_copy_us": 18.3405,
+          "closed_boundary_profile_span_us": 995.02,
+          "down_b_overlap_first_ar_us": 81.661625,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 40.08075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 50.981
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.14025
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 4.14
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 38.72075
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.040125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.72025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.84025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.6205
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.480125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.400375
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 232.16475
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.420375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.42025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.724875
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 225.9645,
+          "input_projection_us": 243.564875,
+          "last_down_ar_us": 114.803,
+          "input_overlap_last_ar_us": 93.502,
+          "concat_us": 38.06075,
+          "body_kernel_us": 742.675,
+          "down_output_copy_us": 16.64025,
+          "closed_boundary_profile_span_us": 1002.56,
+          "down_b_overlap_first_ar_us": 94.541875,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 36.36075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.821
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.00025
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.660125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 38.06075
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.58025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.48025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 12.00025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.480625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.480125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.00025
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 243.564875
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.640375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.64025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.904875
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "padding",
+      "step": 1,
+      "file": "diagnostic.padding.step1.rank1.trace.json",
+      "sha256": "520b9fb53f132b819aa7ac340873bde47dfe3bab019491c626fa6745d4d9b2d6",
+      "counts": {
+        "matmul": 304,
+        "all_reduce": 129,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 165.3,
+          "input_projection_us": 183.42,
+          "last_down_ar_us": 196.7,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 15.06,
+          "body_kernel_us": 657.22,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 1026.84,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 20.96
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 58.4
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.14
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.1
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 15.06
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.68
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 15.02
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.44
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.4
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 8.1
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.04
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 183.42
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.38
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.2
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.88
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 151.36,
+          "input_projection_us": 186.02,
+          "last_down_ar_us": 196.38,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 15.04,
+          "body_kernel_us": 647.48,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 1002.74,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 19.72
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.92
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.4
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.86
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 15.04
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.8
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.56
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.18
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.92
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 8.06
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.84
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 186.02
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.2
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.06
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.9
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 161.3,
+          "input_projection_us": 168.1,
+          "last_down_ar_us": 202.04,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 14.8,
+          "body_kernel_us": 631.6,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 1002.2,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 19.26
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.98
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.26
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.24
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 14.8
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.7
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.74
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.1
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.84
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.8
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.84
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 168.1
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.64
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.76
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 242.54
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 161.44,
+          "input_projection_us": 181.24,
+          "last_down_ar_us": 195.9,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 18.84,
+          "body_kernel_us": 647.72,
+          "down_output_copy_us": 0.0,
+          "closed_boundary_profile_span_us": 1012.18,
+          "down_b_overlap_first_ar_us": 0.0,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 19.88
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.84
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.98
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.5
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 18.84
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.86
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.8
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.94
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.4
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.84
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.74
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 181.24
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.82
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.6
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 242.44
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "split_barrier",
+      "step": 1,
+      "file": "diagnostic.split_barrier.step1.rank1.trace.json",
+      "sha256": "1eb903a086c1d19789108ea8bd5ef397dee852542128e1aea37ecd3e2efb1921",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 224.24,
+          "input_projection_us": 239.48,
+          "last_down_ar_us": 113.38,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 36.7,
+          "body_kernel_us": 744.82,
+          "down_output_copy_us": 13.16,
+          "closed_boundary_profile_span_us": 1127.08,
+          "down_b_overlap_first_ar_us": 92.86,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 31.12
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 54.3
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.8
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.5
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 36.7
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.34
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 20.28
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.06
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.28
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.9
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.58
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 239.48
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.66
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.18
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 239.64
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 214.74,
+          "input_projection_us": 237.5,
+          "last_down_ar_us": 112.06,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 37.58,
+          "body_kernel_us": 736.44,
+          "down_output_copy_us": 12.08,
+          "closed_boundary_profile_span_us": 1092.62,
+          "down_b_overlap_first_ar_us": 104.82,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 31.44
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.54
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.06
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.16
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.58
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.46
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.2
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.5
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.76
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.98
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.84
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 237.5
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.8
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.48
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 243.14
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 208.64,
+          "input_projection_us": 220.64,
+          "last_down_ar_us": 112.72,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 37.0,
+          "body_kernel_us": 715.54,
+          "down_output_copy_us": 12.9,
+          "closed_boundary_profile_span_us": 1100.28,
+          "down_b_overlap_first_ar_us": 79.46,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 30.6
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.18
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 17.18
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.72
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.0
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.96
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.96
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.68
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.56
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.92
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 16.06
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 220.64
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.86
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.8
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 239.42
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 233.6,
+          "input_projection_us": 234.84,
+          "last_down_ar_us": 112.02,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 36.94,
+          "body_kernel_us": 740.7,
+          "down_output_copy_us": 12.54,
+          "closed_boundary_profile_span_us": 1117.76,
+          "down_b_overlap_first_ar_us": 104.5,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 32.92
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 55.22
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.44
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.08
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 36.94
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.8
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.52
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.86
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 33.8
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.9
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.74
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 234.84
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.18
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.8
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.66
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "split_early",
+      "step": 1,
+      "file": "diagnostic.split_early.step1.rank1.trace.json",
+      "sha256": "450a50b40964aa1f69c9bc2c8b9503602f97d95d2317da8929390eacc5d5e3be",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 230.48,
+          "input_projection_us": 249.72,
+          "last_down_ar_us": 113.74,
+          "input_overlap_last_ar_us": 92.96,
+          "concat_us": 37.54,
+          "body_kernel_us": 753.2,
+          "down_output_copy_us": 17.92,
+          "closed_boundary_profile_span_us": 1015.7,
+          "down_b_overlap_first_ar_us": 98.82,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 36.08
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.36
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.34
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.48
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.54
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.72
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 15.14
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.98
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.42
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 8.0
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 15.02
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 249.72
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.76
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.94
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 240.7
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 216.22,
+          "input_projection_us": 254.5,
+          "last_down_ar_us": 114.52,
+          "input_overlap_last_ar_us": 95.02,
+          "concat_us": 37.56,
+          "body_kernel_us": 756.46,
+          "down_output_copy_us": 18.06,
+          "closed_boundary_profile_span_us": 994.5,
+          "down_b_overlap_first_ar_us": 105.48,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 34.9
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.72
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.28
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.4
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.56
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.68
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.02
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.3
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.38
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.82
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.74
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 254.5
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.22
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.92
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 243.02
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 231.7,
+          "input_projection_us": 229.46,
+          "last_down_ar_us": 113.58,
+          "input_overlap_last_ar_us": 91.44,
+          "concat_us": 38.14,
+          "body_kernel_us": 739.46,
+          "down_output_copy_us": 18.8,
+          "closed_boundary_profile_span_us": 997.08,
+          "down_b_overlap_first_ar_us": 103.86,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 37.54
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 49.8
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.6
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.94
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 38.14
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.58
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 18.22
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.96
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 30.32
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 8.44
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 14.52
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 229.46
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.26
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.5
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 241.18
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 219.86,
+          "input_projection_us": 246.92,
+          "last_down_ar_us": 114.92,
+          "input_overlap_last_ar_us": 93.86,
+          "concat_us": 37.52,
+          "body_kernel_us": 753.74,
+          "down_output_copy_us": 18.2,
+          "closed_boundary_profile_span_us": 1017.94,
+          "down_b_overlap_first_ar_us": 89.72,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 37.0
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 51.7
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.28
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.62
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 4,
+              "sum_us": 37.52
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.22
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.9
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.1
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 29.04
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 8.0
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 16.18
+            },
+            "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 246.92
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.72
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.02
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 243.52
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

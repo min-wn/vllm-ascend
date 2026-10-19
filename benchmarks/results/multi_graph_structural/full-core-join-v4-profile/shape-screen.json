@@ -1,0 +1,1465 @@
+{
+  "scope": "synthetic GEMM screening only; no communication, norm, joins, state, real weights or full-model timing",
+  "source_sha256": "6031e7414d43290a632482c658f9895ae6828e92d64fc8107ff2ce897d288ced",
+  "catalog_report_sha256": "2138fe502f2cf5ccfff6212d8dea844291265dee8d031edc536b09218c0e292e",
+  "selection": {
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "dispatched_tokens": [
+      400,
+      304,
+      288,
+      352,
+      272,
+      496,
+      400,
+      464,
+      464,
+      480,
+      304,
+      320,
+      496,
+      480,
+      448,
+      272,
+      320,
+      384,
+      368,
+      480,
+      352,
+      432,
+      352,
+      480,
+      256,
+      384,
+      384,
+      464,
+      400,
+      512,
+      272,
+      352,
+      352,
+      400,
+      448,
+      384,
+      496,
+      336,
+      416,
+      304,
+      464,
+      464,
+      496,
+      496,
+      512,
+      416,
+      288,
+      496,
+      400,
+      352,
+      416,
+      272,
+      336,
+      256,
+      288,
+      416,
+      464,
+      384,
+      352,
+      336,
+      288,
+      288,
+      512,
+      352,
+      464,
+      304,
+      288,
+      288,
+      416,
+      496,
+      480,
+      304,
+      448,
+      480,
+      512,
+      448,
+      512,
+      432,
+      288,
+      400,
+      288,
+      496,
+      432,
+      432,
+      368,
+      272,
+      464,
+      320,
+      368,
+      368,
+      432,
+      320,
+      336,
+      416,
+      256,
+      336,
+      448,
+      496,
+      272,
+      304,
+      320,
+      432,
+      464,
+      288,
+      272,
+      480,
+      384,
+      416,
+      464,
+      480,
+      448,
+      416,
+      512,
+      512,
+      464,
+      464,
+      368,
+      480,
+      464,
+      416,
+      288,
+      512,
+      304,
+      512,
+      448,
+      368,
+      496,
+      320
+    ],
+    "required_tokens": [
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "config_source": "installed EngineArgs defaults; no capture sizes supplied",
+    "query": 4
+  },
+  "weight_shapes": [
+    [
+      5120,
+      8704
+    ],
+    [
+      8192,
+      5120
+    ],
+    [
+      48,
+      5120
+    ]
+  ],
+  "weight_formats": [
+    29,
+    29,
+    29
+  ],
+  "repeats_in_graph": 8,
+  "samples": [
+    {
+      "trial": 0,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 154.88499402999878
+    },
+    {
+      "trial": 0,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 186.3825023174286
+    },
+    {
+      "trial": 0,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 156.4674973487854
+    },
+    {
+      "trial": 0,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 343.5699939727783
+    },
+    {
+      "trial": 0,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 331.6274881362915
+    },
+    {
+      "trial": 0,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 175.65500736236572
+    },
+    {
+      "trial": 0,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 184.18750166893005
+    },
+    {
+      "trial": 0,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 350.05250573158264
+    },
+    {
+      "trial": 0,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 159.5200002193451
+    },
+    {
+      "trial": 0,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 267.9400146007538
+    },
+    {
+      "trial": 0,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 138.26750218868256
+    },
+    {
+      "trial": 0,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 421.750009059906
+    },
+    {
+      "trial": 0,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 226.04000568389893
+    },
+    {
+      "trial": 0,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 122.85500019788742
+    },
+    {
+      "trial": 0,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 172.4575012922287
+    },
+    {
+      "trial": 0,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 147.8475034236908
+    },
+    {
+      "trial": 0,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 179.30249869823456
+    },
+    {
+      "trial": 0,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 345.35500407218933
+    },
+    {
+      "trial": 1,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 331.21249079704285
+    },
+    {
+      "trial": 1,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.42499792575836
+    },
+    {
+      "trial": 1,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 347.32750058174133
+    },
+    {
+      "trial": 1,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 173.09249937534332
+    },
+    {
+      "trial": 1,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 154.2699933052063
+    },
+    {
+      "trial": 1,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.60999500751495
+    },
+    {
+      "trial": 1,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 340.1600122451782
+    },
+    {
+      "trial": 1,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 184.59750711917877
+    },
+    {
+      "trial": 1,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.33499991893768
+    },
+    {
+      "trial": 1,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 182.42749571800232
+    },
+    {
+      "trial": 1,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 136.75500452518463
+    },
+    {
+      "trial": 1,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 345.1874852180481
+    },
+    {
+      "trial": 1,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 157.85999596118927
+    },
+    {
+      "trial": 1,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 121.0549995303154
+    },
+    {
+      "trial": 1,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 266.32750034332275
+    },
+    {
+      "trial": 1,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 145.6100046634674
+    },
+    {
+      "trial": 1,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 170.89250683784485
+    },
+    {
+      "trial": 1,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 421.50750756263733
+    },
+    {
+      "trial": 2,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 157.60500729084015
+    },
+    {
+      "trial": 2,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.45749735832214
+    },
+    {
+      "trial": 2,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 340.5574858188629
+    },
+    {
+      "trial": 2,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 173.51000010967255
+    },
+    {
+      "trial": 2,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 184.55499410629272
+    },
+    {
+      "trial": 2,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 330.3999900817871
+    },
+    {
+      "trial": 2,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 121.22499942779541
+    },
+    {
+      "trial": 2,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.0850031375885
+    },
+    {
+      "trial": 2,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.61999368667603
+    },
+    {
+      "trial": 2,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 182.46249854564667
+    },
+    {
+      "trial": 2,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 420.8599925041199
+    },
+    {
+      "trial": 2,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 348.76999258995056
+    },
+    {
+      "trial": 2,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 344.1149890422821
+    },
+    {
+      "trial": 2,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 154.56749498844147
+    },
+    {
+      "trial": 2,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 170.68250477313995
+    },
+    {
+      "trial": 2,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 145.70249617099762
+    },
+    {
+      "trial": 2,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 137.16000318527222
+    },
+    {
+      "trial": 2,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 265.33249020576477
+    },
+    {
+      "trial": 3,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.19000661373138
+    },
+    {
+      "trial": 3,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 170.73500156402588
+    },
+    {
+      "trial": 3,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 184.52750146389008
+    },
+    {
+      "trial": 3,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 182.70500004291534
+    },
+    {
+      "trial": 3,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 154.56250309944153
+    },
+    {
+      "trial": 3,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 136.86999678611755
+    },
+    {
+      "trial": 3,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 349.7524857521057
+    },
+    {
+      "trial": 3,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 265.24749398231506
+    },
+    {
+      "trial": 3,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 421.82499170303345
+    },
+    {
+      "trial": 3,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 157.74250030517578
+    },
+    {
+      "trial": 3,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.6375025510788
+    },
+    {
+      "trial": 3,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 344.3875014781952
+    },
+    {
+      "trial": 3,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.21999275684357
+    },
+    {
+      "trial": 3,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 340.89750051498413
+    },
+    {
+      "trial": 3,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 330.51249384880066
+    },
+    {
+      "trial": 3,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 120.85500359535217
+    },
+    {
+      "trial": 3,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 145.62749862670898
+    },
+    {
+      "trial": 3,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 173.17500710487366
+    },
+    {
+      "trial": 4,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 267.47000217437744
+    },
+    {
+      "trial": 4,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 158.09500217437744
+    },
+    {
+      "trial": 4,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 421.1449921131134
+    },
+    {
+      "trial": 4,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 349.0850031375885
+    },
+    {
+      "trial": 4,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.5675027370453
+    },
+    {
+      "trial": 4,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 137.00999319553375
+    },
+    {
+      "trial": 4,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 182.85749852657318
+    },
+    {
+      "trial": 4,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 331.18748664855957
+    },
+    {
+      "trial": 4,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 120.84750086069107
+    },
+    {
+      "trial": 4,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.65749990940094
+    },
+    {
+      "trial": 4,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 154.55499291419983
+    },
+    {
+      "trial": 4,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 173.97749423980713
+    },
+    {
+      "trial": 4,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 344.5650041103363
+    },
+    {
+      "trial": 4,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 149.7424989938736
+    },
+    {
+      "trial": 4,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 170.86000740528107
+    },
+    {
+      "trial": 4,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 341.12751483917236
+    },
+    {
+      "trial": 4,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 184.10250544548035
+    },
+    {
+      "trial": 4,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.70500564575195
+    },
+    {
+      "trial": 5,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 341.46249294281006
+    },
+    {
+      "trial": 5,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.09500181674957
+    },
+    {
+      "trial": 5,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 421.3100075721741
+    },
+    {
+      "trial": 5,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 157.69250690937042
+    },
+    {
+      "trial": 5,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.5750070810318
+    },
+    {
+      "trial": 5,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 184.08000469207764
+    },
+    {
+      "trial": 5,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 145.63000202178955
+    },
+    {
+      "trial": 5,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 120.95499783754349
+    },
+    {
+      "trial": 5,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 182.09749460220337
+    },
+    {
+      "trial": 5,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 267.2150135040283
+    },
+    {
+      "trial": 5,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.2750028371811
+    },
+    {
+      "trial": 5,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 349.2175042629242
+    },
+    {
+      "trial": 5,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 177.00250446796417
+    },
+    {
+      "trial": 5,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 345.0250029563904
+    },
+    {
+      "trial": 5,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 177.0475059747696
+    },
+    {
+      "trial": 5,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 346.61999344825745
+    },
+    {
+      "trial": 5,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 154.27249670028687
+    },
+    {
+      "trial": 5,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 137.14499771595
+    },
+    {
+      "trial": 6,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 332.12000131607056
+    },
+    {
+      "trial": 6,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.4300047159195
+    },
+    {
+      "trial": 6,
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 266.99501276016235
+    },
+    {
+      "trial": 6,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 146.96499705314636
+    },
+    {
+      "trial": 6,
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 157.94749557971954
+    },
+    {
+      "trial": 6,
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 125.59249997138977
+    },
+    {
+      "trial": 6,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 189.95000422000885
+    },
+    {
+      "trial": 6,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 355.0899922847748
+    },
+    {
+      "trial": 6,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 186.84999644756317
+    },
+    {
+      "trial": 6,
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 136.63500547409058
+    },
+    {
+      "trial": 6,
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.60500311851501
+    },
+    {
+      "trial": 6,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 422.16500639915466
+    },
+    {
+      "trial": 6,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 156.04999661445618
+    },
+    {
+      "trial": 6,
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 349.6924936771393
+    },
+    {
+      "trial": 6,
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.2950052022934
+    },
+    {
+      "trial": 6,
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 173.2800006866455
+    },
+    {
+      "trial": 6,
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 170.7800030708313
+    },
+    {
+      "trial": 6,
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 343.9149856567383
+    }
+  ],
+  "medians": [
+    {
+      "pair": [
+        304
+      ],
+      "component": "down",
+      "us": 121.0549995303154
+    },
+    {
+      "pair": [
+        304
+      ],
+      "component": "input",
+      "us": 137.00999319553375
+    },
+    {
+      "pair": [
+        304
+      ],
+      "component": "dense_chain",
+      "us": 266.99501276016235
+    },
+    {
+      "pair": [
+        152,
+        152
+      ],
+      "component": "down",
+      "us": 154.56250309944153
+    },
+    {
+      "pair": [
+        152,
+        152
+      ],
+      "component": "input",
+      "us": 182.70500004291534
+    },
+    {
+      "pair": [
+        152,
+        152
+      ],
+      "component": "dense_chain",
+      "us": 349.0850031375885
+    },
+    {
+      "pair": [
+        128,
+        176
+      ],
+      "component": "down",
+      "us": 145.70249617099762
+    },
+    {
+      "pair": [
+        128,
+        176
+      ],
+      "component": "input",
+      "us": 170.86000740528107
+    },
+    {
+      "pair": [
+        128,
+        176
+      ],
+      "component": "dense_chain",
+      "us": 331.21249079704285
+    },
+    {
+      "pair": [
+        64,
+        240
+      ],
+      "component": "down",
+      "us": 148.4300047159195
+    },
+    {
+      "pair": [
+        64,
+        240
+      ],
+      "component": "input",
+      "us": 177.61999368667603
+    },
+    {
+      "pair": [
+        64,
+        240
+      ],
+      "component": "dense_chain",
+      "us": 341.12751483917236
+    },
+    {
+      "pair": [
+        400
+      ],
+      "component": "down",
+      "us": 173.51000010967255
+    },
+    {
+      "pair": [
+        400
+      ],
+      "component": "input",
+      "us": 157.85999596118927
+    },
+    {
+      "pair": [
+        400
+      ],
+      "component": "dense_chain",
+      "us": 344.5650041103363
+    },
+    {
+      "pair": [
+        200,
+        200
+      ],
+      "component": "down",
+      "us": 184.55499410629272
+    },
+    {
+      "pair": [
+        200,
+        200
+      ],
+      "component": "input",
+      "us": 224.2950052022934
+    },
+    {
+      "pair": [
+        200,
+        200
+      ],
+      "component": "dense_chain",
+      "us": 421.50750756263733
+    }
+  ]
+}

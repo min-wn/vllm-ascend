@@ -1,0 +1,18 @@
+{
+  "command": [
+    "python",
+    "/workspace/aclgraph-full-core-join-v4-profile/aclgraph_core_join_shape_probe.py",
+    "--catalog-report",
+    "/workspace/aclgraph-full-core-join-v3/results/diagnostic.rank0.json",
+    "--output",
+    "/workspace/aclgraph-full-core-join-v4-profile/shape-screen.json"
+  ],
+  "environment": {
+    "ASCEND_RT_VISIBLE_DEVICES": "0",
+    "TASK_QUEUE_ENABLE": "0"
+  },
+  "runtime_setup": "source /etc/profile.d/ascend-multigraph.sh",
+  "source_sha256": "6031e7414d43290a632482c658f9895ae6828e92d64fc8107ff2ce897d288ced",
+  "result_sha256": "d150b5db2b497331a6bd69a237612aa01612f24e6df13cce2c183ac261cc3d5c",
+  "scope": "synthetic GEMM screening only; no communication, norm, joins, state, real weights or full-model timing"
+}

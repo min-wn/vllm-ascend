@@ -11,6 +11,14 @@ def profile_indices(step_count):
     return sorted({0, 1, step_count - 1})
 
 
+def validate_profile_indices(selected, step_count):
+    if not selected or any(type(i) is not int or not 0 <= i < step_count for i in selected):
+        raise ValueError("profile indices must be nonempty integers within the continued trajectory")
+    if len(set(selected)) != len(selected):
+        raise ValueError("profile indices must be unique")
+    return selected
+
+
 def profile_replays(
     args,
     torch,
@@ -32,6 +40,7 @@ def profile_replays(
 
     records = []
     selected = profile_indices(len(steps)) if selected_indices is None else selected_indices
+    validate_profile_indices(selected, len(steps))
     for mode in modes:
         restore()
         if select_mode is None:
