@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-19",
+  "targeted_pytest": {"passed": 72, "failed": 0},
+  "cpu_native_address_cases": 331776,
+  "page_device_samples": 80,
+  "page_fp32_sampled_rows": 144,
+  "page_output_hashes_equal_across_processes": true,
+  "overlap_device_samples": 480,
+  "overlap_processes": 3,
+  "raw_manifest_files_verified": 216,
+  "ruff_check": "passed",
+  "ruff_format": "passed",
+  "scoped_codespell": "passed after renaming local nd variable to nd_weights",
+  "scoped_typos": "passed",
+  "scoped_markdownlint": "passed",
+  "full_format_ci": "failed: WSL reports swap warning; format.sh CRLF yields dollar-CR command-not-found and syntax error at line 22",
+  "first_pytest_attempt": "39 passed, 32 fixture setup errors with default Windows temp path; fresh workspace basetemp passed",
+  "production_integration": false,
+  "full_model_or_split_vs_padding_gain": false,
+  "last_device_check": "all eight NPUs idle, no running NPU processes",
+  "measured_source": "raw/tools-v1, raw/tools-v2, planner-control/raw/tools-v3 preserve exact executed sources; final overlap source only renames nd local variable after v3",
+  "limitations": [
+    "No new full-model, serving or TP collective measurements",
+    "Page performance regressed; candidate not adopted",
+    "Overlap uses independently ready full-capacity inputs, not complementary pieces of one batch",
+    "First overlap process has pre-timing checks only; second and third include post-timing and post-profile checks",
+    "Planner attribution is a single-process diagnostic and is not an additive causal breakdown"
+  ]
+}

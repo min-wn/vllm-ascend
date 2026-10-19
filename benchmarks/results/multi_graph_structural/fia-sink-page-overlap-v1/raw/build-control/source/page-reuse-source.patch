@@ -1,0 +1,88 @@
+--- a/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
++++ b/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
+@@ -302,6 +302,9 @@
+                                      uint32_t subKStart,
+                                      uint32_t subKSize);
+     __aicore__ inline void CopyVToL1(uint32_t dstBufId, const RunInfo &info, uint32_t subKStart, uint32_t subKSize);
++    __aicore__ inline void CopyVWithPageAddress(uint32_t dstBufId, const RunInfo &info,
++        uint32_t subKStart, uint32_t subKSize, uint32_t &cachedPageEnd, uint64_t &cachedOffset);
++
+ 
+     template <uint32_t M_L1_SIZE, bool FOECE = false> __aicore__ inline void ResetLoad3DConfig();
+ 
+@@ -337,6 +340,14 @@
+                                         uint32_t subNSize);
+ 
+   private:
++#if defined(THESIS_FIA_PAGE_REUSE) && THESIS_FIA_PAGE_REUSE && (__CCE_AICORE__ == 220)
++    static constexpr bool THESIS_PAGE_REUSE_STATIC =
++        IsSameType<Q_T, bfloat16_t>::value && IsSameType<KV_T, bfloat16_t>::value &&
++        PAGE_ATTENTION && LAYOUT_T == FIA_LAYOUT::TND && PA_LAYOUT == FIA_LAYOUT::BSH &&
++        !CFG::S2_BASICSIZE_IS_1024 && CFG::PRELOAD_NUM == 2 && !CFG::ENABLE_UNIFLAG;
++#else
++    static constexpr bool THESIS_PAGE_REUSE_STATIC = false;
++#endif
+     // =================================L1 Buffer=================================
+     static constexpr uint32_t L1_Q_SIZE = CFG::S2_BASICSIZE_IS_1024 ? 128 * 192 : 256 * 192; // 64KB or 96KB
+     static constexpr uint32_t L1_V_SIZE = 256 * 128; // 64KB
+@@ -1316,6 +1327,29 @@
+ }
+ 
+ template <typename FIAT, typename Config>
++__aicore__ inline void FiaBlockCubeNonQuantGqa<FIAT, Config>::CopyVWithPageAddress(
++    uint32_t dstBufId, const RunInfo &info, uint32_t subKStart, uint32_t subKSize,
++    uint32_t &cachedPageEnd, uint64_t &cachedOffset)
++{
++    // Only called for increasing 64-row blocks, aligned task start, page128 BSH.
++    // Cache belongs to this ComputeMm2 invocation, never another task or replay.
++    if constexpr (THESIS_PAGE_REUSE_STATIC) {
++        constexpr uint32_t PAGE_ROWS = 128U;
++        auto &offsetCalculator = valueGmTensor.offsetCalculator;
++        const uint32_t s2 = info.s2Idx * constInfo.s2BaseSize + subKStart;
++        if (s2 >= cachedPageEnd) {
++            cachedOffset = offsetCalculator.GetOffset(
++                constInfo.batchContinuous ? info.bIdx : 0, info.n2Idx, s2, 0);
++            cachedPageEnd = (s2 & ~(PAGE_ROWS - 1U)) + PAGE_ROWS;
++        }
++        CopySingleMatrixNDToNZ(this->vL1Tensor[dstBufId], valueGmTensor.gmTensor[cachedOffset],
++            subKSize, (uint32_t)constInfo.headDim, offsetCalculator.GetStrideBlockSize(),
++            Align(subKSize, (uint32_t)BLOCK_CUBE));
++        cachedOffset += subKSize * offsetCalculator.GetStrideBlockSize();
++    }
++}
++
++template <typename FIAT, typename Config>
+ template <CubeFormat OutFormat, CubeFormat AFormat>
+ __aicore__ inline void FiaBlockCubeNonQuantGqa<FIAT, Config>::ComputeMm2(const RunInfo &info)
+ {
+@@ -1345,6 +1379,17 @@
+ 
+     ResetLoad3DConfig<M_SPLIT_SIZE>();
+ 
++    const bool reusePageAddress = THESIS_PAGE_REUSE_STATIC && constInfo.headDim == 256U &&
++        constInfo.headDimRope == 0U && !constInfo.ropeSplitMode && constInfo.keySinkNumber == 0U &&
++        constInfo.gSize == 6U && constInfo.kvHeadNum == 2U && constInfo.qHeadNum == 12U &&
++        constInfo.qSeqSize == 4U && constInfo.headDimAlign == 256U && constInfo.preLoadNum == 2U &&
++        constInfo.kvCacheBlockSize == 128U && constInfo.subBlockNum == 2U && constInfo.sinkNumber == 0 &&
++        constInfo.s2BaseSize == 512U && !info.isSinkTensor &&
++        info.actMBaseSize > 0U && info.actMBaseSize <= D256_MM2_QUERY_ROWS &&
++        info.actualSingleProcessSInnerSize > 0U && info.actualSingleProcessSInnerSize <= 512U;
++    uint32_t cachedPageEnd = 0;
++    uint64_t cachedOffset = 0;
++
+     auto KL1Slices = k.Split(K_SPLIT_SIZE);
+ 
+     bool canFullLoadV = (KL1Slices.size() <= L1_V_BUFCNT);
+@@ -1383,7 +1428,11 @@
+             if (unlikely(!reuseVBuf)) {
+                 vBufId = this->vL1BufId;
+                 WaitFlag<HardEvent::MTE1_MTE2>(V_EVENT0 + vBufId);
+-                CopyVToL1(vBufId, info, kL1.start, kL1.sizeAct);
++                if (reusePageAddress) {
++                    CopyVWithPageAddress(vBufId, info, kL1.start, kL1.sizeAct, cachedPageEnd, cachedOffset);
++                } else {
++                    CopyVToL1(vBufId, info, kL1.start, kL1.sizeAct);
++                }
+ 
+                 SetFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);
+                 WaitFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);

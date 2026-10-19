@@ -1,0 +1,15 @@
+{
+  "source_file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+  "before_sha256": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+  "after_sha256": "4ee29c1b29fa4231de3f98c2dfa86b67dd6e58932154d2bb1894ade66454cd81",
+  "macro": "THESIS_FIA_PAGE_REUSE",
+  "target": "A2 BF16 TND BSH page128 Q4 GQA6 KV2 D256, single M<=64, task512, no sink/RoPE",
+  "task_local": true,
+  "cache_reset_each_compute": true,
+  "graph_split_exclusive": false,
+  "buffers_and_events_unchanged": true,
+  "l1_transfer_k": 64,
+  "l0_compute_k": 64,
+  "kv_data_bytes_saved": 0,
+  "qualification": "source only; native address contract and NPU checks required"
+}

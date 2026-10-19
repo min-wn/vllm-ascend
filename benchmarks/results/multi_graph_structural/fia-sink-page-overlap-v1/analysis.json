@@ -1,0 +1,549 @@
+{
+  "state": "passed",
+  "raw_files": 157,
+  "page_summaries": [
+    {
+      "cell": 0,
+      "capacity": 400,
+      "mean_us": 4267.212,
+      "median_us": 4271.168
+    },
+    {
+      "cell": 0,
+      "capacity": 512,
+      "mean_us": 5374.6958,
+      "median_us": 5360.553
+    },
+    {
+      "cell": 1,
+      "capacity": 400,
+      "mean_us": 4396.854,
+      "median_us": 4396.908
+    },
+    {
+      "cell": 1,
+      "capacity": 512,
+      "mean_us": 5562.1087,
+      "median_us": 5534.4975
+    },
+    {
+      "cell": 2,
+      "capacity": 400,
+      "mean_us": 4296.5407,
+      "median_us": 4296.018
+    },
+    {
+      "cell": 2,
+      "capacity": 512,
+      "mean_us": 5366.9638,
+      "median_us": 5368.0015
+    },
+    {
+      "cell": 3,
+      "capacity": 400,
+      "mean_us": 4210.335,
+      "median_us": 4200.572
+    },
+    {
+      "cell": 3,
+      "capacity": 512,
+      "mean_us": 5336.6757,
+      "median_us": 5318.9565
+    }
+  ],
+  "page_effects": [
+    {
+      "direction": "forward",
+      "capacity": 400,
+      "mean_gain_percent": -3.03809606834626,
+      "median_gain_percent": -2.9439254086938442
+    },
+    {
+      "direction": "forward",
+      "capacity": 512,
+      "mean_gain_percent": -3.486948973000469,
+      "median_gain_percent": -3.2448984274570276
+    },
+    {
+      "direction": "reverse",
+      "capacity": 400,
+      "mean_gain_percent": -2.04747840730012,
+      "median_gain_percent": -2.2722143555687158
+    },
+    {
+      "direction": "reverse",
+      "capacity": 512,
+      "mean_gain_percent": -0.5675461973453,
+      "median_gain_percent": -0.9220793589870507
+    }
+  ],
+  "page_fp32_rows": 144,
+  "page_complete_outputs_equal": true,
+  "page_adopt": false,
+  "overlap": [
+    {
+      "run": "overlap-forward",
+      "medians": {
+        "full_serial": 1279.0805,
+        "half_serial": 1833.673,
+        "full_parallel": 1207.73,
+        "half_parallel": 1466.971
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "medians": {
+            "full_serial": 1280.5,
+            "half_serial": 1837.4524999999999,
+            "full_parallel": 1204.075,
+            "half_parallel": 1466.971
+          },
+          "full_gain_percent": 5.968371729793046
+        },
+        {
+          "round": 1,
+          "medians": {
+            "full_serial": 1270.83,
+            "half_serial": 1830.1425,
+            "full_parallel": 1201.08,
+            "half_parallel": 1465.141
+          },
+          "full_gain_percent": 5.4885389863317675
+        },
+        {
+          "round": 2,
+          "medians": {
+            "full_serial": 1266.635,
+            "half_serial": 1834.3274999999999,
+            "full_parallel": 1210.385,
+            "half_parallel": 1466.931
+          },
+          "full_gain_percent": 4.440900496196615
+        },
+        {
+          "round": 3,
+          "medians": {
+            "full_serial": 1285.78,
+            "half_serial": 1840.6325000000002,
+            "full_parallel": 1207.895,
+            "half_parallel": 1476.056
+          },
+          "full_gain_percent": 6.0574126211326975
+        }
+      ],
+      "checks": 8,
+      "full_gain_percent": 5.578265011467223,
+      "profiles": {
+        "full_serial": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 38,
+            "start_us": 0.0,
+            "duration_us": 1.02
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 38,
+            "start_us": 1.06,
+            "duration_us": 77.5415
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 38,
+            "start_us": 79.741,
+            "duration_us": 247.025
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 39,
+            "start_us": 327.946,
+            "duration_us": 321.246375
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 39,
+            "start_us": 649.212,
+            "duration_us": 23.8605
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 39,
+            "start_us": 673.093,
+            "duration_us": 204.204125
+          }
+        ],
+        "half_serial": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 41,
+            "start_us": 0.0,
+            "duration_us": 1.400125
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 41,
+            "start_us": 1.42,
+            "duration_us": 105.382
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 41,
+            "start_us": 107.902,
+            "duration_us": 449.769
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 42,
+            "start_us": 559.291,
+            "duration_us": 772.175375
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 42,
+            "start_us": 1331.487,
+            "duration_us": 30.540625
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 42,
+            "start_us": 1362.067,
+            "duration_us": 367.407375
+          }
+        ],
+        "full_parallel": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 44,
+            "start_us": 0.0,
+            "duration_us": 1.46
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 44,
+            "start_us": 1.48,
+            "duration_us": 121.642375
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 45,
+            "start_us": 2.7,
+            "duration_us": 646.733
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 44,
+            "start_us": 124.242,
+            "duration_us": 784.475625
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 45,
+            "start_us": 649.453,
+            "duration_us": 277.6855
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 45,
+            "start_us": 927.158,
+            "duration_us": 234.744625
+          }
+        ],
+        "half_parallel": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 47,
+            "start_us": 0.0,
+            "duration_us": 1.420125
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 47,
+            "start_us": 1.44,
+            "duration_us": 104.762
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 48,
+            "start_us": 2.56,
+            "duration_us": 1032.760625
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 47,
+            "start_us": 107.522,
+            "duration_us": 451.289
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 48,
+            "start_us": 1035.341,
+            "duration_us": 37.48075
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 48,
+            "start_us": 1072.841,
+            "duration_us": 397.547875
+          }
+        ]
+      }
+    },
+    {
+      "run": "overlap-reverse",
+      "medians": {
+        "half_parallel": 1463.4205,
+        "full_parallel": 1185.2244999999998,
+        "half_serial": 1813.9775,
+        "full_serial": 1267.6105
+      },
+      "rounds": [
+        {
+          "round": 0,
+          "medians": {
+            "half_parallel": 1470.186,
+            "full_parallel": 1188.9895000000001,
+            "half_serial": 1818.557,
+            "full_serial": 1270.2055
+          },
+          "full_gain_percent": 6.393926022206634
+        },
+        {
+          "round": 1,
+          "medians": {
+            "half_parallel": 1458.846,
+            "full_parallel": 1184.83,
+            "half_serial": 1812.507,
+            "full_serial": 1267.9
+          },
+          "full_gain_percent": 6.551778531429936
+        },
+        {
+          "round": 2,
+          "medians": {
+            "half_parallel": 1463.04,
+            "full_parallel": 1186.885,
+            "half_serial": 1815.5575,
+            "full_serial": 1265.1950000000002
+          },
+          "full_gain_percent": 6.189559712139248
+        },
+        {
+          "round": 3,
+          "medians": {
+            "half_parallel": 1463.281,
+            "full_parallel": 1183.06,
+            "half_serial": 1813.0430000000001,
+            "full_serial": 1269.2849999999999
+          },
+          "full_gain_percent": 6.793194593806743
+        }
+      ],
+      "checks": 12,
+      "full_gain_percent": 6.499315049851686,
+      "profiles": {
+        "half_parallel": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 38,
+            "start_us": 0.0,
+            "duration_us": 1.08
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 38,
+            "start_us": 1.1,
+            "duration_us": 86.70175
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 39,
+            "start_us": 2.52,
+            "duration_us": 666.21325
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 38,
+            "start_us": 89.121,
+            "duration_us": 374.0275
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 39,
+            "start_us": 668.753,
+            "duration_us": 30.000625
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 39,
+            "start_us": 698.773,
+            "duration_us": 366.227375
+          }
+        ],
+        "full_parallel": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 41,
+            "start_us": 0.0,
+            "duration_us": 1.48
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 41,
+            "start_us": 1.5,
+            "duration_us": 119.122375
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 42,
+            "start_us": 2.52,
+            "duration_us": 646.733
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 41,
+            "start_us": 121.923,
+            "duration_us": 787.155625
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 42,
+            "start_us": 649.273,
+            "duration_us": 276.7255
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 42,
+            "start_us": 926.019,
+            "duration_us": 236.28475
+          }
+        ],
+        "half_serial": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 44,
+            "start_us": 0.0,
+            "duration_us": 1.44
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 44,
+            "start_us": 1.46,
+            "duration_us": 114.022375
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 44,
+            "start_us": 117.142,
+            "duration_us": 445.848875
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 45,
+            "start_us": 564.491,
+            "duration_us": 709.55425
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 45,
+            "start_us": 1274.085,
+            "duration_us": 36.84075
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 45,
+            "start_us": 1310.946,
+            "duration_us": 367.24725
+          }
+        ],
+        "full_serial": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "type": "KERNEL_AIVEC",
+            "stream": 47,
+            "start_us": 0.0,
+            "duration_us": 1.46
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "type": "KERNEL_AICPU",
+            "stream": 47,
+            "start_us": 1.5,
+            "duration_us": 118.822375
+          },
+          {
+            "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+            "type": "KERNEL_MIX_AIC",
+            "stream": 47,
+            "start_us": 121.723,
+            "duration_us": 293.865875
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 48,
+            "start_us": 416.929,
+            "duration_us": 470.789375
+          },
+          {
+            "name": "SwiGlu",
+            "type": "KERNEL_AIVEC",
+            "stream": 48,
+            "start_us": 887.738,
+            "duration_us": 28.3405
+          },
+          {
+            "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+            "type": "KERNEL_AICORE",
+            "stream": 48,
+            "start_us": 916.099,
+            "duration_us": 239.444875
+          }
+        ]
+      }
+    }
+  ],
+  "overlap_full_model_or_split_gain": false,
+  "limitation": "CPU address model and small device experiments only; no full-model implementation or split advantage"
+}

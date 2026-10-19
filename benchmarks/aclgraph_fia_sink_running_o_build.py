@@ -172,7 +172,7 @@ def build(
     if type(args.resident) is not int or args.resident not in (0, 1) or args.timeout < 1:
         raise ValueError("resident must be 0/1 and timeout must be positive")
     tiling_keys = checked_tiling_keys(getattr(args, "tiling_keys", None))
-    if Path(report_name).name != report_name or feature_name not in ("resident", "wide_v", "prefetch"):
+    if Path(report_name).name != report_name or feature_name not in ("resident", "wide_v", "prefetch", "page_reuse"):
         raise ValueError("unsupported experiment report or feature")
     output.mkdir(parents=True)
     report = output / report_name
