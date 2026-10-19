@@ -1,0 +1,2359 @@
+{
+  "scope": "64 decoders and final norm; two trajectory steps; no logits/sampler/serving",
+  "per_trial": [
+    {
+      "trial": 0,
+      "metric": "device_us",
+      "means": {
+        "padding": 117895.85876464844,
+        "split_barrier": 118362.41912841797,
+        "split_early": 117813.85040283203
+      },
+      "early_reduction_percent": 0.06956000208634405,
+      "early_saves_vs_barrier_us": 548.5687255859375
+    },
+    {
+      "trial": 0,
+      "metric": "wall_us",
+      "means": {
+        "padding": 127881.7125,
+        "split_barrier": 127509.98049999999,
+        "split_early": 126979.51800000001
+      },
+      "early_reduction_percent": 0.7054914126208511,
+      "early_saves_vs_barrier_us": 530.4624999999796
+    },
+    {
+      "trial": 1,
+      "metric": "device_us",
+      "means": {
+        "padding": 117620.57113647461,
+        "split_barrier": 118598.19793701172,
+        "split_early": 117820.72067260742
+      },
+      "early_reduction_percent": -0.17016541766370352,
+      "early_saves_vs_barrier_us": 777.4772644042969
+    },
+    {
+      "trial": 1,
+      "metric": "wall_us",
+      "means": {
+        "padding": 126725.4575,
+        "split_barrier": 127801.577,
+        "split_early": 126904.79250000001
+      },
+      "early_reduction_percent": -0.14151458084104007,
+      "early_saves_vs_barrier_us": 896.7844999999943
+    },
+    {
+      "trial": 2,
+      "metric": "device_us",
+      "means": {
+        "padding": 117549.36981201172,
+        "split_barrier": 118501.91116333008,
+        "split_early": 118178.92074584961
+      },
+      "early_reduction_percent": -0.5355630020345448,
+      "early_saves_vs_barrier_us": 322.99041748046875
+    },
+    {
+      "trial": 2,
+      "metric": "wall_us",
+      "means": {
+        "padding": 126665.1615,
+        "split_barrier": 127809.842,
+        "split_early": 127413.80500000001
+      },
+      "early_reduction_percent": -0.5910413653875901,
+      "early_saves_vs_barrier_us": 396.0369999999966
+    },
+    {
+      "trial": 3,
+      "metric": "device_us",
+      "means": {
+        "padding": 117491.82891845703,
+        "split_barrier": 118584.72061157227,
+        "split_early": 117801.7692565918
+      },
+      "early_reduction_percent": -0.26379735594197484,
+      "early_saves_vs_barrier_us": 782.9513549804688
+    },
+    {
+      "trial": 3,
+      "metric": "wall_us",
+      "means": {
+        "padding": 126532.0165,
+        "split_barrier": 127783.782,
+        "split_early": 126866.838
+      },
+      "early_reduction_percent": -0.26461405521029935,
+      "early_saves_vs_barrier_us": 916.9440000000031
+    },
+    {
+      "trial": 4,
+      "metric": "device_us",
+      "means": {
+        "padding": 117434.48257446289,
+        "split_barrier": 118874.59945678711,
+        "split_early": 118549.83901977539
+      },
+      "early_reduction_percent": -0.9497691145403442,
+      "early_saves_vs_barrier_us": 324.76043701171875
+    },
+    {
+      "trial": 4,
+      "metric": "wall_us",
+      "means": {
+        "padding": 126470.8565,
+        "split_barrier": 128101.033,
+        "split_early": 127709.7365
+      },
+      "early_reduction_percent": -0.9795774570404703,
+      "early_saves_vs_barrier_us": 391.29649999999674
+    }
+  ],
+  "per_step": [
+    {
+      "step": 0,
+      "metric": "device_us",
+      "medians": {
+        "padding": 122333.7631225586,
+        "split_barrier": 123419.50225830078,
+        "split_early": 122402.16064453125
+      },
+      "early_reduction_percent": -0.05591058447547148
+    },
+    {
+      "step": 0,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 132577.412,
+        "split_barrier": 133749.097,
+        "split_early": 132615.342
+      },
+      "early_reduction_percent": -0.028609700119952564
+    },
+    {
+      "step": 1,
+      "metric": "device_us",
+      "medians": {
+        "padding": 112811.1801147461,
+        "split_barrier": 113752.47955322266,
+        "split_early": 113266.4566040039
+      },
+      "early_reduction_percent": -0.4035739088933621
+    },
+    {
+      "step": 1,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 120873.503,
+        "split_barrier": 121818.467,
+        "split_early": 121344.634
+      },
+      "early_reduction_percent": -0.38977194199460996
+    }
+  ],
+  "traces": [
+    {
+      "rank": 0,
+      "mode": "padding",
+      "file": "diagnostic.padding.step0.rank0.trace.json",
+      "sha256": "7adda0c5d47e6ab67ae8e8fcfdfb89ce6ed307da3412e5c7ce9dc8df4eeec896",
+      "counts": {
+        "matmul": 304,
+        "all_reduce": 129,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 229.644625,
+          "input_projection_us": 194.704,
+          "last_down_ar_us": 248.325,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 9.32025,
+          "body_kernel_us": 698.434,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 23.020375
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.74125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.320375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.260125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 9.32025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.66025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 14.72025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.64025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 37.88075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.800125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 17.02025
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 194.704
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 16.92025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.28025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 260.14525
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 219.364375,
+          "input_projection_us": 194.544,
+          "last_down_ar_us": 258.525,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 9.76025,
+          "body_kernel_us": 699.574125,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 23.300375
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 67.921375
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.920375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.060125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 9.76025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.160125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.38025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.78025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 37.76075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.600125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 17.620375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 194.544
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.54025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.600375
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 257.625125
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 219.704375,
+          "input_projection_us": 194.343875,
+          "last_down_ar_us": 255.125,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 10.120125,
+          "body_kernel_us": 697.733875,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 23.4205
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.58125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.120375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.1
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 10.120125
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.500125
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.78025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.640125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 38.40075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.960125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 18.5205
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 194.343875
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.140375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.48025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 259.62525
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 227.804625,
+          "input_projection_us": 194.203875,
+          "last_down_ar_us": 249.685,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 9.54025,
+          "body_kernel_us": 696.453875,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 23.8605
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.90125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.860375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.98
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 9.54025
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 9.42025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 11.86025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 12.020125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 37.78075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.74025
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 18.660375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 194.203875
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.22025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.70025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 260.705125
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "mode": "split_barrier",
+      "file": "diagnostic.split_barrier.step0.rank0.trace.json",
+      "sha256": "389f3fb638060c19b2c707397f01aee29bb4421edc493a740d47152bd5905fdb",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 256.905125,
+          "input_projection_us": 283.90575,
+          "last_down_ar_us": 138.223,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 50.180875,
+          "body_kernel_us": 858.137375,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 36.700625
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.58125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.240375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.66025
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 50.180875
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.440375
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 15.34025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.760375
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 38.40075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.70025
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.540375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 283.90575
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 18.100375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.36025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 262.22525
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 271.5655,
+          "input_projection_us": 286.145625,
+          "last_down_ar_us": 138.363,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 49.680875,
+          "body_kernel_us": 861.996875,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 40.28075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.50125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 20.200375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.420125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 49.680875
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.8605
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.44025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.420125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 40.700875
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.560125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.380375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 286.145625
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.98025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.280125
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 264.14525
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 254.565125,
+          "input_projection_us": 288.48575,
+          "last_down_ar_us": 138.363,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 51.001,
+          "body_kernel_us": 865.85725,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 35.38075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 64.30125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 20.020375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 4.06
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 51.001
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.860375
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.14025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.66025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 38.38075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.620125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.860375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 288.48575
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.10025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.720375
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.265375
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 282.665625,
+          "input_projection_us": 285.96575,
+          "last_down_ar_us": 137.422,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 49.661,
+          "body_kernel_us": 858.037125,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 36.440625
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.58125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.6005
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.42025
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 49.661
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 18.400375
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.18025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.700125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 37.70075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.700125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.700375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 285.96575
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.08025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.56025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 265.34525
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "mode": "split_early",
+      "file": "diagnostic.split_early.step0.rank0.trace.json",
+      "sha256": "4114b739900f71eaa01a57231750b1564dc750bb7973cf0ea76bbcf1e244811f",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 259.88525,
+          "input_projection_us": 297.526,
+          "last_down_ar_us": 141.123,
+          "input_overlap_last_ar_us": 117.882,
+          "concat_us": 51.561125,
+          "body_kernel_us": 880.49775,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 43.68075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.80125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.300375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.46025
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 51.561125
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 18.040375
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 14.58025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.440125
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 37.66075
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.800125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 20.060375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 297.526
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 17.48025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.400375
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 263.705375
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 268.285375,
+          "input_projection_us": 297.706,
+          "last_down_ar_us": 140.703,
+          "input_overlap_last_ar_us": 114.862,
+          "concat_us": 50.921,
+          "body_kernel_us": 885.597875,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 43.88075
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 64.961375
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.760375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.400125
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 50.921
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.620375
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.44025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.58025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 37.320625
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.82025
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 20.3605
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 297.706
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.640375
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.46025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 268.725375
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 268.885375,
+          "input_projection_us": 298.405875,
+          "last_down_ar_us": 140.703,
+          "input_overlap_last_ar_us": 118.203,
+          "concat_us": 51.781,
+          "body_kernel_us": 883.037625,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 40.821
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.321125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.440375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.92
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 51.781
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 18.16025
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.56025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.92025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 38.340875
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.820125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.780375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 298.405875
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 20.9805
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.42025
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 264.365375
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 274.7055,
+          "input_projection_us": 304.606125,
+          "last_down_ar_us": 140.543,
+          "input_overlap_last_ar_us": 112.863,
+          "concat_us": 48.560875,
+          "body_kernel_us": 889.937625,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 47.400875
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.001125
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.400375
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.52
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 48.560875
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.540375
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.66025
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.90025
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 41.060875
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.680125
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.780375
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 304.606125
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.98025
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 13.500375
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.345375
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "padding",
+      "file": "diagnostic.padding.step0.rank1.trace.json",
+      "sha256": "f44f992fd7c4e6d3829ee5305ecb7cd838662b4ef4e7a6556a58fd5b0f4a4ab7",
+      "counts": {
+        "matmul": 304,
+        "all_reduce": 129,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 218.96,
+          "input_projection_us": 193.12,
+          "last_down_ar_us": 249.78,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 9.9,
+          "body_kernel_us": 694.82,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 22.78
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 68.56
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.88
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.08
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 9.9
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.36
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.6
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.92
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 36.64
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.9
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 16.3
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 193.12
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.9
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.46
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 260.42
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 224.22,
+          "input_projection_us": 196.22,
+          "last_down_ar_us": 248.74,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 9.68,
+          "body_kernel_us": 687.72,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 22.6
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.0
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.9
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.98
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 9.68
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.1
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.26
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.88
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 36.3
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.88
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 16.42
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 196.22
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.98
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.82
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 258.7
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 224.42,
+          "input_projection_us": 197.04,
+          "last_down_ar_us": 249.48,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 10.98,
+          "body_kernel_us": 696.24,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 21.92
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 68.7
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.98
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 2.02
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 10.98
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.26
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.46
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.62
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 35.38
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.86
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 16.12
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 197.04
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.06
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.28
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 259.56
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 225.58,
+          "input_projection_us": 194.0,
+          "last_down_ar_us": 248.46,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 9.46,
+          "body_kernel_us": 694.86,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 1,
+              "sum_us": 22.26
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 68.44
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 18.88
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 1,
+              "sum_us": 1.84
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 1,
+              "sum_us": 9.46
+            },
+            "aclnnContiguous_SliceAiCore_Slice": {
+              "count": 1,
+              "sum_us": 8.44
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.28
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.7
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 7,
+              "sum_us": 37.22
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.86
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 2,
+              "sum_us": 16.2
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 2,
+              "sum_us": 194.0
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.1
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.38
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 260.8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "split_barrier",
+      "file": "diagnostic.split_barrier.step0.rank1.trace.json",
+      "sha256": "6a253c97896354773d8662711d87d92700ea075bd97b99950305db6746908b1d",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 281.4,
+          "input_projection_us": 287.0,
+          "last_down_ar_us": 139.14,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 46.86,
+          "body_kernel_us": 848.36,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 35.12
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.56
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.28
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.44
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 46.86
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 16.98
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.54
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.72
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 36.28
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.82
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.5
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 287.0
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.66
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.62
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.98
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 280.62,
+          "input_projection_us": 285.78,
+          "last_down_ar_us": 138.6,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 49.7,
+          "body_kernel_us": 852.22,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 35.0
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.36
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.5
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.32
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 49.7
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.4
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 17.02
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.6
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 37.12
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.92
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 19.02
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 285.78
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.98
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.78
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 262.72
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 283.44,
+          "input_projection_us": 286.08,
+          "last_down_ar_us": 139.12,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 46.8,
+          "body_kernel_us": 846.38,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 34.88
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.52
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 20.2
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.72
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 46.8
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 16.54
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.44
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.52
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 35.82
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.94
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.48
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 286.08
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.66
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.38
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.4
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 253.9,
+          "input_projection_us": 284.66,
+          "last_down_ar_us": 139.04,
+          "input_overlap_last_ar_us": 0.0,
+          "concat_us": 46.54,
+          "body_kernel_us": 846.48,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 35.14
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.1
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 20.1
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.24
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 46.54
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.32
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.54
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.56
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 36.22
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 7.1
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.12
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 284.66
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.0
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.4
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.44
+            }
+          }
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "split_early",
+      "file": "diagnostic.split_early.step0.rank1.trace.json",
+      "sha256": "729c268575b4fb74dd09cbafd081af28377e68cb17f35ad0914a8b474c5a6210",
+      "counts": {
+        "matmul": 316,
+        "all_reduce": 133,
+        "solve": 48,
+        "commit": 48,
+        "fia": 16
+      },
+      "boundaries": [
+        {
+          "boundary": 3,
+          "down_gemm_us": 283.66,
+          "input_projection_us": 302.02,
+          "last_down_ar_us": 140.04,
+          "input_overlap_last_ar_us": 116.28,
+          "concat_us": 47.06,
+          "body_kernel_us": 869.54,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 44.24
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.3
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.2
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.34
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 47.06
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 16.58
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.5
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.44
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 36.18
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.88
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.3
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 302.02
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.48
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.34
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 265.68
+            }
+          }
+        },
+        {
+          "boundary": 19,
+          "down_gemm_us": 280.86,
+          "input_projection_us": 300.54,
+          "last_down_ar_us": 141.3,
+          "input_overlap_last_ar_us": 118.1,
+          "concat_us": 47.2,
+          "body_kernel_us": 868.86,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 43.06
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.78
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.06
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.26
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 47.2
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 16.86
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.5
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.72
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 35.62
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.94
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.76
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 300.54
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.62
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.34
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.6
+            }
+          }
+        },
+        {
+          "boundary": 35,
+          "down_gemm_us": 281.62,
+          "input_projection_us": 296.82,
+          "last_down_ar_us": 140.46,
+          "input_overlap_last_ar_us": 117.36,
+          "concat_us": 45.8,
+          "body_kernel_us": 863.66,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 41.68
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 60.76
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.62
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.7
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 45.8
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 17.76
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.82
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 10.8
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 35.04
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.78
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.46
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 296.82
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 14.84
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.42
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 266.36
+            }
+          }
+        },
+        {
+          "boundary": 51,
+          "down_gemm_us": 282.24,
+          "input_projection_us": 301.32,
+          "last_down_ar_us": 141.28,
+          "input_overlap_last_ar_us": 118.7,
+          "concat_us": 47.52,
+          "body_kernel_us": 868.66,
+          "inventory": {
+            "AddRmsNormBias": {
+              "count": 2,
+              "sum_us": 41.76
+            },
+            "CausalConv1d": {
+              "count": 1,
+              "sum_us": 61.42
+            },
+            "_layer_norm_fwd_1pass_kernel_npu": {
+              "count": 1,
+              "sum_us": 19.46
+            },
+            "aclnnAdds_AddAiCore_Add": {
+              "count": 2,
+              "sum_us": 3.32
+            },
+            "aclnnCat_ConcatD_ConcatD": {
+              "count": 7,
+              "sum_us": 47.52
+            },
+            "aclnnCat_SliceAiCore_Slice": {
+              "count": 4,
+              "sum_us": 16.76
+            },
+            "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+              "count": 1,
+              "sum_us": 12.26
+            },
+            "aclnnInplaceCopy_CastAiCore_Cast": {
+              "count": 3,
+              "sum_us": 11.02
+            },
+            "aclnnInplaceCopy_SliceAiCore_Slice": {
+              "count": 8,
+              "sum_us": 37.32
+            },
+            "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+              "count": 1,
+              "sum_us": 6.84
+            },
+            "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+              "count": 3,
+              "sum_us": 18.66
+            },
+            "aclnnMatmul_MatMulCommon_MatMulV2": {
+              "count": 4,
+              "sum_us": 301.32
+            },
+            "fused_gdn_gating_kernel": {
+              "count": 1,
+              "sum_us": 15.0
+            },
+            "l2norm_fwd_kernel2": {
+              "count": 2,
+              "sum_us": 12.52
+            },
+            "q4_tile_solve_1": {
+              "count": 1,
+              "sum_us": 263.48
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "trial": 0,
+      "mode": "padding",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 134582.571,
+      "device_us": 122923.75946044922
+    },
+    {
+      "trial": 0,
+      "mode": "padding",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121180.854,
+      "device_us": 112867.95806884766
+    },
+    {
+      "trial": 0,
+      "mode": "split_barrier",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 133127.254,
+      "device_us": 122905.44128417969
+    },
+    {
+      "trial": 0,
+      "mode": "split_barrier",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121892.707,
+      "device_us": 113819.39697265625
+    },
+    {
+      "trial": 0,
+      "mode": "split_early",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132615.342,
+      "device_us": 122402.16064453125
+    },
+    {
+      "trial": 0,
+      "mode": "split_early",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121343.694,
+      "device_us": 113225.54016113281
+    },
+    {
+      "trial": 1,
+      "mode": "split_early",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132464.951,
+      "device_us": 122326.98059082031
+    },
+    {
+      "trial": 1,
+      "mode": "split_early",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121344.634,
+      "device_us": 113314.46075439453
+    },
+    {
+      "trial": 1,
+      "mode": "split_barrier",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 133453.086,
+      "device_us": 123097.71728515625
+    },
+    {
+      "trial": 1,
+      "mode": "split_barrier",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 122150.068,
+      "device_us": 114098.67858886719
+    },
+    {
+      "trial": 1,
+      "mode": "padding",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132577.412,
+      "device_us": 122378.72314453125
+    },
+    {
+      "trial": 1,
+      "mode": "padding",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 120873.503,
+      "device_us": 112862.41912841797
+    },
+    {
+      "trial": 2,
+      "mode": "padding",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132588.252,
+      "device_us": 122333.7631225586
+    },
+    {
+      "trial": 2,
+      "mode": "padding",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 120742.071,
+      "device_us": 112764.97650146484
+    },
+    {
+      "trial": 2,
+      "mode": "split_barrier",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 133839.638,
+      "device_us": 123419.50225830078
+    },
+    {
+      "trial": 2,
+      "mode": "split_barrier",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121780.046,
+      "device_us": 113584.32006835938
+    },
+    {
+      "trial": 2,
+      "mode": "split_early",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 133444.776,
+      "device_us": 123209.09881591797
+    },
+    {
+      "trial": 2,
+      "mode": "split_early",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121382.834,
+      "device_us": 113148.74267578125
+    },
+    {
+      "trial": 3,
+      "mode": "split_early",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132456.652,
+      "device_us": 122337.08190917969
+    },
+    {
+      "trial": 3,
+      "mode": "split_early",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121277.024,
+      "device_us": 113266.4566040039
+    },
+    {
+      "trial": 3,
+      "mode": "split_barrier",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 133749.097,
+      "device_us": 123547.98126220703
+    },
+    {
+      "trial": 3,
+      "mode": "split_barrier",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121818.467,
+      "device_us": 113621.4599609375
+    },
+    {
+      "trial": 3,
+      "mode": "padding",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132186.61,
+      "device_us": 122172.47772216797
+    },
+    {
+      "trial": 3,
+      "mode": "padding",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 120877.423,
+      "device_us": 112811.1801147461
+    },
+    {
+      "trial": 4,
+      "mode": "padding",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 132109.58,
+      "device_us": 122105.0033569336
+    },
+    {
+      "trial": 4,
+      "mode": "padding",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 120832.133,
+      "device_us": 112763.96179199219
+    },
+    {
+      "trial": 4,
+      "mode": "split_barrier",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 134423.129,
+      "device_us": 123996.71936035156
+    },
+    {
+      "trial": 4,
+      "mode": "split_barrier",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121778.937,
+      "device_us": 113752.47955322266
+    },
+    {
+      "trial": 4,
+      "mode": "split_early",
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "wall_us": 133658.547,
+      "device_us": 123460.89935302734
+    },
+    {
+      "trial": 4,
+      "mode": "split_early",
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "wall_us": 121760.926,
+      "device_us": 113638.77868652344
+    }
+  ],
+  "cross_padding_diagnostics": [
+    [
+      {
+        "mode": "split_barrier",
+        "step": 0,
+        "field": "hidden",
+        "max_abs": 0.5,
+        "nrmse": 0.008733762428164482,
+        "tolerance_failures": 18518
+      },
+      {
+        "mode": "split_barrier",
+        "step": 0,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.007142110262066126,
+        "tolerance_failures": 301267
+      },
+      {
+        "mode": "split_barrier",
+        "step": 1,
+        "field": "hidden",
+        "max_abs": 0.4375,
+        "nrmse": 0.0088550616055727,
+        "tolerance_failures": 13671
+      },
+      {
+        "mode": "split_barrier",
+        "step": 1,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.0073665110394358635,
+        "tolerance_failures": 239455
+      },
+      {
+        "mode": "split_early",
+        "step": 0,
+        "field": "hidden",
+        "max_abs": 0.5,
+        "nrmse": 0.008733762428164482,
+        "tolerance_failures": 18518
+      },
+      {
+        "mode": "split_early",
+        "step": 0,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.007142110262066126,
+        "tolerance_failures": 301267
+      },
+      {
+        "mode": "split_early",
+        "step": 1,
+        "field": "hidden",
+        "max_abs": 0.4375,
+        "nrmse": 0.0088550616055727,
+        "tolerance_failures": 13671
+      },
+      {
+        "mode": "split_early",
+        "step": 1,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.0073665110394358635,
+        "tolerance_failures": 239455
+      }
+    ],
+    [
+      {
+        "mode": "split_barrier",
+        "step": 0,
+        "field": "hidden",
+        "max_abs": 0.5,
+        "nrmse": 0.008733762428164482,
+        "tolerance_failures": 18518
+      },
+      {
+        "mode": "split_barrier",
+        "step": 0,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.007142110262066126,
+        "tolerance_failures": 301267
+      },
+      {
+        "mode": "split_barrier",
+        "step": 1,
+        "field": "hidden",
+        "max_abs": 0.4375,
+        "nrmse": 0.0088550616055727,
+        "tolerance_failures": 13671
+      },
+      {
+        "mode": "split_barrier",
+        "step": 1,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.0073665110394358635,
+        "tolerance_failures": 239455
+      },
+      {
+        "mode": "split_early",
+        "step": 0,
+        "field": "hidden",
+        "max_abs": 0.5,
+        "nrmse": 0.008733762428164482,
+        "tolerance_failures": 18518
+      },
+      {
+        "mode": "split_early",
+        "step": 0,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.007142110262066126,
+        "tolerance_failures": 301267
+      },
+      {
+        "mode": "split_early",
+        "step": 1,
+        "field": "hidden",
+        "max_abs": 0.4375,
+        "nrmse": 0.0088550616055727,
+        "tolerance_failures": 13671
+      },
+      {
+        "mode": "split_early",
+        "step": 1,
+        "field": "residual",
+        "max_abs": 8.0,
+        "nrmse": 0.0073665110394358635,
+        "tolerance_failures": 239455
+      }
+    ]
+  ]
+}

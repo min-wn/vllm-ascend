@@ -13,7 +13,7 @@ import json
 import os
 import statistics
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 
@@ -145,7 +145,9 @@ def restore_complete(torch, bundle, registry, saved):
     torch.npu.synchronize()
 
 
-def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, vocabulary, report, *, checkpoint):
+def replay_trajectories(
+    args, torch, dist, bundle, factory, registry, forward, vocabulary, report, *, checkpoint, schedule=None
+):
     """Full default-bucket graphs; real FIA updates and all state joins included."""
     from multi_graph_gdn_q4_full_stream_audit import StreamingCheckpoint
     from vllm.distributed.parallel_state import get_world_group
@@ -167,6 +169,25 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
     capacities = sorted(set(selection["dispatched_tokens"][: len(steps)]))
     if diagnostic:
         modes = ("deferred_tile_ready",)
+    if schedule is not None:
+        from aclgraph_full_core_join import legal_pair
+
+        modes = schedule.modes
+        report["split_schedule"] = dict(
+            boundaries=schedule.boundaries,
+            packed=schedule.packed,
+            modes=modes,
+            shared_kernel="deferred_tile_ready",
+            pairs={str(capacity): list(legal_pair(capacity, selection["capture_sizes"])) for capacity in capacities},
+            intermediate_contract="paired consumer waits each row event; two output copies included",
+        )
+
+    def select_mode(mode):
+        registry.mode = mode if schedule is None else "deferred_tile_ready"
+        if schedule is not None:
+            schedule.assert_joined()
+            schedule.mode = mode
+
     initial = complete_snapshot(torch, bundle, registry)
     frames, tokens = {}, {}
     for capacity in capacities:
@@ -195,7 +216,7 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
     # Finish all shape initialization before any graph capture. This also
     # keeps subsequent captures free of intervening eager model launches.
     for mode in modes:
-        registry.mode = mode
+        select_mode(mode)
         for capacity in sorted(frames, reverse=True):
             index = selection["dispatched_tokens"].index(capacity)
             frame = prepare(trace.steps[index], capacity)
@@ -207,7 +228,7 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
                     torch.npu.synchronize()
             print(f"rank={dist.get_rank()} full-model warmup mode={mode} tokens={capacity}", flush=True)
     for mode in modes:
-        registry.mode = mode
+        select_mode(mode)
         for capacity in sorted(frames, reverse=True):
             index = selection["dispatched_tokens"].index(capacity)
             frame = prepare(trace.steps[index], capacity)
@@ -237,7 +258,9 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         fia_tasks_per_graph=16,
         elapsed_seconds=time.perf_counter() - capture_start,
         partition=(
-            "native GDN request-tile readiness inside each legal full-model bucket"
+            "adjacent FIA Down / GDN input projection request lanes; rejoin before full state core"
+            if schedule is not None
+            else "native GDN request-tile readiness inside each legal full-model bucket"
             if args.tile_extension is not None
             else "native GDN request products/solve ranges inside each legal full-model bucket"
         ),
@@ -270,10 +293,11 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             if torch.count_nonzero(scratch[0]).item():
                 raise AssertionError(f"{label}/layer{item.index}: nonzero null candidate")
 
+    qualified_outputs = {}
     for mode in modes:
-        registry.mode = mode
+        select_mode(mode)
         restore_complete(torch, bundle, registry, initial)
-        audit = StreamingCheckpoint(torch, initial)
+        audit = StreamingCheckpoint(torch, initial, scan_elements=getattr(args, "audit_scan_elements", 1 << 20))
         for index in range(args.qualification_steps):
             step, capacity = trace.steps[index], selection["dispatched_tokens"][index]
             registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
@@ -310,13 +334,36 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             report["status"] = "partial_continued_replay_qualification_not_a_performance_result"
             checkpoint()
             print(f"rank={dist.get_rank()} full-model qualified mode={mode} step={index}", flush=True)
+            if schedule is not None:
+                qualified_outputs[mode, index] = eager
+                if mode != "padding":
+                    for field, actual, reference in zip(
+                        ("hidden", "residual"), eager, qualified_outputs["padding", index], strict=True
+                    ):
+                        delta = actual.float() - reference.float()
+                        report.setdefault("cross_padding_diagnostics", []).append(
+                            dict(
+                                mode=mode,
+                                step=index,
+                                field=field,
+                                max_abs=delta.abs().max().item(),
+                                nrmse=(delta.square().mean() / reference.float().square().mean().clamp_min(1e-30))
+                                .sqrt()
+                                .item(),
+                                tolerance_failures=(delta.abs() > 0.02 + 0.02 * reference.float().abs()).sum().item(),
+                            )
+                        )
+                if mode == "split_early":
+                    for actual, reference in zip(eager, qualified_outputs["split_barrier", index], strict=True):
+                        torch.testing.assert_close(actual, reference, rtol=0, atol=0)
+                    report["checks"].append(dict(label="barrier_early_outputs_exact", step=index))
             del eager
         del audit
     del candidate_scratch
     samples = []
     for trial in range(args.trials):
         for mode in modes if trial % 2 == 0 else reversed(modes):
-            registry.mode = mode
+            select_mode(mode)
             restore_complete(torch, bundle, registry, initial)
             for index, step in enumerate(steps):
                 capacity = selection["dispatched_tokens"][index]
@@ -324,8 +371,13 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
                 start = time.perf_counter_ns()
                 registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
                 frame = prepare(step, capacity)
-                replay(entries[mode, capacity], frame)
+                entry = entries[mode, capacity]
+                begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
+                begin.record(entry["root"])
+                replay(entry, frame)
+                end.record(entry["root"])
                 torch.npu.synchronize()
+                device_us = begin.elapsed_time(end) * 1000
                 registry.finish_step(step["step"])
                 elapsed_us = (time.perf_counter_ns() - start) / 1000
                 critical = torch.tensor(elapsed_us, dtype=torch.float64)
@@ -338,6 +390,7 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
                         batch=step["batch"],
                         capacity=capacity,
                         elapsed_us=elapsed_us,
+                        device_us=device_us,
                         critical_rank_us=critical.item(),
                     )
                 )
@@ -372,8 +425,15 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             replay,
             restore=lambda: restore_complete(torch, bundle, registry, initial),
             cpu_group=cpu_group,
+            modes=modes,
+            select_mode=select_mode,
+            selected_indices=[0] if schedule is not None else None,
         )
-        report["status"] = "diagnostic_complete_not_a_speedup_comparison"
+        report["status"] = (
+            "split_full_model_diagnostic_complete_not_serving"
+            if schedule is not None
+            else "diagnostic_complete_not_a_speedup_comparison"
+        )
         checkpoint()
         return
     attribution = replay_attribution(means, tile_enabled=args.tile_extension is not None)
@@ -465,6 +525,18 @@ def experiment(args, trace, runner, model, config):
         sources={Path(__file__).name: hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
     )
     args.partial_report = report
+    if getattr(args, "dense_nz", False):
+        torch.npu.config.allow_internal_format = True
+        converted = []
+        for index, layer in enumerate(model.language_model.model.layers):
+            for name, module in layer.named_modules():
+                weight = getattr(module, "weight", None)
+                if weight is not None and weight.ndim == 2:
+                    weight.data = torch_npu.npu_format_cast(weight.data, 29)
+                    converted.append(dict(layer=index, name=name, format=torch_npu.get_npu_format(weight)))
+        if len(converted) != 304 or any(item["format"] != 29 for item in converted):
+            raise ValueError("NZ diagnostic requires all 304 decoder projection weights in NZ")
+        report["dense_weights"] = dict(format="NZ", shared_by_all_modes=True, converted=converted)
     bundle = allocate_full_caches(
         torch,
         model,
@@ -593,9 +665,29 @@ def experiment(args, trace, runner, model, config):
             registry.register(item.state.handle, backend, item.gdn.out_proj)
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
         if args.phase in ("replay", "diagnostic"):
-            with installed_log_registry(registry):
+            schedule_context = nullcontext(None)
+            if getattr(args, "split_boundaries", None):
+                from aclgraph_full_core_join import CoreJoinSchedule
+
+                schedule_context = CoreJoinSchedule(
+                    model,
+                    args.split_boundaries,
+                    args.selection["capture_sizes"],
+                    packed=args.packed_join,
+                ).installed()
+            with installed_log_registry(registry), schedule_context as schedule:
                 replay_trajectories(
-                    args, torch, dist, bundle, factory, registry, forward, vocabulary, report, checkpoint=save
+                    args,
+                    torch,
+                    dist,
+                    bundle,
+                    factory,
+                    registry,
+                    forward,
+                    vocabulary,
+                    report,
+                    checkpoint=save,
+                    schedule=schedule,
                 )
             save()
             return report
@@ -634,6 +726,9 @@ def main():
         default=Path(__file__).parent / "results/multi_graph_structural/structural-dynamic-trace-v1.json",
     )
     parser.add_argument("--phase", choices=("allocation", "prefix", "eager", "replay", "diagnostic"), default="eager")
+    parser.add_argument("--split-boundaries", type=int, nargs="+")
+    parser.add_argument("--packed-join", action="store_true")
+    parser.add_argument("--dense-nz", action="store_true", help="same decoder NZ weights for all controls")
     parser.add_argument("--diagnostic-steps", type=int, default=6)
     parser.add_argument(
         "--prefix-limit", type=int, help="partial initialization diagnostic; never a full-model qualification"
@@ -644,16 +739,28 @@ def main():
     parser.add_argument("--tile-extension", type=Path)
     parser.add_argument("--trials", type=int, default=3)
     parser.add_argument("--qualification-steps", type=int, default=3)
+    parser.add_argument(
+        "--audit-scan-elements",
+        type=int,
+        default=1 << 20,
+        help="CPU state audit chunk size; changes no replay work or audited state",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists() or (args.prefix_limit is not None and not 1 <= args.prefix_limit <= 128):
         parser.error("require a new output path and prefix-limit in 1..128")
     if args.trials < 2 or not 2 <= args.qualification_steps <= 128:
         parser.error("at least two paired trials and 2..128 continued qualification steps required")
+    if not 1 <= args.audit_scan_elements <= 1 << 24:
+        parser.error("audit scan chunk must be in 1..16777216 elements")
     if args.phase == "diagnostic" and (
         args.tile_extension is None or not args.qualification_steps <= args.diagnostic_steps <= 128
     ):
         parser.error("diagnostic requires the public ready-tile kernel and qualification_steps <= steps <= 128")
+    if args.split_boundaries and args.phase != "diagnostic":
+        parser.error("split boundaries currently require the bounded diagnostic phase")
+    if args.packed_join and not args.split_boundaries:
+        parser.error("packed join requires split boundaries")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     faulthandler.enable()
     faulthandler.dump_traceback_later(180, repeat=True)
