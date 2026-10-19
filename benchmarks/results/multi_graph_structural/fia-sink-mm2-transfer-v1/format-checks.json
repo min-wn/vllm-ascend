@@ -1,0 +1,51 @@
+{
+  "full_ci_returncode": 1,
+  "hook_modified_files_restored": [
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/raw/screen/cpu-transfer-contract.cpp",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/raw/tools/mm2_transfer_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_deploy.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_publish.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_source_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_status.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/deployed-tools/running_o_pair_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_pair_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_pair_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_pair_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/deployed-tools/running_o_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_deploy.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_publish.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_recompute.py"
+  ],
+  "scoped": [
+    {
+      "hook": "ruff-check",
+      "returncode": 0
+    },
+    {
+      "hook": "ruff-format",
+      "returncode": 0
+    },
+    {
+      "hook": "codespell",
+      "returncode": 0
+    },
+    {
+      "hook": "typos",
+      "returncode": 0
+    },
+    {
+      "hook": "markdownlint",
+      "returncode": 0
+    }
+  ],
+  "full_ci_command": "python -m pre_commit run --all-files --hook-stage manual",
+  "equivalent_to": "format.sh ci pre-commit invocation",
+  "raw_evidence_preserved": true
+}

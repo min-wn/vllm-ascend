@@ -1,0 +1,26 @@
+{
+  "unit_tests": {
+    "passed": 73,
+    "skipped": 0
+  },
+  "scoped_hooks_passed": [
+    "ruff-check",
+    "ruff-format",
+    "codespell",
+    "typos",
+    "markdownlint",
+    "check-forbidden-imports"
+  ],
+  "saved_audit_assertions": 1238,
+  "samples": 80,
+  "fp32_rows": 144,
+  "complete_plans": 24,
+  "maximum_fp32_absolute_error": 0.00029981881380081177,
+  "full_ci_passed": false,
+  "full_ci_limitations": "Frozen source/script formatting and spelling, prior Triton imports, Windows tool entrypoints",
+  "all_hook_edits_to_raw_evidence_restored": true,
+  "build_tool_followup": "Canonical uint64 validation uses ASCII range checks instead of forbidden re import; existing tests cover full-width digits, whitespace, overflow and leading zeros. Frozen measured tool is unchanged.",
+  "promotion": false,
+  "full_model_or_split_gain": false,
+  "current_scheme_sha256": "3b7bebc1247e4b8a0d309228222affef4ddda44ce0464c77a41ec4ef844895a1"
+}

@@ -1,0 +1,54 @@
+{
+  "scope": "Whole-head Q4/GQA6/D256/page128 source work counts for two frozen records; not runtime counters",
+  "reference_sha256": "9495a6119fea09d1afe31e28e113d8db759690c910a7a179386777751f2f0763",
+  "rows": [
+    {
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "outer_s2_tasks": 466,
+      "old_v_transfers": 3048,
+      "candidate_v_transfers": 1580,
+      "old_p_transfers": 3048,
+      "candidate_p_transfers": 1580,
+      "eliminated_transfer_groups": 1468,
+      "transfer_group_reduction_percent": 48.16272965879265,
+      "old_mm2_compute_tiles": 3048,
+      "candidate_mm2_compute_tiles": 3048,
+      "old_v_page_lookups": 3048,
+      "candidate_v_page_lookups": 1580,
+      "logical_v_bytes_per_attention": 96667648,
+      "logical_p_bytes_per_attention": 9062592,
+      "logical_kv_bytes_per_attention": 193335296,
+      "valid_row_sequence_unchanged": true
+    },
+    {
+      "step": 29,
+      "batch": 128,
+      "capacity": 512,
+      "outer_s2_tasks": 642,
+      "old_v_transfers": 4268,
+      "candidate_v_transfers": 2200,
+      "old_p_transfers": 4268,
+      "candidate_p_transfers": 2200,
+      "eliminated_transfer_groups": 2068,
+      "transfer_group_reduction_percent": 48.45360824742268,
+      "old_mm2_compute_tiles": 4268,
+      "candidate_mm2_compute_tiles": 4268,
+      "old_v_page_lookups": 4268,
+      "candidate_v_page_lookups": 2200,
+      "logical_v_bytes_per_attention": 135633920,
+      "logical_p_bytes_per_attention": 12715680,
+      "logical_kv_bytes_per_attention": 271267840,
+      "valid_row_sequence_unchanged": true
+    }
+  ],
+  "assumptions": [
+    "one actual M=24 tile per request/KV head",
+    "exact ordered pages, all real lengths",
+    "only MM2 L1 grouping changes; inner compute K remains 64",
+    "no FD or sink tensor"
+  ],
+  "no_measured_hbm_or_latency_claim": true,
+  "graph_split_required_for_candidate": false
+}

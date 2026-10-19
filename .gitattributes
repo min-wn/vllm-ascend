@@ -36,3 +36,10 @@
 /benchmarks/results/multi_graph_structural/fia-sink-running-o-*.json -text whitespace=cr-at-eol
 /benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/builds/*/patch-evidence/*.patch whitespace=cr-at-eol,-blank-at-eol
 /benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/format-ci-running-o.log whitespace=cr-at-eol,-blank-at-eof
+/benchmarks/aclgraph_fia_sink_mm2_transfer*.py text eol=lf
+/tests/ut/worker/multi_graph/test_fia_sink_mm2_transfer.py text eol=lf
+/docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_mm2_transfer_zh.md text eol=lf
+/benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/** -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/raw/** -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/raw/builds/*/*.patch whitespace=cr-at-eol,-blank-at-eol
+/benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/format-ci.log -text whitespace=cr-at-eol,-blank-at-eof

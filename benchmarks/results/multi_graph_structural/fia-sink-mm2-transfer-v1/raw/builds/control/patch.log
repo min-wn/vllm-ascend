@@ -1,0 +1,23 @@
+{
+  "source_file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+  "before_sha256": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+  "after_sha256": "0be3dcd5aa8267c04f1448b1b44a5e62abb084e287f60d5ec2a58ea6d1ba86a9",
+  "macro": "THESIS_FIA_MM2_WIDE_V",
+  "macro_enabled_by_patch_tool": false,
+  "target": "A2 BF16 TND paged ND128 Q4/GQA6/D256, S2<=512, no sink/RoPE",
+  "l1_v_bytes": {
+    "control_slots": 2,
+    "control_bytes_per_slot": 32768,
+    "candidate_slots": 1,
+    "candidate_bytes_per_slot": 65536,
+    "total": 65536
+  },
+  "l1_total_bytes": 475136,
+  "l0_compute_k": 64,
+  "l1_transfer_k": 128,
+  "tradeoff": "fewer transfer/lookup/event groups, less V buffering; no guaranteed latency reduction",
+  "unchanged": "MM1, metadata plan, L0 compute order, softmax, workspace recurrence, graph capacities",
+  "fallback": "other compile-time geometries retain two V slots; non-D256 tasks retain their safe K split",
+  "qualification": "source only; restricted binary and device qualification required",
+  "graph_split_exclusive": false
+}

@@ -1,0 +1,88 @@
+{
+  "state": "passed",
+  "samples": 80,
+  "summaries": [
+    {
+      "cell": 0,
+      "capacity": 400,
+      "mean_us": 4195.4724,
+      "median_us": 4192.2895
+    },
+    {
+      "cell": 0,
+      "capacity": 512,
+      "mean_us": 5302.2917,
+      "median_us": 5313.3595
+    },
+    {
+      "cell": 1,
+      "capacity": 400,
+      "mean_us": 4345.4983,
+      "median_us": 4344.745
+    },
+    {
+      "cell": 1,
+      "capacity": 512,
+      "mean_us": 5536.6729,
+      "median_us": 5506.146
+    },
+    {
+      "cell": 2,
+      "capacity": 400,
+      "mean_us": 4357.4055,
+      "median_us": 4355.2655
+    },
+    {
+      "cell": 2,
+      "capacity": 512,
+      "mean_us": 5771.983,
+      "median_us": 5521.896
+    },
+    {
+      "cell": 3,
+      "capacity": 400,
+      "mean_us": 4219.4026,
+      "median_us": 4210.675
+    },
+    {
+      "cell": 3,
+      "capacity": 512,
+      "mean_us": 5352.7029,
+      "median_us": 5309.995
+    }
+  ],
+  "pairs": [
+    {
+      "control_cell": 0,
+      "wide_cell": 1,
+      "capacity": 400,
+      "mean_increase_percent": 3.5759000583581724,
+      "median_increase_percent": 3.6365689917168265
+    },
+    {
+      "control_cell": 0,
+      "wide_cell": 1,
+      "capacity": 512,
+      "mean_increase_percent": 4.420375438793744,
+      "median_increase_percent": 3.628335330970933
+    },
+    {
+      "control_cell": 3,
+      "wide_cell": 2,
+      "capacity": 400,
+      "mean_increase_percent": 3.2706739100933246,
+      "median_increase_percent": 3.433903115296255
+    },
+    {
+      "control_cell": 3,
+      "wide_cell": 2,
+      "capacity": 512,
+      "mean_increase_percent": 7.833053839024018,
+      "median_increase_percent": 3.9906063941679726
+    }
+  ],
+  "complete_output_hashes_equal": true,
+  "conclusion": "Reject wide-V candidate on both process orders",
+  "full_model_or_split_gain": false,
+  "recomputer_sha256": "295ecc97f49b309974f074e32b28a4f53f246b907f7b6fed1e60634034c37f90"
+}

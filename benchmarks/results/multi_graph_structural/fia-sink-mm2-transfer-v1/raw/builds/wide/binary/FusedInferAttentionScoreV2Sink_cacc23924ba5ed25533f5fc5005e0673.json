@@ -1,0 +1,580 @@
+{
+    "binFileName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673",
+    "binFileSuffix": ".o",
+    "blockDim": -1,
+    "coreType": "MIX",
+    "intercoreSync": 1,
+    "kernelName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673",
+    "magic": "RT_DEV_BINARY_MAGIC_ELF",
+    "memoryStamping": [],
+    "opParaSize": 1672,
+    "parameters": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+    "sha256": "d13191e7e6af465765f1822491c9fa55e96c12e327cca1c799dbe73eeec5abc8",
+    "workspace": {
+        "num": 1,
+        "size": [
+            -1
+        ],
+        "type": [
+            0
+        ]
+    },
+    "kernelList": [
+        {
+            "tilingKey": 104000000010222223,
+            "kernelType": "MIX_AIC",
+            "crossCoreSync": 1,
+            "taskRation": "1:2",
+            "kernelName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_104000000010222223"
+        },
+        {
+            "tilingKey": 104000000010322223,
+            "kernelType": "MIX_AIC",
+            "crossCoreSync": 1,
+            "taskRation": "1:2",
+            "kernelName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_104000000010322223"
+        }
+    ],
+    "taskRation": "tilingKey",
+    "optionalInputMode": "gen_placeholder",
+    "optionalOutputMode": "gen_placeholder",
+    "supportSuperKernel": 1,
+    "compileInfo": {},
+    "dynamicParamMode": "folded_with_desc",
+    "supportInfo": {
+        "implMode": "high_performance",
+        "int64Mode": false,
+        "simplifiedKeyMode": 0,
+        "simplifiedKey": [
+            "FusedInferAttentionScoreV2Sink/d=0,p=1/27,2/27,2/27,2/27,2/0,2/0,2/0,2",
+            "FusedInferAttentionScoreV2Sink/d=0,p=0/27,2/27,2/27,2/27,2/0,2/0,2/0,2",
+            "FusedInferAttentionScoreV2Sink/d=1,p=1/27,2/27,2/27,2/27,2/0,2/0,2/0,2",
+            "FusedInferAttentionScoreV2Sink/d=1,p=0/27,2/27,2/27,2/27,2/0,2/0,2/0,2"
+        ],
+        "dynamicParamMode": "folded_with_desc",
+        "optionalInputMode": "gen_placeholder",
+        "optionalOutputMode": "gen_placeholder",
+        "staticKey": "721d252f91f982ff332e2a530b508b05062f9c081dfc48910fcea5767e49a2dc,e4f2f5203139f2b31d1cd45e979a3ea9fa6cff46bc573d03bd3bb54515eda675",
+        "inputs": [
+            {
+                "name": "query",
+                "index": 0,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            [
+                {
+                    "name": "key",
+                    "index": 1,
+                    "dtype": "bfloat16",
+                    "format": "ND",
+                    "paramType": "dynamic",
+                    "shape": [
+                        -2
+                    ],
+                    "format_match_mode": "FormatAgnostic"
+                }
+            ],
+            [
+                {
+                    "name": "value",
+                    "index": 2,
+                    "dtype": "bfloat16",
+                    "format": "ND",
+                    "paramType": "dynamic",
+                    "shape": [
+                        -2
+                    ],
+                    "format_match_mode": "FormatAgnostic"
+                }
+            ],
+            {
+                "name": "pse_shift",
+                "index": 3,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "atten_mask",
+                "index": 4,
+                "dtype": "bool",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "actual_seq_lengths",
+                "index": 5,
+                "dtype": "int64",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "actual_seq_lengths_kv",
+                "index": 6,
+                "dtype": "int64",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "dequant_scale1",
+                "index": 7,
+                "dtype": "uint64",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "quant_scale1",
+                "index": 8,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "dequant_scale2",
+                "index": 9,
+                "dtype": "uint64",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "quant_scale2",
+                "index": 10,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "quant_offset2",
+                "index": 11,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "antiquant_scale",
+                "index": 12,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "antiquant_offset",
+                "index": 13,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "block_table",
+                "index": 14,
+                "dtype": "int32",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "query_padding_size",
+                "index": 15,
+                "dtype": "int64",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "kv_padding_size",
+                "index": 16,
+                "dtype": "int64",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "key_antiquant_scale",
+                "index": 17,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "key_antiquant_offset",
+                "index": 18,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "value_antiquant_scale",
+                "index": 19,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "value_antiquant_offset",
+                "index": 20,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "query_rope",
+                "index": 21,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "key_rope",
+                "index": 22,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "key_rope_antiquant_scale",
+                "index": 23,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "dequant_scale_query",
+                "index": 24,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "metadata",
+                "index": 25,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "learnable_sink",
+                "index": 26,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "key_sink",
+                "index": 27,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "key_rope_sink",
+                "index": 28,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "value_sink",
+                "index": 29,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "optional",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "attention_out",
+                "index": 0,
+                "dtype": "bfloat16",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "softmax_lse",
+                "index": 1,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "softmax_max",
+                "index": 2,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            },
+            {
+                "name": "softmax_sum",
+                "index": 3,
+                "dtype": "float32",
+                "format": "ND",
+                "paramType": "required",
+                "shape": [
+                    -2
+                ],
+                "format_match_mode": "FormatAgnostic"
+            }
+        ],
+        "attrs": [
+            {
+                "name": "num_heads",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "scale",
+                "dtype": "float",
+                "value": 0.0
+            },
+            {
+                "name": "pre_tokens",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "next_tokens",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "input_layout",
+                "dtype": "str",
+                "value": ""
+            },
+            {
+                "name": "num_key_value_heads",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "sparse_mode",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "inner_precise",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "block_size",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "antiquant_mode",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "softmax_lse_flag",
+                "dtype": "bool",
+                "value": false
+            },
+            {
+                "name": "key_antiquant_mode",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "value_antiquant_mode",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "query_quant_mode",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "pse_type",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "sink_number",
+                "dtype": "int",
+                "value": 0
+            },
+            {
+                "name": "batch_invariant",
+                "dtype": "bool",
+                "value": false
+            },
+            {
+                "name": "softmax_lse_max_sum",
+                "dtype": "bool",
+                "value": false
+            },
+            {
+                "name": "out_dtype",
+                "dtype": "int",
+                "value": 0
+            }
+        ],
+        "opMode": "dynamic",
+        "tilingKey": [
+            "104000000010222223",
+            "104000000010322223"
+        ],
+        "deterministic": "ignore"
+    }
+}

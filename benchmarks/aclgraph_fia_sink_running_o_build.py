@@ -10,7 +10,6 @@ import argparse
 import hashlib
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -86,7 +85,12 @@ def wrapper_options(text, resident):
 def canonical_key(value):
     if type(value) is int:
         value = str(value)
-    if type(value) is not str or not re.fullmatch(r"0|[1-9][0-9]{0,19}", value, flags=re.ASCII):
+    if (
+        type(value) is not str
+        or not 1 <= len(value) <= 20
+        or any(char < "0" or char > "9" for char in value)
+        or (len(value) > 1 and value[0] == "0")
+    ):
         raise ValueError("tiling keys must be canonical unsigned decimal uint64 values")
     if int(value) > MAX_TILING_KEY:
         raise ValueError("tiling key exceeds uint64")
@@ -153,19 +157,28 @@ def compile_command(wrapper, param, output, tiling_keys=None):
     return command
 
 
-def build(args, *, runner=subprocess.run):
+def build(
+    args,
+    *,
+    runner=subprocess.run,
+    source_patch=patch,
+    wrapper_transform=wrapper_options,
+    report_name=REPORT,
+    feature_name="resident",
+):
     root, configured, source, param, vendors, output = preflight(
         args.root, args.upstream_vendor, args.whole_vendor, args.output_dir
     )
     if type(args.resident) is not int or args.resident not in (0, 1) or args.timeout < 1:
         raise ValueError("resident must be 0/1 and timeout must be positive")
     tiling_keys = checked_tiling_keys(getattr(args, "tiling_keys", None))
+    if Path(report_name).name != report_name or feature_name not in ("resident", "wide_v"):
+        raise ValueError("unsupported experiment report or feature")
     output.mkdir(parents=True)
-    report = output / REPORT
+    report = output / report_name
     status = dict(
         state="running",
         started_unix=time.time(),
-        resident=bool(args.resident),
         npu_work_executed=False,
         system_install_performed=False,
         baseline_parameter=dict(path=str(param), sha256=sha256(param)),
@@ -174,6 +187,7 @@ def build(args, *, runner=subprocess.run):
         arbitrary_shape_fallback_qualified=False,
         source_scope="Copied generated AICore tree; original source/build/vendors remain unchanged",
     )
+    status[feature_name] = bool(args.resident)
 
     def save():
         report.write_text(json.dumps(status, indent=2) + "\n", encoding="ascii")
@@ -186,7 +200,7 @@ def build(args, *, runner=subprocess.run):
             str(path.relative_to(copied)): sha256(path) for path in sorted(copied.rglob("*")) if path.is_file()
         }
         save()
-        command = [sys.executable, str(Path(patch.__file__).resolve()), "--source", str(output / "source")]
+        command = [sys.executable, str(Path(source_patch.__file__).resolve()), "--source", str(output / "source")]
         status["patch_command"] = command
         save()
         with (output / "patch.log").open("xb") as log:
@@ -194,14 +208,15 @@ def build(args, *, runner=subprocess.run):
         if result.returncode:
             raise RuntimeError("isolated source patch failed")
         wrapper = copied / OP / WRAPPER
-        wrapper.write_text(wrapper_options(wrapper.read_text(), args.resident), encoding="utf-8")
+        wrapper.write_text(wrapper_transform(wrapper.read_text(), args.resident), encoding="utf-8")
         status["source_after"] = {
             str(path.relative_to(copied)): sha256(path) for path in sorted(copied.rglob("*")) if path.is_file()
         }
         changed = [
             name for name, digest in status["source_before"].items() if status["source_after"].get(name) != digest
         ]
-        expected = [OP + "/" + WRAPPER, OP + "/op_kernel/fia_block_vec_nonquant_sink.h"]
+        kernel_relative = source_patch.SOURCE.relative_to("csrc/attention").as_posix()
+        expected = [OP + "/" + WRAPPER, kernel_relative]
         if sorted(changed) != sorted(expected):
             raise RuntimeError("unexpected copied source mutation")
         status["changed_source_files"] = changed

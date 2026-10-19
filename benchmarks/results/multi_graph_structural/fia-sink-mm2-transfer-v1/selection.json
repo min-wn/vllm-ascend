@@ -1,0 +1,15 @@
+{
+  "raw_files_in_collected_manifest": 92,
+  "raw_files_retained": 89,
+  "omitted_binary_files": [
+    "builds/control/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "builds/wide/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "screen/cpu-transfer-contract"
+  ],
+  "original_collection_all_92_files_verified": true,
+  "omitted_binary_hashes_verified_before_publication": true,
+  "saved_checkout_cannot_rehash_omitted_binaries": true,
+  "measured_sources_unchanged": true,
+  "stop_decision": "Reject wide-V candidate: both process orders regress; no larger matrix",
+  "scope": "Two original records, synthetic sixteen-attention chain; no model/serving/split-exclusive result"
+}

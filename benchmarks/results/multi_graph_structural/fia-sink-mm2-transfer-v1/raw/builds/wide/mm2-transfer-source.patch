@@ -1,0 +1,45 @@
+--- a/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
++++ b/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
+@@ -337,16 +337,27 @@
+                                         uint32_t subNSize);
+ 
+   private:
++#if defined(THESIS_FIA_MM2_WIDE_V) && THESIS_FIA_MM2_WIDE_V && (__CCE_AICORE__ == 220)
++    static constexpr bool THESIS_MM2_WIDE_V =
++        IsSameType<Q_T, bfloat16_t>::value && IsSameType<KV_T, bfloat16_t>::value &&
++        PAGE_ATTENTION && LAYOUT_T == FIA_LAYOUT::TND && PA_LAYOUT == FIA_LAYOUT::BSH &&
++        !CFG::S2_BASICSIZE_IS_1024;
++#else
++    static constexpr bool THESIS_MM2_WIDE_V = false;
++#endif
+     // =================================L1 Buffer=================================
+     static constexpr uint32_t L1_Q_SIZE = CFG::S2_BASICSIZE_IS_1024 ? 128 * 192 : 256 * 192; // 64KB or 96KB
+     static constexpr uint32_t L1_V_SIZE = 256 * 128; // 64KB
+-    static constexpr uint32_t L1_SINK_V_SIZE = 128 * 128;
++    static constexpr uint32_t L1_SINK_V_SIZE = THESIS_MM2_WIDE_V ? 128 * 256 : 128 * 128;
+     static constexpr uint32_t L1_KP_SIZE = 128 * 256; // 64KB. K: 128 * 192 or 128 * 256; P: 128 * 256
+     static constexpr uint32_t L1_SINK_KP_SIZE = 128 * 192; // 对于P 只用到128*128， 对于K：用到128*192
+     static constexpr uint32_t L1_K_SINK_SIZE = 128 * 128;
+ 
+     static constexpr uint32_t L1_Q_BUFCNT = 2;
+-    static constexpr uint32_t L1_V_BUFCNT = CFG::S2_BASICSIZE_IS_1024 ? 4 : 2;
++    static constexpr uint32_t L1_V_BUFCNT = CFG::S2_BASICSIZE_IS_1024 ? 4 :
++        (THESIS_MM2_WIDE_V ? 1 : 2);
++    static_assert(L1_SINK_V_SIZE * L1_V_BUFCNT ==
++                  128 * 128 * (CFG::S2_BASICSIZE_IS_1024 ? 4 : 2));
+     static constexpr uint32_t L1_KP_BUFCNT = CFG::S2_BASICSIZE_IS_1024 ? 2 : 3;
+     static constexpr uint32_t L1_K_SINK_BUFCNT = 2;
+ 
+@@ -1345,7 +1356,11 @@
+ 
+     ResetLoad3DConfig<M_SPLIT_SIZE>();
+ 
+-    auto KL1Slices = k.Split(K_SPLIT_SIZE);
++    // Preserve the safe L0B bound and reduction order; only batch L1 transfers.
++    const uint32_t kL1Split = THESIS_MM2_WIDE_V && constInfo.headDim == 256U &&
++                             constInfo.headDimRope == 0U && !info.isSinkTensor
++        ? 128U : K_SPLIT_SIZE;
++    auto KL1Slices = k.Split(kL1Split);
+ 
+     bool canFullLoadV = (KL1Slices.size() <= L1_V_BUFCNT);
+     uint64_t vCoord = ((uint64_t)info.bIdx << 48) | ((uint64_t)info.n2Idx << 32) | ((uint64_t)info.s2Idx);

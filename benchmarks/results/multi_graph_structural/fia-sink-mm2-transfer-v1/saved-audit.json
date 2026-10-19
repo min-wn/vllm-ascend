@@ -1,0 +1,1676 @@
+{
+  "state": "passed",
+  "assertions": 1238,
+  "raw_files": 92,
+  "timings": 80,
+  "fp32_rows": 144,
+  "maximum_fp32_absolute_error": 0.00029981881380081177,
+  "complete_plan_checks": 24,
+  "collected_raw_files": 92,
+  "retained_raw_files": 89,
+  "local_binary_rehash_available": false,
+  "omitted_binaries": [
+    "builds/control/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "builds/wide/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "screen/cpu-transfer-contract"
+  ],
+  "summaries": [
+    {
+      "cell": 0,
+      "variant": "control",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4195.4724,
+      "median_us": 4192.2895,
+      "min_us": 4139.669,
+      "max_us": 4310.67
+    },
+    {
+      "cell": 0,
+      "variant": "control",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5302.2917,
+      "median_us": 5313.3595000000005,
+      "min_us": 5221.134,
+      "max_us": 5365.215
+    },
+    {
+      "cell": 1,
+      "variant": "wide",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4345.4983,
+      "median_us": 4344.745,
+      "min_us": 4306.87,
+      "max_us": 4378.81
+    },
+    {
+      "cell": 1,
+      "variant": "wide",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5536.6729,
+      "median_us": 5506.146,
+      "min_us": 5479.055,
+      "max_us": 5818.197
+    },
+    {
+      "cell": 2,
+      "variant": "wide",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4357.4055,
+      "median_us": 4355.2654999999995,
+      "min_us": 4320.261,
+      "max_us": 4396.551
+    },
+    {
+      "cell": 2,
+      "variant": "wide",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5771.983,
+      "median_us": 5521.896000000001,
+      "min_us": 5438.905,
+      "max_us": 7997.837
+    },
+    {
+      "cell": 3,
+      "variant": "control",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4219.4026,
+      "median_us": 4210.675,
+      "min_us": 4176.279,
+      "max_us": 4310.23
+    },
+    {
+      "cell": 3,
+      "variant": "control",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5352.7029,
+      "median_us": 5309.995,
+      "min_us": 5281.645,
+      "max_us": 5664.427
+    }
+  ],
+  "directional_pairs": [
+    {
+      "pair": 0,
+      "order": "control_to_wide",
+      "capacity": 400,
+      "control_mean_us": 4195.4724,
+      "wide_mean_us": 4345.4983,
+      "mean_reduction_percent": -3.5759000583581617,
+      "median_reduction_percent": -3.636568991716818,
+      "profile_attention_saved_us": -152.5431249999997
+    },
+    {
+      "pair": 0,
+      "order": "control_to_wide",
+      "capacity": 512,
+      "control_mean_us": 5302.2917,
+      "wide_mean_us": 5536.6729,
+      "mean_reduction_percent": -4.420375438793754,
+      "median_reduction_percent": -3.6283353309709088,
+      "profile_attention_saved_us": -211.28499999999985
+    },
+    {
+      "pair": 1,
+      "order": "wide_to_control",
+      "capacity": 400,
+      "control_mean_us": 4219.4026,
+      "wide_mean_us": 4357.4055,
+      "mean_reduction_percent": -3.270673910093327,
+      "median_reduction_percent": -3.4339031152962254,
+      "profile_attention_saved_us": -72.20125000000007
+    },
+    {
+      "pair": 1,
+      "order": "wide_to_control",
+      "capacity": 512,
+      "control_mean_us": 5352.7029,
+      "wide_mean_us": 5771.983,
+      "mean_reduction_percent": -7.833053839024018,
+      "median_reduction_percent": -3.9906063941679935,
+      "profile_attention_saved_us": -188.80337500000041
+    }
+  ],
+  "output_equality": [
+    {
+      "capacity": 400,
+      "all_four_cells_complete_output_hashes_equal": true
+    },
+    {
+      "capacity": 512,
+      "all_four_cells_complete_output_hashes_equal": true
+    }
+  ],
+  "profiles": [
+    {
+      "cell": 0,
+      "variant": "control",
+      "capacity": 400,
+      "label": "consumer/whole/cap400/repeat0",
+      "model_id": 0,
+      "physical_stream_id": 37,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3611.072125,
+      "attention_task_durations_us": [
+        231.564625,
+        226.3245,
+        224.2845,
+        223.224375,
+        222.844375,
+        224.2445,
+        227.5645,
+        221.244375,
+        233.12475,
+        229.244625,
+        228.704625,
+        222.0645,
+        223.8045,
+        224.7245,
+        223.0645,
+        225.044375
+      ],
+      "attention_first_to_last_envelope_us": 3649.232375,
+      "between_attention_noncompute_us": 38.160249999999905,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 79.981625,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.3,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 4529.08,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 0,
+      "variant": "control",
+      "capacity": 512,
+      "label": "consumer/whole/cap512/repeat0",
+      "model_id": 1,
+      "physical_stream_id": 38,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4769.694875,
+      "attention_task_durations_us": [
+        344.406875,
+        317.12625,
+        295.205875,
+        297.026,
+        298.726,
+        291.16575,
+        298.165875,
+        288.92575,
+        293.765875,
+        293.46575,
+        290.34575,
+        293.36575,
+        292.905875,
+        290.92575,
+        292.465875,
+        291.705875
+      ],
+      "attention_first_to_last_envelope_us": 4806.915875,
+      "between_attention_noncompute_us": 37.22099999999955,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 123.2625,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 2.02,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 5714.75,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 1,
+      "variant": "wide",
+      "capacity": 400,
+      "label": "consumer/whole/cap400/repeat0",
+      "model_id": 0,
+      "physical_stream_id": 37,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3763.61525,
+      "attention_task_durations_us": [
+        239.14475,
+        234.164625,
+        233.084625,
+        232.26475,
+        236.66475,
+        234.74475,
+        228.864625,
+        234.144625,
+        237.26475,
+        242.764875,
+        238.22475,
+        241.14475,
+        231.204625,
+        232.264625,
+        231.824625,
+        235.84475
+      ],
+      "attention_first_to_last_envelope_us": 3801.17575,
+      "between_attention_noncompute_us": 37.56050000000005,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 79.561625,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.26,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 4805.45,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 1,
+      "variant": "wide",
+      "capacity": 512,
+      "label": "consumer/whole/cap512/repeat0",
+      "model_id": 1,
+      "physical_stream_id": 38,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4980.979875,
+      "attention_task_durations_us": [
+        390.04775,
+        325.1265,
+        315.54625,
+        301.846,
+        304.446125,
+        303.186125,
+        311.04625,
+        298.566,
+        302.246125,
+        304.566125,
+        304.326125,
+        305.866125,
+        297.046,
+        303.346125,
+        307.046125,
+        306.726125
+      ],
+      "attention_first_to_last_envelope_us": 5017.500125,
+      "between_attention_noncompute_us": 36.52024999999958,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 137.72275,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.900125,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 6109.05,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 2,
+      "variant": "wide",
+      "capacity": 400,
+      "label": "consumer/whole/cap400/repeat0",
+      "model_id": 0,
+      "physical_stream_id": 37,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3750.134875,
+      "attention_task_durations_us": [
+        238.40475,
+        230.484625,
+        233.344625,
+        231.644625,
+        236.54475,
+        231.464625,
+        233.244625,
+        229.484625,
+        238.80475,
+        234.68475,
+        235.18475,
+        235.22475,
+        240.60475,
+        239.28475,
+        231.3045,
+        230.424625
+      ],
+      "attention_first_to_last_envelope_us": 3788.615625,
+      "between_attention_noncompute_us": 38.480749999999716,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 92.621875,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.32,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 4861.28,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 2,
+      "variant": "wide",
+      "capacity": 512,
+      "label": "consumer/whole/cap512/repeat0",
+      "model_id": 1,
+      "physical_stream_id": 38,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4960.51875,
+      "attention_task_durations_us": [
+        386.047625,
+        322.006375,
+        315.76625,
+        304.046,
+        300.045875,
+        306.026125,
+        310.06625,
+        301.986,
+        307.666125,
+        306.34625,
+        302.186,
+        298.625875,
+        299.586,
+        297.085875,
+        299.066,
+        303.966125
+      ],
+      "attention_first_to_last_envelope_us": 4998.600125,
+      "between_attention_noncompute_us": 38.08137499999975,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 129.5225,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 2.04,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 6164.96,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 3,
+      "variant": "control",
+      "capacity": 400,
+      "label": "consumer/whole/cap400/repeat0",
+      "model_id": 0,
+      "physical_stream_id": 37,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 3677.933625,
+      "attention_task_durations_us": [
+        241.804875,
+        234.64475,
+        232.264625,
+        225.5245,
+        222.8645,
+        227.964625,
+        227.6245,
+        231.944625,
+        231.544625,
+        228.3445,
+        232.844625,
+        230.564625,
+        224.9845,
+        226.1045,
+        228.144625,
+        230.764625
+      ],
+      "attention_first_to_last_envelope_us": 3715.133625,
+      "between_attention_noncompute_us": 37.19999999999982,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 87.82175,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 1.34,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 4595.17,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 0,
+          "physical_stream_id": 37,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    },
+    {
+      "cell": 3,
+      "variant": "control",
+      "capacity": 512,
+      "label": "consumer/whole/cap512/repeat0",
+      "model_id": 1,
+      "physical_stream_id": 38,
+      "attention_tasks": 16,
+      "attention_duration_sum_us": 4771.715375,
+      "attention_task_durations_us": [
+        345.286875,
+        315.56625,
+        293.425875,
+        294.485875,
+        293.005875,
+        292.585875,
+        303.766,
+        293.225875,
+        293.425875,
+        291.325875,
+        298.766,
+        300.706,
+        289.28575,
+        288.36575,
+        288.22575,
+        290.265875
+      ],
+      "attention_first_to_last_envelope_us": 4809.756875,
+      "between_attention_noncompute_us": 38.04150000000027,
+      "metadata_tasks": 1,
+      "metadata_duration_sum_us": 130.162625,
+      "metadata_zero_tasks": 1,
+      "metadata_zero_duration_sum_us": 2.16,
+      "cpu_legacy_update_calls": 0,
+      "cpu_legacy_update_duration_sum_us": 0.0,
+      "legacy_pcie_dma_tasks": 0,
+      "legacy_pcie_dma_duration_sum_us": 0.0,
+      "mem_wait_value_tasks": 0,
+      "mem_wait_value_duration_sum_us": 0.0,
+      "mem_wait_value_duration_union_us": 0.0,
+      "mem_wait_value_overlap_attention_envelope_us": 0.0,
+      "completion_notifications": 1,
+      "hardware_task_type_counts": {
+        "EVENT_RECORD": 2,
+        "EVENT_WAIT": 1,
+        "KERNEL_AICPU": 1,
+        "KERNEL_AIVEC": 1,
+        "KERNEL_MIX_AIC": 16,
+        "MODEL_EXECUTE": 1,
+        "NOTIFY_RECORD": 1,
+        "NOTIFY_WAIT": 1
+      },
+      "profiled_label_us": 5733.86,
+      "preparation_dma_in_label": 0,
+      "task_identities": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 0,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 1,
+          "subtask_id": 4294967295
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 2,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 3,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 4,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 5,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 6,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 7,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 8,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 9,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 10,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 11,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 12,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 13,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 14,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 15,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 16,
+          "subtask_id": 0
+        },
+        {
+          "name": "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 17,
+          "subtask_id": 0
+        },
+        {
+          "name": "NOTIFY_RECORD",
+          "model_id": 1,
+          "physical_stream_id": 38,
+          "task_id": 18,
+          "subtask_id": 4294967295
+        }
+      ]
+    }
+  ],
+  "scope": "Four-process screen, two fixed records, synthetic attention chain; no full-trace/model/split-exclusive claim",
+  "note": "Pair results remain separate; profiler observations are diagnostic. Three omitted binaries are checked against collection identities, not rehashed locally.",
+  "auditor_sha256": "78d34b03d58fc4ead5ddba823c09126288cd464fd8670248834f47e66303459f"
+}
