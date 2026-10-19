@@ -1,0 +1,43 @@
+W1019 14:37:26.428000 641554 site-packages/torch/distributed/run.py:852] 
+W1019 14:37:26.428000 641554 site-packages/torch/distributed/run.py:852] *****************************************
+W1019 14:37:26.428000 641554 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1019 14:37:26.428000 641554 site-packages/torch/distributed/run.py:852] *****************************************
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[rank0]:[W1019 14:37:37.088736552 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[2026-10-19 14:37:41] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:41] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:41] [WARNING] [641635] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 14:37:42] [INFO] [641796] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641635_20261019143741538_ascend_pt
+[2026-10-19 14:37:42] [INFO] [641795] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641636_20261019143741539_ascend_pt
+||//--[2026-10-19 14:37:44] [INFO] [641814] profiler.py: CANN profiling data parsed in a total time of 0:00:02.029832
+[2026-10-19 14:37:44] [INFO] [641813] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031089
+[2026-10-19 14:37:44] [INFO] [641795] profiler.py: All profiling data parsed in a total time of 0:00:02.662366[2026-10-19 14:37:44] [INFO] [641796] profiler.py: All profiling data parsed in a total time of 0:00:02.662409
+
+[2026-10-19 14:37:45] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:45] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:45] [WARNING] [641635] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 14:37:46] [INFO] [642327] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641635_20261019143745427_ascend_pt
+|[2026-10-19 14:37:46] [INFO] [642340] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641636_20261019143745427_ascend_pt
+|//-[2026-10-19 14:37:48] [INFO] [642336] profiler.py: CANN profiling data parsed in a total time of 0:00:02.029822
+-[2026-10-19 14:37:48] [INFO] [642354] profiler.py: CANN profiling data parsed in a total time of 0:00:02.029462
+[2026-10-19 14:37:48] [INFO] [642327] profiler.py: All profiling data parsed in a total time of 0:00:02.661743
+[2026-10-19 14:37:48] [INFO] [642340] profiler.py: All profiling data parsed in a total time of 0:00:02.658022
+[2026-10-19 14:37:49] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:49] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:49] [WARNING] [641635] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 14:37:50] [INFO] [642859] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641636_20261019143749248_ascend_pt
+[2026-10-19 14:37:50] [INFO] [642863] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641635_20261019143749248_ascend_pt
+||//--[2026-10-19 14:37:52] [INFO] [642877] profiler.py: CANN profiling data parsed in a total time of 0:00:02.032355
+[2026-10-19 14:37:52] [INFO] [642859] profiler.py: All profiling data parsed in a total time of 0:00:02.666075
+\[2026-10-19 14:37:53] [INFO] [642878] profiler.py: CANN profiling data parsed in a total time of 0:00:03.035417
+[2026-10-19 14:37:53] [INFO] [642863] profiler.py: All profiling data parsed in a total time of 0:00:03.665383
+[2026-10-19 14:37:54] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:54] [WARNING] [641635] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:37:54] [WARNING] [641635] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 14:37:54] [INFO] [643392] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641635_20261019143754130_ascend_pt
+[2026-10-19 14:37:54] [INFO] [643391] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_641636_20261019143754130_ascend_pt
+||//--[2026-10-19 14:37:57] [INFO] [643409] profiler.py: CANN profiling data parsed in a total time of 0:00:02.029931
+[2026-10-19 14:37:57] [INFO] [643413] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030396
+[2026-10-19 14:37:57] [INFO] [643392] profiler.py: All profiling data parsed in a total time of 0:00:02.669644
+[2026-10-19 14:37:57] [INFO] [643391] profiler.py: All profiling data parsed in a total time of 0:00:02.692692

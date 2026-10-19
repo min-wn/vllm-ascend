@@ -1,0 +1,16 @@
+{
+  "command": [
+    "torchrun",
+    "--standalone",
+    "--nproc-per-node=2",
+    "/workspace/aclgraph-full-path-budget-v2/tools/aclgraph_tp_chunk_cost_probe.py",
+    "--output",
+    "/workspace/aclgraph-full-path-budget-v2/chunk-cost/chunk.json"
+  ],
+  "source_sha256": "1ca5599e4ffc5ead59e070ca6f52372eb0c78c4c8245ad3e3dc5f2758e40c73c",
+  "environment": {
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1",
+    "TASK_QUEUE_ENABLE": "0",
+    "HCCL_DETERMINISTIC": "true"
+  }
+}

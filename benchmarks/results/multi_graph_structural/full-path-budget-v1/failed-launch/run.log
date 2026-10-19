@@ -1,0 +1,219 @@
+W1019 14:14:01.189000 638498 site-packages/torch/distributed/run.py:852] 
+W1019 14:14:01.189000 638498 site-packages/torch/distributed/run.py:852] *****************************************
+W1019 14:14:01.189000 638498 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1019 14:14:01.189000 638498 site-packages/torch/distributed/run.py:852] *****************************************
+INFO 10-19 14:14:11 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-19 14:14:11 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-19 14:14:11 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-19 14:14:11 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-19 14:14:11 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-19 14:14:11 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-19 14:14:11 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-19 14:14:11 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-19 14:14:11 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+INFO 10-19 14:14:11 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+INFO 10-19 14:14:22 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-19 14:14:22 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-19 14:14:22 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-19 14:14:22 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-19 14:14:22 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-19 14:14:22 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-19 14:14:22 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-19 14:14:22 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+WARNING 10-19 14:14:22 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-19 14:14:22 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-19 14:14:22 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+WARNING 10-19 14:14:22 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:14:22 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:14:22 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:14:22 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:14:22 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:14:22 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:14:22 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:14:24 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-19 14:14:24 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-19 14:14:24 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:14:24 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-19 14:14:24 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-19 14:14:24 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-19 14:14:24 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-19 14:14:24 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-19 14:14:24 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-19 14:14:24 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:14:24 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-19 14:14:24 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-19 14:14:24 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-19 14:14:24 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:14:24 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-19 14:14:24 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-19 14:14:24 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-19 14:14:24 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-19 14:14:24 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-19 14:14:24 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-19 14:14:24 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:14:24 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-19 14:14:24 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:14:24 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:14:24 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-19 14:14:24 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-19 14:14:24 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-19 14:14:24 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:14:24 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:14:24 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:14:24 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:14:24 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:14:24 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+WARNING 10-19 14:14:24 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-19 14:14:24 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-19 14:14:24 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-19 14:14:24 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-19 14:14:24 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:14:24 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:14:24 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:14:24 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-19 14:14:24 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-19 14:14:24 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-19 14:14:24 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:14:24 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:14:24 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:14:24 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:14:24 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:14:24 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-19 14:14:24 [ascend_config.py:324] Dynamic EPLB is False
+WARNING 10-19 14:14:24 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+INFO 10-19 14:14:24 [ascend_config.py:325] The number of redundant experts is 0
+WARNING 10-19 14:14:24 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-19 14:14:24 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-19 14:14:24 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-19 14:14:24 [vllm.py:1780] Cudagraph is disabled under eager mode
+INFO 10-19 14:14:24 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+WARNING 10-19 14:14:24 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:14:24 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:14:24 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:14:24 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-19 14:14:24 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+Traceback (most recent call last):
+  File "/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_probe.py", line 677, in <module>
+    main()
+  File "/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_probe.py", line 662, in main
+    run_full_model(args, trace, experiment=experiment)
+  File "/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_loader.py", line 88, in run_full_model
+    executor = ExecutorWithExternalLauncher(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 110, in __init__
+    self._init_executor()
+  File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 184, in _init_executor
+    super()._init_executor()
+  File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 68, in _init_executor
+    self.driver_worker.init_worker(all_kwargs=[kwargs])
+  File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 275, in init_worker
+    worker_class: type[WorkerBase] = resolve_obj_by_qualname(
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/utils/import_utils.py", line 130, in resolve_obj_by_qualname
+    module = importlib.import_module(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 85, in <module>
+    from vllm_ascend.device_allocator.camem import CaMemAllocator
+  File "/vllm-workspace/vllm-ascend/vllm_ascend/device_allocator/camem.py", line 27, in <module>
+    from acl.rt import memcpy  # type: ignore # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'acl'
+[ERROR] 2026-10-19-14:14:25 (PID:638580, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+Traceback (most recent call last):
+  File "/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_probe.py", line 677, in <module>
+    main()
+  File "/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_probe.py", line 662, in main
+    run_full_model(args, trace, experiment=experiment)
+  File "/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_loader.py", line 88, in run_full_model
+    executor = ExecutorWithExternalLauncher(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 110, in __init__
+    self._init_executor()
+  File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 184, in _init_executor
+    super()._init_executor()
+  File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 68, in _init_executor
+    self.driver_worker.init_worker(all_kwargs=[kwargs])
+  File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 275, in init_worker
+    worker_class: type[WorkerBase] = resolve_obj_by_qualname(
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/utils/import_utils.py", line 130, in resolve_obj_by_qualname
+    module = importlib.import_module(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 85, in <module>
+    from vllm_ascend.device_allocator.camem import CaMemAllocator
+  File "/vllm-workspace/vllm-ascend/vllm_ascend/device_allocator/camem.py", line 27, in <module>
+    from acl.rt import memcpy  # type: ignore # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'acl'
+[ERROR] 2026-10-19-14:14:25 (PID:638579, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+W1019 14:14:28.039000 638498 site-packages/torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 638579 closing signal SIGTERM
+E1019 14:14:28.155000 638498 site-packages/torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 1 (pid: 638580) of binary: /usr/local/python3.12.13/bin/python3
+Traceback (most recent call last):
+  File "/usr/local/python3.12.13/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/workspace/aclgraph-full-path-budget-v1/tools/multi_graph_gdn_q4_full_probe.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-10-19_14:14:28
+  host      : 16b0f9cecd11
+  rank      : 0 (local_rank: 0)
+  exitcode  : -15 (pid: 638579)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 638579
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-10-19_14:14:28
+  host      : 16b0f9cecd11
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 638580)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+[ERROR] 2026-10-19-14:14:28 (PID:638498, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

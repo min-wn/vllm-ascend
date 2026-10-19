@@ -1,0 +1,345 @@
+W1019 14:17:49.015000 639124 site-packages/torch/distributed/run.py:852] 
+W1019 14:17:49.015000 639124 site-packages/torch/distributed/run.py:852] *****************************************
+W1019 14:17:49.015000 639124 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1019 14:17:49.015000 639124 site-packages/torch/distributed/run.py:852] *****************************************
+INFO 10-19 14:17:58 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-19 14:17:58 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-19 14:17:58 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-19 14:17:58 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-19 14:17:59 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-19 14:17:59 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-19 14:17:59 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-19 14:17:59 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-19 14:17:59 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+INFO 10-19 14:17:59 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+2026-10-19 14:18:07,685 - 639205 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+2026-10-19 14:18:07,843 - 639206 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+INFO 10-19 14:18:09 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-19 14:18:09 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-19 14:18:09 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-19 14:18:09 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+WARNING 10-19 14:18:10 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+INFO 10-19 14:18:10 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-19 14:18:10 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-19 14:18:10 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-19 14:18:10 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+WARNING 10-19 14:18:10 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:18:10 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:18:10 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:18:10 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+WARNING 10-19 14:18:10 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-19 14:18:10 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:18:10 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:18:10 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:18:10 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:18:12 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-19 14:18:12 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-19 14:18:12 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:18:12 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-19 14:18:12 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-19 14:18:12 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-19 14:18:12 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-19 14:18:12 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-19 14:18:12 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-19 14:18:12 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:18:12 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-19 14:18:12 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:18:12 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:18:12 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-19 14:18:12 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-19 14:18:12 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-19 14:18:12 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:18:12 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:18:12 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:18:12 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:18:12 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:18:12 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+WARNING 10-19 14:18:12 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-19 14:18:12 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-19 14:18:12 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-19 14:18:12 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-19 14:18:12 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:18:12 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:18:12 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:18:12 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-19 14:18:12 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-19 14:18:12 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-19 14:18:12 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-19 14:18:12 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:18:12 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-19 14:18:12 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-19 14:18:12 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-19 14:18:12 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-19 14:18:12 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-19 14:18:12 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-19 14:18:12 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:18:12 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-19 14:18:12 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:18:12 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:18:12 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-19 14:18:12 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-19 14:18:12 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-19 14:18:12 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-19 14:18:12 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 14:18:12 [model.py:2030] Using max model len 2048
+WARNING 10-19 14:18:12 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-19 14:18:12 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-19 14:18:12 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+WARNING 10-19 14:18:12 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-19 14:18:12 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-19 14:18:12 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-19 14:18:12 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-19 14:18:12 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 14:18:12 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-19 14:18:12 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-19 14:18:12 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-19 14:18:12 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+WARNING 10-19 14:18:15 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+WARNING 10-19 14:18:15 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+INFO 10-19 14:18:17 [parallel_state.py:1827] world_size=2 rank=1 local_rank=1 distributed_init_method=env:// backend=hccl
+INFO 10-19 14:18:18 [parallel_state.py:1827] world_size=2 rank=0 local_rank=0 distributed_init_method=env:// backend=hccl
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+INFO 10-19 14:18:18 [parallel_state.py:2267] rank 0 in world size 2 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank N/A, EPLB rank N/A
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+WARNING 10-19 14:18:18 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-19 14:18:18 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+[rank0]:[W1019 14:18:18.952388930 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+INFO 10-19 14:18:18 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-19 14:18:18 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+WARNING 10-19 14:18:18 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-19 14:18:18 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+INFO 10-19 14:18:18 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-19 14:18:18 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-19 14:18:19 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-19 14:18:19 [interface.py:414] Using default backend AttentionBackendEnum.TORCH_SDPA for vit attention
+INFO 10-19 14:18:19 [mm_encoder_attention.py:372] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+INFO 10-19 14:18:19 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO 10-19 14:18:19 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+INFO 10-19 14:18:20 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-19 14:18:20 [weight_utils.py:895] Filesystem type for checkpoints: XFS. Checkpoint size: 51.75 GiB. Available RAM: 1974.51 GiB.
+INFO 10-19 14:18:20 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (XFS) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:02,  3.42it/s]
+Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:04,  1.83it/s]
+Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.49it/s]
+Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.46it/s]
+Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.40it/s]
+Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.38it/s]
+Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.50it/s]
+Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:05<00:01,  1.59it/s]
+Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.32it/s]
+INFO 10-19 14:18:27 [model_runner_v1.py:4522] Loading drafter model...
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.47it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.50it/s]
+
+INFO 10-19 14:18:27 [default_loader.py:430] Loading weights took 7.40 seconds
+INFO 10-19 14:18:28 [model_runner_v1.py:4522] Loading drafter model...
+INFO 10-19 14:18:28 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-19 14:18:28 [model_runner_v1.py:4671] Model runner load_model total time: 10.01 seconds
+INFO 10-19 14:18:28 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-19 14:18:28 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-19 14:18:28 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+INFO 10-19 14:18:29 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-19 14:18:29 [model_runner_v1.py:4671] Model runner load_model total time: 10.15 seconds
+INFO 10-19 14:18:29 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-19 14:18:29 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-19 14:18:29 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+full-model prefix owner=1/128 tokens=923
+full-model prefix owner=9/128 tokens=1036
+full-model prefix owner=17/128 tokens=946
+full-model prefix owner=25/128 tokens=697
+full-model prefix owner=33/128 tokens=674
+full-model prefix owner=41/128 tokens=1529
+full-model prefix owner=49/128 tokens=923
+full-model prefix owner=57/128 tokens=668
+full-model prefix owner=65/128 tokens=1330
+full-model prefix owner=73/128 tokens=1167
+full-model prefix owner=81/128 tokens=1065
+full-model prefix owner=89/128 tokens=1224
+full-model prefix owner=97/128 tokens=926
+full-model prefix owner=105/128 tokens=1027
+full-model prefix owner=113/128 tokens=872
+full-model prefix owner=121/128 tokens=941
+full-model prefix owner=128/128 tokens=1039
+rank=1 full-model warmup mode=deferred_tile_ready tokens=496
+rank=0 full-model warmup mode=deferred_tile_ready tokens=496
+rank=1 full-model warmup mode=deferred_tile_ready tokens=400
+rank=0 full-model warmup mode=deferred_tile_ready tokens=400
+rank=1 full-model warmup mode=deferred_tile_ready tokens=352
+rank=0 full-model warmup mode=deferred_tile_ready tokens=352
+rank=1 full-model warmup mode=deferred_tile_ready tokens=304
+rank=0 full-model warmup mode=deferred_tile_ready tokens=304
+rank=1 full-model warmup mode=deferred_tile_ready tokens=288
+rank=0 full-model warmup mode=deferred_tile_ready tokens=288
+rank=1 full-model warmup mode=deferred_tile_ready tokens=272
+rank=0 full-model warmup mode=deferred_tile_ready tokens=272
+rank=1 full-model capture begin mode=deferred_tile_ready tokens=496
+rank=0 full-model capture begin mode=deferred_tile_ready tokens=496
+rank=1 full-model captured mode=deferred_tile_ready tokens=496
+rank=0 full-model captured mode=deferred_tile_ready tokens=496
+rank=1 full-model capture begin mode=deferred_tile_ready tokens=400
+rank=0 full-model capture begin mode=deferred_tile_ready tokens=400
+rank=1 full-model captured mode=deferred_tile_ready tokens=400
+rank=0 full-model captured mode=deferred_tile_ready tokens=400
+rank=1 full-model capture begin mode=deferred_tile_ready tokens=352
+rank=0 full-model capture begin mode=deferred_tile_ready tokens=352
+rank=1 full-model captured mode=deferred_tile_ready tokens=352
+rank=0 full-model captured mode=deferred_tile_ready tokens=352
+rank=1 full-model capture begin mode=deferred_tile_ready tokens=304
+rank=0 full-model capture begin mode=deferred_tile_ready tokens=304
+rank=1 full-model captured mode=deferred_tile_ready tokens=304
+rank=0 full-model captured mode=deferred_tile_ready tokens=304
+rank=1 full-model capture begin mode=deferred_tile_ready tokens=288
+rank=0 full-model capture begin mode=deferred_tile_ready tokens=288
+rank=1 full-model captured mode=deferred_tile_ready tokens=288
+rank=0 full-model captured mode=deferred_tile_ready tokens=288
+rank=1 full-model capture begin mode=deferred_tile_ready tokens=272
+rank=0 full-model capture begin mode=deferred_tile_ready tokens=272
+rank=1 full-model captured mode=deferred_tile_ready tokens=272
+rank=0 full-model captured mode=deferred_tile_ready tokens=272
+Timeout (0:03:00)!
+Thread 0x0000fffe78f9f100 (most recent call first):
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 255 in _report_continuous_usage
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 173 in _report_usage_worker
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffee0f9f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 359 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 655 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffee17af100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffee1fbf100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffb209a640 (most recent call first):
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 89 in _identical
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 218 in _copy
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 295 in <genexpr>
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 295 in compare_replay
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 299 in replay_trajectories
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 597 in experiment
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 662 in main
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 677 in <module>
+Timeout (0:03:00)!
+Thread 0x0000fffebafdf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 359 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 655 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffebb7ef100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffebbfff100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffa00eb640 (most recent call first):
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 198 in _copy
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 295 in <genexpr>
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_stream_audit.py", line 295 in compare_replay
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 299 in replay_trajectories
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 597 in experiment
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 662 in main
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 677 in <module>
+rank=1 full-model qualified mode=deferred_tile_ready step=0
+rank=0 full-model qualified mode=deferred_tile_ready step=0
+rank=1 full-model qualified mode=deferred_tile_ready step=1
+rank=0 full-model qualified mode=deferred_tile_ready step=1
+[2026-10-19 14:23:33] [WARNING] [639205] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:23:33] [WARNING] [639205] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:23:33] [WARNING] [639205] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+WARNING 10-19 14:23:33 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=639205) is multi-threaded, use of fork() may lead to deadlocks in the child.
+WARNING 10-19 14:23:33 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=639206) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-10-19 14:23:33] [INFO] [639530] profiler.py: Start parsing profiling data in sync mode at: /vllm-workspace/vllm-ascend/export_only_prof_dir/16b0f9cecd11_639205_20261019142333011_ascend_pt
+[2026-10-19 14:23:33] [INFO] [639534] profiler.py: Start parsing profiling data in sync mode at: /vllm-workspace/vllm-ascend/export_only_prof_dir/16b0f9cecd11_639206_20261019142333011_ascend_pt
+||WARNING 10-19 14:23:34 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=639534) is multi-threaded, use of fork() may lead to deadlocks in the child.
+WARNING 10-19 14:23:34 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=639530) is multi-threaded, use of fork() may lead to deadlocks in the child.
+//--\\[2026-10-19 14:23:37] [INFO] [639548] profiler.py: CANN profiling data parsed in a total time of 0:00:03.034554
+[2026-10-19 14:23:37] [INFO] [639549] profiler.py: CANN profiling data parsed in a total time of 0:00:03.034592
+[2026-10-19 14:23:37] [INFO] [639534] profiler.py: All profiling data parsed in a total time of 0:00:03.764304
+[2026-10-19 14:23:37] [INFO] [639530] profiler.py: All profiling data parsed in a total time of 0:00:03.781224
+rank=1 full-model profile step=0 tokens=400
+rank=0 full-model profile step=0 tokens=400
+[2026-10-19 14:23:38] [WARNING] [639205] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:23:38] [WARNING] [639205] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:23:38] [WARNING] [639205] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 14:23:38] [INFO] [640062] profiler.py: Start parsing profiling data in sync mode at: /vllm-workspace/vllm-ascend/export_only_prof_dir/16b0f9cecd11_639205_20261019142338071_ascend_pt
+[2026-10-19 14:23:39] [INFO] [640066] profiler.py: Start parsing profiling data in sync mode at: /vllm-workspace/vllm-ascend/export_only_prof_dir/16b0f9cecd11_639206_20261019142338071_ascend_pt
+||WARNING 10-19 14:23:39 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=640066) is multi-threaded, use of fork() may lead to deadlocks in the child.
+WARNING 10-19 14:23:39 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=640062) is multi-threaded, use of fork() may lead to deadlocks in the child.
+//--\\[2026-10-19 14:23:42] [INFO] [640080] profiler.py: CANN profiling data parsed in a total time of 0:00:03.031995
+[2026-10-19 14:23:42] [INFO] [640082] profiler.py: CANN profiling data parsed in a total time of 0:00:03.030065
+[2026-10-19 14:23:42] [INFO] [640062] profiler.py: All profiling data parsed in a total time of 0:00:03.786849
+[2026-10-19 14:23:42] [INFO] [640066] profiler.py: All profiling data parsed in a total time of 0:00:03.783184
+rank=1 full-model profile step=1 tokens=304
+rank=0 full-model profile step=1 tokens=304
+[2026-10-19 14:23:43] [WARNING] [639205] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:23:43] [WARNING] [639205] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 14:23:43] [WARNING] [639205] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 14:23:44] [INFO] [640594] profiler.py: Start parsing profiling data in sync mode at: /vllm-workspace/vllm-ascend/export_only_prof_dir/16b0f9cecd11_639206_20261019142343480_ascend_pt
+|WARNING 10-19 14:23:44 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=640594) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-10-19 14:23:44] [INFO] [640606] profiler.py: Start parsing profiling data in sync mode at: /vllm-workspace/vllm-ascend/export_only_prof_dir/16b0f9cecd11_639205_20261019142343480_ascend_pt
+|WARNING 10-19 14:23:44 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=640606) is multi-threaded, use of fork() may lead to deadlocks in the child.
+//--\[2026-10-19 14:23:47] [INFO] [640603] profiler.py: CANN profiling data parsed in a total time of 0:00:03.032859
+\[2026-10-19 14:23:47] [INFO] [640621] profiler.py: CANN profiling data parsed in a total time of 0:00:03.031624
+[2026-10-19 14:23:47] [INFO] [640594] profiler.py: All profiling data parsed in a total time of 0:00:03.782372
+[2026-10-19 14:23:48] [INFO] [640606] profiler.py: All profiling data parsed in a total time of 0:00:03.776315
+rank=1 full-model profile step=5 tokens=496
+rank=0 full-model profile step=5 tokens=496
+Timeout (0:03:00)!
+Thread 0x0000fffe78f9f100 (most recent call first):
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 255 in _report_continuous_usage
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 173 in _report_usage_worker
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffee0f9f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 359 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 655 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffee17af100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffee1fbf100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffb209a640 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/memory.py", line 180 in empty_cache
+  File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_torch_accelerator.py", line 5 in patch_empty_cache
+  File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6620 in _cleanup_profiling_kv_cache
+  File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6576 in shutdown
+  File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 386 in shutdown
+  File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 244 in shutdown
+  File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 154 in shutdown
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_loader.py", line 113 in run_full_model
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 662 in main
+  File "/workspace/aclgraph-full-path-budget-v2/tools/multi_graph_gdn_q4_full_probe.py", line 677 in <module>
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -162,9 +162,14 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         else ("deferred_overlap", "deferred_pipeline")
     )
     candidate = "deferred_tile_ready" if args.tile_extension is not None else "deferred_pipeline"
+    diagnostic = args.phase == "diagnostic"
+    steps = trace.steps[: args.diagnostic_steps] if diagnostic else trace.steps
+    capacities = sorted(set(selection["dispatched_tokens"][: len(steps)]))
+    if diagnostic:
+        modes = ("deferred_tile_ready",)
     initial = complete_snapshot(torch, bundle, registry)
     frames, tokens = {}, {}
-    for capacity in selection["required_tokens"]:
+    for capacity in capacities:
         index = selection["dispatched_tokens"].index(capacity)
         frames[capacity] = factory.decode(trace.steps[index], capacity)
         tokens[capacity] = torch.zeros(capacity, dtype=torch.int64, device="npu")
@@ -227,7 +232,8 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
             print(f"rank={dist.get_rank()} full-model captured mode={mode} tokens={capacity}", flush=True)
     report["capture"] = dict(
         graphs=len(entries),
-        required_default_buckets=selection["required_tokens"],
+        required_default_buckets=capacities,
+        diagnostic_subset=diagnostic,
         fia_tasks_per_graph=16,
         elapsed_seconds=time.perf_counter() - capture_start,
         partition=(
@@ -312,7 +318,7 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         for mode in modes if trial % 2 == 0 else reversed(modes):
             registry.mode = mode
             restore_complete(torch, bundle, registry, initial)
-            for index, step in enumerate(trace.steps):
+            for index, step in enumerate(steps):
                 capacity = selection["dispatched_tokens"][index]
                 dist.barrier(group=cpu_group)
                 start = time.perf_counter_ns()
@@ -342,6 +348,34 @@ def replay_trajectories(args, torch, dist, bundle, factory, registry, forward, v
         for mode in modes
     }
     means = {mode: latency[mode]["mean_us"] for mode in modes}
+    if diagnostic:
+        from aclgraph_full_path_profile import profile_replays
+
+        report.update(
+            status="diagnostic_timing_complete_profiles_pending",
+            samples=samples,
+            latency=latency,
+            diagnostic_steps=len(steps),
+            complete_goal_achieved=False,
+            correctness_limitations="only the declared continued qualification steps are fully state-audited",
+        )
+        checkpoint()
+        report["profiles"] = profile_replays(
+            args,
+            torch,
+            dist,
+            registry,
+            steps,
+            selection,
+            entries,
+            prepare,
+            replay,
+            restore=lambda: restore_complete(torch, bundle, registry, initial),
+            cpu_group=cpu_group,
+        )
+        report["status"] = "diagnostic_complete_not_a_speedup_comparison"
+        checkpoint()
+        return
     attribution = replay_attribution(means, tile_enabled=args.tile_extension is not None)
     baseline = attribution["algorithm_control"]
     paired_trials = []
@@ -558,7 +592,7 @@ def experiment(args, trace, runner, model, config):
             )
             registry.register(item.state.handle, backend, item.gdn.out_proj)
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
-        if args.phase == "replay":
+        if args.phase in ("replay", "diagnostic"):
             with installed_log_registry(registry):
                 replay_trajectories(
                     args, torch, dist, bundle, factory, registry, forward, vocabulary, report, checkpoint=save
@@ -599,7 +633,8 @@ def main():
         type=Path,
         default=Path(__file__).parent / "results/multi_graph_structural/structural-dynamic-trace-v1.json",
     )
-    parser.add_argument("--phase", choices=("allocation", "prefix", "eager", "replay"), default="eager")
+    parser.add_argument("--phase", choices=("allocation", "prefix", "eager", "replay", "diagnostic"), default="eager")
+    parser.add_argument("--diagnostic-steps", type=int, default=6)
     parser.add_argument(
         "--prefix-limit", type=int, help="partial initialization diagnostic; never a full-model qualification"
     )
@@ -615,6 +650,10 @@ def main():
         parser.error("require a new output path and prefix-limit in 1..128")
     if args.trials < 2 or not 2 <= args.qualification_steps <= 128:
         parser.error("at least two paired trials and 2..128 continued qualification steps required")
+    if args.phase == "diagnostic" and (
+        args.tile_extension is None or not args.qualification_steps <= args.diagnostic_steps <= 128
+    ):
+        parser.error("diagnostic requires the public ready-tile kernel and qualification_steps <= steps <= 128")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     faulthandler.enable()
     faulthandler.dump_traceback_later(180, repeat=True)
