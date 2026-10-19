@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "capacity": 400,
+      "sum_true_kv_lengths": 94402,
+      "kv_heads": 2,
+      "head_dim": 256,
+      "element_bytes": 2,
+      "kv_factor": 2,
+      "logical_kv_bytes_per_occurrence": 193335296,
+      "logical_running_o_gm_bytes_avoidable_per_occurrence": 13271040,
+      "ratio_percent": 6.864261350395119
+    },
+    {
+      "capacity": 512,
+      "sum_true_kv_lengths": 132455,
+      "kv_heads": 2,
+      "head_dim": 256,
+      "element_bytes": 2,
+      "kv_factor": 2,
+      "logical_kv_bytes_per_occurrence": 271267840,
+      "logical_running_o_gm_bytes_avoidable_per_occurrence": 18972672,
+      "ratio_percent": 6.994073458910574
+    }
+  ],
+  "formula": "sum(kv_lengths) * 2(K,V) * 2(KVheads) * 256(D) * 2(BF16 bytes)",
+  "not_measured_hbm_traffic": true,
+  "no_latency_upper_bound_claim": true,
+  "scope": "Logical useful K/V work only; cache hits, reloads, alignment and pipeline overlap are not modeled.",
+  "source_sha256": "cf454aabdc3035ebc8e410fa33c47cca6bd27bbaf318d8a8597e18d89b4ce559"
+}

@@ -1,0 +1,49 @@
+{
+  "all_rejected": true,
+  "mutations": 8,
+  "checks": [
+    {
+      "mutation": "sample_deleted",
+      "rejected": true,
+      "reason": "twenty unfiltered raw timings"
+    },
+    {
+      "mutation": "all_input_hash_changed",
+      "rejected": true,
+      "reason": "same-variant exact reference identity input_identity"
+    },
+    {
+      "mutation": "full_output_hash_changed",
+      "rejected": true,
+      "reason": "all output bytes equal same-variant reference"
+    },
+    {
+      "mutation": "full_plan_word_changed",
+      "rejected": true,
+      "reason": "full plan byte hash"
+    },
+    {
+      "mutation": "prepared_steps_changed",
+      "rejected": true,
+      "reason": "complete prepared-descriptor accounting prepared_steps"
+    },
+    {
+      "mutation": "warmup_changed",
+      "rejected": true,
+      "reason": "all warmups outside timing"
+    },
+    {
+      "mutation": "producer_inventory_changed",
+      "rejected": true,
+      "reason": "same-variant exact reference identity opp_artifacts"
+    },
+    {
+      "mutation": "actual_cli_seed_changed",
+      "rejected": true,
+      "reason": "frozen CLI option --seed"
+    }
+  ],
+  "auditor_sha256": "9714ce7683710225c245eface947fca8cde7ee38e319c33c0e9513e46913818f",
+  "raw_bundle_mutated": false,
+  "npu_work_executed": false
+}

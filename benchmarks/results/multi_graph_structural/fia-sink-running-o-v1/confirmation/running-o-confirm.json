@@ -1,0 +1,143 @@
+{
+  "state": "completed",
+  "started_unix": 1792401974.3885095,
+  "runs": [
+    {
+      "variant": "control",
+      "policy": "whole",
+      "process_order_index": 0,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3/aclgraph_fia_sink_consumer_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-build-control-v3/vendor-whole",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-confirm-v1/cell-00-control-whole",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--mode",
+        "whole",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--profile-repeats",
+        "1",
+        "--seed",
+        "1703",
+        "--timeout",
+        "900"
+      ],
+      "launched_unix": 1792401976.6444404,
+      "report_path": "cell-00-control-whole/consumer-probe.json",
+      "pid": 2998687,
+      "returncode": 0,
+      "finished_unix": 1792402041.1578405,
+      "report_sha256": "cf454aabdc3035ebc8e410fa33c47cca6bd27bbaf318d8a8597e18d89b4ce559"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "process_order_index": 1,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3/aclgraph_fia_sink_consumer_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-build-resident-v3/vendor-whole",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-confirm-v1/cell-01-resident-whole",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--mode",
+        "whole",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--profile-repeats",
+        "1",
+        "--seed",
+        "1703",
+        "--timeout",
+        "900"
+      ],
+      "launched_unix": 1792402042.2748997,
+      "report_path": "cell-01-resident-whole/consumer-probe.json",
+      "pid": 3080850,
+      "returncode": 0,
+      "finished_unix": 1792402105.0384374,
+      "report_sha256": "13c1cb843a87831814c8f58348f24e3092b39a7b07546cd972280b3f8d00d057"
+    }
+  ],
+  "builds": {
+    "control": {
+      "report_sha256": "36bbec81b52ed85bf4f33ebac911bbe4edffced127d7b2e582d3527ae28e46f0",
+      "artifacts": {
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": {
+          "bytes": 150336,
+          "sha256": "0ef799f0ec513f2fb2c9b0e642379f3123911fdaf9b656f17ab3976c139d1743"
+        },
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": {
+          "bytes": 16813,
+          "sha256": "de502e77fea068afa5b95bd1e1969f8bf6a31bd6b6773541caac167dbd0bb9e1"
+        }
+      }
+    },
+    "resident": {
+      "report_sha256": "6216bcec3693923ed203fa08b96ccb3f976d6d717d82c0e73091497713e02ce0",
+      "artifacts": {
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": {
+          "bytes": 150336,
+          "sha256": "ecaaf9ac324d83d252d0defc7f047383d40c537c23b1f551495bbb4b96b1625f"
+        },
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": {
+          "bytes": 16813,
+          "sha256": "5146a90bc7ea11dfa8e06ac81934ad587d1847c5bda39fb01e996e46fc878dd7"
+        }
+      }
+    }
+  },
+  "design": {
+    "cells": [
+      [
+        "control",
+        "whole"
+      ],
+      [
+        "resident",
+        "whole"
+      ]
+    ],
+    "repeats": 10,
+    "warmups": 5,
+    "profile_repeats": 1,
+    "seed": 1703,
+    "trial": 0,
+    "capacities": [
+      400,
+      512
+    ],
+    "occurrences": 16
+  },
+  "motivation": "Reverse preceding whole pair order to check the 1% median observation and submission spike; retain every sample",
+  "builds_reused_from_v3": true,
+  "consumer_probe_unchanged": true,
+  "performance_measured": true,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "returncode": 0,
+  "finished_unix": 1792402106.1796882
+}

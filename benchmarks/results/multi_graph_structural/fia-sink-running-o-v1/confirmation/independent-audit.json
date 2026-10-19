@@ -1,0 +1,316 @@
+{
+  "qualified": true,
+  "assertions": 2917,
+  "reference_assertions": 5393,
+  "manifest_files": 22,
+  "process_count": 2,
+  "timings": 40,
+  "sampled_fp32_rows": 72,
+  "complete_plan_checks": 12,
+  "same_variant_reference_all_input_output_bytes_and_plans": true,
+  "builds": {
+    "control": {
+      "report_sha256": "36bbec81b52ed85bf4f33ebac911bbe4edffced127d7b2e582d3527ae28e46f0",
+      "artifacts": {
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": {
+          "bytes": 150336,
+          "sha256": "0ef799f0ec513f2fb2c9b0e642379f3123911fdaf9b656f17ab3976c139d1743"
+        },
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": {
+          "bytes": 16813,
+          "sha256": "de502e77fea068afa5b95bd1e1969f8bf6a31bd6b6773541caac167dbd0bb9e1"
+        }
+      },
+      "restricted_tiling_keys": [
+        "104000000010222223",
+        "104000000010322223"
+      ]
+    },
+    "resident": {
+      "report_sha256": "6216bcec3693923ed203fa08b96ccb3f976d6d717d82c0e73091497713e02ce0",
+      "artifacts": {
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": {
+          "bytes": 150336,
+          "sha256": "ecaaf9ac324d83d252d0defc7f047383d40c537c23b1f551495bbb4b96b1625f"
+        },
+        "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": {
+          "bytes": 16813,
+          "sha256": "5146a90bc7ea11dfa8e06ac81934ad587d1847c5bda39fb01e996e46fc878dd7"
+        }
+      },
+      "restricted_tiling_keys": [
+        "104000000010222223",
+        "104000000010322223"
+      ]
+    }
+  },
+  "summaries": [
+    {
+      "timings": 20,
+      "fp32_rows": 36,
+      "complete_plan_checks": 6,
+      "maximum_fp32_absolute_error": 0.00029981881380081177,
+      "timing": [
+        {
+          "capacity": 400,
+          "samples": 10,
+          "samples_removed": 0,
+          "wall_us": 4248.4008,
+          "queue_span_us": 3968.288016319275,
+          "preparation_enqueue_us": 221.0168,
+          "submit_join_cpu_us": 239.673,
+          "wall_median_us": 4234.638,
+          "wall_min_us": 4199.707,
+          "wall_max_us": 4340.409,
+          "wall_range_us": 140.70199999999932,
+          "maximum_sample": {
+            "trial": 0,
+            "mode": "whole",
+            "policy": "whole",
+            "repeat": 6,
+            "step": 0,
+            "batch": 98,
+            "capacity": 400,
+            "wall_us": 4340.409,
+            "preparation_enqueue_us": 228.011,
+            "submit_join_cpu_us": 274.161,
+            "queue_span_us": 4060.800075531006,
+            "legacy_update_calls_delta": 0,
+            "legacy_updated_tasks_delta": 0
+          }
+        },
+        {
+          "capacity": 512,
+          "samples": 10,
+          "samples_removed": 0,
+          "wall_us": 5333.8394,
+          "queue_span_us": 5014.196014404297,
+          "preparation_enqueue_us": 256.9821,
+          "submit_join_cpu_us": 237.635,
+          "wall_median_us": 5329.572,
+          "wall_min_us": 5291.392,
+          "wall_max_us": 5371.013,
+          "wall_range_us": 79.6210000000001,
+          "maximum_sample": {
+            "trial": 0,
+            "mode": "whole",
+            "policy": "whole",
+            "repeat": 1,
+            "step": 29,
+            "batch": 128,
+            "capacity": 512,
+            "wall_us": 5371.013,
+            "preparation_enqueue_us": 263.532,
+            "submit_join_cpu_us": 254.121,
+            "queue_span_us": 5047.239780426025,
+            "legacy_update_calls_delta": 0,
+            "legacy_updated_tasks_delta": 0
+          }
+        }
+      ],
+      "output_identity": [
+        {
+          "capacity": 400,
+          "phase": "pre_checks",
+          "all_16_output_hashes_match_reference": true
+        },
+        {
+          "capacity": 512,
+          "phase": "pre_checks",
+          "all_16_output_hashes_match_reference": true
+        },
+        {
+          "capacity": 400,
+          "phase": "post_checks",
+          "all_16_output_hashes_match_reference": true
+        },
+        {
+          "capacity": 512,
+          "phase": "post_checks",
+          "all_16_output_hashes_match_reference": true
+        }
+      ],
+      "variant": "control",
+      "policy": "whole"
+    },
+    {
+      "timings": 20,
+      "fp32_rows": 36,
+      "complete_plan_checks": 6,
+      "maximum_fp32_absolute_error": 0.00029981881380081177,
+      "timing": [
+        {
+          "capacity": 400,
+          "samples": 10,
+          "samples_removed": 0,
+          "wall_us": 4271.701,
+          "queue_span_us": 3987.186050415039,
+          "preparation_enqueue_us": 224.114,
+          "submit_join_cpu_us": 232.98,
+          "wall_median_us": 4265.273,
+          "wall_min_us": 4204.218,
+          "wall_max_us": 4318.178,
+          "wall_range_us": 113.96000000000004,
+          "maximum_sample": {
+            "trial": 0,
+            "mode": "whole",
+            "policy": "whole",
+            "repeat": 2,
+            "step": 0,
+            "batch": 98,
+            "capacity": 400,
+            "wall_us": 4318.178,
+            "preparation_enqueue_us": 229.391,
+            "submit_join_cpu_us": 241.811,
+            "queue_span_us": 4024.0402221679688,
+            "legacy_update_calls_delta": 0,
+            "legacy_updated_tasks_delta": 0
+          }
+        },
+        {
+          "capacity": 512,
+          "samples": 10,
+          "samples_removed": 0,
+          "wall_us": 5411.8407,
+          "queue_span_us": 5083.039999008179,
+          "preparation_enqueue_us": 265.889,
+          "submit_join_cpu_us": 238.7,
+          "wall_median_us": 5400.5075,
+          "wall_min_us": 5353.652,
+          "wall_max_us": 5484.623,
+          "wall_range_us": 130.97099999999955,
+          "maximum_sample": {
+            "trial": 0,
+            "mode": "whole",
+            "policy": "whole",
+            "repeat": 1,
+            "step": 29,
+            "batch": 128,
+            "capacity": 512,
+            "wall_us": 5484.623,
+            "preparation_enqueue_us": 296.251,
+            "submit_join_cpu_us": 272.141,
+            "queue_span_us": 5121.379852294922,
+            "legacy_update_calls_delta": 0,
+            "legacy_updated_tasks_delta": 0
+          }
+        }
+      ],
+      "output_identity": [
+        {
+          "capacity": 400,
+          "phase": "pre_checks",
+          "all_16_output_hashes_match_reference": true
+        },
+        {
+          "capacity": 512,
+          "phase": "pre_checks",
+          "all_16_output_hashes_match_reference": true
+        },
+        {
+          "capacity": 400,
+          "phase": "post_checks",
+          "all_16_output_hashes_match_reference": true
+        },
+        {
+          "capacity": 512,
+          "phase": "post_checks",
+          "all_16_output_hashes_match_reference": true
+        }
+      ],
+      "variant": "resident",
+      "policy": "whole"
+    }
+  ],
+  "profile": [
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 400,
+      "attention_kernels": 16,
+      "attention_sum_us": 3654.213,
+      "between_attention_gap_us": 38.28049999999985,
+      "producer_sum_us": 77.2415,
+      "clear_sum_us": 1.500125,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 512,
+      "attention_kernels": 16,
+      "attention_sum_us": 4781.15575,
+      "between_attention_gap_us": 37.301124999999956,
+      "producer_sum_us": 125.1425,
+      "clear_sum_us": 2.0,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 400,
+      "attention_kernels": 16,
+      "attention_sum_us": 3649.3725,
+      "between_attention_gap_us": 36.121000000000095,
+      "producer_sum_us": 73.5015,
+      "clear_sum_us": 1.34,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 512,
+      "attention_kernels": 16,
+      "attention_sum_us": 4837.53625,
+      "between_attention_gap_us": 37.98149999999987,
+      "producer_sum_us": 126.4025,
+      "clear_sum_us": 2.040125,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    }
+  ],
+  "consumer_changes": [
+    {
+      "capacity": 400,
+      "control_wall_us": 4248.4008,
+      "resident_wall_us": 4271.701,
+      "saved_wall_us": -23.300199999999677,
+      "reduction_percent": -0.5484463706908179,
+      "control_wall_median_us": 4234.638,
+      "resident_wall_median_us": 4265.273,
+      "median_reduction_percent": -0.723438461563898,
+      "profile_attention_saved_us": 4.840500000000247,
+      "samples_removed": 0
+    },
+    {
+      "capacity": 512,
+      "control_wall_us": 5333.8394,
+      "resident_wall_us": 5411.8407,
+      "saved_wall_us": -78.0012999999999,
+      "reduction_percent": -1.4623856128851556,
+      "control_wall_median_us": 5329.572,
+      "resident_wall_median_us": 5400.5075,
+      "median_reduction_percent": -1.3309792981500126,
+      "profile_attention_saved_us": -56.38050000000021,
+      "samples_removed": 0
+    }
+  ],
+  "npu0_idle_before_each_and_after": true,
+  "source": {
+    "bundle": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\ro-confirm-v1",
+    "reference": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\fia-sink-running-o-v1",
+    "suite_sha256": "59cc8469a8f692364c69d9a838173ee86689cc3e0a8818c67d97d475d1dabe0b",
+    "auditor_sha256": "9714ce7683710225c245eface947fca8cde7ee38e319c33c0e9513e46913818f",
+    "pure_helper_auditor_sha256": "36be19217330214fd8d2e1d5403aa0f02527f5a2b7729a461bcd8db67e7215b4"
+  },
+  "samples_removed": 0,
+  "stable_performance_gain_established": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "limitations": [
+    "One fresh process per variant in reversed whole-policy order; confounds remain.",
+    "Synthetic two-record sixteen-attention chain, not dynamic/full-model/serving or split-versus-padding evidence.",
+    "Every formal sample and spike retained; four profiles are separate one-replay attribution diagnostics.",
+    "Full output equality applies to the frozen workload; sampled FP32 checks do not prove arbitrary inputs."
+  ]
+}

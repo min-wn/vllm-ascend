@@ -7,6 +7,10 @@ The isolated running-O source patch and both macro builds are now complete;
 the four-cell `v3` runtime comparison and independent audit are complete.
 The bounded result below does not establish a stable gain. A Chinese overview is available in the
 [current scheme explanation](aclgraph_dynamic_shape_current_scheme_zh.md).
+The subsequent reversed whole-policy pair does not reproduce the running-O
+gain: wall means regress by 0.548%/1.462% at capacity400/512. The patch remains
+an isolated correctness-qualified candidate and does not enter full-model
+integration as an established optimization.
 
 ## Question
 
@@ -298,6 +302,32 @@ as measured HBM traffic. The affected source/plan and profile evidence support
 further bounded validation; they do not establish a dynamic-trace, full-model,
 serving or graph-splitting gain. On-chip accumulation remains established
 practice, and the same legal fast consumer remains available to both policies.
+
+### Reversed whole-policy pair
+
+A second two-process screen reuses the exact `v3` binaries and frozen probe,
+running control then resident to reverse the original whole-pair order.
+It preserves all forty timings, the same two original records and independent
+pre/post qualification. No compile, arithmetic or input change is introduced.
+
+| Capacity | Control mean us | Resident mean us | Mean reduction | Median reduction | Profile attention sum saved us |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 400 | 4248.401 | 4271.701 | -0.548% | -0.723% | 4.841 |
+| 512 | 5333.839 | 5411.841 | -1.462% | -1.331% | -56.381 |
+
+The gain does not reproduce; negative reductions mean regression. Keep both
+screens separately and do not treat replay samples as independent process
+replicates. This is insufficient evidence to promote the resident consumer
+to full-model integration or call its earlier favorable values stable.
+The exact reverse-pair evidence is stored separately under
+`fia-sink-running-o-v1/confirmation/`.
+
+Actual descriptor lengths imply 193.34/271.27 MB of logical K/V reads per
+attention occurrence versus 13.27/18.97 MB of logically avoidable whole-policy
+running-output workspace reads/writes. These are source/shape work counts,
+not measured HBM bytes or a latency model. They reinforce the need to inspect
+larger paged-K/V movement, layout conversion and Cube/Vector handoff before
+expanding the resident-output experiment.
 
 ## Why this does not supersede Stage 7
 
