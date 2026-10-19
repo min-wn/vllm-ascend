@@ -1,0 +1,45 @@
+{
+  "configs": [
+    {
+      "policy": "upstream",
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/config/cust_aicpu_kernel.json",
+      "sha256": "1127c8287069e1ab1f2a681e76a3dd9c1385eb86e2a8584dd02400333ed09203",
+      "content": {
+        "FusedInferAttentionScoreV2SinkMetadata": {
+          "opInfo": {
+            "computeCost": "100",
+            "engine": "DNN_VM_AICPU",
+            "flagAsync": "False",
+            "flagPartial": "False",
+            "functionName": "RunCpuKernel",
+            "kernelSo": "libfia_v2_sink_aicpu_kernels.so",
+            "opKernelLib": "CUSTAICPUKernel",
+            "userDefined": "True",
+            "workspaceSize": "100"
+          }
+        }
+      }
+    },
+    {
+      "policy": "whole",
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3/op_impl/cpu/config/cust_aicpu_kernel.json",
+      "sha256": "7d5c6a82a6ae43ffa7ba3fbb2d13f8ebad8b85728fbbc9ddac4a35e3df724d1b",
+      "content": {
+        "FusedInferAttentionScoreV2SinkMetadata": {
+          "opInfo": {
+            "computeCost": "100",
+            "engine": "DNN_VM_AICPU",
+            "flagAsync": "False",
+            "flagPartial": "False",
+            "functionName": "RunCpuKernel",
+            "kernelSo": "libthesis_stage5_whole_aicpu.so",
+            "opKernelLib": "CUSTAICPUKernel",
+            "userDefined": "True",
+            "workspaceSize": "100"
+          }
+        }
+      }
+    }
+  ],
+  "only_kernel_so_differs": true
+}

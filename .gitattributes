@@ -1,0 +1,10 @@
+# Experiment evidence and source hashes must survive Windows checkout filters.
+/benchmarks/aclgraph_fia_sink_stage*.py text eol=lf
+/benchmarks/multi_graph_gdn_q4_full_metadata.py text eol=lf
+/benchmarks/multi_graph_gdn_q4_full_loader.py text eol=lf
+/benchmarks/multi_graph_dynamic_trace.py text eol=lf
+# The measured trace uses CRLF; keep its original JSON blob normalized in Git.
+/benchmarks/results/multi_graph_structural/structural-dynamic-trace-v1.json text eol=crlf
+/benchmarks/results/multi_graph_structural/q4-tile-full-replay-v8-queue0.rank0.json text eol=lf
+/benchmarks/results/multi_graph_structural/fia-sink-stage6-v1/** -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/fia-sink-stage6-*.json -text whitespace=cr-at-eol

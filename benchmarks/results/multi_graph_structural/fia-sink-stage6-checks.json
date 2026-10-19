@@ -1,0 +1,60 @@
+{
+  "files": {
+    "benchmarks/aclgraph_fia_sink_stage6_probe.py": "4c47e5b1797a589c931e38c5da29b06a47bce6ff782596fb44160cf64de04141",
+    "benchmarks/aclgraph_fia_sink_stage6_suite.py": "2818dcf7d2e60360b42ac599f7b3fc71413523c5b04948779abc8fde79952eb5",
+    "benchmarks/aclgraph_fia_sink_stage6_analyze.py": "ebb468e62160b678206baad2f46ad1719214b1bccb186d21e141e8bdf4d27766",
+    "tests/ut/worker/multi_graph/test_fia_sink_stage6_probe.py": "91a5062a63146fb4f272c3c20a361c1ee547563f10c5f9cdbf9fade354b61544",
+    "tests/ut/worker/multi_graph/test_fia_sink_stage6_suite.py": "b66925ecd3770174b3cd28253e19177733709675235c693eaa5b613033f307bc",
+    "tests/ut/worker/multi_graph/test_fia_sink_stage6_analyze.py": "b964b439a254dc2cae7ee8a9781de1a5da2c19afc11f7f1326259988925d955f",
+    "docs/source/developer_guide/Design_Documents/aclgraph_fia_sink_stage6.md": "c1ac973c8058219b1903623efd568fd40c6b1d53bab9e53075165796a0326a38"
+  },
+  "checks": [
+    {
+      "check": "codespell",
+      "returncode": 0,
+      "output": "codespell................................................................Passed\n"
+    },
+    {
+      "check": "typos",
+      "returncode": 0,
+      "output": "typos....................................................................Passed\n"
+    },
+    {
+      "check": "markdownlint",
+      "returncode": 0,
+      "output": "markdownlint.............................................................Passed\n"
+    },
+    {
+      "check": "check_forbidden_imports.py",
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "check": "check_boolean_context_manager.py",
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "check": "check_long_functions.py",
+      "returncode": 0,
+      "output": ""
+    }
+  ],
+  "unit_tests": {
+    "passed": 71,
+    "failed": 0,
+    "command": "python -m pytest --noconftest tests/ut/worker/multi_graph/test_fia_sink_stage6_analyze.py tests/ut/worker/multi_graph/test_fia_sink_stage6_probe.py tests/ut/worker/multi_graph/test_fia_sink_stage6_suite.py --basetemp ../../outputs/p6finalall -q",
+    "observed_runtime_seconds": 67.63
+  },
+  "full_repository_ci": {
+    "command": "bash format.sh ci",
+    "returncode": 1,
+    "raw_log_sha256": "b8dc8eaf66d2c4690a6c1d7cecbef487f6ca326bc85e2b2843d64a0d6a2248fe",
+    "existing_failures": [
+      "vendor/raw-log spelling",
+      "device_length_decode.py direct Triton imports",
+      "Windows hooks cannot find /bin/bash/shellcheck/python3"
+    ]
+  },
+  "scope": "checks only; not performance evidence"
+}

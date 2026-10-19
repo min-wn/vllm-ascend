@@ -1,8 +1,11 @@
 # FIA sink stage 6: producer-inclusive native policy comparison
 
-Status: the bounded formal experiment is in progress. This document records
-the mechanism, protocol and interpretation rules before the completed
-evidence is analyzed. It does not report or predict a performance result.
+Status: the bounded formal experiment and independent protocol audit are
+complete. All eight fresh-process runs pass the declared protocol checks.
+The whole-row policy reduces the aggregate producer-inclusive wall mean
+by 5.665% across the four selected records; three process rounds improve
+and one regresses. The unchanged 128-step trace, full model, padding
+comparison and end-to-end inference remain unmeasured in this stage.
 
 ## Question and comparison boundary
 
@@ -221,22 +224,89 @@ observations, including outliers; reductions use the difference of matched
 aggregate times, not an average of per-sample percentage ratios. AB/BA order
 reduces order imbalance but cannot eliminate between-process drift.
 
-Expected repository evidence locations are:
+Repository evidence is preserved at these locations:
 
-- `benchmarks/results/multi_graph_structural/fia-sink-stage6-v1/stage6-suite.json`
+- [Formal suite and relative raw reports](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage6-v1/stage6-suite.json)
   with all eight relative raw process reports and logs.
-- `benchmarks/results/multi_graph_structural/fia-sink-stage6-analysis.json`
+- [Independent protocol audit and paired statistics](../../../../benchmarks/results/multi_graph_structural/fia-sink-stage6-analysis.json)
   for independent protocol qualification and paired statistics.
 
 ## Results and next gate
 
-Completed formal evidence and its qualified analysis will supply this
-section. No performance numbers are inferred from an in-progress process,
-screen run, CPU cost proxy or stage-four oracle.
+The analyzer returns `protocol_qualified=true` with no reported protocol
+issues. All 160 formal observations are retained, yielding 80 matched pairs.
+The whole-row wall endpoint is faster in 70 pairs and slower in 10; no pair
+is discarded. The following means aggregate the four records with equal
+sample counts. Positive reduction means that `whole` is lower.
 
-Regardless of the outcome, the next performance gate is the unchanged
-128-step dynamic trajectory, with its default capture catalog and true
-per-step metadata. A favorable four-record result does not complete that
-gate. Full-model replay, a padding comparison and serving-level measurements
-remain separate later stages with their own correctness and attribution
-requirements.
+| Endpoint mean | Upstream, ms | Whole-row, ms | Upstream minus whole, ms | Reduction |
+| --- | ---: | ---: | ---: | ---: |
+| Complete wall | 5.101027 | 4.812053 | 0.288974 | 5.665% |
+| Replay queue span | 4.789238 | 4.520009 | 0.269228 | 5.622% |
+| Preparation enqueue | 0.235455 | 0.229390 | 0.006065 | 2.576% |
+| Host submission interval | 0.230136 | 0.252932 | -0.022796 | -9.906% |
+
+The host intervals overlap device work and the queue span. They are
+diagnostic components rather than quantities to add together. The result
+shows a net benefit for this executable native policy under the declared
+bounded workload, including its producer. It is not an estimate obtained
+by subtracting the CPU producer cost from an attention-only oracle.
+
+Each selected default capacity has 20 pairs:
+
+| Physical capacity | Upstream wall mean, ms | Whole-row wall mean, ms | Wall reduction | Whole faster pairs |
+| --- | ---: | ---: | ---: | ---: |
+| 256 | 3.745427 | 3.463141 | 7.537% | 19 / 20 |
+| 400 | 4.812165 | 4.558607 | 5.269% | 19 / 20 |
+| 496 | 5.805517 | 5.449275 | 6.136% | 17 / 20 |
+| 512 | 6.040999 | 5.777187 | 4.367% | 15 / 20 |
+
+The capacity256 wall P99 regresses from 4.210017 ms to 4.761551 ms even
+though its mean improves. These percentiles contain only 20 observations
+per policy and capacity, so the evidence flags this tail behavior without
+establishing a stable P99 regression or improvement. The retained outlier
+remains part of every aggregate and the raw report.
+
+Process-round behavior is not uniformly favorable:
+
+| Round | Process order | Upstream wall mean, ms | Whole-row wall mean, ms | Wall reduction |
+| --- | --- | ---: | ---: | ---: |
+| 0 | Upstream, whole | 5.264475 | 4.741090 | 9.942% |
+| 1 | Whole, upstream | 4.993686 | 5.051049 | -1.149% |
+| 2 | Upstream, whole | 5.012760 | 4.767944 | 4.884% |
+| 3 | Whole, upstream | 5.133187 | 4.688128 | 8.670% |
+
+Three of four rounds improve; round one regresses. Together with the small
+number of independent process blocks, this prevents a claim of a universal
+or stable gain across conditions. AB/BA ordering reduces one source of
+imbalance but does not identify or eliminate every source of process drift.
+
+All 3072 sampled FP32 comparisons pass the declared tolerance. Their maximum
+sampled absolute error is `0.0003232210874557495`. Complete Q/K/V and mask
+hashes match across policy processes and remain unchanged after execution;
+all per-bucket pre/post output hashes match within their own process.
+For each policy and capacity, the metadata payload hash is also identical
+across all four rounds. These identity checks support reproducibility of
+the bounded inputs and plans; FP32 comparisons remain sampled correctness,
+not exhaustive elementwise qualification of a full model.
+
+The stage-six values must not be compared causally with the earlier
+stage-four oracle run as though they were one paired experiment. Their
+process protocols, preparation paths and producer placement differ.
+The accepted result here is the internal fresh-process comparison of the
+two native policies with a common consumer and matched input identities.
+It concerns combined complete-row assignment and FD removal, rather than
+an isolated measurement of FD merge time.
+
+The scoped final CPU regression run reports 71 passing tests. Whole-repository
+CI was attempted; its known existing failures remain recorded by the task
+checks, so this is not a claim that the complete repository CI passes.
+
+This positive bounded result advances the next gate to the unchanged
+128-step dynamic trajectory, keeping the default capture catalog and true
+per-step lengths/pages. That experiment must retain producer-inclusive
+timing and continued input/correctness checks as batch membership and KV
+lengths change. It is the next validation step before an engine integration,
+not evidence to skip directly to one. Full-model replay, a padding comparison
+and serving-level measurements remain separate later stages with their own
+correctness and attribution requirements.
