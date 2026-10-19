@@ -211,3 +211,98 @@ def test_compile_command_preserves_bf16_param_and_isolates_output_paths(builder,
         "--simplified_key_mode=0",
         "--op_mode=dynamic",
     ]
+
+
+def test_tiling_key_csv_is_normalized_without_changing_numeric_identity(builder):
+    assert builder.parse_tiling_keys("104000000010322223,2,0") == ("0", "2", "104000000010322223")
+    assert builder.parse_tiling_keys(str((1 << 64) - 1)) == (str((1 << 64) - 1),)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ("", "1,", ",1", "1,,2", "01", "+1", "-1", "1.0", "0x1", "1,1", "1, 2", "１", "1\n", "18446744073709551616"),
+)
+def test_malformed_duplicate_or_out_of_range_tiling_key_csv_is_rejected(builder, value):
+    with pytest.raises(ValueError, match="tiling key"):
+        builder.parse_tiling_keys(value)
+
+
+@pytest.mark.parametrize("keys", (("2", "1"), ("01",), ("1", "1"), (), ["1"], (1,), "1"))
+def test_invalid_tiling_key_contract_is_rejected_before_output_or_compile(builder, configured, keys):
+    args = SimpleNamespace(
+        root=configured.root,
+        upstream_vendor=configured.vendors["upstream"],
+        whole_vendor=configured.vendors["whole"],
+        output_dir=configured.output,
+        resident=1,
+        timeout=60,
+        tiling_keys=keys,
+    )
+
+    def no_compile(*args, **kwargs):
+        pytest.fail("invalid key selection must not invoke patching or compilation")
+
+    with pytest.raises(ValueError, match="tiling key"):
+        builder.build(args, runner=no_compile)
+    assert not configured.output.exists()
+
+
+def test_selected_tiling_keys_are_passed_to_opc_without_leaking_into_wrapper_options(builder, tmp_path):
+    keys = ("104000000010322223", "104000000010322224")
+    wrapper, param, output = (tmp_path / name for name in ("wrapper.py", "param.json", "binary"))
+    base = builder.compile_command(wrapper, param, output)
+    assert builder.compile_command(wrapper, param, output, keys) == [*base, "--tiling_key=" + ",".join(keys)]
+    call = "    compile_op(src, origin_func_name, op_info, options, code_channel, '{}', {'valueDepend': {}})"
+    assert "tiling_key" not in builder.wrapper_options(call, 1)
+
+
+def test_binary_qualification_accepts_duplicate_aic_aiv_entries_but_marks_restricted_scope(builder):
+    metadata = {
+        "kernelList": [
+            {"tilingKey": 2, "kernelType": "MIX_AIC"},
+            {"tilingKey": "2", "kernelType": "MIX_AIV"},
+            {"tilingKey": 12, "kernelType": "MIX_AIC"},
+        ]
+    }
+    result = builder.binary_qualification(metadata, ("2", "12"))
+    assert result["scope"] == "restricted_tiling_keys"
+    assert result["requested_tiling_keys"] == result["actual_tiling_keys"] == ["2", "12"]
+    assert result["kernel_entries"] == 3
+    assert result["exact_selected_keys_verified"] is True
+    assert result["arbitrary_shape_fallback_qualified"] is False
+    assert result["npu_runtime_qualified"] is False
+
+
+@pytest.mark.parametrize("actual", ((2,), (2, 12, 13)))
+def test_missing_or_unrequested_compiled_keys_fail_qualification(builder, actual):
+    metadata = {"kernelList": [{"tilingKey": key} for key in actual]}
+    with pytest.raises(ValueError, match="differ from the requested"):
+        builder.binary_qualification(metadata, ("2", "12"))
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    (
+        None,
+        {},
+        {"kernelList": []},
+        {"kernelList": [{}]},
+        {"kernelList": [1]},
+        {"kernelList": [{"tilingKey": True}]},
+        {"kernelList": [{"tilingKey": "02"}]},
+        {"kernelList": [{"tilingKey": 1 << 64}]},
+    ),
+)
+def test_unproven_or_invalid_compiled_key_inventory_fails_qualification(builder, metadata):
+    with pytest.raises(ValueError, match="kernel|tiling key"):
+        builder.binary_qualification(metadata, ("2",))
+
+
+def test_default_full_parameter_build_still_does_not_claim_arbitrary_shape_runtime_qualification(builder):
+    result = builder.binary_qualification({"kernelList": [{"tilingKey": "2"}]}, None)
+    assert result["scope"] == "all_parameter_tiling_keys"
+    assert result["requested_tiling_keys"] is None
+    assert result["actual_tiling_keys"] == ["2"]
+    assert result["exact_selected_keys_verified"] is False
+    assert result["arbitrary_shape_fallback_qualified"] is False
+    assert result["npu_runtime_qualified"] is False

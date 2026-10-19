@@ -1,0 +1,100 @@
+{
+  "review_status": "guarded_patch_source_review_pass_pending_native_compilation_and_device_validation",
+  "source_commit": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+  "source_root": "outputs/thesis_incremental_plan/pinned_sink_source/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel",
+  "read_only_source_review": true,
+  "npu_work_executed": false,
+  "tests_executed": false,
+  "static_ub_budget_bytes_per_aiv": {
+    "inputQue1_2x32KiB": 65536,
+    "inputQue2_2x16KiB": 32768,
+    "outputQue1_32KiB": 32768,
+    "outputQue2_8KiB": 8192,
+    "tmpBuff1_32KiB": 32768,
+    "softmax_max_exp_sum_3x2KiBx2": 12288,
+    "softmax_defaults_2x2KiB": 4096,
+    "total": 188416,
+    "total_kib": 184,
+    "guarded_outputQue1_reduction": 16384,
+    "independent_running_o_tbuf": 16384,
+    "guarded_proposed_total": 188416,
+    "compiler_allocation_and_hardware_fit_validated": false
+  },
+  "budget_source": "fia_block_vec_nonquant_sink.h:331-361; fia_kernel_nonquant_sink.h:120,299: preLoadNum=2",
+  "geometry": {
+    "query_max_length": 4,
+    "gqa_group_size": 6,
+    "head_dimension_and_alignment": 256,
+    "actual_m_rows_per_head": 24,
+    "aiv_rows": [16, 8],
+    "running_o_fp32_bytes_per_aiv": [16384, 8192],
+    "plan_m_base": 512,
+    "plan_m_base_is_not_actual_head_rows": true,
+    "query_max_length_source": "fia_kernel_nonquant_sink.h:266 reads metadata S1_SIZE_INDEX; raw bridge metadata maxS1=4, separate from physical T=400/512",
+    "actual_rows_source": "fia_kernel_nonquant_sink.h:704-707 takes min(mBase, actualQ*gSize); fia_block_vec_nonquant_sink.h:368-384 uses 16-row vector split"
+  },
+  "global_allocation_guard_requirements": [
+    "Native maximum Q length is 4 and GQA group size is 6, proving all compliant tasks have at most 24 M rows",
+    "headDim==headDimAlign==256; preLoadNum==2",
+    "0<s2BaseSize<=512; actual S2 tile alignment must remain at most 512",
+    "KV_T and OUT_T are two-byte BF16 or FP16 types",
+    "keySinkNumber==0 so synthetic sink tiles cannot exceed the S2 bound",
+    "Other geometry retains original outputQue1 allocation and workspace recurrence"
+  ],
+  "outputQue1_capacity_checks": [
+    {"path": "Vec1 skipped tile zero output", "source": "fia_block_vec_nonquant_sink.h:563-568", "max_bytes": 16384},
+    {"path": "Vec1 softmax FP16/BF16 cast", "source": "fia_block_vec_nonquant_sink.h:583-588", "max_bytes": 16384},
+    {"path": "Vec2 nonfinal FP32 workspace staging", "source": "fia_block_vec_nonquant_sink.h:824-831", "max_bytes": 16384},
+    {"path": "Vec2 flash-decode FP32 staging", "source": "fia_block_vec_nonquant_sink.h:869-884", "max_bytes": 16384},
+    {"path": "Vec2 final BF16/FP16 cast", "source": "fia_block_vec_nonquant_sink.h:927-936", "max_bytes": 8192}
+  ],
+  "single_accumulator_lifetime_proof": {
+    "task_cache_size": 3,
+    "workspace_pingpong_slots": 2,
+    "running_o_slots_required_for_guarded_vec2_order": 1,
+    "axis_order": "fia_kernel_nonquant_sink.h:968-987: S2 is innermost, then gS1, then BN2",
+    "execution_order": "fia_kernel_nonquant_sink.h:1035-1058: one monotonically ordered Vec2 task per execution step; newer Vec1 runs first but must not access independent running-O TBuf",
+    "head_identity_fields": ["bIdx", "n2Idx", "gS1Idx", "actMBaseSize", "per-AIV vecStartM"],
+    "identity_source": "fia_kernel_nonquant_sink.h:694-708",
+    "first_last_source": "fia_kernel_nonquant_sink.h:770-778",
+    "old_head_finalizes_before_new_head_vec2": true,
+    "three_task_cache_is_not_three_simultaneous_vec2_accumulators": true
+  },
+  "resident_task_guard_requirements": [
+    "actual actMBaseSize==24 and one Vec2 M chunk",
+    "info.tndIsS2SplitCore==false; flash-decode heads use original workspace route",
+    "learnableSinkFlag==false and keySinkNumber==0",
+    "First task initializes the independent accumulator; last task invalidates its identity",
+    "Eligibility must remain invariant throughout a head: once workspace writes are omitted, an unexpected mid-head fallback cannot safely read stale vec2ResGm"
+  ],
+  "synchronization_requirements": [
+    "Do not retain an inputQue1 tensor across tasks: next Vec1 reuses inputQue1",
+    "Do not alias outputQue1 storage as persistent accumulator: next Vec1 softmax cast reuses outputQue1",
+    "Use a dedicated TBuf touched only by Vec2 vector instructions",
+    "Preserve PIPE_V dependency barriers at initialization/copy, rescale, Add and normalization boundaries",
+    "Resident nonfinal tasks must bridge V to MTE3 explicitly before ComputeVec2 emits syncV2C2 on PIPE_MTE3 (fia_block_vec_nonquant_sink.h:1215): removing outputQue1 EnQue and workspace store also removes their V-to-MTE3 completion dependency. Cube waits syncV2C2 immediately before FixpipeCToGM overwrites mm2ResGm (fia_block_cube_nonquant_gqa_sink.h:1434-1445)",
+    "Keep existing final cast and outputQue1 EnQue/DeQue transition to protect V-to-MTE3 output",
+    "Do not let MTE3 read the persistent accumulator directly without explicit completion protection"
+  ],
+  "fair_comparison": "Actual per-head plan eligibility decides fast-path use; upstream and whole must load the same patched consumer and get the same eligible path",
+  "patch_review": {
+    "file": "work/vllm-ascend/benchmarks/aclgraph_fia_sink_running_o_patch.py",
+    "read_only_review_complete": true,
+    "blocking_findings": [],
+    "allocation": "184 KiB remains unchanged; dedicated running-O TBuf is independent of both shared queues",
+    "fallback_capacity": "When outputQue1 is 16 KiB, ProcessVec2SingleBuf caps M chunk to 16 rows. D256 FP32 fallback intermediate and FD staging are at most 16 KiB. Current qualified heads still use exactly the original per-AIV 16/8 row chunks",
+    "vec1_capacity": "ProcessVec1SingleBuf already caps each FP32 tile at 32 KiB, so BF16 softmax/zero output fits 16 KiB even for compliant tasks that do not use residency",
+    "crosscore_completion": "Nonfinal resident store explicitly bridges V_MTE3 before the existing PIPE_MTE3 syncV2C2 publication",
+    "cold_spill": "The saved previous loop workspace offset and exact element count are published under V_MTE3, then MTE3_MTE2 and MTE3_V completion events. Legal same-shape S2 discontinuity can resume legacy recurrence from that previous-loop value",
+    "cold_spill_limit": "The spill is not a guarantee for arbitrary malformed descriptors changing actual Q/M shape within a head. Native legal head geometry and ownership remain invariant",
+    "source_only_qualification": true,
+    "runtime_or_performance_claim": false
+  },
+  "remaining_risks": [
+    "Compiler UB allocation and emitted instruction legality need an isolated build",
+    "Device correctness must verify both full-head and FD fallback paths, input/state identities and FP32 reference",
+    "Maximum-Q metadata is a native producer contract; malformed descriptors exceeding it cannot be made safe by a late task fallback after shrinking outputQue1",
+    "Running-O workspace removal may expose another pipeline stall; source byte estimates do not establish HBM traffic or speedup",
+    "This is an on-chip online-softmax adaptation, not a claim that on-chip accumulation is novel"
+  ]
+}

@@ -18,7 +18,7 @@ attention consumer。详细代码与原始结果分别见文末链接；本文�
 | --- | --- | --- |
 | 图层 | 将动态 batch 分成多个已有图，并用多流并行回放 | 前期探索方向；当前结果不证明其优于 padding。 |
 | 计划层 | 根据每步真实长度和页表，决定各核承担哪些 attention 工作 | 当前已实现受条件保护的 whole-row 原生策略。 |
-| 算子层 | 改善同一核内部的分块、累加和数据搬运 | 已实现隔离的 running-O UB 驻留补丁，正在编译和资格验证；性能尚未确认。 |
+| 算子层 | 改善同一核内部的分块、累加和数据搬运 | running-O UB 驻留补丁完成隔离编译和两记录源码消融；正确性通过，观察到有限改善，稳定性未确认。 |
 
 当前仍保留默认 capture sizes，图执行完整的合法 padding 容量。
 没有为某个测试 batch 增加专用 size，也没有通过删除物理 padding 制造优势。
@@ -201,6 +201,11 @@ FD 等不满足 task 条件的 head 继续走 workspace。
 源码补丁以完整 SHA 和 anchor 拒绝版本漂移，并支持同源宏 0/1 对照。
 构建工具只在新实验目录编译一个 BF16 binary，给 upstream/whole 两种 producer
 装入同一 consumer，不安装系统包，也不修改既有 vendor。
+本轮小实验只编译目标路径的 `104000000010222223` 和
+`104000000010322223` 两个 tiling key，并严格核对产物中的 key 集合。
+这是受限实验 binary；源码保留 fallback 不代表该 binary 包含其他 shape 所需的模板。
+whole 计划中的 FD head 数可以为零，但 host 仍可能选用 FD-capable 模板，
+因此不能根据策略名字删除该编译变体。
 源码、CPU 测试和静态预算通过并不等于设备正确性或性能通过。
 
 **资格按实际 plan 和生命周期判断，不能按 `whole` 策略名字判断。**
@@ -210,6 +215,51 @@ FD 等不满足 task 条件的 head 继续走 workspace。
 
 先用原 B98/B128 两条记录做小实验，保留全部 pre/post 正确性门槛和完整 wall，
 profiling 与 timing 分开。只有端点收益与相关执行证据一致，才扩大动态验证。
+
+### 本轮源码消融结果
+
+`v3` 已完成四个独立进程，顺序为 control/upstream、resident/upstream、
+resident/whole、control/whole。每组使用相同的原始两条记录、seed1703、
+16 份私有 Q/K/V、5 次 warmup、每容量 10 次计时和一次单独 profile。
+完整 wall 包含描述符准备、必要 H2D、真实 producer、replay 和最终 join。
+每组仅一个 fresh process，重复 replay 不等于独立进程复现。
+
+| 调度策略 | 原始记录 / token 容量 | control 均值 µs | resident 均值 µs | 观测均值下降 | 单次 profile 的 16 个 attention 总计减少 µs |
+| --- | --- | ---: | ---: | ---: | ---: |
+| upstream | B98 / 400 | 4517.510 | 4357.540 | 3.541% | 101.74 |
+| upstream | B128 / 512 | 5673.378 | 5543.449 | 2.290% | 127.86 |
+| whole | B98 / 400 | 4250.731 | 4186.755 | 1.505% | 49.02 |
+| whole | B128 / 512 | 5609.524 | 5311.093 | 5.320% | 73.00 |
+
+**最后一行不能解释为稳定的 5.32% 改善。** control/whole 的 B128 有一次
+7896.423 µs 尖峰；该组中位数为 5362.983 µs，resident 为 5309.507 µs，
+对应约 0.997% 的中位数改善。全部十次观测保留，没有删异常值。
+profile 的 73.00 µs 与均值节省 298.43 µs 也不相符，不能全部归因于 consumer。
+profile 本身每组每容量仅一次，不能作为稳定延迟估计。
+
+本轮 80 次计时、144 行独立 FP32 抽样和 24 次完整计划检查通过独立审计；
+抽样最大绝对误差为 0.0002998188。相同 policy/capacity 的 control/resident
+在 pre/post 中，16 份完整 BF16 输出哈希全部一致，1024-word 计划也完全相同。
+因此本轮没有观察到 consumer 修改引入数值变化；这不代替全部动态形状正确性证明。
+
+实际计划中，upstream 的完整 head 资格占比为 93.88%/95.31%，whole 为 100%。
+这是根据计划和源码推导的资格，不是设备执行计数。
+upstream 同样得到 consumer 改善，所以片上累加不是 whole 策略独有的收益。
+双方均用 resident consumer 时，whole 相对 upstream 的本轮 wall 均值下降为
+3.919%/4.192%；仍受固定进程顺序等混杂因素影响。
+
+目前判断是：该补丁值得保留为受保护的实验候选，但没有显示大的独有收益，
+也没有证明 GM 带宽饱和或取得完整模型收益。它减少原 running-O 搬运及相关依赖，
+同时改变队列预算、状态检查和同步，不能将全部差值归为单一 GM 流量因素。
+下一次最小验证应采用相反顺序的 whole control/resident 配对，先区分约 1% 的
+实际改善与进程波动；若仍有稳定的设备时间改善，再检查原 chronological trace
+中的 replay 历史与真实模型关键路径预算。当前不扩大模型或完整性能矩阵。
+
+原始结果与两份分析分别保存在
+`benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/`、
+`fia-sink-running-o-independent-audit.json` 和
+`fia-sink-running-o-primary-recompute.json`。首次编译失败、第二次主动停止的
+全变体 CPU 编译另行保存，均没有 NPU 计时，不计入上述数据。
 
 ## 6. 与已有工作的区别，以及毕设能写什么
 
@@ -234,9 +284,10 @@ profiling 与 timing 分开。只有端点收益与相关执行证据一致，�
 3. **证据与边界**：相同 consumer 对照、真实 producer-inclusive 端点、
    默认桶动态轨迹、正确性抽样、独立审计、负轮次和 P99 退化。
 
-下一阶段若源码消融有效，可以进一步研究“调度归属与 consumer 数据驻留的联合设计”。
+下一阶段可以继续检验“调度归属与 consumer 数据驻留的联合设计”。
 其价值必须来自与上游同等 consumer 优化后的比较，不能把既有片上累加方法本身
-写成首创。目前它仍是研究候选，尚没有 source-ablation 收益或毕设级新颖性结论。
+写成首创。目前的小实验观察到有限 consumer 改善，但 upstream 也能受益，
+尚不足以形成稳定联合优势或毕设级新颖性结论。
 
 ## 7. 从当前小实验到完整模型的门槛
 

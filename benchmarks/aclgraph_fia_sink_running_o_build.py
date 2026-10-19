@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,7 @@ POLICY_LIBRARIES = {
     "whole": ("libthesis_stage5_whole_aicpu.so", "1c4ab9fcf2b7d2935be3e60f2a215fb65dc85859bc6fe99fe5271b4c4784ea90"),
 }
 REPORT = "running-o-build.json"
+MAX_TILING_KEY = (1 << 64) - 1
 
 
 def sha256(path):
@@ -81,8 +83,61 @@ def wrapper_options(text, resident):
     return text.replace(anchor, f'    options.append("-DTHESIS_FIA_RUNNING_O_UB={int(resident)}")\n' + anchor)
 
 
-def compile_command(wrapper, param, output):
-    return [
+def canonical_key(value):
+    if type(value) is int:
+        value = str(value)
+    if type(value) is not str or not re.fullmatch(r"0|[1-9][0-9]{0,19}", value, flags=re.ASCII):
+        raise ValueError("tiling keys must be canonical unsigned decimal uint64 values")
+    if int(value) > MAX_TILING_KEY:
+        raise ValueError("tiling key exceeds uint64")
+    return value
+
+
+def parse_tiling_keys(value):
+    if type(value) is not str:
+        raise ValueError("tiling keys must be a comma-separated decimal string")
+    keys = tuple(canonical_key(key) for key in value.split(","))
+    if len(set(keys)) != len(keys):
+        raise ValueError("tiling keys must be unique")
+    return tuple(sorted(keys, key=int))
+
+
+def checked_tiling_keys(keys):
+    if keys is None:
+        return None
+    if type(keys) is not tuple or any(type(key) is not str for key in keys):
+        raise ValueError("tiling keys must be a canonical sorted tuple of decimal strings")
+    normalized = parse_tiling_keys(",".join(keys))
+    if keys != normalized:
+        raise ValueError("tiling key tuple must be numerically sorted")
+    return keys
+
+
+def binary_qualification(metadata, selected_keys):
+    selected_keys = checked_tiling_keys(selected_keys)
+    kernels = metadata.get("kernelList") if isinstance(metadata, dict) else None
+    if not isinstance(kernels, list) or not kernels:
+        raise ValueError("compiled metadata must contain a nonempty kernelList")
+    if any(not isinstance(kernel, dict) or "tilingKey" not in kernel for kernel in kernels):
+        raise ValueError("every compiled kernel must identify its tilingKey")
+    actual_keys = tuple(sorted({canonical_key(kernel["tilingKey"]) for kernel in kernels}, key=int))
+    if selected_keys is not None and actual_keys != selected_keys:
+        raise ValueError("compiled kernelList keys differ from the requested restricted tiling keys")
+    return dict(
+        scope="restricted_tiling_keys" if selected_keys is not None else "all_parameter_tiling_keys",
+        requested_tiling_keys=list(selected_keys) if selected_keys is not None else None,
+        actual_tiling_keys=list(actual_keys),
+        kernel_entries=len(kernels),
+        exact_selected_keys_verified=selected_keys is not None,
+        arbitrary_shape_fallback_qualified=False,
+        npu_runtime_qualified=False,
+        limitation="Only listed tiling keys exist; shape, plan, lifetime and runtime qualification remain required",
+    )
+
+
+def compile_command(wrapper, param, output, tiling_keys=None):
+    tiling_keys = checked_tiling_keys(tiling_keys)
+    command = [
         "opc",
         str(wrapper),
         "--main_func=" + OP,
@@ -93,6 +148,9 @@ def compile_command(wrapper, param, output):
         "--simplified_key_mode=0",
         "--op_mode=dynamic",
     ]
+    if tiling_keys is not None:
+        command.append("--tiling_key=" + ",".join(tiling_keys))
+    return command
 
 
 def build(args, *, runner=subprocess.run):
@@ -101,6 +159,7 @@ def build(args, *, runner=subprocess.run):
     )
     if type(args.resident) is not int or args.resident not in (0, 1) or args.timeout < 1:
         raise ValueError("resident must be 0/1 and timeout must be positive")
+    tiling_keys = checked_tiling_keys(getattr(args, "tiling_keys", None))
     output.mkdir(parents=True)
     report = output / REPORT
     status = dict(
@@ -110,6 +169,9 @@ def build(args, *, runner=subprocess.run):
         npu_work_executed=False,
         system_install_performed=False,
         baseline_parameter=dict(path=str(param), sha256=sha256(param)),
+        requested_tiling_keys=list(tiling_keys) if tiling_keys is not None else None,
+        binary_scope="restricted_tiling_keys" if tiling_keys is not None else "all_parameter_tiling_keys",
+        arbitrary_shape_fallback_qualified=False,
         source_scope="Copied generated AICore tree; original source/build/vendors remain unchanged",
     )
 
@@ -145,7 +207,7 @@ def build(args, *, runner=subprocess.run):
         status["changed_source_files"] = changed
         binary_dir = output / "binary"
         binary_dir.mkdir()
-        command = compile_command(wrapper, param, binary_dir)
+        command = compile_command(wrapper, param, binary_dir, tiling_keys)
         env = dict(
             os.environ,
             # The old configure-time custom directory is no longer populated.
@@ -173,6 +235,7 @@ def build(args, *, runner=subprocess.run):
                 raise RuntimeError("compiler produced no complete binary/json pair")
         metadata = json.loads(artifacts[1].read_text())
         status["binary_metadata"] = metadata
+        status["binary_qualification"] = binary_qualification(metadata, tiling_keys)
         status["artifacts"] = {path.name: dict(bytes=path.stat().st_size, sha256=sha256(path)) for path in artifacts}
         status["vendors"] = {}
         for policy, original in vendors.items():
@@ -193,7 +256,13 @@ def build(args, *, runner=subprocess.run):
             object_relative = "op_impl/ai_core/tbe/kernel/ascend910b/" + OP + "/" + BINARY + ".o"
             if args.resident and object_relative not in actual_changes:
                 raise RuntimeError("resident consumer object is identical to the original binary")
-            status["vendors"][policy] = dict(path=str(destination), changed_files=actual_changes)
+            status["vendors"][policy] = dict(
+                path=str(destination),
+                changed_files=actual_changes,
+                binary_scope=status["binary_qualification"]["scope"],
+                available_tiling_keys=status["binary_qualification"]["actual_tiling_keys"],
+                arbitrary_shape_fallback_qualified=False,
+            )
         status.update(state="completed", stage="completed", returncode=0, finished_unix=time.time())
     except BaseException:
         status.update(state="failed", returncode=1, error=traceback.format_exc(), finished_unix=time.time())
@@ -209,6 +278,12 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--resident", type=int, choices=(0, 1), default=1)
     parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument(
+        "--tiling-keys",
+        type=parse_tiling_keys,
+        default=None,
+        help="Compile only these unique decimal uint64 keys (comma separated); default compiles the full parameter set",
+    )
     args = parser.parse_args()
     if os.name != "posix" or args.root.resolve().parent != Path("/workspace").resolve():
         parser.error("use an isolated /workspace experiment after sourcing the existing Ascend profile")

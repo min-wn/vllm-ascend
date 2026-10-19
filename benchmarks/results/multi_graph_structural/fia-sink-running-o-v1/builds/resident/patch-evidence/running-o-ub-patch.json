@@ -1,0 +1,24 @@
+{
+  "source_commit": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+  "source_file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h",
+  "before_sha256": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+  "after_sha256": "dfbe8e266e0fccce3110c8756a5c0928d1c354e5c4ee9c303d186c639fedbf16",
+  "macro": "THESIS_FIA_RUNNING_O_UB",
+  "macro_enabled_by_patch_tool": false,
+  "scope": "isolated A2 BF16 paged TND Q4 GQA6 D256 consumer; plan-policy independent",
+  "static_guard": "max-S1=4, Q12/KV2, D256/aligned256, page128, preload2, S2<=512, no sink/RoPE",
+  "task_guard": "actual S1=4, actual M=24, !FD, !sink, one AIV16/8-row slice, contiguous same-owner S2 loops",
+  "ub_bytes": {
+    "original": 188416,
+    "patched": 188416,
+    "running_o": 16384,
+    "output1": 16384
+  },
+  "max_output1_bytes": {
+    "vec1_bf16": 16384,
+    "fallback_fp32": 16384,
+    "final_bf16": 8192
+  },
+  "fallback": "unsupported heads use workspace; same-shape native tasks may cold-spill the saved owner with V/MTE3/MTE2 events; malformed descriptors or changing a head's actual M are outside the native contract",
+  "qualification": "source patch only; requires native compilation and numerical/performance tests"
+}

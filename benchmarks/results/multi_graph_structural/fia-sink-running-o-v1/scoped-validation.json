@@ -1,0 +1,21 @@
+{
+  "unit_test_observation": {
+    "passed": 77,
+    "skipped": 1,
+    "command": "../multi-graph-clean-venv/Scripts/python.exe -m pytest -q --tb=short --noconftest --basetemp ../../outputs/thesis_incremental_plan/running-o-restricted-ut tests/ut/worker/multi_graph/test_fia_sink_running_o_build.py tests/ut/worker/multi_graph/test_fia_sink_running_o_patch.py",
+    "skip_reason": "No local Windows C++ compiler; retained Linux CPU helper harness separately passed"
+  },
+  "ruff_check_passed": true,
+  "ruff_format_passed": true,
+  "long_functions_check_passed": true,
+  "codespell_passed": true,
+  "typos_passed": true,
+  "markdownlint_passed_after_hook_repair": true,
+  "full_format_ci_passed": false,
+  "full_ci_log": "format-ci-running-o.log",
+  "tracked_raw_index_byte_audit": {
+    "files": 92,
+    "byte_mismatches": 0
+  },
+  "scope": "Actual checks observed in this session, recorded after execution. Previous 42-test check log is separately retained."
+}

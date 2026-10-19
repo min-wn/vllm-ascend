@@ -1,0 +1,28 @@
+{
+  "state": "failed",
+  "started_unix": 1792396524.3768122,
+  "npu_work_executed": false,
+  "scope": "CPU ownership and FP32 recurrence harness only; no AscendC kernel execution",
+  "patch_sha256": "0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4",
+  "test_sha256": "536fd59f90384e1a67aad0c93923fc3192699a5066ebfe63a041a783451163ef",
+  "harness_sha256": "91eb11a6fa0af150595a2fc28e2199313cd96dcbac9d9db9254e9cf3a2f28e10",
+  "commands": [],
+  "deployed_patch_sha256": "bedeffdc3daf707fc5c575ce5c893b08f19441c4f2b4c0e53d7deb16dbee9524",
+  "deployed_manifest_patch_sha256": "bedeffdc3daf707fc5c575ce5c893b08f19441c4f2b4c0e53d7deb16dbee9524",
+  "returncode": 1,
+  "error": "Traceback (most recent call last):\n  File \"<stdin>\", line 19, in <module>\nAssertionError: Patch differs from frozen deployed tools\n",
+  "finished_unix": 1792396524.3773522,
+  "ssh_command": [
+    "ssh",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=20",
+    "vllm-ascend-030",
+    "bash -lc 'source /etc/profile.d/ascend-multigraph.sh; python -'"
+  ],
+  "ssh_returncode": 0,
+  "ssh_stdout": "{\n  \"state\": \"failed\",\n  \"started_unix\": 1792396524.3768122,\n  \"npu_work_executed\": false,\n  \"scope\": \"CPU ownership and FP32 recurrence harness only; no AscendC kernel execution\",\n  \"patch_sha256\": \"0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4\",\n  \"test_sha256\": \"536fd59f90384e1a67aad0c93923fc3192699a5066ebfe63a041a783451163ef\",\n  \"harness_sha256\": \"91eb11a6fa0af150595a2fc28e2199313cd96dcbac9d9db9254e9cf3a2f28e10\",\n  \"commands\": [],\n  \"deployed_patch_sha256\": \"bedeffdc3daf707fc5c575ce5c893b08f19441c4f2b4c0e53d7deb16dbee9524\",\n  \"deployed_manifest_patch_sha256\": \"bedeffdc3daf707fc5c575ce5c893b08f19441c4f2b4c0e53d7deb16dbee9524\",\n  \"returncode\": 1,\n  \"error\": \"Traceback (most recent call last):\\n  File \\\"<stdin>\\\", line 19, in <module>\\nAssertionError: Patch differs from frozen deployed tools\\n\",\n  \"finished_unix\": 1792396524.3773522\n}\n",
+  "ssh_stderr": "\r\nAuthorized users only. All activities may be monitored and reported.\r\n\r\nAuthorized users only. All activities may be monitored and reported.\r\n",
+  "local_launcher_sha256": "e4a40786b5513f726483a92fa294cdcdaf9a0407ec7953f6fd2986f3b273d0d3"
+}

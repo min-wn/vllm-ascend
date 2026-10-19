@@ -1,0 +1,82 @@
+{
+  "state": "passed",
+  "started_unix": 1792396592.3817239,
+  "npu_work_executed": false,
+  "scope": "CPU ownership and FP32 recurrence harness only; no AscendC kernel execution",
+  "patch_sha256": "0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4",
+  "test_sha256": "536fd59f90384e1a67aad0c93923fc3192699a5066ebfe63a041a783451163ef",
+  "harness_sha256": "91eb11a6fa0af150595a2fc28e2199313cd96dcbac9d9db9254e9cf3a2f28e10",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": "",
+      "started_unix": 1792396592.3825576,
+      "finished_unix": 1792396592.3845391
+    },
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-host-check-v1/running_o.cpp",
+        "-o",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-host-check-v1/running_o"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_unix": 1792396592.384805,
+      "finished_unix": 1792396592.6572866
+    },
+    {
+      "argv": [
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-host-check-v1/running_o"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "",
+      "started_unix": 1792396592.657299,
+      "finished_unix": 1792396592.6728022
+    }
+  ],
+  "frozen_tools": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v2",
+  "deployed_patch_sha256": "0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4",
+  "deployed_manifest_patch_sha256": "0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4",
+  "compiler": "/usr/bin/g++",
+  "returncode": 0,
+  "extracted_harness_sha256": "91eb11a6fa0af150595a2fc28e2199313cd96dcbac9d9db9254e9cf3a2f28e10",
+  "executable_sha256": "3142d4c782e65efadf010e6ff548432701469b116e27c435988d60b41fae4ec2",
+  "two_aiv_row_counts": [
+    16,
+    8
+  ],
+  "synthetic_heads_per_aiv": 12,
+  "s2_iterations_per_head": 9,
+  "ordered_vec2_tasks_checked": 216,
+  "fp32_recurrence_equalities_checked": 663552,
+  "ownership_mutations_rejected": 8,
+  "assertions_enabled": true,
+  "no_native_kernel_correctness_claim": true,
+  "no_performance_claim": true,
+  "finished_unix": 1792396592.6729712,
+  "ssh_command": [
+    "ssh",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=20",
+    "vllm-ascend-030",
+    "bash -lc 'source /etc/profile.d/ascend-multigraph.sh; python -'"
+  ],
+  "ssh_returncode": 0,
+  "ssh_stdout": "{\n  \"state\": \"passed\",\n  \"started_unix\": 1792396592.3817239,\n  \"npu_work_executed\": false,\n  \"scope\": \"CPU ownership and FP32 recurrence harness only; no AscendC kernel execution\",\n  \"patch_sha256\": \"0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4\",\n  \"test_sha256\": \"536fd59f90384e1a67aad0c93923fc3192699a5066ebfe63a041a783451163ef\",\n  \"harness_sha256\": \"91eb11a6fa0af150595a2fc28e2199313cd96dcbac9d9db9254e9cf3a2f28e10\",\n  \"commands\": [\n    {\n      \"argv\": [\n        \"/usr/bin/g++\",\n        \"--version\"\n      ],\n      \"returncode\": 0,\n      \"stdout\": \"g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0\\nCopyright (C) 2021 Free Software Foundation, Inc.\\nThis is free software; see the source for copying conditions.  There is NO\\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\\n\\n\",\n      \"stderr\": \"\",\n      \"started_unix\": 1792396592.3825576,\n      \"finished_unix\": 1792396592.3845391\n    },\n    {\n      \"argv\": [\n        \"/usr/bin/g++\",\n        \"-std=c++17\",\n        \"-Wall\",\n        \"-Wextra\",\n        \"-Werror\",\n        \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-host-check-v1/running_o.cpp\",\n        \"-o\",\n        \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-host-check-v1/running_o\"\n      ],\n      \"returncode\": 0,\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"started_unix\": 1792396592.384805,\n      \"finished_unix\": 1792396592.6572866\n    },\n    {\n      \"argv\": [\n        \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-host-check-v1/running_o\"\n      ],\n      \"returncode\": 0,\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"started_unix\": 1792396592.657299,\n      \"finished_unix\": 1792396592.6728022\n    }\n  ],\n  \"frozen_tools\": \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v2\",\n  \"deployed_patch_sha256\": \"0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4\",\n  \"deployed_manifest_patch_sha256\": \"0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4\",\n  \"compiler\": \"/usr/bin/g++\",\n  \"returncode\": 0,\n  \"extracted_harness_sha256\": \"91eb11a6fa0af150595a2fc28e2199313cd96dcbac9d9db9254e9cf3a2f28e10\",\n  \"executable_sha256\": \"3142d4c782e65efadf010e6ff548432701469b116e27c435988d60b41fae4ec2\",\n  \"two_aiv_row_counts\": [\n    16,\n    8\n  ],\n  \"synthetic_heads_per_aiv\": 12,\n  \"s2_iterations_per_head\": 9,\n  \"ordered_vec2_tasks_checked\": 216,\n  \"fp32_recurrence_equalities_checked\": 663552,\n  \"ownership_mutations_rejected\": 8,\n  \"assertions_enabled\": true,\n  \"no_native_kernel_correctness_claim\": true,\n  \"no_performance_claim\": true,\n  \"finished_unix\": 1792396592.6729712\n}\n",
+  "ssh_stderr": "\r\nAuthorized users only. All activities may be monitored and reported.\r\n\r\nAuthorized users only. All activities may be monitored and reported.\r\n",
+  "local_launcher_sha256": "e9327a75c8b90f613325cde96ca00e2c9344283fe763871a0176f198002e7bb9"
+}

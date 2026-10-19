@@ -1,0 +1,18 @@
+{
+  "scope": "Restricted BF16/TND/BSH-page-attention D256 source-ablation binary, not a general replacement package",
+  "selected_tiling_keys": ["104000000010222223", "104000000010322223"],
+  "source_basis": {
+    "host": "fused_infer_attention_score_v2_sink/op_host/fia_tiling_nonquant_sink.cpp",
+    "key_encoding_lines": [71, 83, 133, 191],
+    "general_gqa_mode4_lines": [213, 228],
+    "tnd_mbase512_no_brc_lines": [314, 348],
+    "unconditional_split_capability_lines": [419, 432, 711, 716],
+    "kernel": "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp",
+    "non_fd_dispatch_lines": [2575, 2586],
+    "fd_capable_dispatch_lines": [2599, 2610]
+  },
+  "explanation": "Host mode4 + TND3 + BF16 Q/KV/out/origin2 + PA2 + KV layout BSH1; S2-split capability adds1. TND mBase512 disables softmax BRC. Native producer may emit zero FD heads while using an FD-capable compiled template.",
+  "runtime_tiling_key_directly_observed": false,
+  "correctness_and_performance_gate_still_required": true,
+  "all_other_shapes_qualified": false
+}

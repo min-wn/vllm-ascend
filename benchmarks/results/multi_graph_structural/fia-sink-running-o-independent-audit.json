@@ -1,0 +1,484 @@
+{
+  "qualified": true,
+  "assertions": 5393,
+  "manifest_files": 92,
+  "process_count": 4,
+  "timings": 80,
+  "sampled_fp32_rows": 144,
+  "maximum_fp32_absolute_error": 0.00029981881380081177,
+  "complete_plan_checks": 24,
+  "same_policy_1024_word_plans_unchanged": true,
+  "all_private_qkv_query_mask_bytes_match": true,
+  "output_identity": [
+    {
+      "policy": "upstream",
+      "capacity": 400,
+      "control_resident_all_16_outputs_bitwise_equal": true,
+      "matching_occurrences": 16,
+      "pre_post_bitwise_equal": {
+        "control": true,
+        "resident": true
+      },
+      "numerical_scope": "Full-output hashes establish equality only when identical; otherwise rely on separate frozen-probe sampled FP32 assert_close, not full-output error proof"
+    },
+    {
+      "policy": "upstream",
+      "capacity": 512,
+      "control_resident_all_16_outputs_bitwise_equal": true,
+      "matching_occurrences": 16,
+      "pre_post_bitwise_equal": {
+        "control": true,
+        "resident": true
+      },
+      "numerical_scope": "Full-output hashes establish equality only when identical; otherwise rely on separate frozen-probe sampled FP32 assert_close, not full-output error proof"
+    },
+    {
+      "policy": "whole",
+      "capacity": 400,
+      "control_resident_all_16_outputs_bitwise_equal": true,
+      "matching_occurrences": 16,
+      "pre_post_bitwise_equal": {
+        "control": true,
+        "resident": true
+      },
+      "numerical_scope": "Full-output hashes establish equality only when identical; otherwise rely on separate frozen-probe sampled FP32 assert_close, not full-output error proof"
+    },
+    {
+      "policy": "whole",
+      "capacity": 512,
+      "control_resident_all_16_outputs_bitwise_equal": true,
+      "matching_occurrences": 16,
+      "pre_post_bitwise_equal": {
+        "control": true,
+        "resident": true
+      },
+      "numerical_scope": "Full-output hashes establish equality only when identical; otherwise rely on separate frozen-probe sampled FP32 assert_close, not full-output error proof"
+    }
+  ],
+  "builds": {
+    "control": {
+      "object_sha256": "0ef799f0ec513f2fb2c9b0e642379f3123911fdaf9b656f17ab3976c139d1743",
+      "header_sha256": "dfbe8e266e0fccce3110c8756a5c0928d1c354e5c4ee9c303d186c639fedbf16",
+      "wrapper_sha256": "689c1be212a5903831a5ad0e0a7e030de9b95ce9fa5fcc0b4c3f5a826c51ba0e",
+      "restricted_tiling_keys": [
+        "104000000010222223",
+        "104000000010322223"
+      ],
+      "raw_binary_metadata_verified": true,
+      "arbitrary_shape_fallback_qualified": false,
+      "build_stage_npu_runtime_qualified": false
+    },
+    "resident": {
+      "object_sha256": "ecaaf9ac324d83d252d0defc7f047383d40c537c23b1f551495bbb4b96b1625f",
+      "header_sha256": "dfbe8e266e0fccce3110c8756a5c0928d1c354e5c4ee9c303d186c639fedbf16",
+      "wrapper_sha256": "254dbddc8712b7a762b42b6a07f749f6fd4e89aba83dbc7c7ebc93eb4cac203b",
+      "restricted_tiling_keys": [
+        "104000000010222223",
+        "104000000010322223"
+      ],
+      "raw_binary_metadata_verified": true,
+      "arbitrary_shape_fallback_qualified": false,
+      "build_stage_npu_runtime_qualified": false
+    }
+  },
+  "timing": [
+    {
+      "variant": "control",
+      "policy": "upstream",
+      "capacity": 400,
+      "samples": 10,
+      "wall_us": 4517.51,
+      "queue_span_us": 4216.424036026001,
+      "preparation_enqueue_us": 223.261,
+      "submit_join_cpu_us": 253.1451,
+      "wall_median_us": 4498.309,
+      "wall_min_us": 4474.059,
+      "wall_max_us": 4620.66,
+      "wall_range_us": 146.60099999999966
+    },
+    {
+      "variant": "control",
+      "policy": "upstream",
+      "capacity": 512,
+      "samples": 10,
+      "wall_us": 5673.3778,
+      "queue_span_us": 5342.813968658447,
+      "preparation_enqueue_us": 253.958,
+      "submit_join_cpu_us": 246.3441,
+      "wall_median_us": 5670.183999999999,
+      "wall_min_us": 5646.953,
+      "wall_max_us": 5714.844,
+      "wall_range_us": 67.89099999999962
+    },
+    {
+      "variant": "resident",
+      "policy": "upstream",
+      "capacity": 400,
+      "samples": 10,
+      "wall_us": 4357.5401999999995,
+      "queue_span_us": 4079.1659832000732,
+      "preparation_enqueue_us": 216.2919,
+      "submit_join_cpu_us": 225.7409,
+      "wall_median_us": 4354.018,
+      "wall_min_us": 4320.038,
+      "wall_max_us": 4396.368,
+      "wall_range_us": 76.33000000000084
+    },
+    {
+      "variant": "resident",
+      "policy": "upstream",
+      "capacity": 512,
+      "samples": 10,
+      "wall_us": 5543.4492,
+      "queue_span_us": 5228.973960876465,
+      "preparation_enqueue_us": 252.5211,
+      "submit_join_cpu_us": 233.83100000000002,
+      "wall_median_us": 5538.878000000001,
+      "wall_min_us": 5495.303,
+      "wall_max_us": 5572.853,
+      "wall_range_us": 77.55000000000018
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 400,
+      "samples": 10,
+      "wall_us": 4186.7555,
+      "queue_span_us": 3905.7639837265015,
+      "preparation_enqueue_us": 215.6388,
+      "submit_join_cpu_us": 238.0549,
+      "wall_median_us": 4182.4575,
+      "wall_min_us": 4138.337,
+      "wall_max_us": 4233.148,
+      "wall_range_us": 94.8109999999997
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 512,
+      "samples": 10,
+      "wall_us": 5311.093,
+      "queue_span_us": 4990.410041809082,
+      "preparation_enqueue_us": 253.873,
+      "submit_join_cpu_us": 238.197,
+      "wall_median_us": 5309.507,
+      "wall_min_us": 5267.372,
+      "wall_max_us": 5361.352,
+      "wall_range_us": 93.97999999999956
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 400,
+      "samples": 10,
+      "wall_us": 4250.7309000000005,
+      "queue_span_us": 3937.2600078582764,
+      "preparation_enqueue_us": 240.8429,
+      "submit_join_cpu_us": 244.1612,
+      "wall_median_us": 4231.613,
+      "wall_min_us": 4181.047,
+      "wall_max_us": 4444.238,
+      "wall_range_us": 263.1910000000007
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 512,
+      "samples": 10,
+      "wall_us": 5609.5244999999995,
+      "queue_span_us": 5021.817970275879,
+      "preparation_enqueue_us": 271.834,
+      "submit_join_cpu_us": 482.4121,
+      "wall_median_us": 5362.9825,
+      "wall_min_us": 5294.572,
+      "wall_max_us": 7896.423,
+      "wall_range_us": 2601.8509999999997
+    }
+  ],
+  "profile": [
+    {
+      "variant": "control",
+      "policy": "upstream",
+      "capacity": 400,
+      "attention_kernels": 16,
+      "attention_sum_us": 3901.458125,
+      "between_attention_gap_us": 37.58075000000008,
+      "producer_sum_us": 76.1815,
+      "clear_sum_us": 1.280125,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "control",
+      "policy": "upstream",
+      "capacity": 512,
+      "attention_kernels": 16,
+      "attention_sum_us": 5127.6825,
+      "between_attention_gap_us": 37.8407500000003,
+      "producer_sum_us": 102.662,
+      "clear_sum_us": 2.040125,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "resident",
+      "policy": "upstream",
+      "capacity": 400,
+      "attention_kernels": 16,
+      "attention_sum_us": 3799.71625,
+      "between_attention_gap_us": 36.54037500000004,
+      "producer_sum_us": 80.301625,
+      "clear_sum_us": 1.34,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "resident",
+      "policy": "upstream",
+      "capacity": 512,
+      "attention_kernels": 16,
+      "attention_sum_us": 4999.820125,
+      "between_attention_gap_us": 38.28099999999995,
+      "producer_sum_us": 90.96175,
+      "clear_sum_us": 1.900125,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 400,
+      "attention_kernels": 16,
+      "attention_sum_us": 3595.85175,
+      "between_attention_gap_us": 37.301750000000084,
+      "producer_sum_us": 85.12175,
+      "clear_sum_us": 1.32,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 512,
+      "attention_kernels": 16,
+      "attention_sum_us": 4731.775,
+      "between_attention_gap_us": 37.060875000000124,
+      "producer_sum_us": 140.402875,
+      "clear_sum_us": 1.92,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 400,
+      "attention_kernels": 16,
+      "attention_sum_us": 3644.872625,
+      "between_attention_gap_us": 37.540750000000116,
+      "producer_sum_us": 92.801875,
+      "clear_sum_us": 1.4,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 512,
+      "attention_kernels": 16,
+      "attention_sum_us": 4804.77575,
+      "between_attention_gap_us": 36.501124999999774,
+      "producer_sum_us": 138.28275,
+      "clear_sum_us": 2.140125,
+      "profile_scope": "one replay after formal timings; does not estimate stable kernel latency"
+    }
+  ],
+  "consumer_changes": [
+    {
+      "policy": "upstream",
+      "capacity": 400,
+      "control_wall_us": 4517.51,
+      "resident_wall_us": 4357.5401999999995,
+      "saved_wall_us": 159.96980000000076,
+      "reduction_percent": 3.5411056090634165,
+      "control_wall_median_us": 4498.309,
+      "resident_wall_median_us": 4354.018,
+      "median_reduction_percent": 3.2076720385371518,
+      "profile_attention_saved_us": 101.74187500000016
+    },
+    {
+      "policy": "whole",
+      "capacity": 400,
+      "control_wall_us": 4250.7309000000005,
+      "resident_wall_us": 4186.7555,
+      "saved_wall_us": 63.97540000000026,
+      "reduction_percent": 1.5050446971366795,
+      "control_wall_median_us": 4231.613,
+      "resident_wall_median_us": 4182.4575,
+      "median_reduction_percent": 1.1616256023412312,
+      "profile_attention_saved_us": 49.02087500000016
+    },
+    {
+      "policy": "upstream",
+      "capacity": 512,
+      "control_wall_us": 5673.3778,
+      "resident_wall_us": 5543.4492,
+      "saved_wall_us": 129.9286000000002,
+      "reduction_percent": 2.290145387462125,
+      "control_wall_median_us": 5670.183999999999,
+      "resident_wall_median_us": 5538.878000000001,
+      "median_reduction_percent": 2.3157273203126865,
+      "profile_attention_saved_us": 127.8623749999997
+    },
+    {
+      "policy": "whole",
+      "capacity": 512,
+      "control_wall_us": 5609.5244999999995,
+      "resident_wall_us": 5311.093,
+      "saved_wall_us": 298.4314999999997,
+      "reduction_percent": 5.320085508138876,
+      "control_wall_median_us": 5362.9825,
+      "resident_wall_median_us": 5309.507,
+      "median_reduction_percent": 0.9971224034387669,
+      "profile_attention_saved_us": 73.00075000000015
+    }
+  ],
+  "policy_interactions": [
+    {
+      "capacity": 400,
+      "control_upstream_minus_whole_us": 266.77909999999974,
+      "resident_upstream_minus_whole_us": 170.78469999999925,
+      "interaction_us_resident_minus_control": -95.9944000000005
+    },
+    {
+      "capacity": 512,
+      "control_upstream_minus_whole_us": 63.85330000000067,
+      "resident_upstream_minus_whole_us": 232.35620000000017,
+      "interaction_us_resident_minus_control": 168.5028999999995
+    }
+  ],
+  "wall_outlier_observation": {
+    "policy": "whole",
+    "capacity": 512,
+    "control_maximum_sample": {
+      "trial": 0,
+      "mode": "whole",
+      "policy": "whole",
+      "repeat": 5,
+      "step": 29,
+      "batch": 128,
+      "capacity": 512,
+      "wall_us": 7896.423,
+      "preparation_enqueue_us": 291.041,
+      "submit_join_cpu_us": 2775.812,
+      "queue_span_us": 5117.219924926758,
+      "legacy_update_calls_delta": 0,
+      "legacy_updated_tasks_delta": 0
+    },
+    "control_median_wall_us": 5362.9825,
+    "control_maximum_minus_median_us": 2533.4404999999997,
+    "control_maximum_over_median": 1.472393952432252,
+    "control_mean_wall_us": 5609.5244999999995,
+    "resident_mean_wall_us": 5311.093,
+    "resident_median_wall_us": 5309.507,
+    "profile_attention_saved_us": 73.00075000000015,
+    "mean_wall_profile_mismatch_flag": true,
+    "samples_removed": 0,
+    "interpretation": "The control whole/cap512 maximum has a large CPU submit/join component. Mean wall saving exceeds median and single-profile attention saving; do not attribute the full mean difference to the resident kernel or call it a stable 5.32% gain."
+  },
+  "eligibility": [
+    {
+      "policy": "upstream",
+      "capacity": 400,
+      "positive_kv_heads": 196,
+      "fd_heads": 12,
+      "source_plan_eligible_complete_heads": 184,
+      "eligible_head_fraction": 0.9387755102040817,
+      "positive_kv_s2_tiles": 466,
+      "eligible_s2_tiles": 435,
+      "logical_running_o_gm_read_write_bytes_avoidable_per_occurrence": 12337152,
+      "qualification_method": "Pinned source guards plus actual 1024-word plan and Q4 geometry; no runtime eligibility counter",
+      "not_measured_hbm_traffic": true,
+      "fd_head_ids": [
+        10,
+        18,
+        37,
+        47,
+        56,
+        66,
+        77,
+        117,
+        127,
+        146,
+        167,
+        186
+      ]
+    },
+    {
+      "policy": "upstream",
+      "capacity": 512,
+      "positive_kv_heads": 256,
+      "fd_heads": 12,
+      "source_plan_eligible_complete_heads": 244,
+      "eligible_head_fraction": 0.953125,
+      "positive_kv_s2_tiles": 642,
+      "eligible_s2_tiles": 612,
+      "logical_running_o_gm_read_write_bytes_avoidable_per_occurrence": 18087936,
+      "qualification_method": "Pinned source guards plus actual 1024-word plan and Q4 geometry; no runtime eligibility counter",
+      "not_measured_hbm_traffic": true,
+      "fd_head_ids": [
+        14,
+        42,
+        53,
+        66,
+        93,
+        107,
+        157,
+        170,
+        182,
+        207,
+        218,
+        231
+      ]
+    },
+    {
+      "policy": "whole",
+      "capacity": 400,
+      "positive_kv_heads": 196,
+      "fd_heads": 0,
+      "source_plan_eligible_complete_heads": 196,
+      "eligible_head_fraction": 1.0,
+      "positive_kv_s2_tiles": 466,
+      "eligible_s2_tiles": 466,
+      "logical_running_o_gm_read_write_bytes_avoidable_per_occurrence": 13271040,
+      "qualification_method": "Pinned source guards plus actual 1024-word plan and Q4 geometry; no runtime eligibility counter",
+      "not_measured_hbm_traffic": true,
+      "fd_head_ids": []
+    },
+    {
+      "policy": "whole",
+      "capacity": 512,
+      "positive_kv_heads": 256,
+      "fd_heads": 0,
+      "source_plan_eligible_complete_heads": 256,
+      "eligible_head_fraction": 1.0,
+      "positive_kv_s2_tiles": 642,
+      "eligible_s2_tiles": 642,
+      "logical_running_o_gm_read_write_bytes_avoidable_per_occurrence": 18972672,
+      "qualification_method": "Pinned source guards plus actual 1024-word plan and Q4 geometry; no runtime eligibility counter",
+      "not_measured_hbm_traffic": true,
+      "fd_head_ids": []
+    }
+  ],
+  "source": {
+    "bundle": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\ro-v3-final",
+    "suite_sha256": "3903447cf0d783b9f41a1eed40bb2113f0f78c360cb682d6fdc36d6c8f80fcc5",
+    "auditor_sha256": "36be19217330214fd8d2e1d5403aa0f02527f5a2b7729a461bcd8db67e7215b4"
+  },
+  "npu0_idle_after": true,
+  "process_replicates_per_cell": 1,
+  "stable_performance_gain_established": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "limitations": [
+    "Four fresh processes in one fixed order; order, addresses, frequency and temperature remain confounded.",
+    "Synthetic sixteen-attention chain with two original records; no dynamic/full-model/serving or split-over-padding claim.",
+    "All formal samples retained; pre/post qualification and profiler replays are separate from timed replay.",
+    "Full output bitwise equality is reported as observed, never inferred from a few FP32 samples.",
+    "Eligibility and avoidable workspace bytes are source/plan deductions, not runtime counters or measured HBM bytes.",
+    "One profiler replay per capacity is attribution evidence only."
+  ]
+}

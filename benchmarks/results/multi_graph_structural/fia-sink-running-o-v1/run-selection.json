@@ -1,0 +1,29 @@
+{
+  "selected_remote_version": 3,
+  "manifest_sha256": "b9cdd9f95ab02d8db5d14bc3f914ec29eea4c87955b121df3f564b18ea228d58",
+  "attempts": [
+    {
+      "version": 1,
+      "archive": "compile-attempt-v1.tar.gz",
+      "sha256": "c3c82a6dd6af5d5f3881bcb258eb6ecbae57bdd46b2cc402ce0b3fa132ed0b6e",
+      "npu_timings": 0,
+      "partial": true
+    },
+    {
+      "version": 2,
+      "archive": "compile-attempt-v2.tar.gz",
+      "sha256": "1b0eca94420e262726721ebf855480c3f7dd521578a4915afd67827e4652613c",
+      "npu_timings": 0,
+      "partial": true
+    }
+  ],
+  "reasons": {
+    "v1": "Compiler missing retained tiling registration; failed before NPU. Deployed patch predates final freeze; no measurements used.",
+    "v2": "Controller deliberately stopped its own broad CPU compilation. Status still running is preserved with interruption sidecar; no NPU runs.",
+    "v3": "Both macro builds completed with exactly two target tiling keys; all four probes completed and audited."
+  },
+  "raw_files_unchanged_after_collection": true,
+  "complete_timing_scope": "Synthetic sixteen-attention chain, two original records, one fresh process/cell; no stable/full-trace/model/split-over-padding claim",
+  "audit_schema_correction": "Whole vendor retains its qualified extra libthesis_stage5_whole_aicpu.so; this exact immutable library and dispatcher are the only cross-policy non-consumer inventory differences.",
+  "local_collection_path_adjustment": "A first local extraction hit Windows MAX_PATH. Final collection shortens metadata destination names; raw bytes and original remote paths remain in manifest."
+}

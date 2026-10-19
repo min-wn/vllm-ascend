@@ -1,0 +1,266 @@
+--- a/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h
++++ b/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h
+@@ -31,6 +31,46 @@
+ using namespace AiInfraInferenceAttentionCommon;
+ using AscendC::CrossCoreSetFlag;
+ using AscendC::CrossCoreWaitFlag;
++
++
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++// Vec2 consumes monotonically ordered tasks. Vec1 never touches this state.
++struct ThesisRunningOState {
++    bool active = false;
++    bool isFirstSInnerLoop = false, isLastS2Loop = false;
++    uint32_t bIdx = 0, n2Idx = 0, gS1Idx = 0, actMBaseSize = 0;
++    uint32_t vecStartM = 0, elements = 0, loop = 0, s2Idx = 0;
++    uint64_t workspaceOffset = 0;
++
++    __aicore__ inline bool SameOwner(const RunInfo &info, uint32_t vecStart, uint32_t count) const
++    {
++        return active && !isLastS2Loop && bIdx == info.bIdx && n2Idx == info.n2Idx && gS1Idx == info.gS1Idx &&
++               actMBaseSize == info.actMBaseSize && vecStartM == vecStart && elements == count &&
++               loop + 1U == info.loop && s2Idx + 1U == info.s2Idx;
++    }
++
++    __aicore__ inline bool CanUse(const RunInfo &info, bool supported, uint32_t vecStart, uint32_t count) const
++    {
++        return supported && (info.isFirstSInnerLoop || SameOwner(info, vecStart, count));
++    }
++
++    __aicore__ inline void Remember(const RunInfo &info, uint32_t vecStart, uint32_t count, uint64_t offset)
++    {
++        active = true;
++        isFirstSInnerLoop = info.isFirstSInnerLoop;
++        isLastS2Loop = info.isLastS2Loop;
++        bIdx = info.bIdx;
++        n2Idx = info.n2Idx;
++        gS1Idx = info.gS1Idx;
++        actMBaseSize = info.actMBaseSize;
++        vecStartM = vecStart;
++        elements = count;
++        loop = info.loop;
++        s2Idx = info.s2Idx;
++        workspaceOffset = offset;
++    }
++};
++#endif
+ 
+ template <typename FIAT> class FiaBlockVecNonQuant {
+   public:
+@@ -213,6 +253,18 @@
+     static constexpr uint32_t LSE_TMP_BUFFER_SIZE = ConstInfo::BUFFER_SIZE_BYTE_8K;
+     static constexpr uint32_t DATA_BLOCK_NUM = 8;
+ 
++
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++    // Recover the 16 KiB accumulator from outputQue1; total UB stays 184 KiB.
++    TBuf<> thesisRunningOBuff;
++    ThesisRunningOState thesisRunningOState;
++    bool thesisRunningOEnabled = false;
++    __aicore__ inline bool ThesisRunningOSupported() const;
++    __aicore__ inline bool ThesisPrepareRunningO(const RunInfo &info, uint32_t startRow,
++                                                uint32_t dealRowCount, uint32_t columnCount);
++    __aicore__ inline void ThesisSpillRunningO();
++#endif
++
+     ConstInfo constInfo = {};
+     MSplitInfo mSplitInfo = {};
+ 
+@@ -335,7 +387,19 @@
+     pipe->InitBuffer(inputQue2, 2, ConstInfo::BUFFER_SIZE_BYTE_16K); // 2:pingpong
+ 
+     // out queue
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++    thesisRunningOEnabled = ThesisRunningOSupported();
++    if (thesisRunningOEnabled) {
++        // Q4*G6 splits 16/8 rows across the AIVs, not 12/12.
++        // Vec1 BF16: 16*512*2 = 16 KiB; final cast: 16*256*2 = 8 KiB.
++        pipe->InitBuffer(outputQue1, 1, ConstInfo::BUFFER_SIZE_BYTE_16K);
++        pipe->InitBuffer(thesisRunningOBuff, ConstInfo::BUFFER_SIZE_BYTE_16K);
++    } else {
++        pipe->InitBuffer(outputQue1, 1, ConstInfo::BUFFER_SIZE_BYTE_32K);
++    }
++#else
+     pipe->InitBuffer(outputQue1, 1, ConstInfo::BUFFER_SIZE_BYTE_32K);
++#endif
+     pipe->InitBuffer(outputQue2, 1, ConstInfo::BUFFER_SIZE_BYTE_8K);
+ 
+     // tmpBuff
+@@ -713,12 +777,76 @@
+     }
+ }
+ 
++
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++template <typename FIAT>
++__aicore__ inline bool FiaBlockVecNonQuant<FIAT>::ThesisRunningOSupported() const
++{
++    // qSeqSize is native metadata max-S1, not packed physical query T.
++    return PAGE_ATTENTION && LAYOUT_T == FIA_LAYOUT::TND &&
++           IsSameType<Q_T, bfloat16_t>::value && IsSameType<KV_T, bfloat16_t>::value &&
++           IsSameType<OUT_T, bfloat16_t>::value && constInfo.qSeqSize == 4U &&
++           constInfo.gSize == 6U && constInfo.qHeadNum == 12U && constInfo.kvHeadNum == 2U &&
++           constInfo.headDim == 256U && constInfo.headDimAlign == 256U &&
++           constInfo.preLoadNum == 2U && constInfo.s2BaseSize > 0U && constInfo.s2BaseSize <= 512U &&
++           constInfo.kvCacheBlockSize == 128U && constInfo.subBlockNum == 2U &&
++           constInfo.sinkNumber == 0 && constInfo.keySinkNumber == 0 && !learnableSinkFlag &&
++           !constInfo.ropeSplitMode && constInfo.headDimRope == 0U;
++}
++
++template <typename FIAT>
++__aicore__ inline void FiaBlockVecNonQuant<FIAT>::ThesisSpillRunningO()
++{
++    if (!thesisRunningOState.active) {
++        return;
++    }
++    // Cold fallback: publish the last resident value before using legacy GM.
++    // This also protects accumulator lifetime if the next task has a new owner.
++    AscendC::PipeBarrier<PIPE_V>();
++    event_t vToMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
++    SetFlag<HardEvent::V_MTE3>(vToMte3);
++    WaitFlag<HardEvent::V_MTE3>(vToMte3);
++    DataCopy(vec2ResGm[thesisRunningOState.workspaceOffset], thesisRunningOBuff.Get<COMPUTE_T>(),
++             thesisRunningOState.elements);
++    event_t mte3ToMte2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
++    SetFlag<HardEvent::MTE3_MTE2>(mte3ToMte2);
++    WaitFlag<HardEvent::MTE3_MTE2>(mte3ToMte2);
++    event_t mte3ToV = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
++    SetFlag<HardEvent::MTE3_V>(mte3ToV);
++    WaitFlag<HardEvent::MTE3_V>(mte3ToV);
++    thesisRunningOState.active = false;
++}
++
++template <typename FIAT>
++__aicore__ inline bool FiaBlockVecNonQuant<FIAT>::ThesisPrepareRunningO(
++    const RunInfo &info, uint32_t startRow, uint32_t dealRowCount, uint32_t columnCount)
++{
++    const bool supported = thesisRunningOEnabled && info.actS1Size == 4U && info.actMBaseSize == 24U &&
++                           !info.tndIsS2SplitCore && !info.isSinkTensor && startRow == 0U &&
++                           mSplitInfo.nBufferStartM == 0U && dealRowCount == mSplitInfo.vecDealM &&
++                           dealRowCount > 0U && dealRowCount <= 16U && columnCount == 256U &&
++                           info.actualSingleProcessSInnerSizeAlign > 0U &&
++                           info.actualSingleProcessSInnerSizeAlign <= 512U;
++    const bool use = thesisRunningOState.CanUse(info, supported, mSplitInfo.vecStartM,
++                                               dealRowCount * columnCount);
++    if (thesisRunningOState.active && (info.isFirstSInnerLoop || !use)) {
++        ThesisSpillRunningO();
++    }
++    return use;
++}
++#endif
++
+ template <typename FIAT> __aicore__ inline void FiaBlockVecNonQuant<FIAT>::ProcessVec2SingleBuf(const RunInfo &info)
+ {
+     if (mSplitInfo.vecDealM == 0) {
+         return;
+     }
+     uint32_t mSplitSize = BASE_BLOCK_MAX_ELEMENT_NUM / constInfo.headDimAlign;
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++    if (thesisRunningOEnabled && mSplitSize > 16U) {
++        mSplitSize = 16U; // Every fallback FP32 output staging also fits 16 KiB.
++    }
++#endif
+     if constexpr (!SOFTMAX_WITH_BRC) {
+         uint32_t alignVal = AiInfraInferenceCommonFaBaseVector::BYTE_BLOCK / sizeof(COMPUTE_T);
+         // 向下8/16对齐是因为UB操作起始地址需32B对齐
+@@ -750,6 +878,9 @@
+     uint64_t inOutBaseOffset = mStart * columnCount;
+     uint64_t srcGmOffset = (info.loop % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
+ 
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++    const bool thesisUseRunningO = ThesisPrepareRunningO(info, startRow, dealRowCount, columnCount);
++#endif
+     LocalTensor<MM2_OUT_T> bmm2ResUb = inputQue1.AllocTensor<MM2_OUT_T>();
+     DataCopy(bmm2ResUb, mm2ResGm[srcGmOffset], vec2ComputeSize);
+     inputQue1.EnQue(bmm2ResUb);
+@@ -757,15 +888,25 @@
+ 
+     // 除第一个循环外，均需要更新中间计算结果
+     if (!info.isFirstSInnerLoop) {
+-        event_t eventIdMte2WaitMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
+-        SetFlag<HardEvent::MTE3_MTE2>(eventIdMte2WaitMte3);
+-        WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte2WaitMte3);
+-        LocalTensor<COMPUTE_T> bmm2ResPreUb = inputQue1.AllocTensor<COMPUTE_T>();
+-        uint64_t vec2ResGmOffset = ((info.loop - 1) % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
+-        DataCopy(bmm2ResPreUb, vec2ResGm[vec2ResGmOffset], vec2ComputeSize);
+-        inputQue1.EnQue(bmm2ResPreUb);
+-
+-        inputQue1.DeQue<COMPUTE_T>();
++        LocalTensor<COMPUTE_T> bmm2ResPreUb;
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++        if (thesisUseRunningO) {
++            // Only a preceding qualified task may make this value readable.
++            AscendC::PipeBarrier<PIPE_V>();
++            bmm2ResPreUb = thesisRunningOBuff.Get<COMPUTE_T>();
++        } else
++#endif
++        {
++            event_t eventIdMte2WaitMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
++            SetFlag<HardEvent::MTE3_MTE2>(eventIdMte2WaitMte3);
++            WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte2WaitMte3);
++            bmm2ResPreUb = inputQue1.AllocTensor<COMPUTE_T>();
++            uint64_t vec2ResGmOffset =
++                ((info.loop - 1) % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
++            DataCopy(bmm2ResPreUb, vec2ResGm[vec2ResGmOffset], vec2ComputeSize);
++            inputQue1.EnQue(bmm2ResPreUb);
++            inputQue1.DeQue<COMPUTE_T>();
++        }
+         AscendC::PipeBarrier<PIPE_V>();
+         uint32_t idx = info.loop % (constInfo.preLoadNum);
+ 
+@@ -790,7 +931,12 @@
+ 
+         AscendC::PipeBarrier<PIPE_V>();
+         Add(bmm2ResUb, bmm2ResUb, bmm2ResPreUb, vec2ComputeSize);
+-        inputQue1.FreeTensor(bmm2ResPreUb);
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++        if (!thesisUseRunningO)
++#endif
++        {
++            inputQue1.FreeTensor(bmm2ResPreUb);
++        }
+     }
+ 
+     // 最后一次输出计算结果，否则将中间结果暂存至workspace
+@@ -819,16 +965,33 @@
+ 
+         AscendC::PipeBarrier<PIPE_V>();
+         Bmm2ResCopyOut(info, bmm2ResUb, mStart, startRow, dealRowCount, columnCount, actualColumnCount);
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++        thesisRunningOState.active = false;
++#endif
+     } else {
+         AscendC::PipeBarrier<PIPE_V>();
+-        LocalTensor<COMPUTE_T> tmpBmm2Res = outputQue1.AllocTensor<COMPUTE_T>();
+-        DataCopy(tmpBmm2Res, bmm2ResUb, dealRowCount * columnCount);
+-        outputQue1.EnQue(tmpBmm2Res);
+-        outputQue1.DeQue<COMPUTE_T>();
+-        uint64_t vec2ResGmOffset = (info.loop % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
+-        DataCopy(vec2ResGm[vec2ResGmOffset], tmpBmm2Res, vec2ComputeSize);
+-
+-        outputQue1.FreeTensor(tmpBmm2Res);
++#if defined(THESIS_FIA_RUNNING_O_UB) && THESIS_FIA_RUNNING_O_UB && (__CCE_AICORE__ == 220)
++        if (thesisUseRunningO) {
++            DataCopy(thesisRunningOBuff.Get<COMPUTE_T>(), bmm2ResUb, vec2ComputeSize);
++            AscendC::PipeBarrier<PIPE_V>();
++            // ComputeVec2 publishes syncV2C2 on PIPE_MTE3. Preserve its V dependency.
++            event_t vToMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
++            SetFlag<HardEvent::V_MTE3>(vToMte3);
++            WaitFlag<HardEvent::V_MTE3>(vToMte3);
++            const uint64_t offset = (info.loop % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
++            thesisRunningOState.Remember(info, mSplitInfo.vecStartM, vec2ComputeSize, offset);
++        } else
++#endif
++        {
++            LocalTensor<COMPUTE_T> tmpBmm2Res = outputQue1.AllocTensor<COMPUTE_T>();
++            DataCopy(tmpBmm2Res, bmm2ResUb, dealRowCount * columnCount);
++            outputQue1.EnQue(tmpBmm2Res);
++            outputQue1.DeQue<COMPUTE_T>();
++            uint64_t vec2ResGmOffset = (info.loop % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
++            DataCopy(vec2ResGm[vec2ResGmOffset], tmpBmm2Res, vec2ComputeSize);
++
++            outputQue1.FreeTensor(tmpBmm2Res);
++        }
+     }
+ 
+     inputQue1.FreeTensor(bmm2ResUb);

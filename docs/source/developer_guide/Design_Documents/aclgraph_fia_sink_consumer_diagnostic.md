@@ -3,6 +3,10 @@
 Status: six-process bounded measurement and two independent analyses completed,
 2026-10-19. This is a small prerequisite diagnostic, not Stage 8 full-model
 integration or a replacement result for the frozen Stage 7 trace.
+The isolated running-O source patch and both macro builds are now complete;
+the four-cell `v3` runtime comparison and independent audit are complete.
+The bounded result below does not establish a stable gain. A Chinese overview is available in the
+[current scheme explanation](aclgraph_dynamic_shape_current_scheme_zh.md).
 
 ## Question
 
@@ -199,21 +203,23 @@ in `fia_block_vec_nonquant_sink.h::DealBmm2ResBaseBlock`:
 - Lines 820-831 copy each non-final result through another UB queue and write
   it back to `vec2ResGm` for the next S2 iteration.
 
-The first controlled consumer variant would retain the running FP32 output
-in UB for the lifetime of its complete request/head. Keep the MM2 producer
-workspace handoff, softmax arithmetic, exact lengths, page routing and final
-output format unchanged. Whole-row/no-FD ownership provides a useful lifetime
-contract, but it does not automatically make the implementation safe.
+The isolated consumer variant now implements running FP32 output residency
+in UB under the complete request/head lifetime contract. It retains the MM2
+producer workspace handoff, softmax arithmetic, exact lengths, page routing
+and final output format. Whole-row/no-FD ownership provides a useful lifetime
+contract, but source and compile checks alone do not establish runtime safety.
 
 `SetMSplitInfo` splits the Q4/GQA6 M=24 rows at a sixteen-row boundary:
 the two AIV sides own sixteen/eight rows, requiring 16/8 KiB of FP32 running
-output at D256. Budget the heavier side per in-flight head, not an assumed
-12/12 KiB split. The existing three-task pipeline can keep different heads
-in flight. Use head/slot identity and explicit producer/consumer events;
-one blindly reused accumulator is incorrect. Audit the complete static UB
-allocation, reusing/reducing the existing output queue where legal. Keep
-the current path for unsupported shapes, FD, capacity/lifetime failure or
-unqualified synchronization.
+output at D256. The patch budgets the heavier side, not an assumed 12/12 KiB
+split, reclaiming 16 KiB from the existing output queue rather than increasing
+the 184 KiB static UB total. The existing three-task pipeline can keep
+different heads in flight. The Vec2 state therefore checks actual owner,
+geometry and consecutive loop/S2 identity before reuse, with spill and event
+protection on the guarded path. A blindly reused accumulator is incorrect.
+The original consumer path remains for unsupported geometry, FD or an
+unqualified ownership/lifetime transition. The bounded runtime checks below
+qualify the two selected records, not every supported source branch.
 
 A smaller prerequisite ablation can test removing the UB-to-UB staging copy
 while retaining GM accumulation, provided the MTE3 completion protects the
@@ -222,7 +228,20 @@ the full running output on chip. Compare the same two original records,
 all pre/post correctness gates and complete wall, with profiles separated.
 Keep a change only if its unprofiled endpoint improves and its affected
 pipeline/task evidence agrees; counter ratios alone are not an acceptance
-criterion. Neither variant is implemented or measured yet.
+criterion. The separate remove-staging-only variant is not implemented.
+The running-O variant and its macro-disabled source control have both passed
+AscendC compilation; this is not a correctness or speedup result.
+
+The current source-ablation binaries compile only the two selected tiling
+keys `104000000010222223` and `104000000010322223`. The build tool requires
+the actual `kernelList` key set to match the selection exactly, allowing
+duplicate AIC/AIV entries for one key. These are restricted experimental
+binaries, not a replacement package qualified for arbitrary shapes or all
+fallback templates. The four `v3` cells cross upstream/whole producer with
+macro-disabled/enabled consumer using the same two original records. Dynamic
+chronological replay, full-model integration and split-over-padding performance
+remain unvalidated for this patch. The GM running-output round trips are a
+source-level target, not a measured proof that GM bandwidth is the bottleneck.
 
 Eligibility must follow the actual native ownership, geometry and lifetime
 contract, not the producer's policy name. If an upstream plan satisfies the
@@ -237,6 +256,48 @@ realization under the current A2 whole-head native ownership and task/UB
 constraints, with evidence against the same upstream consumer. This is not
 yet a benefit unique to graph splitting or a demonstrated thesis-level
 novelty result.
+
+### Bounded running-O source-ablation result
+
+The selected `v3` run completes four fresh processes, eighty unprofiled
+timings and 144 sampled FP32 row comparisons. Each policy/capacity/variant
+has ten timings; there is only one fresh process per cell. The macro-disabled
+control and resident variant use the same patched source, restricted tiling
+keys and frozen preparation/replay protocol. Profiling is separate, with one
+replay per capacity in each process.
+
+| Policy | Capacity | Control wall us | Resident wall us | Mean reduction | Profile attention sum saved us |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Upstream | 400 | 4517.510 | 4357.540 | 3.541% | 101.742 |
+| Upstream | 512 | 5673.378 | 5543.449 | 2.290% | 127.862 |
+| Whole | 400 | 4250.731 | 4186.756 | 1.505% | 49.021 |
+| Whole | 512 | 5609.524 | 5311.093 | 5.320% | 73.001 |
+
+The whole/capacity512 control includes a 7896.423 us wall spike. All ten
+observations remain in its mean. Its median is 5362.9825 us versus
+5309.507 us resident, a reduction of about 0.997%. The 5.320% mean is
+therefore an unstable summary of this cell; the separate single profile
+shows only 73.001 us saved across sixteen attention kernels. Profile sums,
+host intervals and wall timings cannot be substituted for one another.
+Fixed process order, addresses, frequency and temperature remain confounded;
+the observations do not establish stable process-level speedup.
+
+The independent raw audit passes 5393 assertions over 92 manifested files,
+including all timings, 24 complete plan checks and private input identities.
+Within each policy and capacity, all sixteen complete output hashes match
+bitwise across macros and pre/post qualification, and all 1024 plan words
+remain unchanged. The separate 144 FP32 sampled rows pass with maximum
+absolute error 0.00029981881380081177. The full-output hash equality is an
+observed identity, not an inference from those samples; qualification is
+separate from the timed replays. NPU0 is idle afterward.
+
+This screen observes a modest consumer benefit, including on upstream's
+eligible heads. It does not show a large effect unique to whole-row ownership,
+prove GM bandwidth saturation or isolate all eliminated running-output bytes
+as measured HBM traffic. The affected source/plan and profile evidence support
+further bounded validation; they do not establish a dynamic-trace, full-model,
+serving or graph-splitting gain. On-chip accumulation remains established
+practice, and the same legal fast consumer remains available to both policies.
 
 ## Why this does not supersede Stage 7
 
@@ -304,3 +365,10 @@ See [Stage 7](aclgraph_fia_sink_stage7.md), the
 - `fia-sink-consumer-metrics-analysis.json` retains all 64 per-occurrence
   counter records. `fia-sink-consumer-v1/metrics/` preserves the lossless raw
   archive/manifest, the four CSVs, wrapper/configuration and post-run check.
+- `fia-sink-running-o-v1/` retains the selected `v3` four-cell reports,
+  restricted builds, raw profiles, manifests and source snapshots under
+  `benchmarks/results/multi_graph_structural/`.
+- `fia-sink-running-o-independent-audit.json` records the separate raw-file,
+  key inventory, plan, output identity, FP32 and timing audit.
+- `fia-sink-running-o-primary-recompute.json` independently recomputes the
+  wall summaries, retained extrema, contrasts and complete-output identities.

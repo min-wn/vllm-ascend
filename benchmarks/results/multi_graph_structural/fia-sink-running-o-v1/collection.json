@@ -1,0 +1,39 @@
+{
+  "version": 3,
+  "screen_state": "completed",
+  "screen_returncode": 0,
+  "controller_interrupted": false,
+  "partial": false,
+  "collection_does_not_qualify_results": true,
+  "npu_work_executed_by_collector": false,
+  "collected_unix": 1792401762.6588953,
+  "selected_screen_remote": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-screen-v3",
+  "frozen_tools_remote": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-tools-v3",
+  "build_presence": [
+    {
+      "variant": "control",
+      "present": true,
+      "remote_path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-build-control-v3"
+    },
+    {
+      "variant": "resident",
+      "present": true,
+      "remote_path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/running-o-build-resident-v3"
+    }
+  ],
+  "suite_sha256": "3903447cf0d783b9f41a1eed40bb2113f0f78c360cb682d6fdc36d6c8f80fcc5",
+  "omitted_files": [
+    {
+      "remote_path": "running-o-build-control-v3/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+      "bytes": 150336,
+      "reason": "selected compile object/binary; hash retained in build report"
+    },
+    {
+      "remote_path": "running-o-build-resident-v3/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+      "bytes": 150336,
+      "reason": "selected compile object/binary; hash retained in build report"
+    }
+  ],
+  "profile_path_contract": "cell-XX-VARIANT-POLICY/profiles/cap{400,512}/trace.json; optional existing output/trace_view.json and kernel_details.csv retained",
+  "omission_scope": "No full copied source, vendor libraries, AICore objects, profiler raw device/framework dumps or kernel_meta"
+}

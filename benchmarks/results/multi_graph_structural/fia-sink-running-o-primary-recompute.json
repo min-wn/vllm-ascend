@@ -1,0 +1,192 @@
+{
+  "timing": [
+    {
+      "variant": "control",
+      "policy": "upstream",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4517.51,
+      "median_us": 4498.309,
+      "min_us": 4474.059,
+      "max_us": 4620.66,
+      "raw_report_sha256": "8271dd0f202761d993e5ccaaae33b80abada09f4ef0fa23b6798022e8c12508e"
+    },
+    {
+      "variant": "control",
+      "policy": "upstream",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5673.3778,
+      "median_us": 5670.183999999999,
+      "min_us": 5646.953,
+      "max_us": 5714.844,
+      "raw_report_sha256": "8271dd0f202761d993e5ccaaae33b80abada09f4ef0fa23b6798022e8c12508e"
+    },
+    {
+      "variant": "resident",
+      "policy": "upstream",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4357.5401999999995,
+      "median_us": 4354.018,
+      "min_us": 4320.038,
+      "max_us": 4396.368,
+      "raw_report_sha256": "b69688bb7da10758c5ad1c5dc593b565eb7e4162600a3d69e80b68293cc7d60f"
+    },
+    {
+      "variant": "resident",
+      "policy": "upstream",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5543.4492,
+      "median_us": 5538.878000000001,
+      "min_us": 5495.303,
+      "max_us": 5572.853,
+      "raw_report_sha256": "b69688bb7da10758c5ad1c5dc593b565eb7e4162600a3d69e80b68293cc7d60f"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4186.7555,
+      "median_us": 4182.4575,
+      "min_us": 4138.337,
+      "max_us": 4233.148,
+      "raw_report_sha256": "13df0be3503029fcffd9aa228d8c6d39b01ed5ea3f9b7db67bf0195377497609"
+    },
+    {
+      "variant": "resident",
+      "policy": "whole",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5311.093,
+      "median_us": 5309.507,
+      "min_us": 5267.372,
+      "max_us": 5361.352,
+      "raw_report_sha256": "13df0be3503029fcffd9aa228d8c6d39b01ed5ea3f9b7db67bf0195377497609"
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 400,
+      "samples": 10,
+      "mean_us": 4250.7309000000005,
+      "median_us": 4231.613,
+      "min_us": 4181.047,
+      "max_us": 4444.238,
+      "raw_report_sha256": "9495a6119fea09d1afe31e28e113d8db759690c910a7a179386777751f2f0763"
+    },
+    {
+      "variant": "control",
+      "policy": "whole",
+      "capacity": 512,
+      "samples": 10,
+      "mean_us": 5609.5244999999995,
+      "median_us": 5362.9825,
+      "min_us": 5294.572,
+      "max_us": 7896.423,
+      "raw_report_sha256": "9495a6119fea09d1afe31e28e113d8db759690c910a7a179386777751f2f0763"
+    }
+  ],
+  "contrasts": [
+    {
+      "kind": "consumer",
+      "policy": "upstream",
+      "capacity": 400,
+      "saved_us": 159.96980000000076,
+      "reduction_percent": 3.5411056090634165
+    },
+    {
+      "kind": "consumer",
+      "policy": "whole",
+      "capacity": 400,
+      "saved_us": 63.97540000000026,
+      "reduction_percent": 1.5050446971366795
+    },
+    {
+      "kind": "policy",
+      "variant": "control",
+      "capacity": 400,
+      "saved_us": 266.77909999999974,
+      "reduction_percent": 5.9054456990687285
+    },
+    {
+      "kind": "policy",
+      "variant": "resident",
+      "capacity": 400,
+      "saved_us": 170.78469999999925,
+      "reduction_percent": 3.919291438780055
+    },
+    {
+      "kind": "combined",
+      "capacity": 400,
+      "saved_us": 330.7545,
+      "reduction_percent": 7.321610798869288
+    },
+    {
+      "kind": "consumer",
+      "policy": "upstream",
+      "capacity": 512,
+      "saved_us": 129.9286000000002,
+      "reduction_percent": 2.290145387462125
+    },
+    {
+      "kind": "consumer",
+      "policy": "whole",
+      "capacity": 512,
+      "saved_us": 298.4314999999997,
+      "reduction_percent": 5.320085508138876
+    },
+    {
+      "kind": "policy",
+      "variant": "control",
+      "capacity": 512,
+      "saved_us": 63.85330000000067,
+      "reduction_percent": 1.1254900035037447
+    },
+    {
+      "kind": "policy",
+      "variant": "resident",
+      "capacity": 512,
+      "saved_us": 232.35620000000017,
+      "reduction_percent": 4.191545581404447
+    },
+    {
+      "kind": "combined",
+      "capacity": 512,
+      "saved_us": 362.28480000000036,
+      "reduction_percent": 6.3856984810706665
+    }
+  ],
+  "equality": [
+    {
+      "policy": "upstream",
+      "capacity": 400,
+      "full_16_output_hashes_equal_across_macro_and_pre_post": true,
+      "full_1024_word_plans_equal": true
+    },
+    {
+      "policy": "whole",
+      "capacity": 400,
+      "full_16_output_hashes_equal_across_macro_and_pre_post": true,
+      "full_1024_word_plans_equal": true
+    },
+    {
+      "policy": "upstream",
+      "capacity": 512,
+      "full_16_output_hashes_equal_across_macro_and_pre_post": true,
+      "full_1024_word_plans_equal": true
+    },
+    {
+      "policy": "whole",
+      "capacity": 512,
+      "full_16_output_hashes_equal_across_macro_and_pre_post": true,
+      "full_1024_word_plans_equal": true
+    }
+  ],
+  "process_replicates_per_cell": 1,
+  "timings": 80,
+  "scope": "Two fixed records, synthetic sixteen-attention chain; arithmetic is not a stable gain/full-model or split-over-padding claim",
+  "source_sha256": "d481e8c84672419108c4b8016af587fcea667dbb4fee2919f0351fa1de750ffc"
+}
