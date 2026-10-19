@@ -1,0 +1,41 @@
+{
+  "command": [
+    "timeout",
+    "900",
+    "torchrun",
+    "--standalone",
+    "--nproc-per-node=2",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/aclgraph_bounded_lead_probe.py",
+    "--extension",
+    "/workspace/multi-graph-results/q4-log-build-v3-ranges/gdn_q4_log.so",
+    "--products-extension",
+    "/workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so",
+    "--deferred-extension",
+    "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so",
+    "--tile-extension",
+    "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so",
+    "--output",
+    "/workspace/aclgraph-two-layer-core-join-v1/results/probe.json",
+    "--join-before",
+    "core",
+    "--include-fia"
+  ],
+  "environment": {
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1",
+    "VLLM_BATCH_INVARIANT": "0",
+    "TASK_QUEUE_ENABLE": "0",
+    "HCCL_DETERMINISTIC": "true",
+    "PYTHONPATH": "/workspace/aclgraph-two-layer-core-join-v1/tools:/workspace/aclgraph-full-path-budget-v2/tools:/vllm-workspace/vllm-ascend/benchmarks:/vllm-workspace/vllm-ascend:/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:"
+  },
+  "sources": {
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_gdn_q4_log_probe.py": "473e740f337a222ef35d5b3574937a055dce32e55af0d2fc19df076441f07c5b",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_tp_gdn.py": "b0f64bd30936bd9455e029ea7e4d78363402f54291ff1fada88b986c59ec0cbd",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_tp_gdn_phases.py": "6c1ae60e94ba8146a2ee513025e6274401667ff71a2303c7315163090da9d6d4",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_gdn_q4_backend.py": "98499e60061f2ef73c2f766ee926b935d02642d9e5f2bf1b29cf0b4336fedf21",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_tp_boundary_loader.py": "7d32cf6ac2c988f7a83dfb68748cb487fe42a1070b459fc7ae5a6b407a9a0e9e",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_gdn_q4_log_backend.py": "073448425c4019ac44e104f6d157cb8df4acaa9cda1a1984c7b4506fec2f2c66",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/multi_graph_tp_attention.py": "d94dc97ee9e251f0ba4ade7352de124acd626d87d236e278582b57f32e077685",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/aclgraph_bounded_lead_probe.py": "37f65d35559eac3127eb680e7a8f1452423d4962976de638bd9c651e53ea0365",
+    "/workspace/aclgraph-two-layer-core-join-v1/tools/aclgraph_bounded_lead_fia.py": "8a0c1f6ecad38ee907918c30a93f25b528f0c028aad884476107d1d05fb38db5"
+  }
+}

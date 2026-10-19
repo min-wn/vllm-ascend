@@ -12,7 +12,7 @@ from aclgraph_bounded_lead_probe import MODES, pair_samples
 from aclgraph_full_path_budget import intersection, interval
 
 
-def analyze_trace(path, mode, join_before="o"):
+def analyze_trace(path, mode, join_before="o", include_fia=False):
     if join_before not in ("o", "core"):
         raise ValueError("unknown join boundary")
     events = json.loads(path.read_bytes(), parse_float=Decimal)
@@ -33,9 +33,26 @@ def analyze_trace(path, mode, join_before="o"):
     expected = (10, 4, 2, 2) if split else (7, 3, 1, 1)
     if split and join_before == "core":
         expected = (10, 4, 1, 1)
+    if include_fia:
+        expected = (expected[0] + 2, expected[1] + 1, *expected[2:])
     observed = tuple(map(len, (mm, comm, solves, commits)))
     if mode not in MODES or observed != expected:
         raise ValueError(f"incomplete or unexpected endpoint inventory: {mode}, {observed}")
+    fia = [e for e in kernels if e["name"] == "FusedInferAttentionScore"]
+    if len(fia) != int(include_fia):
+        raise ValueError("unexpected FIA kernel count")
+    upstream_summary = None
+    if include_fia:
+        if not interval(mm[0])[1] <= interval(fia[0])[0] < interval(mm[1])[0]:
+            raise ValueError("FIA kernel not between its QKV and O projections")
+        prefix = [e for e in kernels if interval(e)[0] < interval(mm[2])[0]]
+        upstream_summary = dict(
+            kernel_work_us=float(sum(Decimal(str(e["dur"])) for e in prefix)),
+            o_collective_us=float(comm[0]["dur"]),
+            through_previous_post_norm_span_us=float(interval(mm[2])[0] - interval(kernels[0])[0]),
+            note="Includes input copies and previous post-attention norm; spans may include profiler rank skew.",
+        )
+        mm, comm = mm[2:], comm[1:]
     down, inputs, out = (mm[1:3], mm[3:7], mm[7]) if split else (mm[1:2], mm[2:4], mm[4])
     if join_before == "core" and interval(solves[0])[0] + 1 < interval(inputs[-1])[1]:
         raise ValueError("joined core starts before both input projections complete")
@@ -54,6 +71,9 @@ def analyze_trace(path, mode, join_before="o"):
         file=path.name,
         sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
         counts=dict(zip(("matmul", "all_reduce", "solve", "commit"), observed, strict=True)),
+        fia_count=len(fia),
+        fia_kernel_us=total(fia),
+        upstream_attention=upstream_summary,
         previous_down_matmul_us=total(down),
         input_projection_us=total(mats),
         solve_us=total(solves),
@@ -105,6 +125,10 @@ def analyze(root):
     for report in reports:
         if report["status"] != "completed_closed_boundary_with_cross_shape_numerical_diagnostics":
             raise ValueError("incomplete experiment")
+        if report.get("include_fia", False) and (
+            not report.get("official_two_layer_exact") or report.get("fia_update_tasks") != dict.fromkeys(MODES, 1)
+        ):
+            raise ValueError("missing two-layer oracle or real FIA updates")
         if report["critical_rank_samples"] != paired:
             raise ValueError("stored critical-rank aggregation disagrees with raw samples")
         if len(report["checks"]) != 9 or not all(
@@ -137,7 +161,9 @@ def analyze(root):
     for rank, report in enumerate(reports):
         for profile in report["profiles"]:
             path = root / "results" / profile["file"]
-            trace = analyze_trace(path, profile["mode"], report.get("join_before", "o"))
+            trace = analyze_trace(
+                path, profile["mode"], report.get("join_before", "o"), report.get("include_fia", False)
+            )
             if trace["sha256"] != profile["sha256"]:
                 raise ValueError("trace hash mismatch")
             traces.append(dict(rank=rank, mode=profile["mode"], **trace))
@@ -152,7 +178,8 @@ def analyze(root):
             "Profile first-collective spans may include rank arrival skew; check before estimating transport cost.",
             "Kernel duration sums diagnose work but are not additive critical-path savings.",
             "Exact eager/replay and schedule agreement do not certify cross-shape model quality.",
-            "Synthetic reduced-O input; no preceding FIA/update or full-model/serving result.",
+            "Synthetic segment input; only include_fia runs contain preceding FIA/update. "
+            "No full-model/serving result.",
         ],
     )
 

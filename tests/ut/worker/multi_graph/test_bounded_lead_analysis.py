@@ -81,3 +81,44 @@ def test_core_join_requires_one_core_after_both_projections(tmp_path, monkeypatc
     path.write_text(json.dumps(events))
     with pytest.raises(ValueError, match="both input projections"):
         load(monkeypatch).analyze_trace(path, "split_early", "core")
+
+
+def test_two_layer_inventory_requires_real_fia_prefix(tmp_path, monkeypatch):
+    events = trace()
+    origin = Decimal("1792419813172707.961")
+    # Keep the later solve/commit only, representing a joined core.
+    events = [
+        e
+        for e in events
+        if not (
+            e["name"] == "q4_tile_solve_1"
+            and e["ts"] == str(origin + 10)
+            or e["name"] == "q4_log_deferred_0"
+            and e["ts"] == str(origin + 12)
+        )
+    ]
+    for name, start, duration in (
+        ("MatMul", -10, 1),
+        ("FusedInferAttentionScore", -8, 2),
+        ("MatMul", -5, 1),
+        ("hcom_allReduce", -4, 3),
+    ):
+        events.append(
+            dict(
+                name=name,
+                ts=str(origin + start),
+                dur=duration,
+                tid=1,
+                ph="X",
+                args={} if name.startswith("hcom") else {"Task Type": "KERNEL_AICORE"},
+            )
+        )
+    path = tmp_path / "trace.json"
+    path.write_text(json.dumps(events))
+    result = load(monkeypatch).analyze_trace(path, "split_early", "core", True)
+    assert result["counts"] == dict(matmul=12, all_reduce=5, solve=1, commit=1)
+    assert result["fia_count"] == 1
+    events = [e for e in events if e["name"] != "FusedInferAttentionScore"]
+    path.write_text(json.dumps(events))
+    with pytest.raises(ValueError, match="FIA kernel count"):
+        load(monkeypatch).analyze_trace(path, "split_early", "core", True)

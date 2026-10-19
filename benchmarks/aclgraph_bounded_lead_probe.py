@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """Closed previous-MLP/next-GDN endpoint with a join before next O or core.
 
-Synthetic reduced attention/residual inputs; real TP2 layer weights and state.
-All controls use the public ready-tile recurrence. No FIA is inside this endpoint.
+Synthetic segment inputs; real TP2 layer weights and state. Optionally prepend
+the previous official FIA attention, including per-replay H2D and host updates.
+All controls use the public ready-tile recurrence.
 """
 
 import argparse
@@ -139,7 +140,15 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     if previous.layer_scale or previous.use_attn_reduce_scatter_for_moe:
         raise ValueError("requires an ordinary dense predecessor")
 
+    upstream = None
+    if args.include_fia:
+        from aclgraph_bounded_lead_fia import FIAPrefix
+
+        upstream = FIAPrefix(workload, runner, model, previous)
+
     root, comm = torch.npu.Stream(), torch.npu.Stream()
+    update_stream = torch.npu.Stream()
+    staged, updated = torch.npu.Event(), torch.npu.Event()
     ready = [torch.npu.Event() for _ in range(2)]
     done = [torch.npu.Event() for _ in range(2)]
     graphs, outputs, checks, samples, diagnostics = {}, {}, [], [], []
@@ -157,6 +166,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         ],
         modes=MODES,
         join_before=args.join_before,
+        include_fia=args.include_fia,
         converted_weights=converted,
         source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         backend_scratch="private per lane; shared canonical state only for disjoint request owners",
@@ -164,6 +174,21 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         samples=samples,
         numerical_diagnostics=diagnostics,
     )
+    if upstream is not None:
+        report["scope"] = "complete real FIA layer 3 -> complete real GDN layer 4; synthetic segment inputs/prefix"
+        report["exclusions"] = [
+            "full model",
+            "serving",
+            "draft model",
+            "CPU metadata construction",
+            "state snapshot restore",
+        ]
+        report["includes"] += [
+            "official preceding FIA attention",
+            "per-replay true host-length update",
+            "FIA metadata H2D",
+        ]
+        report["fia_update_tasks"] = {}
 
     def progress(stage):
         if rank == 0:
@@ -171,15 +196,22 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
 
     def snapshot():
         torch.npu.synchronize()
-        return (tuple(value.clone() for value in fixture.states), state.snapshot())
+        return (
+            tuple(value.clone() for value in fixture.states),
+            state.snapshot(),
+            tuple(value.clone() for value in upstream.caches) if upstream is not None else (),
+        )
 
     def restore(saved):
         fixture.reset(saved[0])
         state.restore(saved[1])
+        if upstream is not None:
+            for value, source in zip(upstream.caches, saved[2], strict=True):
+                value.copy_(source)
         torch.npu.synchronize()
 
     def tensors(saved):
-        return (*saved[0], *saved[1].tensors)
+        return (*saved[0], *saved[1].tensors, *saved[2])
 
     def assert_values(actual, expected, label):
         for i, (left, right) in enumerate(zip(actual, expected, strict=True)):
@@ -193,9 +225,14 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             tuple(v[owners] for v in after[1].tensors), tuple(v[owners] for v in before[1].tensors), "inactive/compact"
         )
         torch.testing.assert_close(after[0][1], before[0][1], rtol=0, atol=0)
+        if upstream is not None:
+            upstream.check_unwritten(before[2], after[2])
 
     def prepare(step, live):
         fixture.refresh(live, accepted=1 + step % 3)
+        if upstream is not None:
+            upstream.prepare(live, step)
+            upstream.stage()
         torch.manual_seed(75100 + step)
         for value in source:
             value.copy_(torch.randn_like(value) * 0.1)
@@ -214,10 +251,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
 
     with installed_lane_backends(backends) as selected:
 
-        def operation(mode):
+        def operation(mode, capturing=False):
             for destination, origin in zip(data, source, strict=True):
                 destination.copy_(origin)
-            normalized, prior = previous.post_attention_layernorm(*data)
+            prior_input = upstream.forward(*data, capturing=capturing) if upstream is not None else data
+            normalized, prior = previous.post_attention_layernorm(*prior_input)
             packed, _ = previous.mlp.gate_up_proj(normalized)
             intermediate = previous.mlp.act_fn(packed)
             if mode == "padding":
@@ -262,8 +300,40 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 backend.finish_pending_commit()
             return tuple(torch.where(active, value, 0) for value in (output, residual))
 
+        def replay(mode):
+            graph = graphs[mode]
+            if upstream is None:
+                graph.replay()
+                return
+            tasks = upstream.resolve(graph)
+            upstream.stage()
+            staged.record(root)
+            update_stream.wait_event(staged)
+            graph.replay()
+            graph.update(update_stream, tasks)
+            updated.record(update_stream)
+            root.wait_event(updated)
+
         prepare(0, workload.batch)
         initial = snapshot()
+        if upstream is not None:
+            # Independent complete official layer calls guard the decomposition.
+            with upstream.context():
+                prior_output = previous(
+                    hidden_states=source[0].clone(), residual=source[1].clone(), positions=upstream.positions
+                )
+            selected[0] = "full"
+            official = fixture.run(*prior_output)
+            backends["full"].launch_pending_commit()
+            backends["full"].finish_pending_commit()
+            official = tuple(torch.where(active, value, 0).clone() for value in official)
+            official_state = snapshot()
+            restore(initial)
+            observed = operation("padding")
+            assert_values(observed, official, "two-official-layers/output")
+            assert_values(tensors(snapshot()), tensors(official_state), "two-official-layers/state")
+            report["official_two_layer_exact"] = True
+            restore(initial)
         for mode in MODES:
             progress(f"warmup/{mode}")
             for _ in range(2):
@@ -274,12 +344,19 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 torch.npu.synchronize()
             restore(initial)
             root.wait_stream(torch.npu.current_stream())
-            graph = torch.npu.NPUGraph()
+            if upstream is not None:
+                from vllm_ascend.compilation.updatable_graph import UpdatableGraph
+
+                graph = UpdatableGraph()
+            else:
+                graph = torch.npu.NPUGraph()
             dist.barrier(group=cpu_group)
             with torch.npu.graph(graph, pool=torch.npu.graph_pool_handle(), stream=root):
-                outputs[mode] = operation(mode)
+                outputs[mode] = operation(mode, capturing=True)
             torch.npu.synchronize()
             graphs[mode] = graph
+            if upstream is not None:
+                report["fia_update_tasks"][mode] = len(upstream.resolve(graph))
 
         histories = {mode: initial for mode in MODES}
         for step, live in enumerate((workload.batch, workload.batch - 1, workload.batch + 1)):
@@ -295,7 +372,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 restore(before)
                 root.wait_stream(torch.npu.current_stream())
                 with torch.npu.stream(root):
-                    graphs[mode].replay()
+                    replay(mode)
                 actual = snapshot()
                 assert_values(outputs[mode], expected, f"eager/replay/{mode}/{step}")
                 assert_values(tensors(actual), tensors(wanted), f"eager/replay-state/{mode}/{step}")
@@ -310,7 +387,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 tensors(step_results["split_early"][1]), tensors(step_results["split_barrier"][1]), "schedule/state"
             )
             for field, observed, reference in zip(
-                ("hidden", "residual", "conv", "dense_source", "base", "logs", "valid"),
+                ("hidden", "residual", "conv", "dense_source", "base", "logs", "valid")
+                + (("fia_key", "fia_value") if upstream is not None else ()),
                 (*step_results["split_early"][0], *tensors(step_results["split_early"][1])),
                 (*step_results["padding"][0], *tensors(step_results["padding"][1])),
                 strict=True,
@@ -341,7 +419,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     started = time.perf_counter_ns()
                     with torch.npu.stream(root):
                         begin.record(root)
-                        graphs[mode].replay()
+                        replay(mode)
                         end.record(root)
                     end.synchronize()
                     elapsed = (time.perf_counter_ns() - started) / 1000
@@ -369,7 +447,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 # Align after setup, before either rank submits a collective.
                 dist.barrier(group=cpu_group)
                 with torch.npu.stream(root):
-                    graphs[mode].replay()
+                    replay(mode)
                 torch.npu.synchronize()
             path = args.output.with_name(f"{args.output.stem}.{mode}.rank{rank}.trace.json")
             prof.export_chrome_trace(str(path))
@@ -411,6 +489,7 @@ def main():
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--repeats", type=int, default=6)
     parser.add_argument("--join-before", choices=("o", "core"), default="o")
+    parser.add_argument("--include-fia", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists() or args.rounds < 2 or args.repeats < 3:

@@ -1,0 +1,1109 @@
+{
+  "status": "audited_closed_boundary_only",
+  "selection": {
+    "seed": 20261016,
+    "batch": 98,
+    "query": 4,
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "capacity_tokens": 400,
+    "capacity_requests": 100,
+    "pair_tokens": [
+      200,
+      200
+    ],
+    "pair_requests": [
+      50,
+      50
+    ],
+    "default_config_uses_ngram_for_capacity_only": true
+  },
+  "per_round": [
+    {
+      "round": 0,
+      "metric": "device_us",
+      "medians": {
+        "padding": 3909.160017967224,
+        "split_barrier": 3979.4399738311768,
+        "split_early": 3851.7799377441406
+      },
+      "early_saves_vs_barrier_us": 127.66003608703613,
+      "early_added_vs_padding_us": -57.380080223083496,
+      "early_slowdown_vs_padding_pct": -1.4678365674301919
+    },
+    {
+      "round": 0,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 4071.1075,
+        "split_barrier": 4148.4275,
+        "split_early": 3998.5519999999997
+      },
+      "early_saves_vs_barrier_us": 149.8755000000001,
+      "early_added_vs_padding_us": -72.5555000000004,
+      "early_slowdown_vs_padding_pct": -1.7822054563776613
+    },
+    {
+      "round": 1,
+      "metric": "device_us",
+      "medians": {
+        "padding": 3889.45996761322,
+        "split_barrier": 3988.669991493225,
+        "split_early": 3859.189987182617
+      },
+      "early_saves_vs_barrier_us": 129.4800043106079,
+      "early_added_vs_padding_us": -30.269980430603027,
+      "early_slowdown_vs_padding_pct": -0.7782566392932511
+    },
+    {
+      "round": 1,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 4037.917,
+        "split_barrier": 4142.5875,
+        "split_early": 4008.728
+      },
+      "early_saves_vs_barrier_us": 133.85949999999957,
+      "early_added_vs_padding_us": -29.18899999999985,
+      "early_slowdown_vs_padding_pct": -0.7228727088744002
+    },
+    {
+      "round": 2,
+      "metric": "device_us",
+      "medians": {
+        "padding": 3867.810010910034,
+        "split_barrier": 3962.4799489974976,
+        "split_early": 3801.1800050735474
+      },
+      "early_saves_vs_barrier_us": 161.2999439239502,
+      "early_added_vs_padding_us": -66.63000583648682,
+      "early_slowdown_vs_padding_pct": -1.7226804224752978
+    },
+    {
+      "round": 2,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 4025.7575,
+        "split_barrier": 4104.983,
+        "split_early": 3943.352
+      },
+      "early_saves_vs_barrier_us": 161.6310000000003,
+      "early_added_vs_padding_us": -82.4055000000003,
+      "early_slowdown_vs_padding_pct": -2.0469563802588797
+    }
+  ],
+  "traces": [
+    {
+      "rank": 0,
+      "mode": "padding",
+      "file": "probe.padding.rank0.trace.json",
+      "sha256": "ab66b8472a47681fbb840b2805437a4de2f089d1b92e9fb66abe0a842cff0d64",
+      "counts": {
+        "matmul": 9,
+        "all_reduce": 4,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 139.24275,
+      "upstream_attention": {
+        "kernel_work_us": 600.591875,
+        "o_collective_us": 247.065,
+        "through_previous_post_norm_span_us": 1177.363,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 205.704125,
+      "input_projection_us": 169.863375,
+      "solve_us": 256.765125,
+      "other_main_stream_body_us": 248.245,
+      "commit_work_us": 52.421125,
+      "first_collective_us": 250.405,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 1,
+          "sum_us": 24.3805
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 67.041375
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.560375
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 1,
+          "sum_us": 1.94
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 1,
+          "sum_us": 10.84025
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 9.820125
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 14.70025
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 10.840375
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 37.880625
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.32025
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 16.380375
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 2,
+          "sum_us": 169.863375
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 14.64025
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 12.90025
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 256.765125
+        }
+      }
+    },
+    {
+      "rank": 0,
+      "mode": "split_barrier",
+      "file": "probe.split_barrier.rank0.trace.json",
+      "sha256": "a02290ce7548dfeda523c3e2a81ab10180b268120d097b680c7caeba6f1e778a",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 137.28275,
+      "upstream_attention": {
+        "kernel_work_us": 603.492125,
+        "o_collective_us": 247.585,
+        "through_previous_post_norm_span_us": 1404.949,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 210.96425,
+      "input_projection_us": 242.16475,
+      "solve_us": 262.16525,
+      "other_main_stream_body_us": 305.02625,
+      "commit_work_us": 53.061,
+      "first_collective_us": 144.863,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 33.16075
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 62.78125
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 20.2405
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 4.060125
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 7,
+          "sum_us": 49.981125
+        },
+        "aclnnCat_SliceAiCore_Slice": {
+          "count": 4,
+          "sum_us": 18.500375
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 14.54025
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 10.700375
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 8,
+          "sum_us": 37.260625
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.380125
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 3,
+          "sum_us": 18.64025
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 242.16475
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 14.88025
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 12.90025
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 262.16525
+        }
+      },
+      "last_down_collective_us": 139.043,
+      "input_a_overlap_last_collective_us": 0.0,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 0.0,
+      "solve_a_start_after_last_collective_us": 526.05,
+      "join_copy_us": 38.780875
+    },
+    {
+      "rank": 0,
+      "mode": "split_early",
+      "file": "probe.split_early.rank0.trace.json",
+      "sha256": "00a687c71b2f5dbc3362b1a276470326020d1df6a920d152a408198f8897de15",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 140.06275,
+      "upstream_attention": {
+        "kernel_work_us": 603.132125,
+        "o_collective_us": 247.365,
+        "through_previous_post_norm_span_us": 1390.287,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 208.704125,
+      "input_projection_us": 247.344875,
+      "solve_us": 263.905375,
+      "other_main_stream_body_us": 306.886,
+      "commit_work_us": 54.741125,
+      "first_collective_us": 149.163,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 35.32075
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 66.96125
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.900375
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 4.020125
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 7,
+          "sum_us": 47.480875
+        },
+        "aclnnCat_SliceAiCore_Slice": {
+          "count": 4,
+          "sum_us": 18.020375
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 14.70025
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 10.540125
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 8,
+          "sum_us": 37.04075
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.500125
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 3,
+          "sum_us": 18.140375
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 247.344875
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 14.540375
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 12.72025
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 263.905375
+        }
+      },
+      "last_down_collective_us": 142.103,
+      "input_a_overlap_last_collective_us": 120.682375,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 142.022875,
+      "solve_a_start_after_last_collective_us": 390.468,
+      "join_copy_us": 38.26075
+    },
+    {
+      "rank": 1,
+      "mode": "padding",
+      "file": "probe.padding.rank1.trace.json",
+      "sha256": "6e90bdce90c202c81835386efd547ec3c0ac3ba4f4b3ec5e7243e42d67ca66ec",
+      "counts": {
+        "matmul": 9,
+        "all_reduce": 4,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 143.54,
+      "upstream_attention": {
+        "kernel_work_us": 612.5,
+        "o_collective_us": 690.12,
+        "through_previous_post_norm_span_us": 1634.1,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 207.52,
+      "input_projection_us": 171.64,
+      "solve_us": 255.12,
+      "other_main_stream_body_us": 242.2,
+      "commit_work_us": 51.5,
+      "first_collective_us": 248.08,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 1,
+          "sum_us": 23.16
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 61.78
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.98
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 1,
+          "sum_us": 1.96
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 1,
+          "sum_us": 10.96
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 9.66
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 14.4
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 10.74
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 39.74
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.08
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 14.28
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 2,
+          "sum_us": 171.64
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 15.28
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 13.18
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 255.12
+        }
+      }
+    },
+    {
+      "rank": 1,
+      "mode": "split_barrier",
+      "file": "probe.split_barrier.rank1.trace.json",
+      "sha256": "fd0e303fe1e3b4835bdf5cfac005018202042849b6169e52db1e7be1e9839e71",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 140.4,
+      "upstream_attention": {
+        "kernel_work_us": 604.9,
+        "o_collective_us": 519.34,
+        "through_previous_post_norm_span_us": 1612.5,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 229.26,
+      "input_projection_us": 243.26,
+      "solve_us": 260.4,
+      "other_main_stream_body_us": 302.44,
+      "commit_work_us": 53.04,
+      "first_collective_us": 139.24,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 33.12
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 62.52
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 21.96
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 3.54
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 7,
+          "sum_us": 47.34
+        },
+        "aclnnCat_SliceAiCore_Slice": {
+          "count": 4,
+          "sum_us": 18.32
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 15.0
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 10.52
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 8,
+          "sum_us": 37.56
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.5
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 3,
+          "sum_us": 16.76
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 243.26
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 15.04
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 13.26
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 260.4
+        }
+      },
+      "last_down_collective_us": 139.12,
+      "input_a_overlap_last_collective_us": 0.0,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 0.0,
+      "solve_a_start_after_last_collective_us": 523.04,
+      "join_copy_us": 37.64
+    },
+    {
+      "rank": 1,
+      "mode": "split_early",
+      "file": "probe.split_early.rank1.trace.json",
+      "sha256": "da123152c9cbb2a7969542eaa2c66cb9e4cedf64a7b1ed50dd6f67323b6ec241",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 148.32,
+      "upstream_attention": {
+        "kernel_work_us": 613.78,
+        "o_collective_us": 778.3,
+        "through_previous_post_norm_span_us": 1868.5,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 230.4,
+      "input_projection_us": 245.82,
+      "solve_us": 260.12,
+      "other_main_stream_body_us": 306.04,
+      "commit_work_us": 52.4,
+      "first_collective_us": 139.48,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 37.9
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 62.42
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 20.18
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 3.98
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 7,
+          "sum_us": 47.5
+        },
+        "aclnnCat_SliceAiCore_Slice": {
+          "count": 4,
+          "sum_us": 17.6
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 14.66
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 10.6
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 8,
+          "sum_us": 37.76
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 6.98
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 3,
+          "sum_us": 18.04
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 245.82
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 15.02
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 13.4
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 260.12
+        }
+      },
+      "last_down_collective_us": 142.5,
+      "input_a_overlap_last_collective_us": 118.3,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 142.42,
+      "solve_a_start_after_last_collective_us": 387.44,
+      "join_copy_us": 38.44
+    }
+  ],
+  "numerical_diagnostics": [
+    {
+      "rank": 0,
+      "values": [
+        {
+          "step": 0,
+          "field": "hidden",
+          "max_abs": 0.046875,
+          "nrmse": 0.0025434023700654507,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "residual",
+          "max_abs": 0.25,
+          "nrmse": 0.000790074875112623,
+          "tolerance_failures": 1
+        },
+        {
+          "step": 0,
+          "field": "conv",
+          "max_abs": 0.0625,
+          "nrmse": 0.0001936688058776781,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "dense_source",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "base",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "logs",
+          "max_abs": 0.006957948207855225,
+          "nrmse": 0.00017247370851691812,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "valid",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "fia_key",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "fia_value",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "hidden",
+          "max_abs": 0.03125,
+          "nrmse": 0.002709960099309683,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "residual",
+          "max_abs": 0.125,
+          "nrmse": 0.0007872876594774425,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "conv",
+          "max_abs": 0.0625,
+          "nrmse": 0.00019948130648117512,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "dense_source",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "base",
+          "max_abs": 0.0038136839866638184,
+          "nrmse": 0.00021399995603132993,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "logs",
+          "max_abs": 0.012939453125,
+          "nrmse": 0.00017280525935348123,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "valid",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "fia_key",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "fia_value",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "hidden",
+          "max_abs": 0.09375,
+          "nrmse": 0.0028734204825013876,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "residual",
+          "max_abs": 0.5,
+          "nrmse": 0.0008766558021306992,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "conv",
+          "max_abs": 0.125,
+          "nrmse": 0.00021069463400635868,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "dense_source",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "base",
+          "max_abs": 0.003934502601623535,
+          "nrmse": 0.0002546249597799033,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "logs",
+          "max_abs": 0.005130171775817871,
+          "nrmse": 0.00016778484859969467,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "valid",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "fia_key",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "fia_value",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "values": [
+        {
+          "step": 0,
+          "field": "hidden",
+          "max_abs": 0.046875,
+          "nrmse": 0.0025434023700654507,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "residual",
+          "max_abs": 0.25,
+          "nrmse": 0.000790074875112623,
+          "tolerance_failures": 1
+        },
+        {
+          "step": 0,
+          "field": "conv",
+          "max_abs": 0.0625,
+          "nrmse": 0.0002229850651929155,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "dense_source",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "base",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "logs",
+          "max_abs": 0.0042833685874938965,
+          "nrmse": 0.00016649303142912686,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "valid",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "fia_key",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 0,
+          "field": "fia_value",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "hidden",
+          "max_abs": 0.03125,
+          "nrmse": 0.002709960099309683,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "residual",
+          "max_abs": 0.125,
+          "nrmse": 0.0007872876594774425,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "conv",
+          "max_abs": 0.125,
+          "nrmse": 0.00023176815011538565,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "dense_source",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "base",
+          "max_abs": 0.0013343095779418945,
+          "nrmse": 0.00016980663349386305,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "logs",
+          "max_abs": 0.0050542354583740234,
+          "nrmse": 0.0001504079846199602,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "valid",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "fia_key",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 1,
+          "field": "fia_value",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "hidden",
+          "max_abs": 0.09375,
+          "nrmse": 0.0028734204825013876,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "residual",
+          "max_abs": 0.5,
+          "nrmse": 0.0008766558021306992,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "conv",
+          "max_abs": 0.0625,
+          "nrmse": 0.00023335609876085073,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "dense_source",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "base",
+          "max_abs": 0.001104593276977539,
+          "nrmse": 0.0001929678546730429,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "logs",
+          "max_abs": 0.004481911659240723,
+          "nrmse": 0.00016385767958126962,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "valid",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "fia_key",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        },
+        {
+          "step": 2,
+          "field": "fia_value",
+          "max_abs": 0.0,
+          "nrmse": 0.0,
+          "tolerance_failures": 0
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Unprofiled per-sample slowest-rank measurements determine performance, not profile spans.",
+    "Profile first-collective spans may include rank arrival skew; check before estimating transport cost.",
+    "Kernel duration sums diagnose work but are not additive critical-path savings.",
+    "Exact eager/replay and schedule agreement do not certify cross-shape model quality.",
+    "Synthetic segment input; only include_fia runs contain preceding FIA/update. No full-model/serving result."
+  ]
+}
