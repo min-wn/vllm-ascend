@@ -1,0 +1,243 @@
+"""Independent standard-library audit; never imports benchmark analyzers."""
+
+import argparse
+import hashlib
+import json
+import math
+import statistics
+import struct
+from collections import Counter, defaultdict
+from decimal import Decimal
+from pathlib import Path
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def interval(event):
+    start, duration = Decimal(str(event["ts"])), Decimal(str(event["dur"]))
+    assert start.is_finite() and duration.is_finite() and duration >= 0
+    return start, start + duration
+
+
+def total(events):
+    return float(sum((interval(item)[1] - interval(item)[0] for item in events), Decimal(0)))
+
+
+def union(intervals):
+    ordered = sorted(intervals)
+    if not ordered:
+        return 0.0
+    start, end = ordered[0]
+    value = Decimal(0)
+    for following_start, following_end in ordered[1:]:
+        if following_start > end:
+            value += end - start
+            start, end = following_start, following_end
+        else:
+            end = max(end, following_end)
+    return float(value + end - start)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("bundle", type=Path)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    base = args.bundle.resolve(strict=True)
+    manifest = load(base / "manifest.json")
+    seen = set()
+    for item in manifest:
+        path = (base / item["path"]).resolve(strict=True)
+        assert path.is_relative_to(base) and path not in seen
+        assert digest(path) == item["sha256"], item["path"]
+        seen.add(path)
+    suite = load(base / "consumer-suite.json")
+    deployed = load(base / "deployed-tools.json")
+    assert suite["probe_sha256"] == deployed["aclgraph_fia_sink_consumer_probe.py"]
+    assert suite["state"] == "completed" and type(suite["returncode"]) is int and suite["returncode"] == 0
+    design = suite["design"]
+    assert design["rounds"] == 2 and design["repeats"] == 10 and design["occurrences"] == 16
+    assert design["capacities"] == [400, 512] and design["steps"] == [0, 29]
+    assert design["profile_repeats"] == 3 and design["warmups"] == 5 and design["seed"] == 1703
+    modes = ["upstream", "whole", "legacy"]
+    orders = [modes, modes[::-1]]
+    assert design["process_orders"] == orders
+    assert len(suite["runs"]) == 6
+    first, sample_rows, profile_rows = None, [], []
+    oracle_rows = audited_calls = audited_tasks = 0
+    maximum_fp32_abs_error = 0.0
+    process_pids, native_pids = set(), set()
+    runtime_source_hashes = set()
+    profiles_seen = set()
+    policy_audit = load(base / "policy-config-audit.json")
+    assert policy_audit["only_kernel_so_differs"] is True
+    normalized_configs = []
+    for item in policy_audit["configs"]:
+        value = json.loads(json.dumps(item["content"]))
+        value["FusedInferAttentionScoreV2SinkMetadata"]["opInfo"]["kernelSo"] = "<policy>"
+        normalized_configs.append(value)
+    assert normalized_configs[0] == normalized_configs[1]
+    previous = suite["started_unix"]
+    for number, entry in enumerate(suite["runs"]):
+        trial, position = divmod(number, 3)
+        mode = orders[trial][position]
+        assert (entry["trial"], entry["mode"], entry["process_order_index"]) == (trial, mode, number)
+        assert previous <= entry["launched_unix"] < entry["finished_unix"] <= suite["finished_unix"]
+        previous = entry["finished_unix"]
+        path = (base / entry["report_path"]).resolve(strict=True)
+        assert path.is_relative_to(base) and path in seen and digest(path) == entry["report_sha256"]
+        report = load(path)
+        assert report["state"] == "completed" and report["returncode"] == 0
+        assert (report["trial"], report["mode"], report["repeats"], report["occurrences"]) == (trial, mode, 10, 16)
+        assert report["input_identity"] == report["post_input_identity"]
+        assert report["frame_query_identity"] == report["post_frame_query_identity"]
+        assert report["mask_identity"] == report["post_mask_identity"]
+        assert report["frame_queries_match_base_prefixes"] is True
+        assert report["independent_graph_pool_per_bucket"] is True
+        assert all(deployed[name] == value for name, value in report["scripts"].items())
+        assert report["trace_contract"]["trace_file_sha256"] == deployed["structural-dynamic-trace-v1.json"]
+        assert report["trace_contract"]["selection_sha256"] == deployed["q4-tile-full-replay-v8-queue0.rank0.json"]
+        assert report["extension_sha256"] == "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b"
+        assert report["policy_provenance"]["opapi_sha256"] == "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40"
+        assert all(report[name] is False for name in ("full_trace_measured", "full_model_qualified", "end_to_end_gain_established"))
+        assert entry["pid"] not in process_pids and report["child_pid"] not in native_pids
+        process_pids.add(entry["pid"])
+        native_pids.add(report["child_pid"])
+        identity = report["input_identity"]
+        assert len(identity["occurrences"]) == 16
+        assert hashlib.sha256(json.dumps(identity["occurrences"], sort_keys=True, separators=(",", ":")).encode("ascii")).hexdigest() == identity["sha256"]
+        keys = ("input_identity", "frame_query_identity", "mask_identity", "scripts", "extension_sha256", "device_name", "torch_version", "torch_npu_version", "selected_records")
+        if first is None:
+            first = report
+        else:
+            assert all(report[key] == first[key] for key in keys)
+        records = {item["physical_tokens"]: item for item in report["selected_records"]}
+        assert sorted(records) == [400, 512] and [records[cap]["step"] for cap in (400, 512)] == [0, 29]
+        for phase in ("pre_checks", "post_checks"):
+            assert len(report[phase]) == 2
+            for check in report[phase]:
+                record = records[check["capacity"]]
+                assert check["step"] == record["step"] and check["private_occurrences"] == 16
+                assert all(check[flag] is True for flag in ("finite", "all_outputs_finite", "exact_zero_padding", "stable_addresses", "exact_descriptors_read_only"))
+                rows = check["fp32_sampled_rows"]
+                assert len(rows) == 9 and {(item["occurrence"], item["row"]) for item in rows} == {(occ, row) for occ in (0, 7, 15) for row in (0, record["batch"] // 2, record["batch"] - 1)}
+                for item in rows:
+                    length = record["kv_lengths"][item["row"]]
+                    pages = record["block_table"][item["row"]][:(length + 127) // 128]
+                    assert item["kv_length"] == length and item["original_page_ids"] == pages and item["local_page_ids"] == list(range(len(pages)))
+                    assert math.isfinite(item["max_abs_error"]) and item["max_abs_error"] >= 0
+                    maximum_fp32_abs_error = max(maximum_fp32_abs_error, item["max_abs_error"])
+                oracle_rows += len(rows)
+                assert len(check["output_hashes"]) == 16
+                if mode == "legacy":
+                    assert (check["legacy_update_calls_delta"], check["legacy_updated_tasks_delta"]) == (1, 16)
+                    assert check["legacy"]["current_query_lengths"] == record["actual_seq_qlen"]
+                    assert check["legacy"]["current_kv_lengths"] == record["kv_lengths"]
+                    audited_calls += 1
+                    audited_tasks += 16
+                else:
+                    plan = check["plan"]
+                    assert len(plan["words"]) == 1024
+                    assert hashlib.sha256(struct.pack("<1024i", *plan["words"])).hexdigest() == plan["sha256"]
+                    assert plan["current_exact_base_verified"] is True
+        samples = report["samples"]
+        assert len(samples) == 20
+        assert [(item["repeat"], item["capacity"]) for item in samples] == [(repeat, cap) for repeat in range(10) for cap in ((400, 512) if (trial + repeat) % 2 == 0 else (512, 400))]
+        for item in samples:
+            assert (item["trial"], item["mode"], item["step"], item["batch"]) == (trial, mode, records[item["capacity"]]["step"], records[item["capacity"]]["batch"])
+            assert all(type(item[metric]) in (int, float) and math.isfinite(item[metric]) and item[metric] >= 0 for metric in ("wall_us", "queue_span_us", "preparation_enqueue_us", "submit_join_cpu_us"))
+            assert item["wall_us"] > 0
+            assert item["preparation_enqueue_us"] + item["submit_join_cpu_us"] <= item["wall_us"] + 1e-6
+            if mode == "legacy":
+                assert item["legacy_update_calls_delta"] is None and item["legacy_updated_tasks_delta"] is None and item["legacy_counter_instrumented"] is False
+            sample_rows.append(item)
+        for capacity in (400, 512):
+            prep = report["prepared_descriptors"][str(capacity)]
+            assert prep["prepared_steps"] == prep["completed_steps"] == 20 and prep["inflight"] is False
+            assert prep["step_copies"] == {"q_lengths": 0, "kv_lengths": 0 if mode == "legacy" else 20, "block_table": 20}
+            assert prep["setup_copies"] == {"q_lengths": 0 if mode == "legacy" else 1, "kv_lengths": 0, "block_table": 0}
+        if mode == "legacy":
+            item = report["runtime_sources"]["vllm_ascend/compilation/updatable_graph.py"]
+            snapshot = path.parent / item["snapshot_path"]
+            assert digest(snapshot) == item["snapshot_sha256"] == item["sha256"]
+            runtime_source_hashes.add(hashlib.sha256(snapshot.read_bytes().replace(b"\r\n", b"\n")).hexdigest())
+        assert len(report["profiles"]) == 2
+        for profile in report["profiles"]:
+            capacity = profile["capacity"]
+            source = (path.parent / profile["path"]).resolve(strict=True)
+            assert source.is_relative_to(base) and source in seen and source not in profiles_seen
+            profiles_seen.add(source)
+            assert digest(source) == profile["sha256"] and source.stat().st_size == profile["bytes"]
+            document = load(source)
+            events = document["traceEvents"] if isinstance(document, dict) else document
+            labels = [item for item in events if item.get("ph") == "X" and str(item.get("name", "")).startswith("consumer/")]
+            assert [item["name"] for item in labels] == [f"consumer/{mode}/cap{capacity}/repeat{index}" for index in range(3)]
+            for index, label in enumerate(labels):
+                start, end = interval(label)
+                contained = [item for item in events if item.get("ph") == "X" and interval(item)[0] >= start and interval(item)[1] <= end + 1]
+                hardware = [item for item in contained if item.get("args", {}).get("Task Type")]
+                launches = [item for item in hardware if item["args"]["Task Type"] == "MODEL_EXECUTE"]
+                completions = [item for item in hardware if item["args"]["Task Type"] == "NOTIFY_RECORD"]
+                assert len(launches) == len(completions) == 1
+                completion = completions[0]
+                model, stream = completion["args"]["Model Id"], completion["args"]["Physic Stream Id"]
+                assert model != 4294967295
+                task_start, task_end = interval(launches[0])[0], interval(completion)[1]
+                tasks = [item for item in events if item.get("ph") == "X" and item.get("args", {}).get("Model Id") == model and interval(item)[0] >= task_start and interval(item)[1] <= task_end]
+                assert all(item["args"]["Physic Stream Id"] == stream for item in tasks)
+                kernels = [item for item in tasks if str(item["args"]["Task Type"]).startswith("KERNEL_")]
+                attention = sorted([item for item in kernels if item["args"]["Task Type"] == "KERNEL_MIX_AIC"], key=lambda item: interval(item)[0])
+                metadata = [item for item in kernels if item["args"]["Task Type"] == "KERNEL_AICPU"]
+                clears = [item for item in kernels if item["args"]["Task Type"] == "KERNEL_AIVEC"]
+                assert (len(attention), len(metadata), len(clears)) == ((16, 0, 0) if mode == "legacy" else (16, 1, 1))
+                assert len(kernels) == 16 + 2 * (mode != "legacy")
+                assert all(interval(left)[1] <= interval(right)[0] for left, right in zip(attention, attention[1:]))
+                update = [item for item in contained if item.get("cat") == "cpu_op" and item.get("name") == "npu::npu_fused_infer_attention_score"]
+                dma = [item for item in hardware if item["args"]["Task Type"] == "PCIE_DMA_SQE"]
+                assert len(update) == len(dma) == (16 if mode == "legacy" else 0)
+                assert not any(item["args"]["Task Type"] == "SDMA_SQE" for item in hardware)
+                waits = [item for item in tasks if item["args"]["Task Type"] == "MEM_WAIT_VALUE"]
+                first_start, last_end = interval(attention[0])[0], interval(attention[-1])[1]
+                profile_rows.append(dict(trial=trial, mode=mode, capacity=capacity, repeat=index,
+                    attention_tasks=len(attention), metadata_tasks=len(metadata), clear_tasks=len(clears),
+                    cpu_updates=len(update), update_dma=len(dma), attention_sum_us=total(attention),
+                    between_attention_gap_us=float(last_end-first_start)-total(attention),
+                    metadata_sum_us=total(metadata), zero_sum_us=total(clears),
+                    wait_union_us=union(interval(item) for item in waits), cpu_update_sum_us=total(update)))
+    assert process_pids.isdisjoint(native_pids)
+    assert len(sample_rows) == 120 and oracle_rows == 216 and (audited_calls, audited_tasks) == (8, 128)
+    assert len(profile_rows) == 36 and sum(item["attention_tasks"] for item in profile_rows) == 576
+    assert sum(item["cpu_updates"] for item in profile_rows) == sum(item["update_dma"] for item in profile_rows) == 192
+    assert sum(item["metadata_tasks"] for item in profile_rows) == sum(item["clear_tasks"] for item in profile_rows) == 24
+    assert len(runtime_source_hashes) == 1
+    graph_source = Path(__file__).resolve().parents[2] / "work/vllm-ascend/vllm_ascend/compilation/updatable_graph.py"
+    assert hashlib.sha256(graph_source.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == next(iter(runtime_source_hashes))
+    timing = defaultdict(list)
+    profiles = defaultdict(list)
+    for item in sample_rows:
+        timing[item["mode"], item["capacity"]].append(item)
+    for item in profile_rows:
+        profiles[item["mode"], item["capacity"]].append(item)
+    result = dict(qualified=True, manifest_files=len(manifest), process_count=6, timings=120,
+        fp32_rows=216, maximum_fp32_abs_error=maximum_fp32_abs_error,
+        qualification_native_update_calls=8, qualification_native_task_applies=128,
+        profiler_replays=36, attention_executions=576, profiler_cpu_updates=192, profiler_update_dma=192,
+        producer_executions=24, zero_executions=24, runtime_source_lf_sha256=next(iter(runtime_source_hashes)),
+        input_identity_sha256=first["input_identity"]["sha256"],
+        timing=[dict(mode=mode, capacity=cap, count=len(rows), **{key: statistics.mean(item[key] for item in rows) for key in ("wall_us", "queue_span_us", "preparation_enqueue_us", "submit_join_cpu_us")}) for (mode, cap), rows in timing.items()],
+        profiles=[dict(mode=mode, capacity=cap, count=len(rows), **{key: statistics.mean(item[key] for item in rows) for key in ("attention_sum_us", "between_attention_gap_us", "metadata_sum_us", "zero_sum_us", "wait_union_us", "cpu_update_sum_us")}) for (mode, cap), rows in profiles.items()],
+        scope="Independent stdlib verification of a two-record synthetic attention diagnostic; no full-model or serving claim.")
+    if args.output:
+        assert not args.output.exists()
+        args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="ascii")
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

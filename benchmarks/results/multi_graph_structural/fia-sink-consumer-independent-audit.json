@@ -1,0 +1,143 @@
+{
+  "qualified": true,
+  "manifest_files": 35,
+  "process_count": 6,
+  "timings": 120,
+  "fp32_rows": 216,
+  "maximum_fp32_abs_error": 0.00029981881380081177,
+  "qualification_native_update_calls": 8,
+  "qualification_native_task_applies": 128,
+  "profiler_replays": 36,
+  "attention_executions": 576,
+  "profiler_cpu_updates": 192,
+  "profiler_update_dma": 192,
+  "producer_executions": 24,
+  "zero_executions": 24,
+  "runtime_source_lf_sha256": "6a4471a5bfc547accd47c1e48aabf531e877b5daee903380519b163889171829",
+  "input_identity_sha256": "212bad1ce820554e47c53811cc2c4d96331628d66c40a1a9f3fe2707c700a7a6",
+  "timing": [
+    {
+      "mode": "upstream",
+      "capacity": 400,
+      "count": 20,
+      "wall_us": 4808.45975,
+      "queue_span_us": 4520.04497051239,
+      "preparation_enqueue_us": 226.1607,
+      "submit_join_cpu_us": 230.8003
+    },
+    {
+      "mode": "upstream",
+      "capacity": 512,
+      "count": 20,
+      "wall_us": 6085.3943,
+      "queue_span_us": 5765.100955963135,
+      "preparation_enqueue_us": 257.00835,
+      "submit_join_cpu_us": 229.47615
+    },
+    {
+      "mode": "whole",
+      "capacity": 400,
+      "count": 20,
+      "wall_us": 4355.57605,
+      "queue_span_us": 4076.8750429153442,
+      "preparation_enqueue_us": 213.96665,
+      "submit_join_cpu_us": 226.56210000000002
+    },
+    {
+      "mode": "whole",
+      "capacity": 512,
+      "count": 20,
+      "wall_us": 5471.08025,
+      "queue_span_us": 5156.148982048035,
+      "preparation_enqueue_us": 253.16635,
+      "submit_join_cpu_us": 233.2792
+    },
+    {
+      "mode": "legacy",
+      "capacity": 400,
+      "count": 20,
+      "wall_us": 5354.35665,
+      "queue_span_us": 5070.3840255737305,
+      "preparation_enqueue_us": 201.71455,
+      "submit_join_cpu_us": 4944.39555
+    },
+    {
+      "mode": "legacy",
+      "capacity": 512,
+      "count": 20,
+      "wall_us": 6088.96535,
+      "queue_span_us": 5569.117021560669,
+      "preparation_enqueue_us": 239.1558,
+      "submit_join_cpu_us": 5329.61495
+    }
+  ],
+  "profiles": [
+    {
+      "mode": "upstream",
+      "capacity": 400,
+      "count": 6,
+      "attention_sum_us": 4216.107541666666,
+      "between_attention_gap_us": 37.82735416666666,
+      "metadata_sum_us": 79.14822916666667,
+      "zero_sum_us": 1.4300416666666667,
+      "wait_union_us": 0.0,
+      "cpu_update_sum_us": 0.0
+    },
+    {
+      "mode": "upstream",
+      "capacity": 512,
+      "count": 6,
+      "attention_sum_us": 5489.833083333333,
+      "between_attention_gap_us": 37.457124999999905,
+      "metadata_sum_us": 105.56208333333333,
+      "zero_sum_us": 1.7367083333333333,
+      "wait_union_us": 0.0,
+      "cpu_update_sum_us": 0.0
+    },
+    {
+      "mode": "whole",
+      "capacity": 400,
+      "count": 6,
+      "attention_sum_us": 3783.7556041666667,
+      "between_attention_gap_us": 37.71091666666666,
+      "metadata_sum_us": 74.12816666666667,
+      "zero_sum_us": 1.5533541666666668,
+      "wait_union_us": 0.0,
+      "cpu_update_sum_us": 0.0
+    },
+    {
+      "mode": "whole",
+      "capacity": 512,
+      "count": 6,
+      "attention_sum_us": 4869.983749999999,
+      "between_attention_gap_us": 37.4441458333334,
+      "metadata_sum_us": 112.11225,
+      "zero_sum_us": 1.5566875,
+      "wait_union_us": 0.0,
+      "cpu_update_sum_us": 0.0
+    },
+    {
+      "mode": "legacy",
+      "capacity": 400,
+      "count": 6,
+      "attention_sum_us": 3514.050375,
+      "between_attention_gap_us": 1020.5299375,
+      "metadata_sum_us": 0.0,
+      "zero_sum_us": 0.0,
+      "wait_union_us": 1399.2313541666667,
+      "cpu_update_sum_us": 1780.6
+    },
+    {
+      "mode": "legacy",
+      "capacity": 512,
+      "count": 6,
+      "attention_sum_us": 4499.836541666667,
+      "between_attention_gap_us": 1040.5475416666666,
+      "metadata_sum_us": 0.0,
+      "zero_sum_us": 0.0,
+      "wait_union_us": 1548.0113333333334,
+      "cpu_update_sum_us": 2126.285
+    }
+  ],
+  "scope": "Independent stdlib verification of a two-record synthetic attention diagnostic; no full-model or serving claim."
+}

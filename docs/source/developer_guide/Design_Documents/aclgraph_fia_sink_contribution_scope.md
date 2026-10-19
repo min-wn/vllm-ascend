@@ -38,6 +38,7 @@ must not be described as the first cost-based attention scheduler.
 | Stage 6 evaluation | Same consumer, four default buckets, private synthetic Q/K/V, one producer and sixteen sequential consumers. | Required preparation, native producer, replay and joins are included in a matched policy comparison. | Bounded attention-chain evidence, not a loaded model or split/padding comparison. |
 | Stage 7 evaluation | Completed original 128-step descriptor trace, seventeen buckets and separate pre/post qualification. | Measures native policy under chronological membership/length/page changes, with both formal and independent audits passing. | Observed producer-inclusive attention-chain mean reduction of 1.788171%; one round and overall P99 regress. No loaded-model or split/padding comparison. |
 | Stage 8 protocol | Existing TP2 real-model harness provides real QKV/cache/GDN state. | Planned `legacy_pad`/`upstream_sink_pad`/`whole_sink_pad` integration isolates adoption from native policy. | Protocol only; no implemented model integration or measured gain. |
+| Current-consumer diagnostic | Two original records, six fresh processes and separate unprofiled/profile groups compare legacy, upstream and whole. | Real update task auditing is kept outside timing; hardware completion identifies consumer execution, producer and inter-attention gaps separately. | Bounded whole/upstream wall reductions of 9.418%/10.095%; whole attention kernels remain 7.675%/8.226% slower than legacy. The point result does not replace Stage 7 or establish a new scheduling algorithm. |
 
 ## Exact native-policy difference
 
@@ -157,12 +158,22 @@ measurements of a future native implementation.
 
 ## Remaining attribution gates
 
-The next gate is Stage 8's three-step real-model integration screen and a
-critical-path headroom measurement. Establish whether the optimized attention
-work is exposed in the real TP2 model; the Stage 7 chain saving is not a
-promised complete-forward saving. Only after a sound integration and useful
-headroom should the experiment proceed to one continued 128-step model
-qualification per control and later formal three-control measurement.
+Before expanding Stage 8, the
+[current-consumer diagnostic](aclgraph_fia_sink_consumer_diagnostic.md) localizes
+a remaining 270/370 us hardware consumer gap over sixteen occurrences,
+compared with only about 37 us of sink inter-attention gaps. This motivates
+consumer-specific diagnostics rather than more planner or launch micro-tuning.
+Its stronger two-record result also depends on replay context: same-record
+inputs and plans match Stage 7, but the captured graph catalog and history
+differ. Neither complete dynamic-trace robustness nor a particular allocation
+cause is established.
+
+Stage 8's three-step real-model integration screen and critical-path headroom
+measurement remain conditional. Establish whether optimized attention work is
+exposed in the real TP2 model; the Stage 7 chain saving is not a promised
+complete-forward saving. Only after a sound integration and useful headroom
+should the experiment proceed to one continued 128-step model qualification
+per control and later formal three-control measurement.
 Retain true KV writes, all model state, critical-rank communication, producer,
 preparation, output-copy and final-join costs.
 

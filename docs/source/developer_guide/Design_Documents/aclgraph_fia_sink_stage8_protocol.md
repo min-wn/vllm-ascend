@@ -6,6 +6,13 @@ experiment and both audits: wall mean improves 1.788%, one process round
 regresses and overall P99 increases. This protocol uses that result to limit
 the next experiment; it does not assume a real-model benefit.
 
+The [bounded current-consumer diagnostic](aclgraph_fia_sink_consumer_diagnostic.md)
+has since measured a remaining 7.7-8.2% hardware attention-duration deficit
+against legacy, with only about 37 us between sink attention executions.
+Its two-record wall gains do not reproduce Stage 7's dynamic-trace magnitude.
+Keep this integration conditional while localizing consumer execution and
+the allocation/order sensitivity; do not expand the full-model matrix yet.
+
 ## Goal and claim boundary
 
 Stage 8 asks whether the qualified native attention policy survives the real

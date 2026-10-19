@@ -1,0 +1,108 @@
+"""Summarize one diagnostic replay per mode/bucket without performance claims."""
+
+import csv
+import hashlib
+import json
+import statistics
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+EVIDENCE = ROOT / "consumer-metrics-evidence-v2"
+manifest = json.loads((EVIDENCE / "manifest.json").read_text())
+by_remote = {item["remote_path"]: item for item in manifest}
+for item in manifest:
+    content = (EVIDENCE / item["path"]).read_bytes()
+    assert len(content) == item["bytes"]
+    assert hashlib.sha256(content).hexdigest() == item["sha256"]
+
+
+def load(remote):
+    return json.loads((EVIDENCE / by_remote[remote]["path"]).read_text())
+
+
+suite = load("consumer-metrics-v2/metrics-suite.json")
+assert suite["state"] == "completed" and len(suite["runs"]) == 2
+reports = {mode: load(f"consumer-metrics-v2/{mode}/consumer-probe.json") for mode in ("whole", "legacy")}
+probe_sha = "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9"
+for mode, report in reports.items():
+    assert report["state"] == "completed" and report["returncode"] == 0
+    assert report["scripts"]["aclgraph_fia_sink_consumer_probe.py"] == probe_sha
+    assert report["input_identity"] == report["post_input_identity"]
+    assert report["frame_query_identity"] == report["post_frame_query_identity"]
+    assert report["mask_identity"] == report["post_mask_identity"]
+    assert len(report["profiles"]) == 2
+    assert report["metrics_diagnostic"]["source_probe_sha256"] == probe_sha
+    assert report["metrics_diagnostic"]["aic_metrics"] == "PipeUtilization"
+    assert report["occurrences"] == 16 and report["profile_repeats"] == 1
+    for phase in ("pre_checks", "post_checks"):
+        checks = report[phase]
+        assert [check["capacity"] for check in checks] == [400, 512]
+        for check in checks:
+            for key in ("all_outputs_finite", "exact_zero_padding", "stable_addresses", "exact_descriptors_read_only"):
+                assert check[key] is True
+            assert len(check["fp32_sampled_rows"]) == 9
+            if mode == "legacy":
+                assert check["current_host_lengths_verified"] is True
+                assert check["legacy_update_calls_delta"] == 1 and check["legacy_updated_tasks_delta"] == 16
+            else:
+                assert check["plan"]["current_exact_base_verified"] is True
+                assert check["plan"]["whole_coverage"]["used_cores"] == 20
+                assert check["plan"]["whole_coverage"]["physical_heads"] == check["capacity"] // 2
+                assert check["plan"]["metadata"]["fd_present"] is False
+    assert report["full_model_qualified"] is False
+for key in ("input_identity", "frame_query_identity", "mask_identity", "selected_records"):
+    assert reports["whole"][key] == reports["legacy"][key], key
+
+summaries = []
+for mode in ("whole", "legacy"):
+    for capacity in (400, 512):
+        matches = [item for item in manifest if item["remote_path"].startswith(f"consumer-metrics-v2/{mode}/metrics/cap{capacity}/") and item["remote_path"].endswith("/ASCEND_PROFILER_OUTPUT/kernel_details.csv")]
+        assert len(matches) == 1
+        item = matches[0]
+        with (EVIDENCE / item["path"]).open(newline="", encoding="utf-8-sig") as file:
+            reader = csv.DictReader(file)
+            headers = reader.fieldnames
+            rows = list(reader)
+        attention = [row for row in rows if "FusedInferAttentionScore" in row["Type"] and "Metadata" not in row["Type"]]
+        assert len(attention) == 16
+        attention.sort(key=lambda row: float(row["Start Time(us)"].strip()))
+        metric_names = [name for name in headers if name.startswith(("aic_", "aiv_")) or name in ("aicore_time(us)", "cube_utilization(%)", "Duration(us)", "Wait Time(us)", "Block Num", "Mix Block Num")]
+        per_occurrence = []
+        for occurrence, row in enumerate(attention):
+            numeric = {name: float(row[name].strip()) for name in metric_names}
+            per_occurrence.append(dict(occurrence=occurrence, name=row["Name"], task_id=row["Task ID"], stream_id=row["Stream ID"], metrics=numeric))
+        metric_summary = {name: dict(mean=statistics.mean(layer["metrics"][name] for layer in per_occurrence), min=min(layer["metrics"][name] for layer in per_occurrence), max=max(layer["metrics"][name] for layer in per_occurrence)) for name in metric_names}
+        summaries.append(dict(mode=mode, capacity=capacity, step=0 if capacity == 400 else 29, csv=item, headers=headers, attention_count=16, attention_total_us=sum(row["metrics"]["Duration(us)"] for row in per_occurrence), other_operators=[row for row in rows if row not in attention], metrics=metric_summary, per_occurrence=per_occurrence))
+
+comparisons = []
+for capacity in (400, 512):
+    values = {summary["mode"]: summary for summary in summaries if summary["capacity"] == capacity}
+    whole, legacy = values["whole"], values["legacy"]
+    comparisons.append(dict(capacity=capacity, whole_total_attention_us=whole["attention_total_us"], legacy_total_attention_us=legacy["attention_total_us"], sink_excess_attention_us=whole["attention_total_us"]-legacy["attention_total_us"], sink_excess_pct=(whole["attention_total_us"] / legacy["attention_total_us"]-1)*100, mean_pipeline_metric_deltas={name: whole["metrics"][name]["mean"] - legacy["metrics"][name]["mean"] for name in whole["metrics"]}))
+result = dict(
+    state="completed",
+    scope="one diagnostic PipeUtilization replay per mode/bucket; 64 sequential attention kernel records, no formal performance inference",
+    sampled_fp32_comparisons=72,
+    input_identity_matched=True,
+    qualification_passed=True,
+    aggregation="16 attention occurrences are equally weighted; means do not denote system utilization or individual-core occupancy",
+    counter_semantics_source="https://www.hiascend.com/doc_center/source/en/CANNCommunityEdition/900/devaids/Profiling/atlasprofiling_16_0067.html",
+    counter_semantics={
+        "aic_total_cycles": "sum across the task's blocks",
+        "aicore_time(us)": "theoretical equal-duration block task time derived from summed cycles, core count and frequency",
+        "cube_utilization(%)": "total_cycles / (frequency * core_num * task_duration); not MAC utilization or achieved FLOPS",
+        "aic_mac_ratio": "MAC pipeline time divided by aicore_time; pipelines overlap",
+    },
+    comparisons=comparisons,
+    summaries=summaries,
+    limitations=[
+        "AIC metric profiling perturbs execution; durations are not formal wall samples.",
+        "Pipeline ratios overlap and are not an additive time decomposition.",
+        "PipeUtilization does not report HBM byte counts or bandwidth; no bandwidth-saturation claim is supported.",
+        "Metrics are per-op device summaries and do not isolate source-level loops or individual cores.",
+        "One profile per mode/bucket cannot establish stability, causal benefit, full-model or serving speedup.",
+    ],
+)
+target = ROOT / "consumer-metrics-analysis.json"
+target.write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps(dict(output=str(target), comparisons=comparisons), indent=2))

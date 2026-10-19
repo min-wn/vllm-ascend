@@ -1,0 +1,49 @@
+import hashlib
+import io
+import json
+import shlex
+import subprocess
+import tarfile
+from pathlib import Path
+
+output = Path(__file__).resolve().parent / "consumer-metrics-evidence-v2"
+output.mkdir(exist_ok=False)
+payload = '''import hashlib,io,json,sys,tarfile
+from pathlib import Path
+root=Path('/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e')
+suite=json.loads((root/'consumer-metrics-v2/metrics-suite.json').read_text())
+assert suite['state'] in ('completed','failed'),suite['state']
+files=[]
+for version in (1,2):
+    for category in ('consumer-metrics-v','consumer-metrics-tools-v'):
+        directory=root/(category+str(version))
+        files.extend(path for path in directory.rglob('*') if path.is_file() and '__pycache__' not in path.parts)
+manifest=[]
+with tarfile.open(fileobj=sys.stdout.buffer,mode='w|gz') as archive:
+    for index,path in enumerate(sorted(files)):
+        content=path.read_bytes()
+        local='raw/'+str(index).zfill(4)+path.suffix
+        item=dict(path=local,remote_path=str(path.relative_to(root)),sha256=hashlib.sha256(content).hexdigest(),bytes=len(content))
+        manifest.append(item)
+        info=tarfile.TarInfo(local)
+        info.size=len(content)
+        archive.addfile(info,io.BytesIO(content))
+    content=(json.dumps(manifest,indent=2)+'\\n').encode()
+    info=tarfile.TarInfo('manifest.json')
+    info.size=len(content)
+    archive.addfile(info,io.BytesIO(content))
+'''
+with (output / "archive.tar.gz").open("xb") as archive:
+    subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=20", "vllm-ascend-030", "bash -lc " + shlex.quote("source /etc/profile.d/ascend-multigraph.sh; python -")], input=payload.encode(), stdout=archive, check=True, timeout=120)
+with tarfile.open(output / "archive.tar.gz", "r:gz") as archive:
+    for member in archive:
+        target = (output / member.name).resolve()
+        assert target.is_relative_to(output.resolve()) and member.isfile()
+        target.parent.mkdir(exist_ok=True, parents=True)
+        target.write_bytes(archive.extractfile(member).read())
+manifest = json.loads((output / "manifest.json").read_text())
+for item in manifest:
+    content = (output / item["path"]).read_bytes()
+    assert len(content) == item["bytes"]
+    assert hashlib.sha256(content).hexdigest() == item["sha256"]
+print(json.dumps(dict(output=str(output), files=len(manifest), bytes=sum(item['bytes'] for item in manifest), manifest_sha256=hashlib.sha256((output/'manifest.json').read_bytes()).hexdigest())))

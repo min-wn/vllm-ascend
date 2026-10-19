@@ -1,0 +1,72 @@
+"""Two fresh-process diagnostic runs; frozen consumer probe stays unchanged."""
+
+import hashlib
+import json
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path("/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e")
+TOOLS = ROOT / "consumer-metrics-tools-v2"
+OUTPUT = ROOT / "consumer-metrics-v2"
+OUTPUT.mkdir(exist_ok=False)
+STATUS = OUTPUT / "metrics-suite.json"
+state = dict(
+    state="running", started_unix=time.time(), pid=__import__("os").getpid(),
+    scope="two modes x two original buckets, one PipeUtilization replay each; diagnostic only",
+    design=dict(modes=["whole", "legacy"], capacities=[400, 512], steps=[0, 29], occurrences=16, repeats=1, warmups=1, profile_repeats=1, aic_metrics="PipeUtilization"),
+    sources=json.loads((TOOLS / "deployed-tools.json").read_text()),
+    runs=[],
+)
+
+
+def save():
+    temporary = STATUS.with_suffix(".tmp")
+    temporary.write_text(json.dumps(state, indent=2) + "\n")
+    temporary.replace(STATUS)
+
+
+save()
+for mode in ("whole", "legacy"):
+    vendor = ROOT / ("stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3" if mode == "whole" else "opp/packages/vendors/thesis_fia_stage2_transformer")
+    destination = OUTPUT / mode
+    command = [sys.executable, str(TOOLS / "consumer_metrics_wrapper.py"), "--root", str(ROOT), "--opp-root", str(vendor), "--output-dir", str(destination), "--trace", str(TOOLS / "structural-dynamic-trace-v1.json"), "--selection", str(TOOLS / "q4-tile-full-replay-v8-queue0.rank0.json"), "--mode", mode, "--trial", "0", "--repeats", "1", "--warmups", "1", "--profile-repeats", "1", "--timeout", "900"]
+    entry = dict(mode=mode, command=command, report_path=f"{mode}/consumer-probe.json", started_unix=time.time())
+    state["runs"].append(entry)
+    save()
+    with (OUTPUT / f"{mode}.log").open("xb") as log:
+        child = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+        entry["launcher_pid"] = child.pid
+        save()
+
+        def forward(number, _frame):
+            __import__("os").killpg(child.pid, number)
+            child.wait(timeout=30)
+            raise SystemExit(128 + number)
+
+        signal.signal(signal.SIGTERM, forward)
+        signal.signal(signal.SIGINT, forward)
+        try:
+            rc = child.wait(timeout=960)
+        except subprocess.TimeoutExpired:
+            __import__("os").killpg(child.pid, signal.SIGTERM)
+            try:
+                child.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                __import__("os").killpg(child.pid, signal.SIGKILL)
+                child.wait()
+            rc = 124
+    entry.update(returncode=rc, finished_unix=time.time())
+    if rc != 0:
+        state.update(state="failed", finished_unix=time.time())
+        save()
+        raise SystemExit(rc)
+    report = json.loads((destination / "consumer-probe.json").read_text())
+    if report["state"] != "completed":
+        raise AssertionError("fresh diagnostic failed qualification")
+    entry["report_sha256"] = hashlib.sha256((destination / "consumer-probe.json").read_bytes()).hexdigest()
+    save()
+state.update(state="completed", finished_unix=time.time())
+save()

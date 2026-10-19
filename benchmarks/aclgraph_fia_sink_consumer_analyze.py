@@ -853,6 +853,12 @@ def analyze(bundle, *, base_dir, trace_path=None, selection_path=None):
         coverage=coverage,
         profile=profiles,
         comparison=comparisons(indexed),
+        comparison_per_round=[
+            dict(
+                trial=trial, comparisons=comparisons({key: value for key, value in indexed.items() if key[0] == trial})
+            )
+            for trial in range(ROUNDS)
+        ],
         bounded_probe_measured=valid,
         full_trace_measured=False,
         full_model_qualified=False,

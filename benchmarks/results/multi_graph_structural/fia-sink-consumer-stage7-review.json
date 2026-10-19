@@ -1,0 +1,111 @@
+{
+  "review_qualified": true,
+  "scope": "Read-only independent comparison; no new NPU execution.",
+  "identity": [
+    {
+      "mode": "upstream",
+      "step": 0,
+      "old_rounds": 4,
+      "new_rounds": 2,
+      "all_private_qkv_frame_queries_and_policy_plan_equal": true,
+      "plan_sha256": "a5aa697abdbf226a1701bd1cb61787af3d80f59fc165d69d9be5d879475ad84d"
+    },
+    {
+      "mode": "whole",
+      "step": 0,
+      "old_rounds": 4,
+      "new_rounds": 2,
+      "all_private_qkv_frame_queries_and_policy_plan_equal": true,
+      "plan_sha256": "77faa651bcd39f62b8ea77db5edc7febb8105c236f563b9a707bdf35f4beff7a"
+    },
+    {
+      "mode": "upstream",
+      "step": 29,
+      "old_rounds": 4,
+      "new_rounds": 2,
+      "all_private_qkv_frame_queries_and_policy_plan_equal": true,
+      "plan_sha256": "cb19f18b093241b9d4fa2e884fd62391c63ed31ada23ffcc0498ddd745ca602c"
+    },
+    {
+      "mode": "whole",
+      "step": 29,
+      "old_rounds": 4,
+      "new_rounds": 2,
+      "all_private_qkv_frame_queries_and_policy_plan_equal": true,
+      "plan_sha256": "fe96545efdcf48b1acce36c7bfed191cf3f1af2cc71ca0f8fde59c8131b228f1"
+    }
+  ],
+  "matched_record_timings": [
+    {
+      "source": "stage7",
+      "step": 0,
+      "capacity": 400,
+      "observations_per_policy": 12,
+      "upstream_wall_mean_us": 4665.015083333334,
+      "whole_wall_mean_us": 4609.7785,
+      "wall_reduction_percent": 1.1840601229924586
+    },
+    {
+      "source": "bounded_v2",
+      "step": 0,
+      "capacity": 400,
+      "observations_per_policy": 20,
+      "upstream_wall_mean_us": 4808.45975,
+      "whole_wall_mean_us": 4355.57605,
+      "wall_reduction_percent": 9.41847750727247
+    },
+    {
+      "source": "stage7",
+      "step": 29,
+      "capacity": 512,
+      "observations_per_policy": 12,
+      "upstream_wall_mean_us": 5818.991083333333,
+      "whole_wall_mean_us": 5799.649083333334,
+      "wall_reduction_percent": 0.33239439145040794
+    },
+    {
+      "source": "bounded_v2",
+      "step": 29,
+      "capacity": 512,
+      "observations_per_policy": 20,
+      "upstream_wall_mean_us": 6085.3943,
+      "whole_wall_mean_us": 5471.08025,
+      "wall_reduction_percent": 10.094893111527714
+    }
+  ],
+  "conclusions": [
+    "Frequency weights alone cannot explain the discrepancy: both identical individual records show different policy effects.",
+    "The 17-bucket versus 2-bucket graph allocation/reservation is a correlated variable, not proven cause.",
+    "Whole-row consumer improvements observed in repeated records cannot be generalized to chronological dynamic inference."
+  ],
+  "confounders": [
+    "Resident graph catalog, retained output/workspace memory, allocator layout and capture history.",
+    "Chronological 128-step descriptor/history traversal versus alternating two fixed records.",
+    "One full chronological warmup per timed pass versus five initial replays per fixed record.",
+    "Four versus two fresh-process rounds, different policy ordering, measurement times and sample counts."
+  ],
+  "minimum_next_control": {
+    "name": "17-bucket resident catalog with the identical two-record bounded replay",
+    "treatment": "Capture and retain all 17 original bucket graphs in original first-use order, with independent pools; time only original records step0/29 using the bounded-v2 preparation, five warmups, rotating ten-repeat order and endpoint.",
+    "concurrent_reference": "Capture only buckets400/512, rerun the identical bounded schedule in the same measurement block.",
+    "cells": [
+      "2-bucket upstream",
+      "2-bucket whole",
+      "17-bucket upstream",
+      "17-bucket whole"
+    ],
+    "minimum_fresh_processes": 4,
+    "minimum_timing_count": 80,
+    "policy_and_catalog_order": "Counterbalance the four fresh-process cells; repeat one reverse block only if the concurrent reference or process drift prevents interpretation.",
+    "held_fixed": [
+      "Frozen common consumer and policy binaries",
+      "Seed1703 and complete private QKV/frame-query bytes",
+      "Original step0/29 true lengths/page routing and policy-plan hashes",
+      "Device0, queue0, occurrence16, independent bucket pools",
+      "Identical bounded preparation, warmup, replay order and complete wall endpoint"
+    ],
+    "interpretation_if_gain_persists": "Catalog expansion alone does not explain the Stage7 loss; prioritize chronological descriptor/execution history next.",
+    "interpretation_if_gain_shrinks": "Catalog construction/residency affects the policy gap; this still does not isolate memory bytes from address placement, capture history or device state.",
+    "scope_limit": "This is one bridge control, not a new full trace matrix or a serving/model speedup claim."
+  }
+}

@@ -406,6 +406,32 @@ def test_complete_bounded_diagnostic(module, expected, tmp_path):
     )
 
 
+def test_comparison_per_round_keeps_distinct_blocks(module, expected, tmp_path):
+    bundle = make_bundle(module, expected, tmp_path)
+    for entry in bundle["runs"]:
+        if entry["trial"] == 1:
+            path = tmp_path / entry["report_path"]
+            report = json.loads(path.read_text())
+            for sample in report["samples"]:
+                sample["wall_us"] += 100
+            write_json(path, report)
+            entry["report_sha256"] = module.evidence.sha256(path)
+    result = module.analyze(bundle, base_dir=tmp_path)
+    assert result["diagnostic_qualified"], result["issues"] + result["profile"]["issues"]
+    blocks = result["comparison_per_round"]
+    assert [block["trial"] for block in blocks] == [0, 1]
+    for block in blocks:
+        assert len(block["comparisons"]) == 6
+        for row in block["comparisons"]:
+            assert row["paired_count"] == 10
+            expected_left = 210 + 100 * block["trial"]
+            expected_right = 200 if row["right_mode"] == "whole" else 210
+            assert row["metrics"]["wall_us"]["left"]["mean_us"] == expected_left
+            assert row["metrics"]["wall_us"]["right"]["mean_us"] == expected_right + 100 * block["trial"]
+    assert all(row["paired_count"] == 20 for row in result["comparison"])
+    assert all(row["metrics"]["wall_us"]["left"]["mean_us"] == 260 for row in result["comparison"])
+
+
 @pytest.mark.parametrize("mode", ("upstream", "whole", "legacy"))
 def test_native_replay_metrics_exclude_waits_and_nested_cpu(module, mode):
     rows = module.parse_profile(profile_events(mode, 400), mode, 400)

@@ -1,0 +1,3578 @@
+[
+  {
+    "path": "raw/0000.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_consumer_analyze.py",
+    "sha256": "e305873ae281b63746bc248cc9fe99021ca7a0512d09fb532f883fb7600ac124",
+    "bytes": 43801
+  },
+  {
+    "path": "raw/0001.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_consumer_probe.py",
+    "sha256": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+    "bytes": 27626
+  },
+  {
+    "path": "raw/0002.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_consumer_suite.py",
+    "sha256": "ce1f414e5a2a33fb2bc95f4e8a830ec277b5edc443e3416427ac4b366856742b",
+    "bytes": 6742
+  },
+  {
+    "path": "raw/0003.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage1_extension.py",
+    "sha256": "10fd3b4b22f142c1b9575e2c7b960a3c0a908f9e2acb843bcd722da448d22bc4",
+    "bytes": 12192
+  },
+  {
+    "path": "raw/0004.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage1_smoke.py",
+    "sha256": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "bytes": 20236
+  },
+  {
+    "path": "raw/0005.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage2_graph.py",
+    "sha256": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+    "bytes": 18624
+  },
+  {
+    "path": "raw/0006.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage2_patch.py",
+    "sha256": "0d7853ab651b0ad4392211219933a7a7085cffce2f437b8d6207b7dffb7a4d04",
+    "bytes": 8495
+  },
+  {
+    "path": "raw/0007.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage2_summarize.py",
+    "sha256": "9e46506fcad1880e6074c3d89998d1e085302255974420a8d893c99252ee6212",
+    "bytes": 40437
+  },
+  {
+    "path": "raw/0008.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage2_validate.py",
+    "sha256": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+    "bytes": 33667
+  },
+  {
+    "path": "raw/0009.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage3_analyze.py",
+    "sha256": "2e277b1883ccc500f5cd8bc050020d8e7b640ffe52b49b996ecbadaa603a25af",
+    "bytes": 24540
+  },
+  {
+    "path": "raw/0010.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage3_budget.py",
+    "sha256": "a71e01920680a7a0449f6e041bb49ddf5e5dccc3c583d3b9c1d35ead336a09ca",
+    "bytes": 26726
+  },
+  {
+    "path": "raw/0011.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage3_legacy.py",
+    "sha256": "406562489d9f97d1cf995dabf28fe4977396f24d8060295698940f462f3428a1",
+    "bytes": 9226
+  },
+  {
+    "path": "raw/0012.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage3_trace.py",
+    "sha256": "e99f60febf234336569a3ca5f0b1176eacadf89851c5b20b065b389693d85aa5",
+    "bytes": 10697
+  },
+  {
+    "path": "raw/0013.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage4_analyze.py",
+    "sha256": "79bcd54698afb49ea28d74b99b64f0d7b61c2bb9fa2bd9472f8cb2c757996463",
+    "bytes": 15150
+  },
+  {
+    "path": "raw/0014.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage4_budget.py",
+    "sha256": "3409f61b9f088f497f6c3b3b05d2f2a8b005368080498e8d8064a8c6e7d4bcd3",
+    "bytes": 16420
+  },
+  {
+    "path": "raw/0015.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage4_prepare.py",
+    "sha256": "21a723a09a3bc4e2949e3292c5e9c9756bdcbb5d293853c68cd569a7093f1072",
+    "bytes": 8199
+  },
+  {
+    "path": "raw/0016.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage4_whole_analyze.py",
+    "sha256": "c988da3e0a11f39b85e21e5563f7b4939c646bc64ca0cf647717d0d64e1ef124",
+    "bytes": 23179
+  },
+  {
+    "path": "raw/0017.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage4_whole_plan.py",
+    "sha256": "10d095369cde48cef0538249b2806d0db7ca655fddb208d2819019bf5294e7b8",
+    "bytes": 12987
+  },
+  {
+    "path": "raw/0018.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage4_whole_probe.py",
+    "sha256": "07bd3396584b5370719eac51743d95c8263556c92c66d25e0705236a2e9c2902",
+    "bytes": 24028
+  },
+  {
+    "path": "raw/0019.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage5_build.py",
+    "sha256": "bd37a3f48bbea05267f51631e4e713aef1f5700029d76f38b0bd507997645021",
+    "bytes": 10562
+  },
+  {
+    "path": "raw/0020.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage5_gate.py",
+    "sha256": "88088520c4e961fe1441423f01397204290dd59ee5bda7e9a00c9ec6ac2069e2",
+    "bytes": 13461
+  },
+  {
+    "path": "raw/0021.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage5_patch.py",
+    "sha256": "cdcae709d6bf3072644e87b3bb306545386233aae375841513cd1b9d92ba8008",
+    "bytes": 8251
+  },
+  {
+    "path": "raw/0022.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage6_analyze.py",
+    "sha256": "ebb468e62160b678206baad2f46ad1719214b1bccb186d21e141e8bdf4d27766",
+    "bytes": 39917
+  },
+  {
+    "path": "raw/0023.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage6_probe.py",
+    "sha256": "4c47e5b1797a589c931e38c5da29b06a47bce6ff782596fb44160cf64de04141",
+    "bytes": 21198
+  },
+  {
+    "path": "raw/0024.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage6_suite.py",
+    "sha256": "2818dcf7d2e60360b42ac599f7b3fc71413523c5b04948779abc8fde79952eb5",
+    "bytes": 7743
+  },
+  {
+    "path": "raw/0025.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage7_analyze.py",
+    "sha256": "383641730f7e7308d35222db292602fb135b1c17440f9fc4118ce38daccd6569",
+    "bytes": 30356
+  },
+  {
+    "path": "raw/0026.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage7_probe.py",
+    "sha256": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+    "bytes": 20428
+  },
+  {
+    "path": "raw/0027.py",
+    "remote_path": "consumer-metrics-tools-v1/aclgraph_fia_sink_stage7_suite.py",
+    "sha256": "8d2eec1702bf897f265dab85544145568d55c1cc361bafc708fb50411f32cd76",
+    "bytes": 8512
+  },
+  {
+    "path": "raw/0028.py",
+    "remote_path": "consumer-metrics-tools-v1/consumer_metrics_driver.py",
+    "sha256": "475ab0e6ad66e1a9f91f6aa5bf63cffc414a646abadef7c0e011cc91aa87e8a1",
+    "bytes": 3234
+  },
+  {
+    "path": "raw/0029.py",
+    "remote_path": "consumer-metrics-tools-v1/consumer_metrics_wrapper.py",
+    "sha256": "72c9686b18c775509e2dd6926ffaed59d20a785730ac25d531f6dcf06d290732",
+    "bytes": 2744
+  },
+  {
+    "path": "raw/0030.json",
+    "remote_path": "consumer-metrics-tools-v1/deployed-tools.json",
+    "sha256": "48685b51a2a7570cd03fb67bb9b03dfb3d67d353be78e8c8b22f9a807e7d19c5",
+    "bytes": 3788
+  },
+  {
+    "path": "raw/0031.log",
+    "remote_path": "consumer-metrics-tools-v1/driver.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0032.py",
+    "remote_path": "consumer-metrics-tools-v1/multi_graph_dynamic_trace.py",
+    "sha256": "dc5dac7685a58508fc425e6587752ba6bd7fc9c71fb2d60e2cb9f0ab422b10b5",
+    "bytes": 4962
+  },
+  {
+    "path": "raw/0033.py",
+    "remote_path": "consumer-metrics-tools-v1/multi_graph_gdn_q4_full_loader.py",
+    "sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0",
+    "bytes": 5140
+  },
+  {
+    "path": "raw/0034.py",
+    "remote_path": "consumer-metrics-tools-v1/multi_graph_gdn_q4_full_metadata.py",
+    "sha256": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147",
+    "bytes": 19066
+  },
+  {
+    "path": "raw/0035.txt",
+    "remote_path": "consumer-metrics-tools-v1/pre-npu-smi.txt",
+    "sha256": "d16d74c239b92dc6e69101548bbfc62d3539900eee8c8b765097758292ac73af",
+    "bytes": 4851
+  },
+  {
+    "path": "raw/0036.json",
+    "remote_path": "consumer-metrics-tools-v1/q4-tile-full-replay-v8-queue0.rank0.json",
+    "sha256": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba",
+    "bytes": 353931
+  },
+  {
+    "path": "raw/0037.json",
+    "remote_path": "consumer-metrics-tools-v1/structural-dynamic-trace-v1.json",
+    "sha256": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "bytes": 1012549
+  },
+  {
+    "path": "raw/0038.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_consumer_analyze.py",
+    "sha256": "e305873ae281b63746bc248cc9fe99021ca7a0512d09fb532f883fb7600ac124",
+    "bytes": 43801
+  },
+  {
+    "path": "raw/0039.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_consumer_probe.py",
+    "sha256": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+    "bytes": 27626
+  },
+  {
+    "path": "raw/0040.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_consumer_suite.py",
+    "sha256": "ce1f414e5a2a33fb2bc95f4e8a830ec277b5edc443e3416427ac4b366856742b",
+    "bytes": 6742
+  },
+  {
+    "path": "raw/0041.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage1_extension.py",
+    "sha256": "10fd3b4b22f142c1b9575e2c7b960a3c0a908f9e2acb843bcd722da448d22bc4",
+    "bytes": 12192
+  },
+  {
+    "path": "raw/0042.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage1_smoke.py",
+    "sha256": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "bytes": 20236
+  },
+  {
+    "path": "raw/0043.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage2_graph.py",
+    "sha256": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+    "bytes": 18624
+  },
+  {
+    "path": "raw/0044.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage2_patch.py",
+    "sha256": "0d7853ab651b0ad4392211219933a7a7085cffce2f437b8d6207b7dffb7a4d04",
+    "bytes": 8495
+  },
+  {
+    "path": "raw/0045.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage2_summarize.py",
+    "sha256": "9e46506fcad1880e6074c3d89998d1e085302255974420a8d893c99252ee6212",
+    "bytes": 40437
+  },
+  {
+    "path": "raw/0046.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage2_validate.py",
+    "sha256": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+    "bytes": 33667
+  },
+  {
+    "path": "raw/0047.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage3_analyze.py",
+    "sha256": "2e277b1883ccc500f5cd8bc050020d8e7b640ffe52b49b996ecbadaa603a25af",
+    "bytes": 24540
+  },
+  {
+    "path": "raw/0048.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage3_budget.py",
+    "sha256": "a71e01920680a7a0449f6e041bb49ddf5e5dccc3c583d3b9c1d35ead336a09ca",
+    "bytes": 26726
+  },
+  {
+    "path": "raw/0049.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage3_legacy.py",
+    "sha256": "406562489d9f97d1cf995dabf28fe4977396f24d8060295698940f462f3428a1",
+    "bytes": 9226
+  },
+  {
+    "path": "raw/0050.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage3_trace.py",
+    "sha256": "e99f60febf234336569a3ca5f0b1176eacadf89851c5b20b065b389693d85aa5",
+    "bytes": 10697
+  },
+  {
+    "path": "raw/0051.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage4_analyze.py",
+    "sha256": "79bcd54698afb49ea28d74b99b64f0d7b61c2bb9fa2bd9472f8cb2c757996463",
+    "bytes": 15150
+  },
+  {
+    "path": "raw/0052.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage4_budget.py",
+    "sha256": "3409f61b9f088f497f6c3b3b05d2f2a8b005368080498e8d8064a8c6e7d4bcd3",
+    "bytes": 16420
+  },
+  {
+    "path": "raw/0053.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage4_prepare.py",
+    "sha256": "21a723a09a3bc4e2949e3292c5e9c9756bdcbb5d293853c68cd569a7093f1072",
+    "bytes": 8199
+  },
+  {
+    "path": "raw/0054.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage4_whole_analyze.py",
+    "sha256": "c988da3e0a11f39b85e21e5563f7b4939c646bc64ca0cf647717d0d64e1ef124",
+    "bytes": 23179
+  },
+  {
+    "path": "raw/0055.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage4_whole_plan.py",
+    "sha256": "10d095369cde48cef0538249b2806d0db7ca655fddb208d2819019bf5294e7b8",
+    "bytes": 12987
+  },
+  {
+    "path": "raw/0056.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage4_whole_probe.py",
+    "sha256": "07bd3396584b5370719eac51743d95c8263556c92c66d25e0705236a2e9c2902",
+    "bytes": 24028
+  },
+  {
+    "path": "raw/0057.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage5_build.py",
+    "sha256": "bd37a3f48bbea05267f51631e4e713aef1f5700029d76f38b0bd507997645021",
+    "bytes": 10562
+  },
+  {
+    "path": "raw/0058.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage5_gate.py",
+    "sha256": "88088520c4e961fe1441423f01397204290dd59ee5bda7e9a00c9ec6ac2069e2",
+    "bytes": 13461
+  },
+  {
+    "path": "raw/0059.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage5_patch.py",
+    "sha256": "cdcae709d6bf3072644e87b3bb306545386233aae375841513cd1b9d92ba8008",
+    "bytes": 8251
+  },
+  {
+    "path": "raw/0060.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage6_analyze.py",
+    "sha256": "ebb468e62160b678206baad2f46ad1719214b1bccb186d21e141e8bdf4d27766",
+    "bytes": 39917
+  },
+  {
+    "path": "raw/0061.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage6_probe.py",
+    "sha256": "4c47e5b1797a589c931e38c5da29b06a47bce6ff782596fb44160cf64de04141",
+    "bytes": 21198
+  },
+  {
+    "path": "raw/0062.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage6_suite.py",
+    "sha256": "2818dcf7d2e60360b42ac599f7b3fc71413523c5b04948779abc8fde79952eb5",
+    "bytes": 7743
+  },
+  {
+    "path": "raw/0063.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage7_analyze.py",
+    "sha256": "383641730f7e7308d35222db292602fb135b1c17440f9fc4118ce38daccd6569",
+    "bytes": 30356
+  },
+  {
+    "path": "raw/0064.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage7_probe.py",
+    "sha256": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+    "bytes": 20428
+  },
+  {
+    "path": "raw/0065.py",
+    "remote_path": "consumer-metrics-tools-v2/aclgraph_fia_sink_stage7_suite.py",
+    "sha256": "8d2eec1702bf897f265dab85544145568d55c1cc361bafc708fb50411f32cd76",
+    "bytes": 8512
+  },
+  {
+    "path": "raw/0066.py",
+    "remote_path": "consumer-metrics-tools-v2/consumer_metrics_driver.py",
+    "sha256": "39a2c7af182a31e0725ea1642a6a503c42482fd63c18b6fec89b3f26b863f49a",
+    "bytes": 3234
+  },
+  {
+    "path": "raw/0067.py",
+    "remote_path": "consumer-metrics-tools-v2/consumer_metrics_wrapper.py",
+    "sha256": "07c8b7aabf6b2deceb0d8d5765627f01df299e2b8bb1ef02e64b9bb74a637eb4",
+    "bytes": 2795
+  },
+  {
+    "path": "raw/0068.json",
+    "remote_path": "consumer-metrics-tools-v2/deployed-tools.json",
+    "sha256": "bda1fc9ca76cf8ecfc987adca0e142e7f7b06cb72cc669ae1456046ffd8bd89e",
+    "bytes": 3788
+  },
+  {
+    "path": "raw/0069.log",
+    "remote_path": "consumer-metrics-tools-v2/driver.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0070.py",
+    "remote_path": "consumer-metrics-tools-v2/multi_graph_dynamic_trace.py",
+    "sha256": "dc5dac7685a58508fc425e6587752ba6bd7fc9c71fb2d60e2cb9f0ab422b10b5",
+    "bytes": 4962
+  },
+  {
+    "path": "raw/0071.py",
+    "remote_path": "consumer-metrics-tools-v2/multi_graph_gdn_q4_full_loader.py",
+    "sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0",
+    "bytes": 5140
+  },
+  {
+    "path": "raw/0072.py",
+    "remote_path": "consumer-metrics-tools-v2/multi_graph_gdn_q4_full_metadata.py",
+    "sha256": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147",
+    "bytes": 19066
+  },
+  {
+    "path": "raw/0073.txt",
+    "remote_path": "consumer-metrics-tools-v2/pre-npu-smi.txt",
+    "sha256": "a6a9f796ecaf78f1038442aeb375c39e6423435c093fded0920fa3129dea5238",
+    "bytes": 4851
+  },
+  {
+    "path": "raw/0074.json",
+    "remote_path": "consumer-metrics-tools-v2/q4-tile-full-replay-v8-queue0.rank0.json",
+    "sha256": "b3d43bc77797570a25bbcf6cf76551f101e9119ef8d8261cb4937e44488f46ba",
+    "bytes": 353931
+  },
+  {
+    "path": "raw/0075.json",
+    "remote_path": "consumer-metrics-tools-v2/structural-dynamic-trace-v1.json",
+    "sha256": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "bytes": 1012549
+  },
+  {
+    "path": "raw/0076.json",
+    "remote_path": "consumer-metrics-v1/metrics-suite.json",
+    "sha256": "6e984ecaf754ed0aa0290ac132aefd59dc8e2a22d40f5240609f588951e5df57",
+    "bytes": 5647
+  },
+  {
+    "path": "raw/0077.json",
+    "remote_path": "consumer-metrics-v1/whole/consumer-probe.json",
+    "sha256": "638b3a1052ecb66d0fae814a25effcb6eef3ac5c41ee1b152fa8fb26d55e9e09",
+    "bytes": 186121
+  },
+  {
+    "path": "raw/0078.log",
+    "remote_path": "consumer-metrics-v1/whole/consumer-probe.log",
+    "sha256": "aaf06383c5bd3a284c4b6bacf03b6a5593bef13eeb9ea7b6fc25f4c1848b67ac",
+    "bytes": 3722
+  },
+  {
+    "path": "raw/0079.log",
+    "remote_path": "consumer-metrics-v1/whole.log",
+    "sha256": "63f75ceb3c5b25e5996e9a9cf1675dbc2f4303b559b62fad855ee084df9ee451",
+    "bytes": 146
+  },
+  {
+    "path": "raw/0080.json",
+    "remote_path": "consumer-metrics-v2/legacy/consumer-probe.json",
+    "sha256": "dc1356cf9b24870847be8b125e60abf450140d5273992cf6cc6923d5d6dfdb60",
+    "bytes": 314984
+  },
+  {
+    "path": "raw/0081.log",
+    "remote_path": "consumer-metrics-v2/legacy/consumer-probe.log",
+    "sha256": "f4ca85dcb5a671bda4dff8fbeae284cb307dbb2bdadd63a35bdd04e6757b5f8c",
+    "bytes": 7467
+  },
+  {
+    "path": "raw/0082.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/analyse.done",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0083.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/analysis.db",
+    "sha256": "2c85bcfaa541481c70c540b398031872d6000677c134590b4b4a9583e74c7a12",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0084.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/api_statistic.csv",
+    "sha256": "2e30d4b892b89a4b2199aa096c395e2abca937bd8f8b430493abed03eaf10770",
+    "bytes": 1357
+  },
+  {
+    "path": "raw/0085.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler.db",
+    "sha256": "311dd1b48735055bfc9bc03e36e9b590565e7ffc0f3e16bcf9c8f4d03eabef0e",
+    "bytes": 200704
+  },
+  {
+    "path": "raw/0086.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+    "sha256": "038b785e551e66ab309be7e2aeecf516dfd6e3e531199d0d18f5349d8fd2c0d2",
+    "bytes": 15477
+  },
+  {
+    "path": "raw/0087.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/op_statistic.csv",
+    "sha256": "041a2c17c38262a58173328488beae6fc2c7f3362f3b786d85207bdac0a9d410",
+    "bytes": 174
+  },
+  {
+    "path": "raw/0088.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/operator_details.csv",
+    "sha256": "ebacb187525049515af9b40aca3a6f0becf95a8311dec220f9eed1fa93270692",
+    "bytes": 3481
+  },
+  {
+    "path": "raw/0089.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/step_trace_time.csv",
+    "sha256": "066c08e86d479bcddc54941a48babfb1028f3788059ccef578a3149caf0e601d",
+    "bytes": 214
+  },
+  {
+    "path": "raw/0090.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/task_time.csv",
+    "sha256": "9222bc5c57d38f4664bbfaf0c0c21d7a45be6288fd5e81391034cbc5ed4bd7f8",
+    "bytes": 78272
+  },
+  {
+    "path": "raw/0091.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+    "sha256": "b64b3794328f6eeaa8bcff34adda86934410dd0da82cda8227eed879737f687e",
+    "bytes": 366415
+  },
+  {
+    "path": "raw/0092.op_range",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/FRAMEWORK/torch.op_range",
+    "sha256": "bf5f8815b0d49f525fe222610c9be240232724739f97ccaa3af352489f324191",
+    "bytes": 5878
+  },
+  {
+    "path": "raw/0093.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0094.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/ffts_profile.data.0.slice_0",
+    "sha256": "fcd7a8ec9d53f62afc9fd98a61af0c046807896a1730da7e53e1e787447769d7",
+    "bytes": 83968
+  },
+  {
+    "path": "raw/0095.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/ffts_profile.data.0.slice_0.done",
+    "sha256": "e1a81ac6563887b537bfbab6684d171d1dbf067f2021213117dcbff0cf3583bd",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0096.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/lpmInfoConv.data.0.slice_0",
+    "sha256": "5642af24f9480c233254808b079edfbfc6f699af9e22430e6331fc099a214bfa",
+    "bytes": 888
+  },
+  {
+    "path": "raw/0097.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/lpmInfoConv.data.0.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0098.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/lpmInfoConv.data.0.slice_0.done",
+    "sha256": "6237ac6ea158af626a16613f483d3b1ca462d4bfe8ac8dea0cc2329b6eeaac9c",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0099.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/stars_soc.data.0.slice_0",
+    "sha256": "22418e27a90295b8babf995b6f51206476d3075bb1c9b9162bc96236d484d12f",
+    "bytes": 130816
+  },
+  {
+    "path": "raw/0100.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/data/stars_soc.data.0.slice_0.done",
+    "sha256": "6ea82b239f45dbe6e6e765f5e3e2faaad6cc471aa2d2444379a8f901b3ef6ec1",
+    "bytes": 40
+  },
+  {
+    "path": "raw/0101.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/dev_start.log.0",
+    "sha256": "a1430f40719e78a308738787d365b49363a19ae472d6e0d6d6ba6b3d8a556db7",
+    "bytes": 60
+  },
+  {
+    "path": "raw/0102.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/dev_start.log.0.done",
+    "sha256": "8e68aa82efbbbf5463388485841998c7fdfecf37a776797fb2e3a3f17231fdda",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0103.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/end_info.0",
+    "sha256": "4030b0c0d6abc043233ee2f1f8bd7de756b099e01990b41488aa4613c8022aee",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0104.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/end_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0105.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/host_start.log.0",
+    "sha256": "deeffaa2478d33c3b345ba8d53f6a66383f267d71c98a3add8935828341ded0f",
+    "bytes": 85
+  },
+  {
+    "path": "raw/0106.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/host_start.log.0.done",
+    "sha256": "bb1f6f0d5cfa3725e0ba27099b0126823f234b803e204fd02ba3f1ff0dcbd267",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0107.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/info.json.0",
+    "sha256": "7cb5673c0a37fa6f202f3068d516f9075400d16248cde7dbb34d4e8d070bddba",
+    "bytes": 939
+  },
+  {
+    "path": "raw/0108.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/info.json.0.done",
+    "sha256": "afd159b1927fcfa3efabeb47c4d7c86bd605ec0a3915d38fc3518b4957835f4c",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0109.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sample.json",
+    "sha256": "36559bfee7b755a60f78b2931a4ae8d813029eadc8f0595189caccfb753398e3",
+    "bytes": 3182
+  },
+  {
+    "path": "raw/0110.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sample.json.done",
+    "sha256": "4c38f24bbc12c497d7ad02b6c6a754f5a58f94539f03be4261c8e530223bd7dc",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0111.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/ai_core_op_summary.db",
+    "sha256": "4f6d5a885eb88fce519c6f626c9cb740efb0241bcc0837961c26956a69765857",
+    "bytes": 86016
+  },
+  {
+    "path": "raw/0112.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/ascend_task.db",
+    "sha256": "e66c5c5f5bdcc426863c4932f4e50860dbf4768c427688fa111050e9e23edd0b",
+    "bytes": 77824
+  },
+  {
+    "path": "raw/0113.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/biu_perf.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0114.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/freq.db",
+    "sha256": "2de9faefa0e7ccf089c28231c5e0d5abff25406a49018b5dc5f1a781d46564cf",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0115.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/metric_summary.db",
+    "sha256": "e139e745fb18cbbe07bfd2f291e3e478233baa995afff8b12e215f801ae27b26",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0116.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/op_counter.db",
+    "sha256": "7a56d1b24d99a834833e1dbd3ce2c01698e7f0bdba4dd0a7e8bd70697abc14aa",
+    "bytes": 69632
+  },
+  {
+    "path": "raw/0117.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/step_trace.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0118.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/sqlite/time.db",
+    "sha256": "304d7f46b86abf554968c06e290d6530fa0421abafda5e846016d145cfa54067",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0119.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/start_info.0",
+    "sha256": "a15643dab95f4b8df4209f384274cbb22714febfda7884b52eb7dc7b27d943c2",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0120.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/device_0/start_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0121.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.additional.context_id_info.slice_0",
+    "sha256": "b4248a54f760f149af89ac0df4d491cfc03175f67de8e4b95130a23316d0ccf7",
+    "bytes": 4096
+  },
+  {
+    "path": "raw/0122.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.additional.context_id_info.slice_0.done",
+    "sha256": "5237ce416cfe520376a776752f5e8593ed2a325f96c47406941e0080c85994fe",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0123.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.additional.tensor_info.slice_0",
+    "sha256": "20ec9fdd913494a740c72322b59dd6114caff73adec91621a3372b13780ea1d9",
+    "bytes": 28672
+  },
+  {
+    "path": "raw/0124.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.additional.tensor_info.slice_0.done",
+    "sha256": "7a828f8ff10dab900edb5bd97c33327d09e28cecb54ebae75f5b8c45d0103c29",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0125.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.api_event.data.slice_0",
+    "sha256": "58121e8059745459d2c9dd6008dcf1568c2c8072f01208cfe227f2ec511ffc7a",
+    "bytes": 8280
+  },
+  {
+    "path": "raw/0126.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.api_event.data.slice_0.done",
+    "sha256": "aad524b16c0dbb756b44ed8c839c501322ab9aa8e1d2cf900c5d4e5f11ba9ac6",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0127.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.compact.node_basic_info.slice_0",
+    "sha256": "a285bba9f1fa06cf8ab1cc10bb01b9a17b77c0eeb7a197a62c2b58214af817fe",
+    "bytes": 1024
+  },
+  {
+    "path": "raw/0128.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.compact.node_basic_info.slice_0.done",
+    "sha256": "b737deab45f793a0dc9d185b7b606907d7274a292299b9867e2f4e091f580dae",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0129.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.compact.task_track.slice_0",
+    "sha256": "7fba055be393018cd5d4ca291b11c358e6780c298c78fedbc99a7f8d3e91f309",
+    "bytes": 2688
+  },
+  {
+    "path": "raw/0130.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.compact.task_track.slice_0.done",
+    "sha256": "ea024f11b033f0ab3d22f14b7371149c88ca1b2fca78762fccdd01caf4377789",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0131.slice_1",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.compact.task_track.slice_1",
+    "sha256": "71db2b14cf8fc3f8f1bd8e4b5da6f83448d6f5b0e22a3c8f0e7ed6dfc7b81c43",
+    "bytes": 64
+  },
+  {
+    "path": "raw/0132.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/aging.compact.task_track.slice_1.done",
+    "sha256": "229b95a565f9710dd381cfa012af30a35d9a253493ed06c07987d43d3fbf899d",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0133.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0134.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.hash_dic.slice_0",
+    "sha256": "febdc0fcb4f26baa4e2a29f91422f949dd34f6ededfd04c6c467068171615aec",
+    "bytes": 1087
+  },
+  {
+    "path": "raw/0135.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.hash_dic.slice_0.done",
+    "sha256": "e857a38a3f09ed4e9502bd996be6cdc4a72b3b3e5132f17ddb5407e599285550",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0136.slice_1",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.hash_dic.slice_1",
+    "sha256": "febdc0fcb4f26baa4e2a29f91422f949dd34f6ededfd04c6c467068171615aec",
+    "bytes": 1087
+  },
+  {
+    "path": "raw/0137.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.hash_dic.slice_1.done",
+    "sha256": "e857a38a3f09ed4e9502bd996be6cdc4a72b3b3e5132f17ddb5407e599285550",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0138.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_0",
+    "sha256": "b53f88b45d2da119c206b5b414a4df162a077258145b3efe2eed5a4181fbf5f8",
+    "bytes": 17
+  },
+  {
+    "path": "raw/0139.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_0.done",
+    "sha256": "b576a45721e4fc1a274b8a5c14d623767fe36253ae6d2d9e3d62dabaa735c162",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0140.slice_1",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_1",
+    "sha256": "13b68cc2f105d054a7ae49d89c40a17ac6e27daefd0b1fbceb04d1ab0d454369",
+    "bytes": 6414
+  },
+  {
+    "path": "raw/0141.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_1.done",
+    "sha256": "bf0ee02bb8743734221cc294a9017c684115329b0a608cda03a93d1d6b53f8f8",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0142.slice_2",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_2",
+    "sha256": "ecdd722ee4622a51fd2237a552b3960517713e4c7c363aa3bab48181da555ca4",
+    "bytes": 35
+  },
+  {
+    "path": "raw/0143.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_2.done",
+    "sha256": "8b04213ef22419f2f8088d6978d0a7ebbdbd2fb8c8c7dc17c0633a784cc6a639",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0144.slice_3",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_3",
+    "sha256": "08a42076dea587d40d5a65401189845b9c5770c4955e2de6f5d116ff2f2fc4e4",
+    "bytes": 351
+  },
+  {
+    "path": "raw/0145.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_3.done",
+    "sha256": "cce5ad8d92eddb4894230fab4a3769f28f7ad87c47daea9fbd461ea75fdd0bb2",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0146.slice_4",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_4",
+    "sha256": "e629d0412f69b233887d5173b7f2e866de10cb81fba71db03ea790873f1d17ca",
+    "bytes": 143
+  },
+  {
+    "path": "raw/0147.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_4.done",
+    "sha256": "77abaea8926dd68dd43a41ac5b61355a7d6cce9fcc88d4ba56c8b93069680142",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0148.slice_5",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_5",
+    "sha256": "b9a5c9e74cdffcf6886fe3c74bab55d54024e6b42001083479e337fe1aafa366",
+    "bytes": 13131
+  },
+  {
+    "path": "raw/0149.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.additional.type_info_dic.slice_5.done",
+    "sha256": "6ca294e9cf6e853d45871b8a6d8e44cf9de193b166a7a3f57b6019cd28670f3d",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0150.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.capture_stream_info.slice_0",
+    "sha256": "51f12cbf3f7799cd9c6f47e2ddfe1ab5f7a5839d9ae602f4b9078b6ad7661cc9",
+    "bytes": 64
+  },
+  {
+    "path": "raw/0151.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.capture_stream_info.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0152.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.capture_stream_info.slice_0.done",
+    "sha256": "229b95a565f9710dd381cfa012af30a35d9a253493ed06c07987d43d3fbf899d",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0153.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.stream_sq_info.slice_0",
+    "sha256": "cce6173157539fcf5396a9208a52e8899ea204ecc282d87218a187514044706e",
+    "bytes": 2432
+  },
+  {
+    "path": "raw/0154.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.stream_sq_info.slice_0.done",
+    "sha256": "93c923b94fbfb3f26f0aaa2494b489e569740149150af0bef7aba21220ac83b3",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0155.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.task_track.slice_0",
+    "sha256": "044f1197b5cb069eebbac4f683b0f7a2eb0cf21c768156706db389d793f6cf9d",
+    "bytes": 11328
+  },
+  {
+    "path": "raw/0156.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.compact.task_track.slice_0.done",
+    "sha256": "ac6b9afa843309516b5476df82616120bd991644d824054b6824bea6d7f6b80b",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0157.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.variable.capture_op_info.slice_0",
+    "sha256": "0bf73051831892a6629d45cd6024406a71897e516449c8246fe1b08465c3a91d",
+    "bytes": 24640
+  },
+  {
+    "path": "raw/0158.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/data/unaging.variable.capture_op_info.slice_0.done",
+    "sha256": "bf085d0e6eff7738a5d862ef6f1363a628fafad08946d2f6ed6326380695ce3f",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0159",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/end_info",
+    "sha256": "bd6a631ddbb44e7bab2f0a4085950ce4d593bf25c6c29da1b397618b80f8eca1",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0160.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/end_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0161.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/host_start.log",
+    "sha256": "8b92ac656d2f8a44dd269831ee9591d8a27534afdc1906c796e1ef47b033e0d4",
+    "bytes": 82
+  },
+  {
+    "path": "raw/0162.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/host_start.log.done",
+    "sha256": "88add95f7109dd717e359d4f83620dd312623da4e716274d1ee173b051ab8517",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0163.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/info.json",
+    "sha256": "f617873e800e0af483c942c41d9b880d4b50f73e59b86dd1742ac624d3130ae2",
+    "bytes": 594
+  },
+  {
+    "path": "raw/0164.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/info.json.done",
+    "sha256": "c89a7f0d34dfb47ac233317542af65ad34bb969684173243be126b0d29e6f098",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0165.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sample.json",
+    "sha256": "e656f1a3f44e76659945b3a348bc54c3c7a73053cb92f7010c46cb0a106a15dc",
+    "bytes": 3173
+  },
+  {
+    "path": "raw/0166.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sample.json.done",
+    "sha256": "a86d37d151a380ab9c2f624e2c2eca167df0626688dda8edc7cb923a9551680a",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0167.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/api_event.db",
+    "sha256": "5cfaeba92f8452639d6f0283e65c4c9274454baa04bce78e14e1579f2c7c3697",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0168.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/ge_hash.db",
+    "sha256": "9330d870b9c09556fb2b44e377ac51ae847fdd5ebb6c891f7324ed5498d9e4c1",
+    "bytes": 36864
+  },
+  {
+    "path": "raw/0169.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/ge_info.db",
+    "sha256": "7ccc81c1b45de39378aefe13ecd8610485a301a1866adb75162897ed1f50d859",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0170.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/rts_track.db",
+    "sha256": "524658422a4b3c6469e558a417d1088de632fe5f6f64d68b131bf3c3815796e0",
+    "bytes": 28672
+  },
+  {
+    "path": "raw/0171.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/runtime.db",
+    "sha256": "2d4ce877d213e80befb81fa8bdd80e1c8375ba5bc6f4fa7c1218bb84ae9c1d82",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0172.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/stream_info.db",
+    "sha256": "3ff88e61bad66b01eb0c2443413a94fa5ccb7417bd9a30b46a10557ccf8aeb47",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0173.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/sqlite/time.db",
+    "sha256": "02b262a61335f00ea433830f28aac119b27cfd9adf9c43ffe98a49ba1a02a713",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0174",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/start_info",
+    "sha256": "d4379836ff5e20eb901d97bd3f02396137ca70b395bea2c3bdfbd2c860909cd2",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0175.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/host/start_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0176.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/collection_analyze.log",
+    "sha256": "37e721eb195ebb94d79ec8ff06ac36665abdc382fea06136284a3568144ce17a",
+    "bytes": 342
+  },
+  {
+    "path": "raw/0177.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/collection_device_0.log",
+    "sha256": "6a9a64a83327e907e263d176c4f51c9a00fccd6377e0c2544ab5888bd53a7697",
+    "bytes": 20882
+  },
+  {
+    "path": "raw/0178.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/collection_host.log",
+    "sha256": "95d7a93e7b9aa8c74ac000cbb29e4f270452c55f9a987ffcd3cc07b320136d41",
+    "bytes": 9198
+  },
+  {
+    "path": "raw/0179.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2285834.log",
+    "sha256": "b1623e34766de9c92bb36cf4341e0585767581b2153cc97fbad4779a4d4b875e",
+    "bytes": 13818
+  },
+  {
+    "path": "raw/0180.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2285916.log",
+    "sha256": "940da21713d6cf36f0479941d98c3f0c492d6b1c91a21acdb744c8d6aa252b7e",
+    "bytes": 15332
+  },
+  {
+    "path": "raw/0181.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2285948.log",
+    "sha256": "7c687f1c39cdddc663f15e12f58f40e573e298dfc51784d1aa146d43074e7931",
+    "bytes": 97925
+  },
+  {
+    "path": "raw/0182.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2285997.log",
+    "sha256": "9febbf2aae9acfc7355aa1174e711620753c1bef6270d6a7c67d906dbb8926bc",
+    "bytes": 78476
+  },
+  {
+    "path": "raw/0183.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2286083.log",
+    "sha256": "b56f99faa3b32407513fb26f8f89ab16238c981d1521e2031ee8b8098ba0d92e",
+    "bytes": 13818
+  },
+  {
+    "path": "raw/0184.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2286165.log",
+    "sha256": "5625827156bbbc69caa72c6d260cd161fbd094a23ca66aa7e05f9a0959bfa585",
+    "bytes": 15330
+  },
+  {
+    "path": "raw/0185.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2286197.log",
+    "sha256": "cedcfa99e7123794915457dd052ccc3785b0e73fac0d8437bea27f21295758c7",
+    "bytes": 97925
+  },
+  {
+    "path": "raw/0186.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_log/msprof_analysis_2286246.log",
+    "sha256": "3882f26e59dcaf6407dc2f5bc14fadeb61a94a7042a41b113a057c5ef925dbb1",
+    "bytes": 78476
+  },
+  {
+    "path": "raw/0187.txt",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_output/README.txt",
+    "sha256": "cbe7fd84fa75d9962fa39a9ef4e2ee211d7abc6e4eb04303a97b0ac34571eec9",
+    "bytes": 3439
+  },
+  {
+    "path": "raw/0188.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_output/api_statistic_20261019061309.csv",
+    "sha256": "ce35972bd2773e8a0f97effb8ccce0f3b2b1491dc917dcf615428c19b452bf48",
+    "bytes": 1337
+  },
+  {
+    "path": "raw/0189.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_output/msprof_20261019061308.json",
+    "sha256": "3e2af63b35fbd52f99df5189a47491a185f1fdd61f95d360538e3c94e5dd8f73",
+    "bytes": 312312
+  },
+  {
+    "path": "raw/0190.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_output/op_statistic_20261019061309.csv",
+    "sha256": "9f78e6353af7b19df05a7b2f2bdb83711579edd74bb9501e9fdcf861b18fbc39",
+    "bytes": 172
+  },
+  {
+    "path": "raw/0191.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_output/op_summary_20261019061309.csv",
+    "sha256": "69c9433b7730b6fd082fdbddd267b309436eca493f76ad250a3e26c4b59c7d2f",
+    "bytes": 15474
+  },
+  {
+    "path": "raw/0192.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/mindstudio_profiler_output/task_time_20261019061309.csv",
+    "sha256": "c9983eaa4ec420794f265bc2c817f3ad3e63930dfba4ee36e165b98135001e58",
+    "bytes": 77265
+  },
+  {
+    "path": "raw/0193.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/PROF_000001_20261019061302811_02244471HNEJAQRB/msprof_20261019061308.db",
+    "sha256": "b078b48b4cded654e8e74b72430d842a81be8172e75dc07162e02d47325da33e",
+    "bytes": 184320
+  },
+  {
+    "path": "raw/0194.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061303_2285794_ProfilingParser.log",
+    "sha256": "42db77d0fc54d088bb398d42ed72a37691dedd64779ccad217d6b2ffc34725ba",
+    "bytes": 6804
+  },
+  {
+    "path": "raw/0195.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061303_2285803_CANNExportParser.log",
+    "sha256": "6af03b23eb0f7f71e2fb0e6c3f15ec131aba8aed20718e33f722cb974100d8b5",
+    "bytes": 491
+  },
+  {
+    "path": "raw/0196.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061303_2285810_TracePreParser.log",
+    "sha256": "8cdc3032415441902acf34048c7e1250886c9f3c6bae9c8b79919a854217f66d",
+    "bytes": 478
+  },
+  {
+    "path": "raw/0197.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286024_TraceViewParser.log",
+    "sha256": "ec49f0cd435145fb87e30cbb586140cb343be1aeb1bf568ba84aa88e9e0cfcf2",
+    "bytes": 484
+  },
+  {
+    "path": "raw/0198.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286026_CANNAnalyzeParser.log",
+    "sha256": "9124b03d2f10518474727d4fa33bc80e092826dccd6f05eed600e85196c3060f",
+    "bytes": 496
+  },
+  {
+    "path": "raw/0199.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286031_TraceStepTimeParser.log",
+    "sha256": "13a988d7a873219d3c2f6e3122fe689fc03f37246e5a0090d9481b6fef456189",
+    "bytes": 638
+  },
+  {
+    "path": "raw/0200.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286033_OperatorViewParser.log",
+    "sha256": "4a5a48b79212476ee73082e66034d5b8d5d9830cb23aef0576197ee02d89057f",
+    "bytes": 502
+  },
+  {
+    "path": "raw/0201.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286036_IntegrateParser.log",
+    "sha256": "36328d5bedf9f4673829aa3c6a5c1867be727ebcf86c62d98ef5ceece8505328",
+    "bytes": 484
+  },
+  {
+    "path": "raw/0202.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286038_KernelViewParser.log",
+    "sha256": "556f6da2f4232cad1bc148fc44a4a138a7723ce939b40f6f9e4b2217f936b179",
+    "bytes": 748
+  },
+  {
+    "path": "raw/0203.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061305_2286040_MemoryViewParser.log",
+    "sha256": "e1df0cf622fff4b429922212716f3a6882f42169e42abc1990b13035ce489aee",
+    "bytes": 490
+  },
+  {
+    "path": "raw/0204.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061306_2286043_CommunicationParser.log",
+    "sha256": "c93eec76309f20d3a299037f5209237853a43441d3c57955c411b0087f5f26fd",
+    "bytes": 636
+  },
+  {
+    "path": "raw/0205.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061307_2286045_ProfilingParser.log",
+    "sha256": "042e2302e8e5d22095a8fae703ea16fac3c01f18e43456ce632207d8e9e59b48",
+    "bytes": 2535
+  },
+  {
+    "path": "raw/0206.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061307_2286054_CANNExportParser.log",
+    "sha256": "0b41516c685ab71e03005ae3b95875da4fbda3ee8fadae73fe70e1cc22d80ecd",
+    "bytes": 491
+  },
+  {
+    "path": "raw/0207.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061307_2286061_TracePreParser.log",
+    "sha256": "638c6d7eb319f2c03f53bcc0999fbb2cde794f98b2e4c3be9fc8a7a9f2e01bfa",
+    "bytes": 478
+  },
+  {
+    "path": "raw/0208.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/logs/profiler_20261019061309_2286272_TraceViewParser.log",
+    "sha256": "e545b9101212bfcc904caa91e40c4be756be4c26a6295dd1e0e22af1c55bbcfb",
+    "bytes": 484
+  },
+  {
+    "path": "raw/0209.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/profiler_info.json",
+    "sha256": "a71bdac81dc50864bdb4570f56454bd3aac7cee4ed9c25a050d2a6bf6a7bdd02",
+    "bytes": 1372
+  },
+  {
+    "path": "raw/0210.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap400/16b0f9cecd11_2244471_20261019061302786_ascend_pt/profiler_metadata.json",
+    "sha256": "83f45409bcec040fc99aa664d0e1966c0efb1133fadee9f67fef15a75c07209e",
+    "bytes": 320
+  },
+  {
+    "path": "raw/0211.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/analyse.done",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0212.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/analysis.db",
+    "sha256": "ec0cc59dca6ba9bb52e4ef392cfd7ee3524637b9a23464ab5d2ed3f6407a64cd",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0213.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/api_statistic.csv",
+    "sha256": "0b6e9e5206e76d7500cf24e2533a5c423842aa65990dfdd88378461c95244d59",
+    "bytes": 1356
+  },
+  {
+    "path": "raw/0214.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler.db",
+    "sha256": "5a48d410165f64a57f8db3ecc5f2c867669dc3889c6ac93f67feba6f17596292",
+    "bytes": 217088
+  },
+  {
+    "path": "raw/0215.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+    "sha256": "5e7ca878249e7b3f0fbdfd382c5023f70ead7574ea1715ac400f321ed4e63812",
+    "bytes": 15462
+  },
+  {
+    "path": "raw/0216.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/op_statistic.csv",
+    "sha256": "e2b04f2f93c6d104a3000e17629e1d691e0e2e06e1de2e10b59936fa9ef2a7ed",
+    "bytes": 174
+  },
+  {
+    "path": "raw/0217.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/operator_details.csv",
+    "sha256": "68a5bf4d4adae8de86988f9cae1aaa2b6112a755c92855b632b942c99204dd04",
+    "bytes": 3486
+  },
+  {
+    "path": "raw/0218.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/step_trace_time.csv",
+    "sha256": "45602cf9ad0f0cb45e0f256db9a896c93560d4bc39d50794b6d64105ae9bbbb0",
+    "bytes": 223
+  },
+  {
+    "path": "raw/0219.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/task_time.csv",
+    "sha256": "437378e1f09de74fe6b5e7daa0a0751bb3afdc93e17a0033103e237d0fba32e5",
+    "bytes": 98441
+  },
+  {
+    "path": "raw/0220.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+    "sha256": "a85a7cb636f1d164fd68e5fe031f1d745cb530428bbc317017b17efa9a61470b",
+    "bytes": 437181
+  },
+  {
+    "path": "raw/0221.op_range",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/FRAMEWORK/torch.op_range",
+    "sha256": "bd9e85119bf30fb2103c22658bb55a5322a5c14d52057b028274a1f0cb0a1626",
+    "bytes": 5878
+  },
+  {
+    "path": "raw/0222.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0223.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/ffts_profile.data.0.slice_0",
+    "sha256": "2829ed6de93eb921349c0dcd125bb1217b2764131c8b5b7c8aff3ad900259c88",
+    "bytes": 83968
+  },
+  {
+    "path": "raw/0224.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/ffts_profile.data.0.slice_0.done",
+    "sha256": "e1a81ac6563887b537bfbab6684d171d1dbf067f2021213117dcbff0cf3583bd",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0225.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/lpmInfoConv.data.0.slice_0",
+    "sha256": "600f0fda2b6361528bbb9223de5d5f8ea526d58c0461e7fed500422888dd7113",
+    "bytes": 1776
+  },
+  {
+    "path": "raw/0226.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/lpmInfoConv.data.0.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0227.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/lpmInfoConv.data.0.slice_0.done",
+    "sha256": "225d6e058f192cf9a4bf1d00b8f3e2012d24e46c7e654b9820ac9a826b36af3a",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0228.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/stars_soc.data.0.slice_0",
+    "sha256": "039b3454cba46d40e6f257f2a81b94ffa1fbc73c22e7ac252380600da8069cec",
+    "bytes": 164096
+  },
+  {
+    "path": "raw/0229.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/data/stars_soc.data.0.slice_0.done",
+    "sha256": "b407a6eac4cc16c261b37093fd2a69f312cd64b30d2bbcd27a94776d39497821",
+    "bytes": 40
+  },
+  {
+    "path": "raw/0230.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/dev_start.log.0",
+    "sha256": "21484fe1c36115f51b717387f2c942241bbd2c65ca8f5ac2d5552de3bd229b64",
+    "bytes": 60
+  },
+  {
+    "path": "raw/0231.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/dev_start.log.0.done",
+    "sha256": "8e68aa82efbbbf5463388485841998c7fdfecf37a776797fb2e3a3f17231fdda",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0232.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/end_info.0",
+    "sha256": "7c2e03497e9d06335a8335641d8666907c37b6e824662650bc18c6da447c448c",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0233.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/end_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0234.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/host_start.log.0",
+    "sha256": "75220b793e71c860225e0320433d30fb506dcc641ba1ef282b24064a5b6efceb",
+    "bytes": 85
+  },
+  {
+    "path": "raw/0235.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/host_start.log.0.done",
+    "sha256": "bb1f6f0d5cfa3725e0ba27099b0126823f234b803e204fd02ba3f1ff0dcbd267",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0236.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/info.json.0",
+    "sha256": "90269826892da1ac1bdc917cee1a3987795216f7c41ed075ea4aa8aadfe1fcf1",
+    "bytes": 939
+  },
+  {
+    "path": "raw/0237.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/info.json.0.done",
+    "sha256": "afd159b1927fcfa3efabeb47c4d7c86bd605ec0a3915d38fc3518b4957835f4c",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0238.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sample.json",
+    "sha256": "f939a5a2092dd72290398ead7f1e1ea9faea27426003176a26cac3015b08e2e9",
+    "bytes": 3182
+  },
+  {
+    "path": "raw/0239.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sample.json.done",
+    "sha256": "4c38f24bbc12c497d7ad02b6c6a754f5a58f94539f03be4261c8e530223bd7dc",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0240.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/ai_core_op_summary.db",
+    "sha256": "fa47cfdc8ac4a13c999603dd9ce33a67cdf2985b0e3a97ad9f86097f26c55b55",
+    "bytes": 98304
+  },
+  {
+    "path": "raw/0241.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/ascend_task.db",
+    "sha256": "498dd519aa59fb227305cd147603cdb003e9015dc5f2943ad163e2bd8034d6ad",
+    "bytes": 94208
+  },
+  {
+    "path": "raw/0242.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/biu_perf.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0243.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/freq.db",
+    "sha256": "5249fcc3cc812d9850cdbd50da67179a33e9010fee4b242a9bf691bc6cbccabc",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0244.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/metric_summary.db",
+    "sha256": "5ab3e58453f5b273b83c3f95b7bbdddff91ebd2f4dd81d63fde6b556a246c677",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0245.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/op_counter.db",
+    "sha256": "1949950219f17579c74482d4126ded46d4e2457274db704d4ecfd1c56ce99eae",
+    "bytes": 81920
+  },
+  {
+    "path": "raw/0246.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/step_trace.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0247.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/sqlite/time.db",
+    "sha256": "114c84be0aa2339e997fa1914fc5f58c5257c64ad56d810a98f9a785088b938d",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0248.0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/start_info.0",
+    "sha256": "c69569cc5a37c571ffdbb7d97d8c46c4b8f6df279158fec4d2fcbe46a775a102",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0249.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/device_0/start_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0250.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.additional.context_id_info.slice_0",
+    "sha256": "cbcd5a59a4c8899bd18150c8da593b227ee0df54bd200d04b14fd82b6661f8de",
+    "bytes": 4096
+  },
+  {
+    "path": "raw/0251.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.additional.context_id_info.slice_0.done",
+    "sha256": "5237ce416cfe520376a776752f5e8593ed2a325f96c47406941e0080c85994fe",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0252.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.additional.tensor_info.slice_0",
+    "sha256": "dcac22126af95de25743ce300959f563894f159ea1c8e2140e4009712852ef0a",
+    "bytes": 28672
+  },
+  {
+    "path": "raw/0253.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.additional.tensor_info.slice_0.done",
+    "sha256": "7a828f8ff10dab900edb5bd97c33327d09e28cecb54ebae75f5b8c45d0103c29",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0254.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.api_event.data.slice_0",
+    "sha256": "33c463cb8465018a500a3c830baab2f176f08270683c6895ce061ea49eb7b212",
+    "bytes": 8280
+  },
+  {
+    "path": "raw/0255.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.api_event.data.slice_0.done",
+    "sha256": "aad524b16c0dbb756b44ed8c839c501322ab9aa8e1d2cf900c5d4e5f11ba9ac6",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0256.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.compact.node_basic_info.slice_0",
+    "sha256": "ffa8422ffd90e47c0eea1f25c320ed98d4f5f2e8fc5ed14c92265c440020c9a4",
+    "bytes": 1024
+  },
+  {
+    "path": "raw/0257.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.compact.node_basic_info.slice_0.done",
+    "sha256": "b737deab45f793a0dc9d185b7b606907d7274a292299b9867e2f4e091f580dae",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0258.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.compact.task_track.slice_0",
+    "sha256": "04d6c5dd28960463404e566019944c7c9c59d6429abf075f99d92c314e62c467",
+    "bytes": 2752
+  },
+  {
+    "path": "raw/0259.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/aging.compact.task_track.slice_0.done",
+    "sha256": "d76199c515baba6609f64369feb5170f96aa79c87afcc78a5a65b70389e8084f",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0260.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0261.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.hash_dic.slice_0",
+    "sha256": "febdc0fcb4f26baa4e2a29f91422f949dd34f6ededfd04c6c467068171615aec",
+    "bytes": 1087
+  },
+  {
+    "path": "raw/0262.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.hash_dic.slice_0.done",
+    "sha256": "e857a38a3f09ed4e9502bd996be6cdc4a72b3b3e5132f17ddb5407e599285550",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0263.slice_1",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.hash_dic.slice_1",
+    "sha256": "febdc0fcb4f26baa4e2a29f91422f949dd34f6ededfd04c6c467068171615aec",
+    "bytes": 1087
+  },
+  {
+    "path": "raw/0264.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.hash_dic.slice_1.done",
+    "sha256": "e857a38a3f09ed4e9502bd996be6cdc4a72b3b3e5132f17ddb5407e599285550",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0265.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_0",
+    "sha256": "b53f88b45d2da119c206b5b414a4df162a077258145b3efe2eed5a4181fbf5f8",
+    "bytes": 17
+  },
+  {
+    "path": "raw/0266.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_0.done",
+    "sha256": "b576a45721e4fc1a274b8a5c14d623767fe36253ae6d2d9e3d62dabaa735c162",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0267.slice_1",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_1",
+    "sha256": "13b68cc2f105d054a7ae49d89c40a17ac6e27daefd0b1fbceb04d1ab0d454369",
+    "bytes": 6414
+  },
+  {
+    "path": "raw/0268.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_1.done",
+    "sha256": "bf0ee02bb8743734221cc294a9017c684115329b0a608cda03a93d1d6b53f8f8",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0269.slice_2",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_2",
+    "sha256": "ecdd722ee4622a51fd2237a552b3960517713e4c7c363aa3bab48181da555ca4",
+    "bytes": 35
+  },
+  {
+    "path": "raw/0270.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_2.done",
+    "sha256": "8b04213ef22419f2f8088d6978d0a7ebbdbd2fb8c8c7dc17c0633a784cc6a639",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0271.slice_3",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_3",
+    "sha256": "08a42076dea587d40d5a65401189845b9c5770c4955e2de6f5d116ff2f2fc4e4",
+    "bytes": 351
+  },
+  {
+    "path": "raw/0272.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_3.done",
+    "sha256": "cce5ad8d92eddb4894230fab4a3769f28f7ad87c47daea9fbd461ea75fdd0bb2",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0273.slice_4",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_4",
+    "sha256": "e629d0412f69b233887d5173b7f2e866de10cb81fba71db03ea790873f1d17ca",
+    "bytes": 143
+  },
+  {
+    "path": "raw/0274.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_4.done",
+    "sha256": "77abaea8926dd68dd43a41ac5b61355a7d6cce9fcc88d4ba56c8b93069680142",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0275.slice_5",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_5",
+    "sha256": "b9a5c9e74cdffcf6886fe3c74bab55d54024e6b42001083479e337fe1aafa366",
+    "bytes": 13131
+  },
+  {
+    "path": "raw/0276.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.additional.type_info_dic.slice_5.done",
+    "sha256": "6ca294e9cf6e853d45871b8a6d8e44cf9de193b166a7a3f57b6019cd28670f3d",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0277.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.capture_stream_info.slice_0",
+    "sha256": "ed2a6ab0cfc5604b2ae599d50fcf927f150e1896312d1fd1e11cc86fd00b514d",
+    "bytes": 64
+  },
+  {
+    "path": "raw/0278.complete",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.capture_stream_info.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0279.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.capture_stream_info.slice_0.done",
+    "sha256": "229b95a565f9710dd381cfa012af30a35d9a253493ed06c07987d43d3fbf899d",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0280.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.stream_sq_info.slice_0",
+    "sha256": "d9f5e520db7188de448e8f13546e1cb6d75e0a598565a92eaf545efacbfd2282",
+    "bytes": 2432
+  },
+  {
+    "path": "raw/0281.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.stream_sq_info.slice_0.done",
+    "sha256": "93c923b94fbfb3f26f0aaa2494b489e569740149150af0bef7aba21220ac83b3",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0282.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.task_track.slice_0",
+    "sha256": "53b563cc73cc5319307dbb44df1687a98fd4f442c2328a695fa2eebffc9b1a14",
+    "bytes": 11328
+  },
+  {
+    "path": "raw/0283.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.compact.task_track.slice_0.done",
+    "sha256": "ac6b9afa843309516b5476df82616120bd991644d824054b6824bea6d7f6b80b",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0284.slice_0",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.variable.capture_op_info.slice_0",
+    "sha256": "ba78e46027670209e1b61d6f2054ff1b71c6328778e90de070307b72efbda5ce",
+    "bytes": 24640
+  },
+  {
+    "path": "raw/0285.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/data/unaging.variable.capture_op_info.slice_0.done",
+    "sha256": "bf085d0e6eff7738a5d862ef6f1363a628fafad08946d2f6ed6326380695ce3f",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0286",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/end_info",
+    "sha256": "df74f07c1c69917f14654c416abf9b08236f88245e51389bce35ac3aa741d1c2",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0287.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/end_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0288.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/host_start.log",
+    "sha256": "8ee927ed343ef8c5ba12f6ee6109c440d8fb1765ee6dccfbda5fec66610fdca5",
+    "bytes": 82
+  },
+  {
+    "path": "raw/0289.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/host_start.log.done",
+    "sha256": "88add95f7109dd717e359d4f83620dd312623da4e716274d1ee173b051ab8517",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0290.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/info.json",
+    "sha256": "e0840df3a96de2f33af8ac1e5900b25bfc20ef58fce642b164d97c312a503f4e",
+    "bytes": 594
+  },
+  {
+    "path": "raw/0291.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/info.json.done",
+    "sha256": "c89a7f0d34dfb47ac233317542af65ad34bb969684173243be126b0d29e6f098",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0292.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sample.json",
+    "sha256": "beea129dd58b88854665c25d88c85f2564e9cdfd9af43f64de9f513ea4a0dcd0",
+    "bytes": 3173
+  },
+  {
+    "path": "raw/0293.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sample.json.done",
+    "sha256": "a86d37d151a380ab9c2f624e2c2eca167df0626688dda8edc7cb923a9551680a",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0294.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/api_event.db",
+    "sha256": "424604d86ef41ef2d71a05423acee2b727780c05bb54ba51bbce571ef25cc433",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0295.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/ge_hash.db",
+    "sha256": "9330d870b9c09556fb2b44e377ac51ae847fdd5ebb6c891f7324ed5498d9e4c1",
+    "bytes": 36864
+  },
+  {
+    "path": "raw/0296.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/ge_info.db",
+    "sha256": "00d4504ec364533a90ec852725bbe7f1b61ff02f84f517344bd15396731897f0",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0297.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/rts_track.db",
+    "sha256": "9b8241bee5eb0d318a54f40abf7a5cc64bac649e4a835addd2c926803f9eee7c",
+    "bytes": 28672
+  },
+  {
+    "path": "raw/0298.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/runtime.db",
+    "sha256": "bc23da0a672bd195f02fdcc3ceedea83e8c4d7865c2ff84018aba07aad52c707",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0299.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/stream_info.db",
+    "sha256": "a5e4e409376844ade1060c948264959fda7b3ca346a8093be888bb4a76c76e9a",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0300.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/sqlite/time.db",
+    "sha256": "02b262a61335f00ea433830f28aac119b27cfd9adf9c43ffe98a49ba1a02a713",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0301",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/start_info",
+    "sha256": "97669224be1999e4c4d92a569cd4d58fc1cbe7e2cb466c767599ce798fd93ef0",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0302.done",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/host/start_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0303.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/collection_analyze.log",
+    "sha256": "40245c1e4cf901e5734a75c42dad90b64fbe3e61b576b108a7ab170a3c38c672",
+    "bytes": 342
+  },
+  {
+    "path": "raw/0304.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/collection_device_0.log",
+    "sha256": "dbe60608ec37f33128327fe7c407a053268548ae67bc5bdba4044dc8f6dfd932",
+    "bytes": 20882
+  },
+  {
+    "path": "raw/0305.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/collection_host.log",
+    "sha256": "b2154205b7e5392751dfb76c43b2f9d4c48bdad039b6f0a1dcd86d9279facf96",
+    "bytes": 9198
+  },
+  {
+    "path": "raw/0306.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286351.log",
+    "sha256": "57335b5dfba0bd363108deed06d0a7dddd1479ef4462156095ff63f877a8f009",
+    "bytes": 13818
+  },
+  {
+    "path": "raw/0307.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286433.log",
+    "sha256": "651065a23e61d81d6dd5aef5290dc7253cb9f61323a9d3b743b850bf3ec99884",
+    "bytes": 15332
+  },
+  {
+    "path": "raw/0308.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286465.log",
+    "sha256": "6d0f2fdbfccd5c2d9af6a4d3c17c6eca1b1b18dee1e920496965f346ad62079d",
+    "bytes": 97925
+  },
+  {
+    "path": "raw/0309.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286514.log",
+    "sha256": "7571792102c444e914f5d7da1639177304b3150c1b4990b1736d2f216c0fdf58",
+    "bytes": 78476
+  },
+  {
+    "path": "raw/0310.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286600.log",
+    "sha256": "b8f09383a155ce4e77ffa1c0f222aff8325dc44a631a0a423ca7f0e80de5f20c",
+    "bytes": 13818
+  },
+  {
+    "path": "raw/0311.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286682.log",
+    "sha256": "e355417c0d667f813e22cb16885d0df10faadbd6ed602ffabbe6b42413683737",
+    "bytes": 15333
+  },
+  {
+    "path": "raw/0312.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286714.log",
+    "sha256": "5160192902432cf329c08420172b43b61d163f4afaa6a2e7a39dafc645ecd180",
+    "bytes": 97925
+  },
+  {
+    "path": "raw/0313.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_log/msprof_analysis_2286763.log",
+    "sha256": "cc40c5c6cc4bc69d695e80649a25530100478557bae219af18dba5456d9e0cd1",
+    "bytes": 78476
+  },
+  {
+    "path": "raw/0314.txt",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_output/README.txt",
+    "sha256": "0277ccbece4b2f51ffe672ec6b52ecdba4a760c2de1aa0f27ee8b6b63d6dd76d",
+    "bytes": 3439
+  },
+  {
+    "path": "raw/0315.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_output/api_statistic_20261019061317.csv",
+    "sha256": "dce6b6cfa7e9809a9e8f985fee66428bcfdf61c7295e007ee37afaecb042677b",
+    "bytes": 1336
+  },
+  {
+    "path": "raw/0316.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_output/msprof_20261019061316.json",
+    "sha256": "05edc2a85b36e1a3a1ff12318d72b1aa966a09299cedf9f6f7a8dd54f001a08a",
+    "bytes": 376030
+  },
+  {
+    "path": "raw/0317.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_output/op_statistic_20261019061317.csv",
+    "sha256": "2591c1d4d45b0a69325bfa1ca15e0e6bd38acf86fa2d0eb8c9a7dcf56207564b",
+    "bytes": 172
+  },
+  {
+    "path": "raw/0318.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_output/op_summary_20261019061317.csv",
+    "sha256": "65a5ce440db3b5a22996984979f51d481c99a008205f030976ff7dff91dcaa08",
+    "bytes": 15459
+  },
+  {
+    "path": "raw/0319.csv",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/mindstudio_profiler_output/task_time_20261019061317.csv",
+    "sha256": "c0d2955586dd102230a63cc9e5c3288fe6c19bcb070ece24386276fd6909f91a",
+    "bytes": 97174
+  },
+  {
+    "path": "raw/0320.db",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/PROF_000002_20261019061310919_02244471CGLCBOMA/msprof_20261019061316.db",
+    "sha256": "d5ea83fa43ad864f18ba0df50b87e6f7db900a814827510fb26d805f5f00f3ce",
+    "bytes": 200704
+  },
+  {
+    "path": "raw/0321.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061311_2286311_ProfilingParser.log",
+    "sha256": "89733d74071be689809863c04d3d2b4d1b9cdcef6b6a91af343dc0a8cbae2689",
+    "bytes": 6804
+  },
+  {
+    "path": "raw/0322.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061311_2286320_CANNExportParser.log",
+    "sha256": "7cafabe63fd606f1f217ff48956b879d0d6e4786e93c9b2c3f717ec27ed86c04",
+    "bytes": 491
+  },
+  {
+    "path": "raw/0323.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061311_2286327_TracePreParser.log",
+    "sha256": "1d780df0adca0c15bf3fce4bf73d87e3c0b4bbcc8c484de69b920f0d0d7dc9a0",
+    "bytes": 478
+  },
+  {
+    "path": "raw/0324.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286541_TraceViewParser.log",
+    "sha256": "4b57f4a0f425c5b28fcdd21780d74b0d9c0040d7602ac6e385a1f00a2e3fd804",
+    "bytes": 484
+  },
+  {
+    "path": "raw/0325.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286543_CANNAnalyzeParser.log",
+    "sha256": "641c63f726a2db9143f7a87bee20b45e03672c472b40fd926495031f89d6bf5f",
+    "bytes": 496
+  },
+  {
+    "path": "raw/0326.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286548_TraceStepTimeParser.log",
+    "sha256": "7960e6575e7e38670ea888966ea7c374bbe6b5a62b204ba6ff3394f229c56b0a",
+    "bytes": 638
+  },
+  {
+    "path": "raw/0327.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286550_OperatorViewParser.log",
+    "sha256": "cf3f02894efe81fdacf067e68bbee39ee46aadf56e63428df3e08fc083a15066",
+    "bytes": 502
+  },
+  {
+    "path": "raw/0328.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286553_IntegrateParser.log",
+    "sha256": "ecc48ea61b1068430f0bcc88b93ebd3c5e72ff71bc9041f3b5097dd984e1577c",
+    "bytes": 484
+  },
+  {
+    "path": "raw/0329.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286555_KernelViewParser.log",
+    "sha256": "c8eb97df386241e1ec199b032f23fcbca4230814f8adf6f6b8e654fbca1a675c",
+    "bytes": 748
+  },
+  {
+    "path": "raw/0330.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061313_2286557_MemoryViewParser.log",
+    "sha256": "cd17a8690d9c66b5c43afd39d94b4fd5b54a160c54aa1415385b2fb008bfb562",
+    "bytes": 490
+  },
+  {
+    "path": "raw/0331.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061314_2286560_CommunicationParser.log",
+    "sha256": "39537952521dcb4621d487d9cc22cfdf94eceef3b6906b294fb32296592236cd",
+    "bytes": 636
+  },
+  {
+    "path": "raw/0332.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061315_2286562_ProfilingParser.log",
+    "sha256": "8c4b154be3d3292de77469a3becc0b5e920d45db1feb3e775ecf977c37c3c628",
+    "bytes": 2535
+  },
+  {
+    "path": "raw/0333.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061315_2286571_CANNExportParser.log",
+    "sha256": "1862f9a2ad2e0b916a94b86a3cc6636dc77e76882c37beb4da4e5deb849cd6a9",
+    "bytes": 491
+  },
+  {
+    "path": "raw/0334.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061315_2286576_TracePreParser.log",
+    "sha256": "3fdca8d274f676552aedd8246340276b17a1b409555c987889e6f7ccbb500d34",
+    "bytes": 478
+  },
+  {
+    "path": "raw/0335.log",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/logs/profiler_20261019061317_2286789_TraceViewParser.log",
+    "sha256": "7c6897dfe78c4fc9230544dc4a5b5d42b3294f09c07ffa6bbaaf8eeb2730bfcd",
+    "bytes": 484
+  },
+  {
+    "path": "raw/0336.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/profiler_info.json",
+    "sha256": "4ca0973382b12a58e1029ebfe68ed1e79a0402ba1d68b9bb1b8cd760cbf8e5be",
+    "bytes": 1372
+  },
+  {
+    "path": "raw/0337.json",
+    "remote_path": "consumer-metrics-v2/legacy/metrics/cap512/16b0f9cecd11_2244471_20261019061310893_ascend_pt/profiler_metadata.json",
+    "sha256": "40ec08f73daddc0a91f984200eb29ae57b1c65fcd55b457165a2bc841eb89ec2",
+    "bytes": 320
+  },
+  {
+    "path": "raw/0338.json",
+    "remote_path": "consumer-metrics-v2/legacy/profiles/cap400/trace.json",
+    "sha256": "5ca2325d956fab8f5edbdfb6f8f1c004ca57b68f3098b5f9269e8956a8f74c3f",
+    "bytes": 366415
+  },
+  {
+    "path": "raw/0339.json",
+    "remote_path": "consumer-metrics-v2/legacy/profiles/cap512/trace.json",
+    "sha256": "197be657db1df9372579c5341f02637dfac7c2f3f8d1cd273ea6b838bd550e29",
+    "bytes": 437181
+  },
+  {
+    "path": "raw/0340.py",
+    "remote_path": "consumer-metrics-v2/legacy/runtime/updatable_graph.py",
+    "sha256": "d41d912ce8f4183228fdc182dbdb6a504f07642fddb8872c657e7f4429ac0729",
+    "bytes": 7183
+  },
+  {
+    "path": "raw/0341.log",
+    "remote_path": "consumer-metrics-v2/legacy.log",
+    "sha256": "323aa99369076995d60187aa247dc877fb56ce712e2599d531c7c5bd7fd6f50f",
+    "bytes": 150
+  },
+  {
+    "path": "raw/0342.json",
+    "remote_path": "consumer-metrics-v2/metrics-suite.json",
+    "sha256": "1d5963998c04123004330f03979b8dcce9f11a096756c5fa9ce6cb1ef5973444",
+    "bytes": 7075
+  },
+  {
+    "path": "raw/0343.json",
+    "remote_path": "consumer-metrics-v2/whole/consumer-probe.json",
+    "sha256": "76bd4b29169950a66d903f9f1cf23250612c6a0af9d6260af906d69fe04dc12c",
+    "bytes": 528480
+  },
+  {
+    "path": "raw/0344.log",
+    "remote_path": "consumer-metrics-v2/whole/consumer-probe.log",
+    "sha256": "a0baa90fa45c62f7d885917501b6b54d5fd230c27120b2c9778e564a5c58b738",
+    "bytes": 7463
+  },
+  {
+    "path": "raw/0345.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/analyse.done",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0346.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/analysis.db",
+    "sha256": "08f3785aef09461cb77912a11a3f959abf3ed8f7d9d5e1acfe84758df2996a5d",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0347.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/api_statistic.csv",
+    "sha256": "633a6e3a8bf3e8a414dd6348dafcb28890d0a8ba1f25e965fc18a93b51cc1cbd",
+    "bytes": 683
+  },
+  {
+    "path": "raw/0348.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler.db",
+    "sha256": "ab588ca276dcaf853bbaa222f0b04abaf596438cc8f0839871c4de7184d5a115",
+    "bytes": 106496
+  },
+  {
+    "path": "raw/0349.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+    "sha256": "fde33a6c7c59e6952184f56f86846e380c4701e7277006e1243b8cdad06ccd8a",
+    "bytes": 10601
+  },
+  {
+    "path": "raw/0350.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/op_statistic.csv",
+    "sha256": "362e7039cc870662ba1d8f29ad5564bc710d744d54e496cb7c52b103587600cc",
+    "bytes": 324
+  },
+  {
+    "path": "raw/0351.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/operator_details.csv",
+    "sha256": "f65d65dbedd22daa3179012f079b4a8c44979e6565baa30847d8c3e610ce33d9",
+    "bytes": 778
+  },
+  {
+    "path": "raw/0352.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/step_trace_time.csv",
+    "sha256": "740935c94f6b3a98c332849e15c430d121bef9ac85e81ba732bf73ffeb19d802",
+    "bytes": 225
+  },
+  {
+    "path": "raw/0353.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/task_time.csv",
+    "sha256": "a87a26144718f6e2e1e915b2a48dd3a44734d81c6779160f328f8c9a7cba2271",
+    "bytes": 3531
+  },
+  {
+    "path": "raw/0354.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+    "sha256": "0c151d840fb55a5acb307b7770ba4346e79cf440bc44744cd9ae4933b4e031a5",
+    "bytes": 30209
+  },
+  {
+    "path": "raw/0355.op_range",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/FRAMEWORK/torch.op_range",
+    "sha256": "745dd35e4f8f344f776c51d1251d272aea3b8009cf231702af33968d0845de28",
+    "bytes": 1113
+  },
+  {
+    "path": "raw/0356.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0357.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/ffts_profile.data.0.slice_0",
+    "sha256": "806ce1bf49c0d6ab448d4a1ba32a0e510caec9b9e57490fd6c658c234d0ee21e",
+    "bytes": 84096
+  },
+  {
+    "path": "raw/0358.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/ffts_profile.data.0.slice_0.done",
+    "sha256": "7baa65adb8e5ed5a44f749e9dd3a5e462c45335c0884b97356b9edfab54afbe0",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0359.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/lpmInfoConv.data.0.slice_0",
+    "sha256": "4979e5b99ebf4fd97e3428e4b4ea80962cbefb90818d4853856e4a39f4758838",
+    "bytes": 888
+  },
+  {
+    "path": "raw/0360.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/lpmInfoConv.data.0.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0361.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/lpmInfoConv.data.0.slice_0.done",
+    "sha256": "6237ac6ea158af626a16613f483d3b1ca462d4bfe8ac8dea0cc2329b6eeaac9c",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0362.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/stars_soc.data.0.slice_0",
+    "sha256": "baa15b82fbd79aacb4f80997ed44ebbd85168c5c8a2a3201a8e22c37df79954f",
+    "bytes": 5632
+  },
+  {
+    "path": "raw/0363.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/data/stars_soc.data.0.slice_0.done",
+    "sha256": "90f74bb387846e6675312acb8111e8ff8fe62a8059d6539acd5b83d54620646e",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0364.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/dev_start.log.0",
+    "sha256": "fe746b6a72119576b38f4acb00c8c5af218091fe3b373d600ba2edd8d9b94b61",
+    "bytes": 60
+  },
+  {
+    "path": "raw/0365.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/dev_start.log.0.done",
+    "sha256": "8e68aa82efbbbf5463388485841998c7fdfecf37a776797fb2e3a3f17231fdda",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0366.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/end_info.0",
+    "sha256": "ff79378699b3ee26954349259791b7ed92296379c199ad9ea2bd32630fc6404b",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0367.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/end_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0368.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/host_start.log.0",
+    "sha256": "74ba4ee192ed0d8f3ab0b9e56ccb4b3c4dd2d5a5c2c830a225e05eefb9f2c7f1",
+    "bytes": 85
+  },
+  {
+    "path": "raw/0369.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/host_start.log.0.done",
+    "sha256": "bb1f6f0d5cfa3725e0ba27099b0126823f234b803e204fd02ba3f1ff0dcbd267",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0370.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/info.json.0",
+    "sha256": "21f6babee53f0ac72593322810223d0e1c899ad585c47bca5c513bf7d5602516",
+    "bytes": 939
+  },
+  {
+    "path": "raw/0371.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/info.json.0.done",
+    "sha256": "afd159b1927fcfa3efabeb47c4d7c86bd605ec0a3915d38fc3518b4957835f4c",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0372.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sample.json",
+    "sha256": "b30c42421a759fb7971207ccc4e7bed85973255de70aa11aef302b4c44658669",
+    "bytes": 3181
+  },
+  {
+    "path": "raw/0373.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sample.json.done",
+    "sha256": "68f17445d6abd70b11f88b20b75011aa63309b3aec44b1f25dea29a4d2a505f4",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0374.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/ai_core_op_summary.db",
+    "sha256": "5bf322dbf67ce9be5138c1cc8a7bd787610678a1698a8509d55a10fe61b174d2",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0375.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/ascend_task.db",
+    "sha256": "b1cdaee63f956676132ae1f053a5e5b6e7bfa3c426c84e3bac552cfcb9043765",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0376.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/biu_perf.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0377.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/freq.db",
+    "sha256": "f59ccdf3fd81fac72c123b900f90c31285db613dae3cb010ceed0079685c3f9e",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0378.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/metric_summary.db",
+    "sha256": "0f10824480cc9686a8d2104841647fbcc6fe3eb6a4a8c1257dcd74a8909e097f",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0379.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/op_counter.db",
+    "sha256": "1e14c3f8bcd65b04691b648b59eaa156a06aabe14bb6fb39d73ad84f2ea7af9f",
+    "bytes": 16384
+  },
+  {
+    "path": "raw/0380.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/step_trace.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0381.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/sqlite/time.db",
+    "sha256": "178f27089ef39bdbf2eac1584d56021ee9a79a6c80047851188bb20e76ba0d98",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0382.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/start_info.0",
+    "sha256": "2f377d2af68985eed8a32a710ed15a50a14ec8bb441c51a8865750c0cee3ca4b",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0383.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/device_0/start_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0384.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/aging.api_event.data.slice_0",
+    "sha256": "320f8949926f143b67597ebd14482c2f8dda3252383f54b15450c1278adc57f8",
+    "bytes": 600
+  },
+  {
+    "path": "raw/0385.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/aging.api_event.data.slice_0.done",
+    "sha256": "0a1b2b369b16d5a35189e145d368890caea3569d37b3eb995a29a7b0518c7a39",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0386.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/aging.compact.task_track.slice_0",
+    "sha256": "b42a236878209477200eeebe9c58f9eb52b0272ffbb24198ba452b9b131e64e1",
+    "bytes": 576
+  },
+  {
+    "path": "raw/0387.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/aging.compact.task_track.slice_0.done",
+    "sha256": "d558eea27fd057a9687828d32bf1dcdf71ecd63205bee1364f575e7566d81289",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0388.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0389.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.capture_op_info.slice_0",
+    "sha256": "e00f84d47b4c0277f8a396091715d6f18b7a3dfc3445af386a8097ea58d8fba2",
+    "bytes": 256
+  },
+  {
+    "path": "raw/0390.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.capture_op_info.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0391.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.capture_op_info.slice_0.done",
+    "sha256": "c2caa68e5399fb6d9b297610b8f140abf1c621d3c9be53ab5dbd084a6b1aafed",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0392.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.hash_dic.slice_0",
+    "sha256": "4321209c295ec76b6fab81c0af65e825cfb7426931d1e7f2bffaa5426ba87278",
+    "bytes": 1595
+  },
+  {
+    "path": "raw/0393.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.hash_dic.slice_0.done",
+    "sha256": "066a8d52d5f1ad9896771945d1c47c49a0812f3eb656c8be6c45cef323397896",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0394.slice_1",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.hash_dic.slice_1",
+    "sha256": "4321209c295ec76b6fab81c0af65e825cfb7426931d1e7f2bffaa5426ba87278",
+    "bytes": 1595
+  },
+  {
+    "path": "raw/0395.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.hash_dic.slice_1.done",
+    "sha256": "066a8d52d5f1ad9896771945d1c47c49a0812f3eb656c8be6c45cef323397896",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0396.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_0",
+    "sha256": "b53f88b45d2da119c206b5b414a4df162a077258145b3efe2eed5a4181fbf5f8",
+    "bytes": 17
+  },
+  {
+    "path": "raw/0397.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_0.done",
+    "sha256": "b576a45721e4fc1a274b8a5c14d623767fe36253ae6d2d9e3d62dabaa735c162",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0398.slice_1",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_1",
+    "sha256": "13b68cc2f105d054a7ae49d89c40a17ac6e27daefd0b1fbceb04d1ab0d454369",
+    "bytes": 6414
+  },
+  {
+    "path": "raw/0399.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_1.done",
+    "sha256": "bf0ee02bb8743734221cc294a9017c684115329b0a608cda03a93d1d6b53f8f8",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0400.slice_2",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_2",
+    "sha256": "ecdd722ee4622a51fd2237a552b3960517713e4c7c363aa3bab48181da555ca4",
+    "bytes": 35
+  },
+  {
+    "path": "raw/0401.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_2.done",
+    "sha256": "8b04213ef22419f2f8088d6978d0a7ebbdbd2fb8c8c7dc17c0633a784cc6a639",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0402.slice_3",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_3",
+    "sha256": "08a42076dea587d40d5a65401189845b9c5770c4955e2de6f5d116ff2f2fc4e4",
+    "bytes": 351
+  },
+  {
+    "path": "raw/0403.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_3.done",
+    "sha256": "cce5ad8d92eddb4894230fab4a3769f28f7ad87c47daea9fbd461ea75fdd0bb2",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0404.slice_4",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_4",
+    "sha256": "e629d0412f69b233887d5173b7f2e866de10cb81fba71db03ea790873f1d17ca",
+    "bytes": 143
+  },
+  {
+    "path": "raw/0405.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_4.done",
+    "sha256": "77abaea8926dd68dd43a41ac5b61355a7d6cce9fcc88d4ba56c8b93069680142",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0406.slice_5",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_5",
+    "sha256": "e8b7f8df373f53da73aafe81f1582ff0aa494bb13636dedf7993f81f29ef517f",
+    "bytes": 13019
+  },
+  {
+    "path": "raw/0407.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.additional.type_info_dic.slice_5.done",
+    "sha256": "ad8ba1a9b5bb354b737c1f33e4ba0e1cf26d2f0c953f618f0f2c6eb40c7f34aa",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0408.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.capture_stream_info.slice_0",
+    "sha256": "98b599bf1ecdb69a3ef40670877d45ecf0698e70b21b729d2b5b58b3ae1d4d7e",
+    "bytes": 64
+  },
+  {
+    "path": "raw/0409.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.capture_stream_info.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0410.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.capture_stream_info.slice_0.done",
+    "sha256": "229b95a565f9710dd381cfa012af30a35d9a253493ed06c07987d43d3fbf899d",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0411.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.stream_sq_info.slice_0",
+    "sha256": "eb03f6b961e7c441ca156b8eb457b76a065efb469655a663a3552d56520d1f27",
+    "bytes": 2432
+  },
+  {
+    "path": "raw/0412.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.stream_sq_info.slice_0.done",
+    "sha256": "93c923b94fbfb3f26f0aaa2494b489e569740149150af0bef7aba21220ac83b3",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0413.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.task_track.slice_0",
+    "sha256": "7a1392bb53a076081cef82601be224965dbfde428c4a68d56d51ac3320e83f26",
+    "bytes": 1216
+  },
+  {
+    "path": "raw/0414.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.compact.task_track.slice_0.done",
+    "sha256": "5a119be8c51704efc90347c65e758680d7b05ced10687db9f92e311317b20782",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0415.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.variable.capture_op_info.slice_0",
+    "sha256": "4226b0d33352c1564f42ff1364bd94cbf2eb84f8bfd984bce4efe1cb8e38c1f1",
+    "bytes": 9856
+  },
+  {
+    "path": "raw/0416.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/data/unaging.variable.capture_op_info.slice_0.done",
+    "sha256": "e7cb13524903bea6b48ba76d7e3cca0e4cfa48f73d60295c3557c90d691162c2",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0417",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/end_info",
+    "sha256": "135a79d7c9dc9a2f7605cebee5c713eccc930ed986290a765535b02c559deee5",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0418.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/end_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0419.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/host_start.log",
+    "sha256": "63d4a46a019c514d4cd39c040954370e3f0c87a8bf65511331c3f6eae5b3967d",
+    "bytes": 82
+  },
+  {
+    "path": "raw/0420.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/host_start.log.done",
+    "sha256": "88add95f7109dd717e359d4f83620dd312623da4e716274d1ee173b051ab8517",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0421.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/info.json",
+    "sha256": "dd3134f651362548abb33181920b8d3e318e191db3dffaf68d095550934b2445",
+    "bytes": 594
+  },
+  {
+    "path": "raw/0422.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/info.json.done",
+    "sha256": "c89a7f0d34dfb47ac233317542af65ad34bb969684173243be126b0d29e6f098",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0423.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sample.json",
+    "sha256": "75adfbdd61e2f7abde8718878f8c61aeaab7fe236d03c59930d76c2890af8661",
+    "bytes": 3172
+  },
+  {
+    "path": "raw/0424.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sample.json.done",
+    "sha256": "4a449d8ba03fe98a8e3ee905b6e55cf3f0c601e75cc05d3fe7c2ccc24efc5ed3",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0425.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/api_event.db",
+    "sha256": "37fc0562ab995dea471a9d8d8f4744140bcf3b03625d42701e8d4f56db334bcc",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0426.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/ge_hash.db",
+    "sha256": "26f035973348633428d4a1a3af802024ec7a76d7115f2ae82f4015c30dc66b40",
+    "bytes": 36864
+  },
+  {
+    "path": "raw/0427.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/ge_info.db",
+    "sha256": "11664f1a9a902b624799df94eac951575fcaab550e757eac52d51aec69409581",
+    "bytes": 16384
+  },
+  {
+    "path": "raw/0428.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/rts_track.db",
+    "sha256": "889cf68230a702020362644b549ff33e2ff517e18600d069259674427e266afb",
+    "bytes": 20480
+  },
+  {
+    "path": "raw/0429.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/runtime.db",
+    "sha256": "290a9e4ed3feb01bdbab1f35e09821a5ea397a6dfdcaefc1e6818c6348a453b2",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0430.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/stream_info.db",
+    "sha256": "907a520541073bfd0923e3fcc15b9ac25dcd31f55276e32f0ff5c51ea121c22d",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0431.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/sqlite/time.db",
+    "sha256": "02b262a61335f00ea433830f28aac119b27cfd9adf9c43ffe98a49ba1a02a713",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0432",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/start_info",
+    "sha256": "5c92dcd7265bfebd45c280e42fad68e547f78d960f763a2b990a2d2a85fbb7a7",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0433.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/host/start_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0434.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/collection_analyze.log",
+    "sha256": "26212f0a3c01e08da803e28c556289270b025fde756a18bf634f1d2afae8103e",
+    "bytes": 342
+  },
+  {
+    "path": "raw/0435.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/collection_device_0.log",
+    "sha256": "a84d09baf9b61fcd2462cbe1a0ebcb895be9592819a011028c4085ee536a112d",
+    "bytes": 20878
+  },
+  {
+    "path": "raw/0436.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/collection_host.log",
+    "sha256": "b86cca46a854246b9905a9106c0085bf1c81e376619d19de6e6cc2f85cb53a62",
+    "bytes": 9434
+  },
+  {
+    "path": "raw/0437.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2202841.log",
+    "sha256": "d2db0f0dbb7a9db0acfdf06b8334bee7169c863ed91f437a6561e8e8b9a1407f",
+    "bytes": 13903
+  },
+  {
+    "path": "raw/0438.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2202923.log",
+    "sha256": "0af6af2156ecdc6a05101a9f8fa6b6c1e4844f21a0f0fbc4eb2ef0fa8632c933",
+    "bytes": 15298
+  },
+  {
+    "path": "raw/0439.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2202955.log",
+    "sha256": "74f049678c734c685117aa887429a1a6a768e94de37445db1d4bc7047e0f176e",
+    "bytes": 97785
+  },
+  {
+    "path": "raw/0440.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2203004.log",
+    "sha256": "3288b47e50d99ca64c5e1aab340c278e3a8717a755c518c6e266891de23fdb6a",
+    "bytes": 78325
+  },
+  {
+    "path": "raw/0441.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2203090.log",
+    "sha256": "cd7f463fa16c677eb4ba1dd3f413aa64e42529ac5fb49ef20da13bcce4dfaeb7",
+    "bytes": 13903
+  },
+  {
+    "path": "raw/0442.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2203172.log",
+    "sha256": "23d8bfdf4fa83f05611ef6bd1acab007c73149dfb3100c1cf54d86d66795305f",
+    "bytes": 15299
+  },
+  {
+    "path": "raw/0443.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2203204.log",
+    "sha256": "e18ab7ee44fd66598075382f5f46450af09823d45c8b9f85a03c50d7c705916f",
+    "bytes": 97785
+  },
+  {
+    "path": "raw/0444.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_log/msprof_analysis_2203253.log",
+    "sha256": "9450620f19306964ccf99dfe9106b1cd781eeec71722d027c12ca02cd4db4fbb",
+    "bytes": 78325
+  },
+  {
+    "path": "raw/0445.txt",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_output/README.txt",
+    "sha256": "62466a0e61688e7dabf739df2debfa1410c2f0a76a932d74e6e22da66997ad72",
+    "bytes": 3439
+  },
+  {
+    "path": "raw/0446.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_output/api_statistic_20261019061157.csv",
+    "sha256": "dbe17a8361abdfd99c94cbc0219964f3835861cc9a6570ed5ed8c8e32d6df0d0",
+    "bytes": 672
+  },
+  {
+    "path": "raw/0447.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_output/msprof_20261019061156.json",
+    "sha256": "1403c0ed2cb827a346919cb9791a93a34c06e3909ee715e732103f2d9cfb0300",
+    "bytes": 23209
+  },
+  {
+    "path": "raw/0448.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_output/op_statistic_20261019061157.csv",
+    "sha256": "6c7210f5d3a0d9b4589541fbb7659cb2623b73375f22e08c0d0c2e5ccb84c70b",
+    "bytes": 320
+  },
+  {
+    "path": "raw/0449.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_output/op_summary_20261019061157.csv",
+    "sha256": "24dd33a34ce1ebeac7664e94fae54bf476a2978d6a07c10224f001a116782484",
+    "bytes": 10596
+  },
+  {
+    "path": "raw/0450.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/mindstudio_profiler_output/task_time_20261019061157.csv",
+    "sha256": "866434fbdfe0cdc8bab3e0e74ec0b9e2b5a8d26276ea04d63f8ff2520a6e9b64",
+    "bytes": 3502
+  },
+  {
+    "path": "raw/0451.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/PROF_000001_20261019061151010_02161478IEKCNCBD/msprof_20261019061156.db",
+    "sha256": "97f12ab782d05dec260cce8162aeff63c861b9c7d3ff2218d6ec8a5b51532c03",
+    "bytes": 102400
+  },
+  {
+    "path": "raw/0452.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061151_2202801_ProfilingParser.log",
+    "sha256": "a086a1e49a8a44930355ad89968ea3578fe6ad7cae6d5cdb57f8f2452185d326",
+    "bytes": 6908
+  },
+  {
+    "path": "raw/0453.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061151_2202810_CANNExportParser.log",
+    "sha256": "f63c9b0df910fcdf991dce25aeed4a311bd41e93bae161b679f03bc734b8b9ad",
+    "bytes": 490
+  },
+  {
+    "path": "raw/0454.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061151_2202818_TracePreParser.log",
+    "sha256": "fc9cc6c6007712a445f344b62e98778cd6a2939f9bafee5ba3ab2debf6eb29e6",
+    "bytes": 477
+  },
+  {
+    "path": "raw/0455.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061153_2203030_CANNAnalyzeParser.log",
+    "sha256": "1dbac56202efbb8f0037e85b32b16fca993baf772ea479e014ddee1f974c188d",
+    "bytes": 495
+  },
+  {
+    "path": "raw/0456.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061153_2203034_TraceViewParser.log",
+    "sha256": "3582f69cd33cf94ff15f5a109e94eeaf85ba3b9540f680d58ecb46c5b9284a27",
+    "bytes": 483
+  },
+  {
+    "path": "raw/0457.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061153_2203038_OperatorViewParser.log",
+    "sha256": "70453c781ae1c8e63fd35f54e00de796408c87ed66581ebdca6e9adaaf93638b",
+    "bytes": 501
+  },
+  {
+    "path": "raw/0458.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061153_2203040_TraceStepTimeParser.log",
+    "sha256": "51b5b80917111e0b1d042f618ce7995ae69ee451e4f3a7a08da6fb03112a5af4",
+    "bytes": 637
+  },
+  {
+    "path": "raw/0459.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061153_2203043_KernelViewParser.log",
+    "sha256": "ba8e22deb6ddc913d5e3dc19b186635f30fa252a79da681eda2fe1f8be28e651",
+    "bytes": 747
+  },
+  {
+    "path": "raw/0460.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061153_2203045_IntegrateParser.log",
+    "sha256": "063f2791b1619b876b708c63f813795d94d9a2f865fba46d5e743bb481302643",
+    "bytes": 483
+  },
+  {
+    "path": "raw/0461.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061154_2203047_MemoryViewParser.log",
+    "sha256": "ca8d92d37384b266e0698e160781b4256339e8d6b76688d049f48f7ac2d2a0f9",
+    "bytes": 489
+  },
+  {
+    "path": "raw/0462.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061154_2203050_CommunicationParser.log",
+    "sha256": "c9a928e68d53c9d74f407117e89eb55ecaf1e9d0af20ea7344838597b8cdd2ab",
+    "bytes": 635
+  },
+  {
+    "path": "raw/0463.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061155_2203052_ProfilingParser.log",
+    "sha256": "b63aba081192c5326cf9472c309852efaac5692e08fc54d201dbd38d5ea4bbd8",
+    "bytes": 2534
+  },
+  {
+    "path": "raw/0464.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061155_2203061_CANNExportParser.log",
+    "sha256": "dc63c0aecb31810fe3407f2c55956400da37c2d660a5a500353f6f9ea63c48c8",
+    "bytes": 490
+  },
+  {
+    "path": "raw/0465.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061156_2203067_TracePreParser.log",
+    "sha256": "4c5dfdc525616ecef4178f30f78d0d9367d6e255a8ec5771a54d4ee7ca205703",
+    "bytes": 477
+  },
+  {
+    "path": "raw/0466.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/logs/profiler_20261019061157_2203279_TraceViewParser.log",
+    "sha256": "415e466f1865924d6e627d32a48c3da3cd6b199757531d6c6108b9d7800f1cb4",
+    "bytes": 483
+  },
+  {
+    "path": "raw/0467.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/profiler_info.json",
+    "sha256": "af92b3afc0039fde7de7cc18de6a2a07a0ce4310e1d6861b5116ef5772d44f3f",
+    "bytes": 1372
+  },
+  {
+    "path": "raw/0468.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap400/16b0f9cecd11_2161478_20261019061150986_ascend_pt/profiler_metadata.json",
+    "sha256": "6342a2759693dbd08a8430e7df679f2bcc9d8233a56c685d734a6ce79b8d1e79",
+    "bytes": 320
+  },
+  {
+    "path": "raw/0469.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/analyse.done",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0470.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/analysis.db",
+    "sha256": "424c191d8aae7837cfedc0e6e6e66cbd0cdd77564a34be4469b6ea2d67e7dd62",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0471.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/api_statistic.csv",
+    "sha256": "0a1d176723f15972adad9a4534d4f78b7df6accc12f759523fce1992ede85cea",
+    "bytes": 686
+  },
+  {
+    "path": "raw/0472.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler.db",
+    "sha256": "e0977c5b000ab1a990d8ef658347759502a9c725165c4ff51fa4b7212bf2a168",
+    "bytes": 106496
+  },
+  {
+    "path": "raw/0473.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/kernel_details.csv",
+    "sha256": "50db1055f79b5cac6c030479faab4dbc0e92e924501d998f111c0dfa70f4235d",
+    "bytes": 10636
+  },
+  {
+    "path": "raw/0474.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/op_statistic.csv",
+    "sha256": "334f37bc5e65b5800c297f6e4966c9740b1f04f0a92425ac6e387e982b1b8192",
+    "bytes": 328
+  },
+  {
+    "path": "raw/0475.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/operator_details.csv",
+    "sha256": "5f5012285ab311e9d05a9cb76754e1b0fdd4d01f8f02924d87ca8b0c3335fe8a",
+    "bytes": 784
+  },
+  {
+    "path": "raw/0476.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/step_trace_time.csv",
+    "sha256": "fe5c18b7c2f19d1e81bae8f215e036ad319225484bc57df84ea19047eaad78fd",
+    "bytes": 216
+  },
+  {
+    "path": "raw/0477.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/task_time.csv",
+    "sha256": "4c61597195ca4c0a1d0e236b258c98bdb97c86c77492dcce8f51ad1a154aca51",
+    "bytes": 3533
+  },
+  {
+    "path": "raw/0478.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/ASCEND_PROFILER_OUTPUT/trace_view.json",
+    "sha256": "3cb1ba69f91676a8bf2c027de06b8fe0331f32e82f92e938cd72c82b9e101ceb",
+    "bytes": 30442
+  },
+  {
+    "path": "raw/0479.op_range",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/FRAMEWORK/torch.op_range",
+    "sha256": "9ae95d2818d9565265b37b4e7d2661e18439982f98c748ddee8a3e75db4e0207",
+    "bytes": 1113
+  },
+  {
+    "path": "raw/0480.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0481.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/ffts_profile.data.0.slice_0",
+    "sha256": "6fa2059e82a4415871e58d6563258517c24de168438c646299922a848fce4653",
+    "bytes": 84096
+  },
+  {
+    "path": "raw/0482.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/ffts_profile.data.0.slice_0.done",
+    "sha256": "7baa65adb8e5ed5a44f749e9dd3a5e462c45335c0884b97356b9edfab54afbe0",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0483.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/lpmInfoConv.data.0.slice_0",
+    "sha256": "7527baffde8c65261d9777f5ad4e878bc4698aef6a1fed8eb8455f94e064f607",
+    "bytes": 1776
+  },
+  {
+    "path": "raw/0484.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/lpmInfoConv.data.0.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0485.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/lpmInfoConv.data.0.slice_0.done",
+    "sha256": "225d6e058f192cf9a4bf1d00b8f3e2012d24e46c7e654b9820ac9a826b36af3a",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0486.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/stars_soc.data.0.slice_0",
+    "sha256": "612a974714887f76607ab2e2173b574d43269aa480e60f1694cf96977be746d9",
+    "bytes": 5632
+  },
+  {
+    "path": "raw/0487.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/data/stars_soc.data.0.slice_0.done",
+    "sha256": "90f74bb387846e6675312acb8111e8ff8fe62a8059d6539acd5b83d54620646e",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0488.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/dev_start.log.0",
+    "sha256": "672be12d17159400228a8835f7eb5751929e721febbd4f90cf81806b80118c11",
+    "bytes": 60
+  },
+  {
+    "path": "raw/0489.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/dev_start.log.0.done",
+    "sha256": "8e68aa82efbbbf5463388485841998c7fdfecf37a776797fb2e3a3f17231fdda",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0490.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/end_info.0",
+    "sha256": "8ce1cd82912594a8fbff817f5b17c3cdf31a97c64b8625d1104e7a3f11ee976a",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0491.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/end_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0492.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/host_start.log.0",
+    "sha256": "6b6741a6bbb7c1a9c4f384a4736889d1312a1d0aba22074d9b0ea7576f23bd51",
+    "bytes": 85
+  },
+  {
+    "path": "raw/0493.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/host_start.log.0.done",
+    "sha256": "bb1f6f0d5cfa3725e0ba27099b0126823f234b803e204fd02ba3f1ff0dcbd267",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0494.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/info.json.0",
+    "sha256": "14407129dce063db18f0b7283dab278ca396f52372b8fcf71de1dc4b7b500911",
+    "bytes": 939
+  },
+  {
+    "path": "raw/0495.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/info.json.0.done",
+    "sha256": "afd159b1927fcfa3efabeb47c4d7c86bd605ec0a3915d38fc3518b4957835f4c",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0496.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sample.json",
+    "sha256": "e1cb4d0784b7447e12af597ae8ece6fc429be3ad4fec025d02505e5632e9714d",
+    "bytes": 3181
+  },
+  {
+    "path": "raw/0497.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sample.json.done",
+    "sha256": "68f17445d6abd70b11f88b20b75011aa63309b3aec44b1f25dea29a4d2a505f4",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0498.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/ai_core_op_summary.db",
+    "sha256": "035729c661820b79f2dc946c3fd998f11a380de98eae8c796607a23ed356697a",
+    "bytes": 24576
+  },
+  {
+    "path": "raw/0499.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/ascend_task.db",
+    "sha256": "c28cbf66d14b168ca3c7ab3330c96944960e24b5fc47b85e7e869c793a3feb33",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0500.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/biu_perf.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0501.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/freq.db",
+    "sha256": "0da4240472d59573c9e9386c916a62080fbfff6a49db350d16c4ce39a7d46761",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0502.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/metric_summary.db",
+    "sha256": "c3c23eda19f5aea0fd03a046027c05dbeb43597e7a8861408a8135cd4023681f",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0503.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/op_counter.db",
+    "sha256": "913565f86c2ec217a2b2694d67178c98ff4e752d80825787ded2b64f6a5024f0",
+    "bytes": 16384
+  },
+  {
+    "path": "raw/0504.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/step_trace.db",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0505.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/sqlite/time.db",
+    "sha256": "2ddb096f2243f4ec1a4f49e6491bfd4ed66ba50fa8e0d578d1f7286c34fc9ed1",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0506.0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/start_info.0",
+    "sha256": "e35bcddd20869ceb67fe50a827101c15bb165504757d744d5435dfa96e2d25ae",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0507.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/device_0/start_info.0.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0508.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/aging.api_event.data.slice_0",
+    "sha256": "45edcf3d864ce7b390bc27a5388d88b42c0e9032521f0c111142cc64361bd0ec",
+    "bytes": 600
+  },
+  {
+    "path": "raw/0509.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/aging.api_event.data.slice_0.done",
+    "sha256": "0a1b2b369b16d5a35189e145d368890caea3569d37b3eb995a29a7b0518c7a39",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0510.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/aging.compact.task_track.slice_0",
+    "sha256": "38d70b424b6d20faae78f68467e8f31cfafde4cdee314ef2328810c2c4dfa4fa",
+    "bytes": 576
+  },
+  {
+    "path": "raw/0511.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/aging.compact.task_track.slice_0.done",
+    "sha256": "d558eea27fd057a9687828d32bf1dcdf71ecd63205bee1364f575e7566d81289",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0512.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/all_file.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0513.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.capture_op_info.slice_0",
+    "sha256": "cc89aa925cf5e4824ecf8283602cda7d76f255b1bcdbc1cdd5400b1a4fc28d27",
+    "bytes": 256
+  },
+  {
+    "path": "raw/0514.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.capture_op_info.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0515.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.capture_op_info.slice_0.done",
+    "sha256": "c2caa68e5399fb6d9b297610b8f140abf1c621d3c9be53ab5dbd084a6b1aafed",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0516.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.hash_dic.slice_0",
+    "sha256": "4321209c295ec76b6fab81c0af65e825cfb7426931d1e7f2bffaa5426ba87278",
+    "bytes": 1595
+  },
+  {
+    "path": "raw/0517.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.hash_dic.slice_0.done",
+    "sha256": "066a8d52d5f1ad9896771945d1c47c49a0812f3eb656c8be6c45cef323397896",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0518.slice_1",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.hash_dic.slice_1",
+    "sha256": "4321209c295ec76b6fab81c0af65e825cfb7426931d1e7f2bffaa5426ba87278",
+    "bytes": 1595
+  },
+  {
+    "path": "raw/0519.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.hash_dic.slice_1.done",
+    "sha256": "066a8d52d5f1ad9896771945d1c47c49a0812f3eb656c8be6c45cef323397896",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0520.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_0",
+    "sha256": "b53f88b45d2da119c206b5b414a4df162a077258145b3efe2eed5a4181fbf5f8",
+    "bytes": 17
+  },
+  {
+    "path": "raw/0521.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_0.done",
+    "sha256": "b576a45721e4fc1a274b8a5c14d623767fe36253ae6d2d9e3d62dabaa735c162",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0522.slice_1",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_1",
+    "sha256": "13b68cc2f105d054a7ae49d89c40a17ac6e27daefd0b1fbceb04d1ab0d454369",
+    "bytes": 6414
+  },
+  {
+    "path": "raw/0523.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_1.done",
+    "sha256": "bf0ee02bb8743734221cc294a9017c684115329b0a608cda03a93d1d6b53f8f8",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0524.slice_2",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_2",
+    "sha256": "ecdd722ee4622a51fd2237a552b3960517713e4c7c363aa3bab48181da555ca4",
+    "bytes": 35
+  },
+  {
+    "path": "raw/0525.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_2.done",
+    "sha256": "8b04213ef22419f2f8088d6978d0a7ebbdbd2fb8c8c7dc17c0633a784cc6a639",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0526.slice_3",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_3",
+    "sha256": "08a42076dea587d40d5a65401189845b9c5770c4955e2de6f5d116ff2f2fc4e4",
+    "bytes": 351
+  },
+  {
+    "path": "raw/0527.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_3.done",
+    "sha256": "cce5ad8d92eddb4894230fab4a3769f28f7ad87c47daea9fbd461ea75fdd0bb2",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0528.slice_4",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_4",
+    "sha256": "e629d0412f69b233887d5173b7f2e866de10cb81fba71db03ea790873f1d17ca",
+    "bytes": 143
+  },
+  {
+    "path": "raw/0529.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_4.done",
+    "sha256": "77abaea8926dd68dd43a41ac5b61355a7d6cce9fcc88d4ba56c8b93069680142",
+    "bytes": 37
+  },
+  {
+    "path": "raw/0530.slice_5",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_5",
+    "sha256": "e8b7f8df373f53da73aafe81f1582ff0aa494bb13636dedf7993f81f29ef517f",
+    "bytes": 13019
+  },
+  {
+    "path": "raw/0531.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.additional.type_info_dic.slice_5.done",
+    "sha256": "ad8ba1a9b5bb354b737c1f33e4ba0e1cf26d2f0c953f618f0f2c6eb40c7f34aa",
+    "bytes": 39
+  },
+  {
+    "path": "raw/0532.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.capture_stream_info.slice_0",
+    "sha256": "58100619efceefb6103d219bdc814369e752491aa39c1c8c760ce72dc323bcbd",
+    "bytes": 64
+  },
+  {
+    "path": "raw/0533.complete",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.capture_stream_info.slice_0.complete",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "raw/0534.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.capture_stream_info.slice_0.done",
+    "sha256": "229b95a565f9710dd381cfa012af30a35d9a253493ed06c07987d43d3fbf899d",
+    "bytes": 36
+  },
+  {
+    "path": "raw/0535.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.stream_sq_info.slice_0",
+    "sha256": "c1e3a0774a3c6d8d7301cf85c130deec54cbe41efe5af591cb63b66b4608acd3",
+    "bytes": 2432
+  },
+  {
+    "path": "raw/0536.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.stream_sq_info.slice_0.done",
+    "sha256": "93c923b94fbfb3f26f0aaa2494b489e569740149150af0bef7aba21220ac83b3",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0537.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.task_track.slice_0",
+    "sha256": "52921a1af321a9c0cea43577e669edd7de982b07d4ea8ab4164a1a2e88f87ee3",
+    "bytes": 1216
+  },
+  {
+    "path": "raw/0538.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.compact.task_track.slice_0.done",
+    "sha256": "5a119be8c51704efc90347c65e758680d7b05ced10687db9f92e311317b20782",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0539.slice_0",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.variable.capture_op_info.slice_0",
+    "sha256": "9c8a7c501555f408962dc5ce71a66bc1ac1cc419eee15b2963cd600d8b1e1af6",
+    "bytes": 9856
+  },
+  {
+    "path": "raw/0540.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/data/unaging.variable.capture_op_info.slice_0.done",
+    "sha256": "e7cb13524903bea6b48ba76d7e3cca0e4cfa48f73d60295c3557c90d691162c2",
+    "bytes": 38
+  },
+  {
+    "path": "raw/0541",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/end_info",
+    "sha256": "b163bcbf8fe84ce8b831df67c683d3572685f1311b1dfcb810eb2ab34c30647d",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0542.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/end_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0543.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/host_start.log",
+    "sha256": "450a8137b9289cf7b144cc554bdf03f957fba599c0f567e6260e3a9da50dea81",
+    "bytes": 82
+  },
+  {
+    "path": "raw/0544.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/host_start.log.done",
+    "sha256": "88add95f7109dd717e359d4f83620dd312623da4e716274d1ee173b051ab8517",
+    "bytes": 12
+  },
+  {
+    "path": "raw/0545.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/info.json",
+    "sha256": "8da11484c8ce7025cee1a1944ca8a4510e445af54e199de92ee7875ef6ddc054",
+    "bytes": 594
+  },
+  {
+    "path": "raw/0546.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/info.json.done",
+    "sha256": "c89a7f0d34dfb47ac233317542af65ad34bb969684173243be126b0d29e6f098",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0547.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sample.json",
+    "sha256": "7dbfb4c3d68080e1583f0d8a4092edb05f2975a1ee4a7e1f6a33150f08d182e6",
+    "bytes": 3172
+  },
+  {
+    "path": "raw/0548.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sample.json.done",
+    "sha256": "4a449d8ba03fe98a8e3ee905b6e55cf3f0c601e75cc05d3fe7c2ccc24efc5ed3",
+    "bytes": 14
+  },
+  {
+    "path": "raw/0549.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/api_event.db",
+    "sha256": "733aea711239ae968d6b94246a56cb51665d8a04aaee488bc7dc1d94ff48d75d",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0550.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/ge_hash.db",
+    "sha256": "6887a8e565f6f94fe7905dabaa3cc7b505d0dea44e96d07b244df0f4f5ad64a3",
+    "bytes": 36864
+  },
+  {
+    "path": "raw/0551.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/ge_info.db",
+    "sha256": "96ca5ed586c0e9a1c97c0f36ef18d060d1c8c9e47d644f3825aecd7d02886ca5",
+    "bytes": 16384
+  },
+  {
+    "path": "raw/0552.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/rts_track.db",
+    "sha256": "d576b2f9377a2bcd704915654c63767d4a8ebd04028e1a0402c9d394bd9176bc",
+    "bytes": 20480
+  },
+  {
+    "path": "raw/0553.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/runtime.db",
+    "sha256": "88189c816ef9723f459e1e502d9f270dbad339109b99033c79d253a8138e0d4f",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0554.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/stream_info.db",
+    "sha256": "d09974503f1127ae8146249aff013f60fbf3097dbcefcb6110f2e28bf994c24a",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0555.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/sqlite/time.db",
+    "sha256": "02b262a61335f00ea433830f28aac119b27cfd9adf9c43ffe98a49ba1a02a713",
+    "bytes": 8192
+  },
+  {
+    "path": "raw/0556",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/start_info",
+    "sha256": "97bdfdadfc2f3871b5e645ec82784895f1bf9a5b492491963d86504a72d377f6",
+    "bytes": 177
+  },
+  {
+    "path": "raw/0557.done",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/host/start_info.done",
+    "sha256": "eec793dbb75e48d0a20373fd4290c2b72c8610c533e65f578afbe6bc9744ab13",
+    "bytes": 13
+  },
+  {
+    "path": "raw/0558.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/collection_analyze.log",
+    "sha256": "6443e7877934e94064d5d3995090f0f918c0b0a9457cc57b88fbd4597a18ddcc",
+    "bytes": 342
+  },
+  {
+    "path": "raw/0559.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/collection_device_0.log",
+    "sha256": "b12afa4dbe3105d315461191f5c5ca0f335995df1000215480a86b8edc4527ac",
+    "bytes": 20878
+  },
+  {
+    "path": "raw/0560.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/collection_host.log",
+    "sha256": "0180f36047fe3638d5d925bfb5acffccfb218dd4afd77e922f89eec77434262d",
+    "bytes": 9434
+  },
+  {
+    "path": "raw/0561.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203358.log",
+    "sha256": "70f0c65c1c13befaca7ffeb3bab80b939b8b34b66e1e432beefcd0f5de5df41a",
+    "bytes": 13903
+  },
+  {
+    "path": "raw/0562.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203440.log",
+    "sha256": "d989be4364d33c48929c09f385ec63f845a7c505712617208063f843a49d2a34",
+    "bytes": 15300
+  },
+  {
+    "path": "raw/0563.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203472.log",
+    "sha256": "25427a6f5af82426b84992226dbfc433155d6207fca841debc97451665ef4dfc",
+    "bytes": 97785
+  },
+  {
+    "path": "raw/0564.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203521.log",
+    "sha256": "75904fd1c15577d949b596e17fc4586160d8ebd96768df0dbeaee876b9a1c090",
+    "bytes": 78325
+  },
+  {
+    "path": "raw/0565.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203607.log",
+    "sha256": "991f1841060affb571048b27656d65f56dfa094f966688566511827832a1228a",
+    "bytes": 13903
+  },
+  {
+    "path": "raw/0566.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203689.log",
+    "sha256": "0eb52d18b34481a4aa42fceb215f2d6b4e64084dbcaa642c4d604bd0a57ddcc2",
+    "bytes": 15300
+  },
+  {
+    "path": "raw/0567.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203721.log",
+    "sha256": "d0df852d5755339a4803c5eed55a15f4e7d3e49124fce959767a961a0182dfe1",
+    "bytes": 97785
+  },
+  {
+    "path": "raw/0568.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_log/msprof_analysis_2203770.log",
+    "sha256": "b1b197dd172f473554939d3afd5e5cac9577822a26977c60a8d72f71196beeb8",
+    "bytes": 78325
+  },
+  {
+    "path": "raw/0569.txt",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_output/README.txt",
+    "sha256": "75f5d74c20cfd61eada85540c47ddcdc761b10250aa0411825628168cef09780",
+    "bytes": 3439
+  },
+  {
+    "path": "raw/0570.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_output/api_statistic_20261019061205.csv",
+    "sha256": "0628fde5a750ae0abb6ddfb0a732bff2bd83526efbe3560058f70876b0871c29",
+    "bytes": 675
+  },
+  {
+    "path": "raw/0571.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_output/msprof_20261019061204.json",
+    "sha256": "1e59979d30bc24502f16a59c0320f9c66595804380030604b500b7d8452c733e",
+    "bytes": 23415
+  },
+  {
+    "path": "raw/0572.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_output/op_statistic_20261019061205.csv",
+    "sha256": "9119b08f8db758cae37021be29240bcbfa57fc35daf7486735a626bd23237f4f",
+    "bytes": 324
+  },
+  {
+    "path": "raw/0573.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_output/op_summary_20261019061205.csv",
+    "sha256": "41afdffef0a42526334298e23ac2ccc151470fea47a87ff37a39845f5e4ea700",
+    "bytes": 10631
+  },
+  {
+    "path": "raw/0574.csv",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/mindstudio_profiler_output/task_time_20261019061205.csv",
+    "sha256": "b2bf434651d176a958234c5f1cb32050827e796ff91d0580a1130f3b09380ef7",
+    "bytes": 3504
+  },
+  {
+    "path": "raw/0575.db",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/PROF_000002_20261019061159076_02161478COHJPOCE/msprof_20261019061204.db",
+    "sha256": "de7f69f43a720d4f5ee6f27d5e38d22851396ff77deefbbea56d4ab1b1ec27f7",
+    "bytes": 102400
+  },
+  {
+    "path": "raw/0576.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061159_2203318_ProfilingParser.log",
+    "sha256": "505a3ad2dfcae1ecd231b1206cbd948f741e7b66bdd5b1cd1883fc3156d2a800",
+    "bytes": 6908
+  },
+  {
+    "path": "raw/0577.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061159_2203327_CANNExportParser.log",
+    "sha256": "dd4f6423998f400e75ebaf3abd04629dd7034624d9f669030e7e71c465e0b727",
+    "bytes": 490
+  },
+  {
+    "path": "raw/0578.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061159_2203335_TracePreParser.log",
+    "sha256": "834d3181351048ae8248576347fd561818b836347d8aef241054b9bf5a3a0c8b",
+    "bytes": 477
+  },
+  {
+    "path": "raw/0579.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061201_2203547_CANNAnalyzeParser.log",
+    "sha256": "11e0c53a6f6485075780b396f8292fa55ebac19ba7d9471692e2c907a46c9cda",
+    "bytes": 495
+  },
+  {
+    "path": "raw/0580.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061201_2203551_TraceViewParser.log",
+    "sha256": "f1b1e80eb48ff2b1c80315d85dfa5feade043bb24d2f3571e804d60a5a2e595e",
+    "bytes": 483
+  },
+  {
+    "path": "raw/0581.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061201_2203555_OperatorViewParser.log",
+    "sha256": "7d8e710c820b0acc973fb07ac58fde776995728d3c99e9aafa403fede5e065b6",
+    "bytes": 501
+  },
+  {
+    "path": "raw/0582.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061201_2203557_TraceStepTimeParser.log",
+    "sha256": "6be1f7e1dc5ee78f8786c97aa255bb0bab256940204173ccf641cba2e2b63d05",
+    "bytes": 637
+  },
+  {
+    "path": "raw/0583.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061202_2203560_KernelViewParser.log",
+    "sha256": "0cdee43a9dbb723f9d7db72ff48f378337c48ec2b6252e4a5df01d5423cad273",
+    "bytes": 747
+  },
+  {
+    "path": "raw/0584.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061202_2203562_IntegrateParser.log",
+    "sha256": "b413fb0e4f081d531880948bd6272b01027cb592d109526fef93552d4a97bb4b",
+    "bytes": 483
+  },
+  {
+    "path": "raw/0585.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061202_2203564_MemoryViewParser.log",
+    "sha256": "e173af56bd18b68c6310c142a251ed70e539367683b8ff43eb176c4e1bed9c6b",
+    "bytes": 489
+  },
+  {
+    "path": "raw/0586.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061202_2203567_CommunicationParser.log",
+    "sha256": "b43ee4ae6ceb6de7f44d26fcf4b12414d67dd58eb1298a5506edccc071595bc7",
+    "bytes": 635
+  },
+  {
+    "path": "raw/0587.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061203_2203569_ProfilingParser.log",
+    "sha256": "f89caaaf606e58688425040024e1513218dc42e8d8996757482fc4e3e90e7394",
+    "bytes": 2534
+  },
+  {
+    "path": "raw/0588.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061204_2203578_CANNExportParser.log",
+    "sha256": "56dc74e5d18daf8a9654e6f4ee8ee5e9b6ad30f2ded778a128587a04e829298f",
+    "bytes": 490
+  },
+  {
+    "path": "raw/0589.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061204_2203584_TracePreParser.log",
+    "sha256": "869e594c210747add2b1b0763911c4a446cbc0c8492509a34635146c69995811",
+    "bytes": 477
+  },
+  {
+    "path": "raw/0590.log",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/logs/profiler_20261019061205_2203796_TraceViewParser.log",
+    "sha256": "98c46c187de889388fd44127a40e11aef8e7918bc648838539b7ba25c2f2489d",
+    "bytes": 483
+  },
+  {
+    "path": "raw/0591.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/profiler_info.json",
+    "sha256": "567763878da43d1b02d55b737d4869b98e85aba42f7e1043ce8b7c0e4eaccd6b",
+    "bytes": 1372
+  },
+  {
+    "path": "raw/0592.json",
+    "remote_path": "consumer-metrics-v2/whole/metrics/cap512/16b0f9cecd11_2161478_20261019061159053_ascend_pt/profiler_metadata.json",
+    "sha256": "e690779d01348a5a348b005cddc0800cee5f10e55027390301c7793589094910",
+    "bytes": 320
+  },
+  {
+    "path": "raw/0593.json",
+    "remote_path": "consumer-metrics-v2/whole/profiles/cap400/trace.json",
+    "sha256": "cbffc97156021fb89ca464460b141fe616df2b55c078a4a0cec146deddadfb49",
+    "bytes": 30209
+  },
+  {
+    "path": "raw/0594.json",
+    "remote_path": "consumer-metrics-v2/whole/profiles/cap512/trace.json",
+    "sha256": "3cb1ba69f91676a8bf2c027de06b8fe0331f32e82f92e938cd72c82b9e101ceb",
+    "bytes": 30442
+  },
+  {
+    "path": "raw/0595.log",
+    "remote_path": "consumer-metrics-v2/whole.log",
+    "sha256": "921f21052987c7be397d79a8d612d2285c89b890f9051feb2b0b63c07d561d74",
+    "bytes": 149
+  }
+]

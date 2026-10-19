@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "runtime_probe_sha256": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+  "formal_analyzer_qualified": true,
+  "independent_raw_and_task_audit_qualified": true,
+  "stage7_identity_review_qualified": true,
+  "runtime_scope": "Two-record synthetic attention chain; no complete trace/model/serving claim.",
+  "unit_tests": {
+    "passed": 47,
+    "failed": 0,
+    "elapsed_seconds": 5.74
+  },
+  "scoped_checks": {
+    "passed": true,
+    "hooks": [
+      "ruff-check",
+      "ruff-format",
+      "codespell",
+      "typos",
+      "markdownlint"
+    ]
+  },
+  "metrics_archive_checked_files": 596,
+  "metrics_diagnostic_qualification_passed": true,
+  "full_ci": {
+    "passed": false,
+    "log": "fia-sink-consumer-v1/format-ci.log",
+    "existing_failures": [
+      "Vendor/raw-evidence spelling",
+      "Existing direct Triton imports in device_length_decode.py",
+      "Windows hooks missing /bin/bash, shellcheck or python3"
+    ]
+  },
+  "files": {
+    "benchmarks/aclgraph_fia_sink_consumer_analyze.py": "d420efdac972e45c52d7fc5c3f8cd5d77027b1f42146f254f99b9fc290c0e71c",
+    "benchmarks/aclgraph_fia_sink_consumer_probe.py": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+    "benchmarks/aclgraph_fia_sink_consumer_suite.py": "ce1f414e5a2a33fb2bc95f4e8a830ec277b5edc443e3416427ac4b366856742b",
+    "tests/ut/worker/multi_graph/test_fia_sink_consumer_analyze.py": "cc6a5ad0526b1a648713c0b1223779015d3546b8068f287a6dfcf1f7ade8d9db",
+    "tests/ut/worker/multi_graph/test_fia_sink_consumer_probe.py": "a07a84d783dc3498a7bf13b7e5e2c21b67f56d0adbe5a7d980b3df14963a7ff9",
+    "tests/ut/worker/multi_graph/test_fia_sink_consumer_suite.py": "e3b6919cb88dbe173daebc1ba309a728fe2bfdd86d9579e2757a465ec5ee484f"
+  }
+}

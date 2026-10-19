@@ -1,0 +1,26 @@
+{
+  "status": "Source inspection only; not implemented and no measured benefit.",
+  "pinned_commit": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+  "sources": {
+    "fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+    "fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041"
+  },
+  "target": "FiaBlockVecNonQuant::DealBmm2ResBaseBlock, original lines741-836",
+  "repeated_work": "Read prior FP32 output from vec2ResGm on non-first S2; UB staging and write it back on non-final S2.",
+  "candidate": "Retain running FP32 output per in-flight complete-head slot in UB, preserving softmax recurrence and final format.",
+  "initial_ablation": "Optionally first remove only UB-to-UB staging with explicit MTE3 lifetime protection; keep GM accumulation.",
+  "budget": {
+    "rows_per_aiv": [
+      16,
+      8
+    ],
+    "fp32_bytes_per_head_per_aiv": [
+      16384,
+      8192
+    ],
+    "requirement": "Budget worst-side live head slots across existing three-task pipeline and all other static UB allocations; reuse output queue only with valid lifetime."
+  },
+  "fallback": "Keep original consumer for FD, unsupported geometry, unsafe slot lifetime or failed UB/synchronization contract.",
+  "evidence_gate": "Same inputs/policy, pre/post finite, exact padding, descriptor/address invariants and FP32; unprofiled full wall first, profile only diagnostic.",
+  "attribution": "Established on-chip online-softmax accumulation; potential target-specific guarded implementation, no algorithmic priority or graph-split-exclusive claim."
+}

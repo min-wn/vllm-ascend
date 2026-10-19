@@ -1,0 +1,7 @@
+import os,signal
+from pathlib import Path
+pid=1581779
+command=(Path('/proc')/str(pid)/'cmdline').read_bytes().replace(b'\0',b' ')
+assert b'/consumer-tools-bounded-v1/aclgraph_fia_sink_consumer_suite.py' in command,command
+os.killpg(pid,signal.SIGTERM)
+print('Terminated owned bounded-v1 suite after source-format correction; preserve directory.')

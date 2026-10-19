@@ -1,0 +1,225 @@
+{
+  "read_only_review_passed": true,
+  "manifest_files_verified": 596,
+  "distinct_csvs": 4,
+  "attention_records": 64,
+  "official_counter_definition": "https://www.hiascend.com/doc_center/source/en/CANNCommunityEdition/900/devaids/Profiling/atlasprofiling_16_0067.html",
+  "counter_interpretation": [
+    "aic_total_cycles sums task block cycles; aicore_time is the theoretical equal-block task time under a frequency assumption.",
+    "cube_utilization equals 100*aicore_time/task_duration in these files and does not equal MAC utilization or achieved FLOPS.",
+    "Pipeline times and ratios overlap across engines and cores; do not add them to wall latency.",
+    "A block count of20/40 does not reveal the distribution or tail across individual cores."
+  ],
+  "aggregation_review": "Equal weighting is valid for descriptive means of the sixteen measured homogeneous operators. Pipeline ratio aggregation requires relevant AIC/AIV core-time denominators, and cube utilization over operator time uses duration weights; neither is system-wide utilization.",
+  "groups": [
+    {
+      "mode": "whole",
+      "capacity": 400,
+      "attention_records": 16,
+      "all_block_counts_20_40": true,
+      "pipeline_ratios": {
+        "aic_mac": {
+          "op_equal_mean_ratio": 0.1505,
+          "sum_time_over_sum_relevant_core_time": 0.1504147592907113
+        },
+        "aic_scalar": {
+          "op_equal_mean_ratio": 0.5854374999999999,
+          "sum_time_over_sum_relevant_core_time": 0.5854046667077489
+        },
+        "aic_mte1": {
+          "op_equal_mean_ratio": 0.269625,
+          "sum_time_over_sum_relevant_core_time": 0.2695172764553521
+        },
+        "aic_mte2": {
+          "op_equal_mean_ratio": 0.8055625000000001,
+          "sum_time_over_sum_relevant_core_time": 0.8053998316369225
+        },
+        "aic_fixpipe": {
+          "op_equal_mean_ratio": 0.21075,
+          "sum_time_over_sum_relevant_core_time": 0.21078622322691065
+        },
+        "aiv_vec": {
+          "op_equal_mean_ratio": 0.0945,
+          "sum_time_over_sum_relevant_core_time": 0.09465761236317648
+        },
+        "aiv_scalar": {
+          "op_equal_mean_ratio": 0.3686875,
+          "sum_time_over_sum_relevant_core_time": 0.3686575894877707
+        },
+        "aiv_mte2": {
+          "op_equal_mean_ratio": 0.14024999999999999,
+          "sum_time_over_sum_relevant_core_time": 0.14028151999446636
+        },
+        "aiv_mte3": {
+          "op_equal_mean_ratio": 0.0530625,
+          "sum_time_over_sum_relevant_core_time": 0.05307802201812277
+        }
+      },
+      "cube_utilization_op_mean": 90.7600625,
+      "cube_utilization_duration_weighted": 90.7525128848533,
+      "cube_formula_max_percentage_point_rounding_error": 0.00046643790163614085
+    },
+    {
+      "mode": "whole",
+      "capacity": 512,
+      "attention_records": 16,
+      "all_block_counts_20_40": true,
+      "pipeline_ratios": {
+        "aic_mac": {
+          "op_equal_mean_ratio": 0.1748125,
+          "sum_time_over_sum_relevant_core_time": 0.1690572536779132
+        },
+        "aic_scalar": {
+          "op_equal_mean_ratio": 0.614375,
+          "sum_time_over_sum_relevant_core_time": 0.607871765863508
+        },
+        "aic_mte1": {
+          "op_equal_mean_ratio": 0.3134375,
+          "sum_time_over_sum_relevant_core_time": 0.3026758030157787
+        },
+        "aic_mte2": {
+          "op_equal_mean_ratio": 0.8548125,
+          "sum_time_over_sum_relevant_core_time": 0.8553555566486214
+        },
+        "aic_fixpipe": {
+          "op_equal_mean_ratio": 0.2241875,
+          "sum_time_over_sum_relevant_core_time": 0.22314019972094176
+        },
+        "aiv_vec": {
+          "op_equal_mean_ratio": 0.1076875,
+          "sum_time_over_sum_relevant_core_time": 0.10421394813887686
+        },
+        "aiv_scalar": {
+          "op_equal_mean_ratio": 0.36293749999999997,
+          "sum_time_over_sum_relevant_core_time": 0.35693669529653244
+        },
+        "aiv_mte2": {
+          "op_equal_mean_ratio": 0.1439375,
+          "sum_time_over_sum_relevant_core_time": 0.1442139917875097
+        },
+        "aiv_mte3": {
+          "op_equal_mean_ratio": 0.0543125,
+          "sum_time_over_sum_relevant_core_time": 0.05411688449153162
+        }
+      },
+      "cube_utilization_op_mean": 88.009625,
+      "cube_utilization_duration_weighted": 87.50611310277239,
+      "cube_formula_max_percentage_point_rounding_error": 0.0005932562897754678
+    },
+    {
+      "mode": "legacy",
+      "capacity": 400,
+      "attention_records": 16,
+      "all_block_counts_20_40": true,
+      "pipeline_ratios": {
+        "aic_mac": {
+          "op_equal_mean_ratio": 0.16225,
+          "sum_time_over_sum_relevant_core_time": 0.16221523263190077
+        },
+        "aic_scalar": {
+          "op_equal_mean_ratio": 0.639125,
+          "sum_time_over_sum_relevant_core_time": 0.6391836805702096
+        },
+        "aic_mte1": {
+          "op_equal_mean_ratio": 0.27918750000000003,
+          "sum_time_over_sum_relevant_core_time": 0.2790400456703826
+        },
+        "aic_mte2": {
+          "op_equal_mean_ratio": 0.7984375,
+          "sum_time_over_sum_relevant_core_time": 0.7984272455275981
+        },
+        "aic_fixpipe": {
+          "op_equal_mean_ratio": 0.1563125,
+          "sum_time_over_sum_relevant_core_time": 0.1563050804756859
+        },
+        "aiv_vec": {
+          "op_equal_mean_ratio": 0.109875,
+          "sum_time_over_sum_relevant_core_time": 0.10998224432723464
+        },
+        "aiv_scalar": {
+          "op_equal_mean_ratio": 0.2789375,
+          "sum_time_over_sum_relevant_core_time": 0.27889821780461876
+        },
+        "aiv_mte2": {
+          "op_equal_mean_ratio": 0.1205625,
+          "sum_time_over_sum_relevant_core_time": 0.12066114069681776
+        },
+        "aiv_mte3": {
+          "op_equal_mean_ratio": 0.0349375,
+          "sum_time_over_sum_relevant_core_time": 0.034992250216050715
+        }
+      },
+      "cube_utilization_op_mean": 87.608625,
+      "cube_utilization_duration_weighted": 87.60309796253817,
+      "cube_formula_max_percentage_point_rounding_error": 0.0006543174282711561
+    },
+    {
+      "mode": "legacy",
+      "capacity": 512,
+      "attention_records": 16,
+      "all_block_counts_20_40": true,
+      "pipeline_ratios": {
+        "aic_mac": {
+          "op_equal_mean_ratio": 0.16618750000000002,
+          "sum_time_over_sum_relevant_core_time": 0.16618239146652405
+        },
+        "aic_scalar": {
+          "op_equal_mean_ratio": 0.6424375,
+          "sum_time_over_sum_relevant_core_time": 0.6425462854958263
+        },
+        "aic_mte1": {
+          "op_equal_mean_ratio": 0.286,
+          "sum_time_over_sum_relevant_core_time": 0.28597606033434175
+        },
+        "aic_mte2": {
+          "op_equal_mean_ratio": 0.7993125000000001,
+          "sum_time_over_sum_relevant_core_time": 0.7992770123982769
+        },
+        "aic_fixpipe": {
+          "op_equal_mean_ratio": 0.1556875,
+          "sum_time_over_sum_relevant_core_time": 0.15558051935425474
+        },
+        "aiv_vec": {
+          "op_equal_mean_ratio": 0.11031250000000001,
+          "sum_time_over_sum_relevant_core_time": 0.11032733043502822
+        },
+        "aiv_scalar": {
+          "op_equal_mean_ratio": 0.28325,
+          "sum_time_over_sum_relevant_core_time": 0.28331169681577845
+        },
+        "aiv_mte2": {
+          "op_equal_mean_ratio": 0.1156875,
+          "sum_time_over_sum_relevant_core_time": 0.1157229588857921
+        },
+        "aiv_mte3": {
+          "op_equal_mean_ratio": 0.033625,
+          "sum_time_over_sum_relevant_core_time": 0.033643014501874915
+        }
+      },
+      "cube_utilization_op_mean": 93.4699375,
+      "cube_utilization_duration_weighted": 93.44299870809814,
+      "cube_formula_max_percentage_point_rounding_error": 0.00041015068755712036
+    }
+  ],
+  "unexplained_transient": {
+    "mode": "whole",
+    "capacity": 512,
+    "first_three_core_time_us": [
+      152.11,
+      209.842,
+      253.993
+    ],
+    "first_three_duration_us": [
+      365.967,
+      329.487,
+      318.406
+    ],
+    "subsequent_core_time_approximately_us": [
+      290,
+      305
+    ],
+    "interpretation": "Preserve all observations. This head transient is unexplained; frequency conversion, profiler/counter startup and actual execution history are not separated. Do not claim any one cause."
+  },
+  "bounded_conclusion": "One replay per mode and two records supplies a directional MTE2/scalar-work lead, not proof of HBM saturation, individual-core imbalance, a source-level loop bottleneck, stable kernel deficit or recoverable speedup. Concurrent pipeline counter differences cannot be summed into an optimization budget.",
+  "source_analysis_sha256": "e4a7962a45c9fd72d9de64cc1e5d196e59ccc25fa3ca46b916c909b6a014a0df"
+}

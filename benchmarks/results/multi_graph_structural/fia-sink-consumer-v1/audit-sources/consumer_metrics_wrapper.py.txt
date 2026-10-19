@@ -1,0 +1,76 @@
+"""Diagnostic-only profiler injection around an unchanged frozen consumer probe."""
+
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import aclgraph_fia_sink_consumer_probe as probe
+
+
+original_profiles = probe.profiles
+original_popen = subprocess.Popen
+wrapper_path = Path(__file__).resolve()
+probe_path = Path(probe.__file__).resolve()
+
+
+class PatchedPopen(original_popen):
+    def __init__(self, command, *args, **kwargs):
+        if isinstance(command, list) and len(command) > 2 and Path(command[1]).resolve() == probe_path:
+            command = list(command)
+            command[1] = str(wrapper_path)
+        super().__init__(command, *args, **kwargs)
+
+
+def metrics_profiles(torch, args, records, prepared, entries, audits, status, save):
+    import torch_npu
+
+    profiler = torch_npu.profiler
+    original_profile = profiler.profile
+    counter = 0
+    metric_records = []
+    status["metrics_diagnostic"] = dict(
+        scope="PipeUtilization diagnostic; separate from bounded-v2 performance samples",
+        wrapper_sha256=hashlib.sha256(wrapper_path.read_bytes()).hexdigest(),
+        source_probe_sha256=hashlib.sha256(probe_path.read_bytes()).hexdigest(),
+        profiler_level="Level1",
+        aic_metrics="PipeUtilization",
+        data_simplification=False,
+        export_type="text",
+        profiles=metric_records,
+    )
+    save()
+
+    def profile_with_metrics(*profile_args, **profile_kwargs):
+        nonlocal counter
+        record = records[counter]
+        counter += 1
+        destination = args.output_dir / "metrics" / f"cap{record['physical_tokens']}"
+        destination.mkdir(parents=True, exist_ok=False)
+        metric_records.append(dict(capacity=record["physical_tokens"], step=record["step"], path=destination.relative_to(args.output_dir).as_posix()))
+        save()
+        profile_kwargs["experimental_config"] = profiler._ExperimentalConfig(
+            profiler_level=profiler.ProfilerLevel.Level1,
+            aic_metrics=profiler.AiCMetrics.PipeUtilization,
+            data_simplification=False,
+            export_type="text",
+        )
+        profile_kwargs["on_trace_ready"] = profiler.tensorboard_trace_handler(str(destination))
+        return original_profile(*profile_args, **profile_kwargs)
+
+    profiler.profile = profile_with_metrics
+    try:
+        result = original_profiles(torch, args, records, prepared, entries, audits, status, save)
+        if counter != len(records):
+            raise AssertionError("diagnostic profiler did not cover both original capacity records")
+        save()
+        return result
+    finally:
+        profiler.profile = original_profile
+
+
+probe.profiles = metrics_profiles
+subprocess.Popen = PatchedPopen
+if __name__ == "__main__":
+    raise SystemExit(probe.main())

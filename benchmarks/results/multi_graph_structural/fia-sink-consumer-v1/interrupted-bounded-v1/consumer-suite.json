@@ -1,0 +1,130 @@
+{
+  "state": "failed",
+  "started_unix": 1792389246.6423159,
+  "design": {
+    "modes": [
+      "upstream",
+      "whole",
+      "legacy"
+    ],
+    "capacities": [
+      400,
+      512
+    ],
+    "steps": [
+      0,
+      29
+    ],
+    "occurrences": 16,
+    "rounds": 2,
+    "repeats": 10,
+    "warmups": 5,
+    "profile_repeats": 3,
+    "process_orders": [
+      [
+        "upstream",
+        "whole",
+        "legacy"
+      ],
+      [
+        "legacy",
+        "whole",
+        "upstream"
+      ]
+    ],
+    "seed": 1703,
+    "legacy_update_audit": "pre/post qualification only; uninstrumented timing/profile; independent profile task counts",
+    "profile_label_scope": "replay and final join; preparation completed before each label"
+  },
+  "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "probe_sha256": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+  "scope": "two-record synthetic attention-chain consumer diagnostic; no full-trace/model inference claim",
+  "runs": [
+    {
+      "trial": 0,
+      "mode": "upstream",
+      "process_order_index": 0,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/aclgraph_fia_sink_consumer_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-bounded-v1/round-00-upstream",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "upstream",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--profile-repeats",
+        "3",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "900"
+      ],
+      "launched_unix": 1792389246.643376,
+      "report_path": "round-00-upstream/consumer-probe.json",
+      "pid": 1581780,
+      "returncode": 0,
+      "finished_unix": 1792389309.9019659,
+      "report_sha256": "34f4b2326c762f018bdd35218f1f5c63e7e12af98d5d25f3f264f587ceae2541"
+    },
+    {
+      "trial": 0,
+      "mode": "whole",
+      "process_order_index": 1,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/aclgraph_fia_sink_consumer_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-bounded-v1/round-00-whole",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "whole",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--profile-repeats",
+        "3",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "900"
+      ],
+      "launched_unix": 1792389309.9119692,
+      "report_path": "round-00-whole/consumer-probe.json",
+      "pid": 1663894
+    }
+  ],
+  "performance_measured": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "returncode": 1,
+  "error": "Traceback (most recent call last):\n  File \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/aclgraph_fia_sink_consumer_suite.py\", line 109, in run_suite\n    rc = run_one(\n         ^^^^^^^^\n  File \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/aclgraph_fia_sink_stage7_suite.py\", line 81, in run_one\n    return process.wait(timeout=timeout + 60)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/subprocess.py\", line 1264, in wait\n    return self._wait(timeout=timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/subprocess.py\", line 2047, in _wait\n    time.sleep(delay)\n  File \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/consumer-tools-bounded-v1/aclgraph_fia_sink_stage7_suite.py\", line 74, in forward\n    raise SystemExit(128 + number)\nSystemExit: 143\n",
+  "finished_unix": 1792389322.16599
+}
