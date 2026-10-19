@@ -1,0 +1,27 @@
+{
+  "unit_tests": {
+    "passed": 73,
+    "command": "python -m pytest -q --noconftest --tb=short --basetemp=outputs/pytest-double-buffer-v1 tests/ut/worker/multi_graph/test_fia_sink_mm2_double_buffer.py tests/ut/worker/multi_graph/test_fia_sink_running_o_build.py"
+  },
+  "saved_audit_assertions": 1830,
+  "timings": 120,
+  "fp32_rows": 216,
+  "complete_plans": 36,
+  "maximum_fp32_absolute_error": 0.00029981881380081177,
+  "scoped_hooks_passed": [
+    "ruff-check",
+    "ruff-format",
+    "codespell",
+    "typos",
+    "markdownlint",
+    "check-forbidden-imports"
+  ],
+  "full_ci_passed": false,
+  "full_ci_limitations": "Frozen source/script formatting and spelling, prior imports, Windows script entrypoints",
+  "hook_edits_restored": 28,
+  "raw_evidence_reaudited": true,
+  "deployed_patch_build_contract_sources_match_checkout": true,
+  "promotion": false,
+  "full_model_or_split_gain": false,
+  "current_scheme_sha256": "d60dfec8c9ad332c33bded88e5b3435b64965ae93495f2111fca17ab95da3a27"
+}

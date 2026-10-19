@@ -1,0 +1,18 @@
+{
+  "collected_raw_files": 121,
+  "retained_raw_files": 117,
+  "omitted_binary_files": [
+    "builds/control/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "builds/original/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "builds/wide/binary/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o",
+    "screen/cpu-double-buffer-contract"
+  ],
+  "collected_files_all_verified": true,
+  "omitted_binary_hashes_verified_before_publication": true,
+  "saved_checkout_cannot_rehash_omitted_binaries": true,
+  "measured_sources_unchanged": true,
+  "full_model_or_split_gain": false,
+  "scope": "Two original records, six fresh processes; synthetic sixteen-attention chain",
+  "promotion": false,
+  "decision": "Retain isolated candidate; net benefit over original layout is not established; no expanded matrix"
+}

@@ -1,0 +1,820 @@
+{
+  "state": "completed",
+  "started_unix": 1792409901.6336732,
+  "npu_work_executed": false,
+  "system_install_performed": false,
+  "baseline_parameter": {
+    "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/build/binary/ascend910b/gen/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_param.json",
+    "sha256": "9384517184de3478d50eec0461cd78a5b1e1aeee2ccc86a6ae927b70cd474880"
+  },
+  "requested_tiling_keys": [
+    "104000000010222223",
+    "104000000010322223"
+  ],
+  "binary_scope": "restricted_tiling_keys",
+  "arbitrary_shape_fallback_qualified": false,
+  "source_scope": "Copied generated AICore tree; original source/build/vendors remain unchanged",
+  "wide_v": true,
+  "source_before": {
+    "ascendc/common/common.h": "d26d042b297cf862c584e05b2625136e7ee99de3be53be2e32fb28efe62d60d9",
+    "ascendc/common/common_func.h": "1de03871c582d97e9ed1814763e65f30381bdaaa0dae6705a74ea0281ffa809b",
+    "ascendc/common/dropmask.h": "b93b07a2d06c590243cd1ba757c281a6b268d03ff819b311fb5aa088e06a7654",
+    "ascendc/common/gm_to_l1_iterator.h": "4e7e3b9b489e8b60ae356aa8f95d088ed2ddf1013a4518032312f4e13eefa7f9",
+    "ascendc/common/gm_to_ub_iterator.h": "a28634b12f044aad50eca3a46af52e3d0eb1a024b6301d1a948d917d3095a508",
+    "ascendc/common/hardware.h": "05a8bf30e465e22ea13b71f0eb2b71075de4396da35e3d95c80ba086ae5f42a8",
+    "ascendc/common/iterator.h": "70535c8c9c01aa935d45aed44d977f69f0ed2eeebeea1d80f060e4b1d1fbd39f",
+    "ascendc/common/l0c_to_gm_iterator.h": "a3eea68d194669fb7db53a3b38d3117cb1584f6637d22085081e4c0768a2429e",
+    "ascendc/common/l0c_to_l1_iterator.h": "2b73136bb76f3ef99649406fdba15c8dc7f50b606d728ab005e2417860ea7d06",
+    "ascendc/common/l0c_to_ub_iterator.h": "ede17f84df3f67a7063792f190b6b66cd328213af0d55ffd9997255988ab73f8",
+    "ascendc/common/l1_to_bt_iterator.h": "45ae57cd939a7a30e74b33dbfd088f8998445648cee71c8d291d449808233440",
+    "ascendc/common/l1_to_fb_iterator.h": "db7c233466609cf1b46c94b7d72f2b9d73ab6cc2167ed27f6809e2a097d06d1c",
+    "ascendc/common/l1_to_l0_iterator.h": "81308eebcfcdabc041d129af63e7de1655f94c232e24b2e360cfb8c5dad4ca90",
+    "ascendc/common/l1_to_ub_iterator.h": "3b4b7e08af1ed4d82b13e4994916c4d2fdd3ebe906cb3c406295b04e410d111a",
+    "ascendc/common/layout.h": "29815798a7238d674b649dbf97b48a250e58ca2b8ff6dc09a5667a2e973fdbde",
+    "ascendc/common/mem.h": "e240841f845f8343bf01e06cf1528c011986504a6da80fe54615f01b2a4428c5",
+    "ascendc/common/mma.h": "1d307e242c4d39c668668f254bb696b421326efbb6117ed9df704876fa6d877d",
+    "ascendc/common/pse.h": "0b1ec227c944e430a8ec354d4b40830626e2282ac06a5192439619b11833cde4",
+    "ascendc/common/simd.h": "88519d7abc601dc4fc6c36de52814901b407d549912c8b51d69b55ef070a5d31",
+    "ascendc/common/util.h": "442648c354814d149ba7f8185e4b16cc7d528d1333f8437f07c0f3c5c93187d9",
+    "fused_infer_attention_score_v2_sink/CMakeLists.txt": "d6df0d6ca4b7ae4a9a99f071a74d51229eb691e6df6fab7506915abd9ecf3d29",
+    "fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink.py": "ecd00cb89bbe8f82940ef71b0b799e408294f8095f878ba4cb551a84e198d365",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink.cpp": "87f027c28e5d33ca3d5be0ad64b5337aed6cf29f7e7d5e9eba7cdbfbef65055c",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink.h": "9240608d02f454561b6761077dc30f3b07999aeee4b254d7110b1b2e8a46e1ac",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v2.cpp": "2dcbf74e62ecd23a1b30f5de491f60fafb7c48fc222b52aa82f3e808507f5825",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v2.h": "f74d9114812f5343261844664d71ffd52fba53655649333c37da76fc17bbcea7",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v3.cpp": "4a19067cd09e87da35836a836b81fbf6339271c178e73258196e220c013b55ad",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v3.h": "38a4b1500c92e9544600782eb856f08c15928ab1b342f846d35bf6d6642dcc7b",
+    "fused_infer_attention_score_v2_sink/op_api/fused_infer_attention_score_v2_sink.cpp": "a8c9db4641b0684bbb381b5bdf986ece4edf1016f3277163c3013e9a7ebbaa30",
+    "fused_infer_attention_score_v2_sink/op_api/fused_infer_attention_score_v2_sink.h": "8d98258d29af8000e5bbab9adde4b7be99258cc008003aee937a8554fbc04b05",
+    "fused_infer_attention_score_v2_sink/op_kernel/CopyInL1.h": "42f1619817f636acf4b824624cc1f37b260a8d41dd96f63d2b13acc2c34f5614",
+    "fused_infer_attention_score_v2_sink/op_kernel/FixpipeOut.h": "a43d183efc0101a3ede52606846cefa0dfc2e5893febc81f5ae2d6c2b337d5f0",
+    "fused_infer_attention_score_v2_sink/op_kernel/array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79",
+    "fused_infer_attention_score_v2_sink/op_kernel/axis.h": "ea3d5fa888fc9162eb38a10dfc1be116d927f829a6ac07e4261ad8340e6645fa",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffer.h": "75f1708ef3b88da6ac0edda4543d123e92e808031126f3b1947f57cbcff8294a",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffer_manager.h": "40bc0c2f6df26955782bf2395c6068f614468ec98c42cae9a5bdf0d3c724b6d8",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffer_mix_core.h": "6ff52c7db120365aa0078395892cb4490a0d049b1a75664d04416310ee6cbb08",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffers_policy.h": "846242b5a88b55385776a23b86c770ff66b563f6c7defedbdb854016dd0d52c3",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_mla_sink.h": "05454a599cb2d9b2e56c3c8fb59c1b89dcf0d487dbf2fd822b7abe70f8c382a2",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_sink.h": "920c2b0ec94d347a75ada0707de6fdc10d6641b132f765355628c439eb149bc9",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_flashdecode_sink.h": "b8e55ebd2e93a57ff16c291e169db9b7d764c3089b8f99eb46bb500e84ebe4ad",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_mla_sink.h": "765066653915e4c5ffec142768557f00a68039339182e4b9eeef0e3bd51a6449",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_mla_sink.h": "23df706e2abb8bbb7118579860911c571c8b87ffdb0752d28fa62ec3ec094d1e",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_public_define.h": "54150ffef7aae1ad8b0922816b49be37840007bc56e7a43aa310b669fbd2a62e",
+    "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp": "e719a4fa20507166633a963d14e4c6656a44b9336135d34af76bbea565b90b49",
+    "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink_metadata.h": "a33c4c3e870b7ca0c9a1bc53d834b44fd6203625d2bcc82c868badb257ee2013",
+    "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink_tilingkey.h": "d35a4d66679194f6f3cc6eaf0cd0da7fb0e9a7445cda6b4206aecbeb42a34c28",
+    "fused_infer_attention_score_v2_sink/op_kernel/kernel_common_sink.h": "55e4176d5c796fae002ac2e405fdf047e1c9245097d98229165a8c5306239f96",
+    "fused_infer_attention_score_v2_sink/op_kernel/matmul.h": "a224d05ca417a90365b870438b8ec7608aafc8d951059483043678e211c76afd",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/copy_gm_to_l1.h": "6293778b165cbeaf1a844bf7489d387abf560217ea7045abe6f1127e7e6117fc",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/copy_gm_to_ub.h": "98ad825ca31c5f232bb5b9d124d95f019ec31c166711e814f2281f43ddea1b17",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/copy_ub_to_gm.h": "5fd5cab5d7c12e3907e6aaeb9d66fe65db9a5a6c6af04f8eed3531dc8a97f5fa",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/fa_gm_tensor.h": "afea40fda64041724cecb1887cf46dc3d28c0c26084d8fd17201e68b729ca72c",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/fa_l1_tensor.h": "03805d27791ce125513ac07ec6d51f9366c463d0793fe02575275400d0d0287d",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/fa_ub_tensor.h": "97ae6e862d7c80a2e25f95c58f33a63923fce5509a33908e71620ea9e6eead26",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/gm_coord.h": "4a99ca73b1cd1b110a067a4679aac19279a0f00d44f3d44c2617dd35b5238bfb",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/gm_layout.h": "66971b608f79b1ac4ec4b8d58b34f93e39f2b965a77fd1c988b3c3aa9d4e3784",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/offset_calculator_v2.h": "8cae62420aa811a79c1192978476129b88107d76bb745fc823bd1239c83f357c",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/parser.h": "36293eebadd8d83df4780933a5e4c6ec8c3bbee56ddff49fbb0fc51651ee5823",
+    "fused_infer_attention_score_v2_sink/op_kernel/memory_copy.h": "3d735fa9a7fbe689ca9c42ecb133b17c5c0bad7a6fd1d38a5fc129dd55881977",
+    "fused_infer_attention_score_v2_sink/op_kernel/offset_calculator.h": "3f1e8642e9eb73166367876f033435dbb2301513b0c08ba9be2e5d982875fd1b",
+    "fused_infer_attention_score_v2_sink/op_kernel/vector_common.h": "3772a293bb875844f6154a5905b212c60a93d2a0a0c13c642af6c14519404b7a",
+    "fused_infer_attention_score_v2_sink/torch_binding/npu_fused_infer_attention_score_v2_sink.cpp": "9939be6f9230ed20ebf3794776c821486a8e677461d5240d4edb521f22f88bca",
+    "fused_infer_attention_score_v2_sink/torch_binding/npu_fused_infer_attention_score_v2_sink_metadata.cpp": "e6ae5b85c6ef32d3bf9d13c050ab280eb0f5b130a7f8e9f4e56459fd34a3ac9e",
+    "fused_infer_attention_score_v2_sink/torch_binding/ops_common.cpp": "192904e9e043f39043ba347ce136f47a20da1c520bd10790361937a79d4a321e",
+    "fused_infer_attention_score_v2_sink/torch_binding/ops_common.h": "92abe2484f16fd9b7c8fe090e1eae5d9f1f73ad57a0395cf0cfe3b2b668aa103"
+  },
+  "patch_command": [
+    "/usr/local/python3.12.13/bin/python",
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-double-buffer-tools-v1/aclgraph_fia_sink_mm2_double_buffer_patch.py",
+    "--source",
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-double-buffer-build-wide-v1/source"
+  ],
+  "source_after": {
+    "ascendc/common/common.h": "d26d042b297cf862c584e05b2625136e7ee99de3be53be2e32fb28efe62d60d9",
+    "ascendc/common/common_func.h": "1de03871c582d97e9ed1814763e65f30381bdaaa0dae6705a74ea0281ffa809b",
+    "ascendc/common/dropmask.h": "b93b07a2d06c590243cd1ba757c281a6b268d03ff819b311fb5aa088e06a7654",
+    "ascendc/common/gm_to_l1_iterator.h": "4e7e3b9b489e8b60ae356aa8f95d088ed2ddf1013a4518032312f4e13eefa7f9",
+    "ascendc/common/gm_to_ub_iterator.h": "a28634b12f044aad50eca3a46af52e3d0eb1a024b6301d1a948d917d3095a508",
+    "ascendc/common/hardware.h": "05a8bf30e465e22ea13b71f0eb2b71075de4396da35e3d95c80ba086ae5f42a8",
+    "ascendc/common/iterator.h": "70535c8c9c01aa935d45aed44d977f69f0ed2eeebeea1d80f060e4b1d1fbd39f",
+    "ascendc/common/l0c_to_gm_iterator.h": "a3eea68d194669fb7db53a3b38d3117cb1584f6637d22085081e4c0768a2429e",
+    "ascendc/common/l0c_to_l1_iterator.h": "2b73136bb76f3ef99649406fdba15c8dc7f50b606d728ab005e2417860ea7d06",
+    "ascendc/common/l0c_to_ub_iterator.h": "ede17f84df3f67a7063792f190b6b66cd328213af0d55ffd9997255988ab73f8",
+    "ascendc/common/l1_to_bt_iterator.h": "45ae57cd939a7a30e74b33dbfd088f8998445648cee71c8d291d449808233440",
+    "ascendc/common/l1_to_fb_iterator.h": "db7c233466609cf1b46c94b7d72f2b9d73ab6cc2167ed27f6809e2a097d06d1c",
+    "ascendc/common/l1_to_l0_iterator.h": "81308eebcfcdabc041d129af63e7de1655f94c232e24b2e360cfb8c5dad4ca90",
+    "ascendc/common/l1_to_ub_iterator.h": "3b4b7e08af1ed4d82b13e4994916c4d2fdd3ebe906cb3c406295b04e410d111a",
+    "ascendc/common/layout.h": "29815798a7238d674b649dbf97b48a250e58ca2b8ff6dc09a5667a2e973fdbde",
+    "ascendc/common/mem.h": "e240841f845f8343bf01e06cf1528c011986504a6da80fe54615f01b2a4428c5",
+    "ascendc/common/mma.h": "1d307e242c4d39c668668f254bb696b421326efbb6117ed9df704876fa6d877d",
+    "ascendc/common/pse.h": "0b1ec227c944e430a8ec354d4b40830626e2282ac06a5192439619b11833cde4",
+    "ascendc/common/simd.h": "88519d7abc601dc4fc6c36de52814901b407d549912c8b51d69b55ef070a5d31",
+    "ascendc/common/util.h": "442648c354814d149ba7f8185e4b16cc7d528d1333f8437f07c0f3c5c93187d9",
+    "fused_infer_attention_score_v2_sink/CMakeLists.txt": "d6df0d6ca4b7ae4a9a99f071a74d51229eb691e6df6fab7506915abd9ecf3d29",
+    "fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink.py": "58ec221ec67ee6f427e7799d2f46a4baf3d61346ec431b83bb18bba98feb8387",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink.cpp": "87f027c28e5d33ca3d5be0ad64b5337aed6cf29f7e7d5e9eba7cdbfbef65055c",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink.h": "9240608d02f454561b6761077dc30f3b07999aeee4b254d7110b1b2e8a46e1ac",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v2.cpp": "2dcbf74e62ecd23a1b30f5de491f60fafb7c48fc222b52aa82f3e808507f5825",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v2.h": "f74d9114812f5343261844664d71ffd52fba53655649333c37da76fc17bbcea7",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v3.cpp": "4a19067cd09e87da35836a836b81fbf6339271c178e73258196e220c013b55ad",
+    "fused_infer_attention_score_v2_sink/op_api/aclnn_fused_infer_attention_score_v2_sink_v3.h": "38a4b1500c92e9544600782eb856f08c15928ab1b342f846d35bf6d6642dcc7b",
+    "fused_infer_attention_score_v2_sink/op_api/fused_infer_attention_score_v2_sink.cpp": "a8c9db4641b0684bbb381b5bdf986ece4edf1016f3277163c3013e9a7ebbaa30",
+    "fused_infer_attention_score_v2_sink/op_api/fused_infer_attention_score_v2_sink.h": "8d98258d29af8000e5bbab9adde4b7be99258cc008003aee937a8554fbc04b05",
+    "fused_infer_attention_score_v2_sink/op_kernel/CopyInL1.h": "42f1619817f636acf4b824624cc1f37b260a8d41dd96f63d2b13acc2c34f5614",
+    "fused_infer_attention_score_v2_sink/op_kernel/FixpipeOut.h": "a43d183efc0101a3ede52606846cefa0dfc2e5893febc81f5ae2d6c2b337d5f0",
+    "fused_infer_attention_score_v2_sink/op_kernel/array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79",
+    "fused_infer_attention_score_v2_sink/op_kernel/axis.h": "ea3d5fa888fc9162eb38a10dfc1be116d927f829a6ac07e4261ad8340e6645fa",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffer.h": "75f1708ef3b88da6ac0edda4543d123e92e808031126f3b1947f57cbcff8294a",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffer_manager.h": "40bc0c2f6df26955782bf2395c6068f614468ec98c42cae9a5bdf0d3c724b6d8",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffer_mix_core.h": "6ff52c7db120365aa0078395892cb4490a0d049b1a75664d04416310ee6cbb08",
+    "fused_infer_attention_score_v2_sink/op_kernel/buffers_policy.h": "846242b5a88b55385776a23b86c770ff66b563f6c7defedbdb854016dd0d52c3",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h": "746f884ee7770d916b33621f3fae454d4caa347bca61ed59c1d25c9f8ad104ca",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_mla_sink.h": "05454a599cb2d9b2e56c3c8fb59c1b89dcf0d487dbf2fd822b7abe70f8c382a2",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_sink.h": "920c2b0ec94d347a75ada0707de6fdc10d6641b132f765355628c439eb149bc9",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_flashdecode_sink.h": "b8e55ebd2e93a57ff16c291e169db9b7d764c3089b8f99eb46bb500e84ebe4ad",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_mla_sink.h": "765066653915e4c5ffec142768557f00a68039339182e4b9eeef0e3bd51a6449",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_mla_sink.h": "23df706e2abb8bbb7118579860911c571c8b87ffdb0752d28fa62ec3ec094d1e",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_public_define.h": "54150ffef7aae1ad8b0922816b49be37840007bc56e7a43aa310b669fbd2a62e",
+    "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp": "e719a4fa20507166633a963d14e4c6656a44b9336135d34af76bbea565b90b49",
+    "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink_metadata.h": "a33c4c3e870b7ca0c9a1bc53d834b44fd6203625d2bcc82c868badb257ee2013",
+    "fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink_tilingkey.h": "d35a4d66679194f6f3cc6eaf0cd0da7fb0e9a7445cda6b4206aecbeb42a34c28",
+    "fused_infer_attention_score_v2_sink/op_kernel/kernel_common_sink.h": "55e4176d5c796fae002ac2e405fdf047e1c9245097d98229165a8c5306239f96",
+    "fused_infer_attention_score_v2_sink/op_kernel/matmul.h": "a224d05ca417a90365b870438b8ec7608aafc8d951059483043678e211c76afd",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/copy_gm_to_l1.h": "6293778b165cbeaf1a844bf7489d387abf560217ea7045abe6f1127e7e6117fc",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/copy_gm_to_ub.h": "98ad825ca31c5f232bb5b9d124d95f019ec31c166711e814f2281f43ddea1b17",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/copy_ub_to_gm.h": "5fd5cab5d7c12e3907e6aaeb9d66fe65db9a5a6c6af04f8eed3531dc8a97f5fa",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/fa_gm_tensor.h": "afea40fda64041724cecb1887cf46dc3d28c0c26084d8fd17201e68b729ca72c",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/fa_l1_tensor.h": "03805d27791ce125513ac07ec6d51f9366c463d0793fe02575275400d0d0287d",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/fa_ub_tensor.h": "97ae6e862d7c80a2e25f95c58f33a63923fce5509a33908e71620ea9e6eead26",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/gm_coord.h": "4a99ca73b1cd1b110a067a4679aac19279a0f00d44f3d44c2617dd35b5238bfb",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/gm_layout.h": "66971b608f79b1ac4ec4b8d58b34f93e39f2b965a77fd1c988b3c3aa9d4e3784",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/offset_calculator_v2.h": "8cae62420aa811a79c1192978476129b88107d76bb745fc823bd1239c83f357c",
+    "fused_infer_attention_score_v2_sink/op_kernel/memcopy/parser.h": "36293eebadd8d83df4780933a5e4c6ec8c3bbee56ddff49fbb0fc51651ee5823",
+    "fused_infer_attention_score_v2_sink/op_kernel/memory_copy.h": "3d735fa9a7fbe689ca9c42ecb133b17c5c0bad7a6fd1d38a5fc129dd55881977",
+    "fused_infer_attention_score_v2_sink/op_kernel/offset_calculator.h": "3f1e8642e9eb73166367876f033435dbb2301513b0c08ba9be2e5d982875fd1b",
+    "fused_infer_attention_score_v2_sink/op_kernel/vector_common.h": "3772a293bb875844f6154a5905b212c60a93d2a0a0c13c642af6c14519404b7a",
+    "fused_infer_attention_score_v2_sink/torch_binding/npu_fused_infer_attention_score_v2_sink.cpp": "9939be6f9230ed20ebf3794776c821486a8e677461d5240d4edb521f22f88bca",
+    "fused_infer_attention_score_v2_sink/torch_binding/npu_fused_infer_attention_score_v2_sink_metadata.cpp": "e6ae5b85c6ef32d3bf9d13c050ab280eb0f5b130a7f8e9f4e56459fd34a3ac9e",
+    "fused_infer_attention_score_v2_sink/torch_binding/ops_common.cpp": "192904e9e043f39043ba347ce136f47a20da1c520bd10790361937a79d4a321e",
+    "fused_infer_attention_score_v2_sink/torch_binding/ops_common.h": "92abe2484f16fd9b7c8fe090e1eae5d9f1f73ad57a0395cf0cfe3b2b668aa103"
+  },
+  "changed_source_files": [
+    "fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink.py",
+    "fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h"
+  ],
+  "command": [
+    "opc",
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-double-buffer-build-wide-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink.py",
+    "--main_func=fused_infer_attention_score_v2_sink",
+    "--input_param=/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/build/binary/ascend910b/gen/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_param.json",
+    "--soc_version=Ascend910B1",
+    "--output=/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-double-buffer-build-wide-v1/binary",
+    "--impl_mode=high_performance,optional",
+    "--simplified_key_mode=0",
+    "--op_mode=dynamic",
+    "--tiling_key=104000000010222223,104000000010322223"
+  ],
+  "stage": "completed",
+  "compile_returncode": 0,
+  "binary_metadata": {
+    "binFileName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673",
+    "binFileSuffix": ".o",
+    "blockDim": -1,
+    "coreType": "MIX",
+    "intercoreSync": 1,
+    "kernelName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673",
+    "magic": "RT_DEV_BINARY_MAGIC_ELF",
+    "memoryStamping": [],
+    "opParaSize": 1672,
+    "parameters": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "sha256": "732f0af59e807bddcf0a4297049e49dd63baf4c5ea3cfa4b6a0d2ce7cda172a0",
+    "workspace": {
+      "num": 1,
+      "size": [
+        -1
+      ],
+      "type": [
+        0
+      ]
+    },
+    "kernelList": [
+      {
+        "tilingKey": 104000000010222223,
+        "kernelType": "MIX_AIC",
+        "crossCoreSync": 1,
+        "taskRation": "1:2",
+        "kernelName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_104000000010222223"
+      },
+      {
+        "tilingKey": 104000000010322223,
+        "kernelType": "MIX_AIC",
+        "crossCoreSync": 1,
+        "taskRation": "1:2",
+        "kernelName": "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_104000000010322223"
+      }
+    ],
+    "taskRation": "tilingKey",
+    "optionalInputMode": "gen_placeholder",
+    "optionalOutputMode": "gen_placeholder",
+    "supportSuperKernel": 1,
+    "compileInfo": {},
+    "dynamicParamMode": "folded_with_desc",
+    "supportInfo": {
+      "implMode": "high_performance",
+      "int64Mode": false,
+      "simplifiedKeyMode": 0,
+      "simplifiedKey": [
+        "FusedInferAttentionScoreV2Sink/d=0,p=1/27,2/27,2/27,2/27,2/0,2/0,2/0,2",
+        "FusedInferAttentionScoreV2Sink/d=0,p=0/27,2/27,2/27,2/27,2/0,2/0,2/0,2",
+        "FusedInferAttentionScoreV2Sink/d=1,p=1/27,2/27,2/27,2/27,2/0,2/0,2/0,2",
+        "FusedInferAttentionScoreV2Sink/d=1,p=0/27,2/27,2/27,2/27,2/0,2/0,2/0,2"
+      ],
+      "dynamicParamMode": "folded_with_desc",
+      "optionalInputMode": "gen_placeholder",
+      "optionalOutputMode": "gen_placeholder",
+      "staticKey": "721d252f91f982ff332e2a530b508b05062f9c081dfc48910fcea5767e49a2dc,e4f2f5203139f2b31d1cd45e979a3ea9fa6cff46bc573d03bd3bb54515eda675",
+      "inputs": [
+        {
+          "name": "query",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        [
+          {
+            "name": "key",
+            "index": 1,
+            "dtype": "bfloat16",
+            "format": "ND",
+            "paramType": "dynamic",
+            "shape": [
+              -2
+            ],
+            "format_match_mode": "FormatAgnostic"
+          }
+        ],
+        [
+          {
+            "name": "value",
+            "index": 2,
+            "dtype": "bfloat16",
+            "format": "ND",
+            "paramType": "dynamic",
+            "shape": [
+              -2
+            ],
+            "format_match_mode": "FormatAgnostic"
+          }
+        ],
+        {
+          "name": "pse_shift",
+          "index": 3,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "atten_mask",
+          "index": 4,
+          "dtype": "bool",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "actual_seq_lengths",
+          "index": 5,
+          "dtype": "int64",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "actual_seq_lengths_kv",
+          "index": 6,
+          "dtype": "int64",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "dequant_scale1",
+          "index": 7,
+          "dtype": "uint64",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "quant_scale1",
+          "index": 8,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "dequant_scale2",
+          "index": 9,
+          "dtype": "uint64",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "quant_scale2",
+          "index": 10,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "quant_offset2",
+          "index": 11,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "antiquant_scale",
+          "index": 12,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "antiquant_offset",
+          "index": 13,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "block_table",
+          "index": 14,
+          "dtype": "int32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "query_padding_size",
+          "index": 15,
+          "dtype": "int64",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "kv_padding_size",
+          "index": 16,
+          "dtype": "int64",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "key_antiquant_scale",
+          "index": 17,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "key_antiquant_offset",
+          "index": 18,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "value_antiquant_scale",
+          "index": 19,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "value_antiquant_offset",
+          "index": 20,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "query_rope",
+          "index": 21,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "key_rope",
+          "index": 22,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "key_rope_antiquant_scale",
+          "index": 23,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "dequant_scale_query",
+          "index": 24,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "metadata",
+          "index": 25,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "learnable_sink",
+          "index": 26,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "key_sink",
+          "index": 27,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "key_rope_sink",
+          "index": 28,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "value_sink",
+          "index": 29,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "optional",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "attention_out",
+          "index": 0,
+          "dtype": "bfloat16",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "softmax_lse",
+          "index": 1,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "softmax_max",
+          "index": 2,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        },
+        {
+          "name": "softmax_sum",
+          "index": 3,
+          "dtype": "float32",
+          "format": "ND",
+          "paramType": "required",
+          "shape": [
+            -2
+          ],
+          "format_match_mode": "FormatAgnostic"
+        }
+      ],
+      "attrs": [
+        {
+          "name": "num_heads",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "scale",
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "name": "pre_tokens",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "next_tokens",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "input_layout",
+          "dtype": "str",
+          "value": ""
+        },
+        {
+          "name": "num_key_value_heads",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "sparse_mode",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "inner_precise",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "block_size",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "antiquant_mode",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "softmax_lse_flag",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "key_antiquant_mode",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "value_antiquant_mode",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "query_quant_mode",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "pse_type",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "sink_number",
+          "dtype": "int",
+          "value": 0
+        },
+        {
+          "name": "batch_invariant",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "softmax_lse_max_sum",
+          "dtype": "bool",
+          "value": false
+        },
+        {
+          "name": "out_dtype",
+          "dtype": "int",
+          "value": 0
+        }
+      ],
+      "opMode": "dynamic",
+      "tilingKey": [
+        "104000000010222223",
+        "104000000010322223"
+      ],
+      "deterministic": "ignore"
+    }
+  },
+  "binary_qualification": {
+    "scope": "restricted_tiling_keys",
+    "requested_tiling_keys": [
+      "104000000010222223",
+      "104000000010322223"
+    ],
+    "actual_tiling_keys": [
+      "104000000010222223",
+      "104000000010322223"
+    ],
+    "kernel_entries": 2,
+    "exact_selected_keys_verified": true,
+    "arbitrary_shape_fallback_qualified": false,
+    "npu_runtime_qualified": false,
+    "limitation": "Only listed tiling keys exist; shape, plan, lifetime and runtime qualification remain required"
+  },
+  "artifacts": {
+    "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": {
+      "bytes": 179008,
+      "sha256": "732f0af59e807bddcf0a4297049e49dd63baf4c5ea3cfa4b6a0d2ce7cda172a0"
+    },
+    "FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": {
+      "bytes": 16813,
+      "sha256": "1a18136d30d9d9579a61f2ffc0e2359492c4b07b817772d13a5f251ec457b2cd"
+    }
+  },
+  "vendors": {
+    "upstream": {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-double-buffer-build-wide-v1/vendor-upstream",
+      "changed_files": [
+        "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json",
+        "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o"
+      ],
+      "binary_scope": "restricted_tiling_keys",
+      "available_tiling_keys": [
+        "104000000010222223",
+        "104000000010322223"
+      ],
+      "arbitrary_shape_fallback_qualified": false
+    },
+    "whole": {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-double-buffer-build-wide-v1/vendor-whole",
+      "changed_files": [
+        "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json",
+        "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o"
+      ],
+      "binary_scope": "restricted_tiling_keys",
+      "available_tiling_keys": [
+        "104000000010222223",
+        "104000000010322223"
+      ],
+      "arbitrary_shape_fallback_qualified": false
+    }
+  },
+  "returncode": 0,
+  "finished_unix": 1792409974.895104
+}

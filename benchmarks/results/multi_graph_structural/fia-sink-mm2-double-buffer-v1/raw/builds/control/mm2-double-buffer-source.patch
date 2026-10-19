@@ -1,0 +1,82 @@
+--- a/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
++++ b/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
+@@ -337,6 +337,23 @@
+                                         uint32_t subNSize);
+ 
+   private:
++#if defined(THESIS_FIA_MM2_DOUBLE_V_LAYOUT) && THESIS_FIA_MM2_DOUBLE_V_LAYOUT && (__CCE_AICORE__ == 220)
++    static constexpr bool THESIS_DOUBLE_V_STATIC =
++        IsSameType<Q_T, bfloat16_t>::value && IsSameType<KV_T, bfloat16_t>::value &&
++        PAGE_ATTENTION && LAYOUT_T == FIA_LAYOUT::TND && PA_LAYOUT == FIA_LAYOUT::BSH &&
++        !CFG::S2_BASICSIZE_IS_1024 && CFG::PRELOAD_NUM == 2;
++#else
++    static constexpr bool THESIS_DOUBLE_V_STATIC = false;
++#endif
++#if defined(THESIS_FIA_MM2_DOUBLE_V_WIDE) && THESIS_FIA_MM2_DOUBLE_V_WIDE
++    static constexpr bool THESIS_DOUBLE_V_WIDE = true;
++#else
++    static constexpr bool THESIS_DOUBLE_V_WIDE = false;
++#endif
++    bool thesisDoubleVEnabled = false;
++    static constexpr uint32_t THESIS_DOUBLE_SLOT_ELEMENTS = 128 * 256;
++    static_assert(2 * THESIS_DOUBLE_SLOT_ELEMENTS + 2 * THESIS_DOUBLE_SLOT_ELEMENTS ==
++                  2 * (256 * 192) + 2 * (128 * 128));
+     // =================================L1 Buffer=================================
+     static constexpr uint32_t L1_Q_SIZE = CFG::S2_BASICSIZE_IS_1024 ? 128 * 192 : 256 * 192; // 64KB or 96KB
+     static constexpr uint32_t L1_V_SIZE = 256 * 128; // 64KB
+@@ -350,8 +367,8 @@
+     static constexpr uint32_t L1_KP_BUFCNT = CFG::S2_BASICSIZE_IS_1024 ? 2 : 3;
+     static constexpr uint32_t L1_K_SINK_BUFCNT = 2;
+ 
+-    Array<LocalTensor<Q_T>, L1_Q_BUFCNT, L1_Q_SIZE> qL1Tensor;
+-    Array<LocalTensor<KV_T>, L1_V_BUFCNT, L1_SINK_V_SIZE> vL1Tensor;
++    LocalTensor<Q_T> qL1Tensor[L1_Q_BUFCNT];
++    LocalTensor<KV_T> vL1Tensor[L1_V_BUFCNT];
+     Array<LocalTensor<KV_T>, L1_KP_BUFCNT, L1_SINK_KP_SIZE> kpL1Tensor;
+     Array<LocalTensor<KV_T>, L1_K_SINK_BUFCNT, L1_K_SINK_SIZE> kSinkL1Tensor;
+ 
+@@ -791,15 +808,28 @@
+ __aicore__ inline void FiaBlockCubeNonQuantGqa<FIAT, Config>::InitBuffers(TPipe *pipe)
+ {
+     // L1 Q
+-    pipe->InitBuffer(L1_Q, L1_Q_SIZE * L1_Q_BUFCNT * sizeof(Q_T));
+-    qL1Tensor.Init(L1_Q.Get<Q_T>());
++    // Select the whole layout before allocation; unsupported geometry keeps its old bounds.
++    thesisDoubleVEnabled = THESIS_DOUBLE_V_STATIC && constInfo.headDim == 256U &&
++        constInfo.headDimRope == 0U && !constInfo.ropeSplitMode && constInfo.keySinkNumber == 0U &&
++        constInfo.gSize == 6U && constInfo.kvHeadNum == 2U && constInfo.qHeadNum == 12U &&
++        constInfo.qSeqSize == 4U && constInfo.headDimAlign == 256U && constInfo.preLoadNum == 2U &&
++        constInfo.kvCacheBlockSize == 128U && constInfo.subBlockNum == 2U && constInfo.sinkNumber == 0 &&
++        constInfo.s2BaseSize > 0U && constInfo.s2BaseSize <= 512U;
++    const uint32_t qL1Stride = thesisDoubleVEnabled ? THESIS_DOUBLE_SLOT_ELEMENTS : L1_Q_SIZE;
++    pipe->InitBuffer(L1_Q, qL1Stride * L1_Q_BUFCNT * sizeof(Q_T));
++    for (uint32_t i = 0; i < L1_Q_BUFCNT; ++i) {
++        qL1Tensor[i] = L1_Q.Get<Q_T>()[i * qL1Stride];
++    }
+ 
+     // L1 V
+     // L1 KP
+     // L1 K_SINK
+ 
+-    pipe->InitBuffer(L1_V, L1_SINK_V_SIZE * L1_V_BUFCNT * sizeof(KV_T)); // L1_SINK_V_SIZE:128*128
+-    vL1Tensor.Init(L1_V.Get<KV_T>());
++    const uint32_t vL1Stride = thesisDoubleVEnabled ? THESIS_DOUBLE_SLOT_ELEMENTS : L1_SINK_V_SIZE;
++    pipe->InitBuffer(L1_V, vL1Stride * L1_V_BUFCNT * sizeof(KV_T));
++    for (uint32_t i = 0; i < L1_V_BUFCNT; ++i) {
++        vL1Tensor[i] = L1_V.Get<KV_T>()[i * vL1Stride];
++    }
+     pipe->InitBuffer(L1_KP, L1_SINK_KP_SIZE * L1_KP_BUFCNT * sizeof(KV_T)); // L1_SINK_KP_SIZE:128*192
+     kpL1Tensor.Init(L1_KP.Get<KV_T>());
+     pipe->InitBuffer(L1_K_SINK, L1_K_SINK_SIZE * L1_K_SINK_BUFCNT * sizeof(KV_T));
+@@ -1345,7 +1375,10 @@
+ 
+     ResetLoad3DConfig<M_SPLIT_SIZE>();
+ 
+-    auto KL1Slices = k.Split(K_SPLIT_SIZE);
++    // L0B still consumes the same ordered 64-row D256 products.
++    const uint32_t kL1Split = THESIS_DOUBLE_V_WIDE && thesisDoubleVEnabled && !info.isSinkTensor
++        ? 128U : K_SPLIT_SIZE;
++    auto KL1Slices = k.Split(kL1Split);
+ 
+     bool canFullLoadV = (KL1Slices.size() <= L1_V_BUFCNT);
+     uint64_t vCoord = ((uint64_t)info.bIdx << 48) | ((uint64_t)info.n2Idx << 32) | ((uint64_t)info.s2Idx);
