@@ -1,0 +1,69 @@
+W1019 19:20:15.065000 674009 site-packages/torch/distributed/run.py:852] 
+W1019 19:20:15.065000 674009 site-packages/torch/distributed/run.py:852] *****************************************
+W1019 19:20:15.065000 674009 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1019 19:20:15.065000 674009 site-packages/torch/distributed/run.py:852] *****************************************
+[W1019 19:20:26.698639336 ProcessGroupHCCL.cpp:1294] Warning: The watchdog timeout 120000ms(which is set by init_process_group) is less than or equal to HCCL execution timeout 1836000ms! The plog may not be recorded. (function ProcessGroupHCCL)
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[rank0]:[W1019 19:20:30.830467880 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+rank=0 stage=eager/0/mm_ar
+rank=1 stage=eager/0/mm_ar
+rank=1 stage=eager/0/mm_rs_ag
+rank=0 stage=eager/0/mm_rs_ag
+rank=0 stage=eager/0/fused_rs_ag
+rank=1 stage=eager/0/fused_rs_ag
+rank=0 stage=capture/mm_ar
+rank=1 stage=capture/mm_ar
+rank=1 stage=capture/mm_rs_ag
+rank=0 stage=capture/mm_rs_ag
+rank=1 stage=capture/fused_rs_ag
+rank=0 stage=capture/fused_rs_ag
+rank=1 stage=replay_check/0/mm_ar
+rank=0 stage=replay_check/0/mm_ar
+rank=0 stage=replay_check/0/mm_rs_ag
+rank=1 stage=replay_check/0/mm_rs_ag
+rank=0 stage=replay_check/0/fused_rs_ag
+rank=1 stage=replay_check/0/fused_rs_ag
+rank=1 stage=eager/1/mm_ar
+rank=0 stage=eager/1/mm_ar
+rank=0 stage=eager/1/mm_rs_ag
+rank=1 stage=eager/1/mm_rs_ag
+rank=0 stage=eager/1/fused_rs_agrank=1 stage=eager/1/fused_rs_ag
+
+rank=1 stage=replay_check/1/mm_ar
+rank=0 stage=replay_check/1/mm_ar
+rank=0 stage=replay_check/1/mm_rs_ag
+rank=1 stage=replay_check/1/mm_rs_ag
+rank=1 stage=replay_check/1/fused_rs_ag
+rank=0 stage=replay_check/1/fused_rs_ag
+rank=1 stage=timing_complete_profiles_pendingrank=0 stage=timing_complete_profiles_pending
+
+[2026-10-19 19:20:38] [WARNING] [674090] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 19:20:38] [WARNING] [674090] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 19:20:38] [WARNING] [674090] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 19:20:39] [INFO] [674913] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_674091_20261019192038576_ascend_pt
+[2026-10-19 19:20:39] [INFO] [674935] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_674090_20261019192038577_ascend_pt
+||//--[2026-10-19 19:20:41] [INFO] [674963] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030602
+[2026-10-19 19:20:41] [INFO] [675005] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031906
+[2026-10-19 19:20:42] [INFO] [674913] profiler.py: All profiling data parsed in a total time of 0:00:02.733994
+[2026-10-19 19:20:42] [INFO] [674935] profiler.py: All profiling data parsed in a total time of 0:00:02.756566
+[2026-10-19 19:20:42] [WARNING] [674090] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 19:20:42] [WARNING] [674090] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 19:20:42] [WARNING] [674090] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 19:20:43] [INFO] [675717] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_674091_20261019192042532_ascend_pt
+|[2026-10-19 19:20:43] [INFO] [675740] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_674090_20261019192042566_ascend_pt
+|//--[2026-10-19 19:20:45] [INFO] [675765] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030978
+[2026-10-19 19:20:45] [INFO] [675829] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031171
+[2026-10-19 19:20:46] [INFO] [675717] profiler.py: All profiling data parsed in a total time of 0:00:02.742468
+[2026-10-19 19:20:46] [INFO] [675740] profiler.py: All profiling data parsed in a total time of 0:00:02.764668
+[2026-10-19 19:20:46] [WARNING] [674090] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 19:20:46] [WARNING] [674090] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-19 19:20:46] [WARNING] [674090] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-19 19:20:47] [INFO] [676521] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_674091_20261019192046463_ascend_pt
+[2026-10-19 19:20:47] [INFO] [676544] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_674090_20261019192046528_ascend_pt
+||//--[2026-10-19 19:20:49] [INFO] [676570] profiler.py: CANN profiling data parsed in a total time of 0:00:02.032581
+[2026-10-19 19:20:49] [INFO] [676605] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030929
+[2026-10-19 19:20:49] [INFO] [676521] profiler.py: All profiling data parsed in a total time of 0:00:02.742291
+[2026-10-19 19:20:49] [INFO] [676544] profiler.py: All profiling data parsed in a total time of 0:00:02.730869
+rank=1 stage=qualified_synthetic_down_endpoint_not_full_model
+rank=0 stage=qualified_synthetic_down_endpoint_not_full_model

@@ -1,0 +1,439 @@
+{
+  "scope": "synthetic TP2 Down to replicated full output; input copy and reconstruction included; no model/state",
+  "capacity": 400,
+  "checkpoint_weights": [
+    null,
+    null
+  ],
+  "checks": [
+    [
+      {
+        "label": "eager/0/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/0/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/0/fused_rs_ag",
+        "max_abs": 0.03125,
+        "nrmse": 5.58117353648413e-05,
+        "exact": false
+      },
+      {
+        "label": "replay/0/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/0/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/0/fused_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "eager/1/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/1/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/1/fused_rs_ag",
+        "max_abs": 0.015625,
+        "nrmse": 5.912463166168891e-05,
+        "exact": false
+      },
+      {
+        "label": "replay/1/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/1/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/1/fused_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      }
+    ],
+    [
+      {
+        "label": "eager/0/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/0/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/0/fused_rs_ag",
+        "max_abs": 0.03125,
+        "nrmse": 5.58117353648413e-05,
+        "exact": false
+      },
+      {
+        "label": "replay/0/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/0/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/0/fused_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "eager/1/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/1/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": false
+      },
+      {
+        "label": "eager/1/fused_rs_ag",
+        "max_abs": 0.015625,
+        "nrmse": 5.912463166168891e-05,
+        "exact": false
+      },
+      {
+        "label": "replay/1/mm_ar",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/1/mm_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      },
+      {
+        "label": "replay/1/fused_rs_ag",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "exact": true
+      }
+    ]
+  ],
+  "traces": [
+    {
+      "rank": 0,
+      "mode": "mm_ar",
+      "file": "replay.mm_ar.rank0.trace.json",
+      "sha256": "ebc27d24bf56edf6e20f0021f9aba05c3b1da369b22053556e97f884f95661da",
+      "final_compute_stream_join": true,
+      "tasks": [
+        {
+          "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+          "duration_us": 9.340125,
+          "stream": 39
+        },
+        {
+          "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+          "duration_us": 175.5635,
+          "stream": 39
+        },
+        {
+          "name": "hcom_allReduce__612_0_1",
+          "duration_us": 247.645,
+          "stream": 0
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "mode": "mm_rs_ag",
+      "file": "replay.mm_rs_ag.rank0.trace.json",
+      "sha256": "424b4a63bb33577f6cd66ab7c8edfc078744d7b5cf5ceeaf1fe70e34e4e9ad76",
+      "final_compute_stream_join": true,
+      "tasks": [
+        {
+          "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+          "duration_us": 11.160125,
+          "stream": 41
+        },
+        {
+          "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+          "duration_us": 393.607875,
+          "stream": 41
+        },
+        {
+          "name": "hcom_allGather__612_1_1",
+          "duration_us": 124.322,
+          "stream": 0
+        },
+        {
+          "name": "hcom_reduceScatter__612_0_1",
+          "duration_us": 134.263,
+          "stream": 0
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "mode": "fused_rs_ag",
+      "file": "replay.fused_rs_ag.rank0.trace.json",
+      "sha256": "bff5ca9370891ec2043fb3ebcea9997a6aa8bc86afdb9961cb30bd6c9ddd253f",
+      "final_compute_stream_join": true,
+      "tasks": [
+        {
+          "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+          "duration_us": 11.22025,
+          "stream": 43
+        },
+        {
+          "name": "MatmulReduceScatterV2",
+          "duration_us": 438.00875,
+          "stream": 43
+        },
+        {
+          "name": "hcom_allGather__612_0_1",
+          "duration_us": 124.363,
+          "stream": 0
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "mm_ar",
+      "file": "replay.mm_ar.rank1.trace.json",
+      "sha256": "060cfe0a0fccf25f0b7299a51b02b58ed551f4a472795dc179c2d18404e0cdc9",
+      "final_compute_stream_join": true,
+      "tasks": [
+        {
+          "name": "hcom_allReduce__612_0_1",
+          "duration_us": 261.72,
+          "stream": 0
+        },
+        {
+          "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+          "duration_us": 8.2,
+          "stream": 39
+        },
+        {
+          "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+          "duration_us": 181.44,
+          "stream": 39
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "mm_rs_ag",
+      "file": "replay.mm_rs_ag.rank1.trace.json",
+      "sha256": "165d8806c5511a99e8a868f402b7f72a5d3252561b3bb61af91b36c359f32012",
+      "final_compute_stream_join": true,
+      "tasks": [
+        {
+          "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+          "duration_us": 10.5,
+          "stream": 41
+        },
+        {
+          "name": "aclnnMatmulWeightNz_MatMulCommon_MatMulV2",
+          "duration_us": 394.02,
+          "stream": 41
+        },
+        {
+          "name": "hcom_allGather__612_1_1",
+          "duration_us": 126.28,
+          "stream": 0
+        },
+        {
+          "name": "hcom_reduceScatter__612_0_1",
+          "duration_us": 152.72,
+          "stream": 0
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "mode": "fused_rs_ag",
+      "file": "replay.fused_rs_ag.rank1.trace.json",
+      "sha256": "afc42fba2cdf9c92d03341f3bf59dcc846b294ecc2c68f886c0b85aca5a50f39",
+      "final_compute_stream_join": true,
+      "tasks": [
+        {
+          "name": "aclnnInplaceCopy_TensorMoveAiCore_TensorMove",
+          "duration_us": 10.54,
+          "stream": 43
+        },
+        {
+          "name": "MatmulReduceScatterV2",
+          "duration_us": 509.42,
+          "stream": 43
+        },
+        {
+          "name": "hcom_allGather__612_0_1",
+          "duration_us": 125.54,
+          "stream": 0
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "no full-model or split-specific speedup proof",
+    "profiler perturbs these short operators; durations are not unprofiled timings",
+    "saved samples are already slowest-rank paired values; individual rank timings were not saved"
+  ],
+  "medians": {
+    "mm_ar": {
+      "device_us": 481.0200035572052,
+      "wall_us": 616.098
+    },
+    "mm_rs_ag": {
+      "device_us": 488.89000713825226,
+      "wall_us": 624.038
+    },
+    "fused_rs_ag": {
+      "device_us": 405.3400009870529,
+      "wall_us": 539.087
+    }
+  },
+  "per_trial": [
+    {
+      "trial": 0,
+      "metric": "device_us",
+      "medians": {
+        "mm_ar": 485.3599965572357,
+        "mm_rs_ag": 489.0899956226349,
+        "fused_rs_ag": 404.3700098991394
+      },
+      "fused_reduction_percent": 16.686580524265693
+    },
+    {
+      "trial": 0,
+      "metric": "wall_us",
+      "medians": {
+        "mm_ar": 624.0425,
+        "mm_rs_ag": 624.448,
+        "fused_rs_ag": 539.0319999999999
+      },
+      "fused_reduction_percent": 13.62254974621121
+    },
+    {
+      "trial": 1,
+      "metric": "device_us",
+      "medians": {
+        "mm_ar": 480.4899990558624,
+        "mm_rs_ag": 483.91999304294586,
+        "fused_rs_ag": 408.0599993467331
+      },
+      "fused_reduction_percent": 15.074195061593477
+    },
+    {
+      "trial": 1,
+      "metric": "wall_us",
+      "medians": {
+        "mm_ar": 614.303,
+        "mm_rs_ag": 618.347,
+        "fused_rs_ag": 537.9770000000001
+      },
+      "fused_reduction_percent": 12.42481316223426
+    },
+    {
+      "trial": 2,
+      "metric": "device_us",
+      "medians": {
+        "mm_ar": 478.29999029636383,
+        "mm_rs_ag": 487.92000114917755,
+        "fused_rs_ag": 403.70000898838043
+      },
+      "fused_reduction_percent": 15.596902116130051
+    },
+    {
+      "trial": 2,
+      "metric": "wall_us",
+      "medians": {
+        "mm_ar": 607.9929999999999,
+        "mm_rs_ag": 628.288,
+        "fused_rs_ag": 536.607
+      },
+      "fused_reduction_percent": 11.741253599959201
+    },
+    {
+      "trial": 3,
+      "metric": "device_us",
+      "medians": {
+        "mm_ar": 477.3000031709671,
+        "mm_rs_ag": 490.5800074338913,
+        "fused_rs_ag": 410.9399914741516
+      },
+      "fused_reduction_percent": 13.903207889367142
+    },
+    {
+      "trial": 3,
+      "metric": "wall_us",
+      "medians": {
+        "mm_ar": 608.0675,
+        "mm_rs_ag": 626.3775,
+        "fused_rs_ag": 545.0525
+      },
+      "fused_reduction_percent": 10.363158695375096
+    },
+    {
+      "trial": 4,
+      "metric": "device_us",
+      "medians": {
+        "mm_ar": 486.73000931739807,
+        "mm_rs_ag": 490.5500113964081,
+        "fused_rs_ag": 399.2699980735779
+      },
+      "fused_reduction_percent": 17.968896425037816
+    },
+    {
+      "trial": 4,
+      "metric": "wall_us",
+      "medians": {
+        "mm_ar": 622.998,
+        "mm_rs_ag": 623.963,
+        "fused_rs_ag": 541.942
+      },
+      "fused_reduction_percent": 13.010635668172299
+    }
+  ],
+  "fused_reduction_percent": {
+    "device_us": 15.733233963346404,
+    "wall_us": 12.499797110199996
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=15",
+    "360",
+    "torchrun",
+    "--standalone",
+    "--nproc-per-node=2",
+    "/workspace/aclgraph-fused-down-v1/sources/aclgraph_fused_down_probe.py",
+    "--catalog-report",
+    "/workspace/aclgraph-full-core-join-v3/results/diagnostic.rank0.json",
+    "--phase",
+    "replay",
+    "--output",
+    "/workspace/aclgraph-fused-down-v1/results/replay.json"
+  ],
+  "environment": {
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1",
+    "TASK_QUEUE_ENABLE": "0",
+    "HCCL_DETERMINISTIC": "true",
+    "PYTHONPATH": "/usr/local/Ascend/cann-9.1.0/python/site-packages:/usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe:"
+  },
+  "source_sha256": "677e4166340e294968ccefbe415a838410a447431dda705ee0b63f40ef6350c1"
+}
