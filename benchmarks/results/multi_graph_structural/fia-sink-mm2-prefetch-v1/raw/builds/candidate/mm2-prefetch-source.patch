@@ -1,0 +1,164 @@
+--- a/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
++++ b/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h
+@@ -302,6 +302,10 @@
+                                      uint32_t subKStart,
+                                      uint32_t subKSize);
+     __aicore__ inline void CopyVToL1(uint32_t dstBufId, const RunInfo &info, uint32_t subKStart, uint32_t subKSize);
++    template <CubeFormat AFormat>
++    __aicore__ inline void PrefetchMm2Block(const RunInfo &info, const Axis &m, const Axis &k,
++                                          uint32_t kpBufId, uint32_t vBufId);
++
+ 
+     template <uint32_t M_L1_SIZE, bool FOECE = false> __aicore__ inline void ResetLoad3DConfig();
+ 
+@@ -337,6 +341,14 @@
+                                         uint32_t subNSize);
+ 
+   private:
++#if defined(THESIS_FIA_MM2_PREFETCH) && THESIS_FIA_MM2_PREFETCH && (__CCE_AICORE__ == 220)
++    static constexpr bool THESIS_MM2_PREFETCH_STATIC =
++        IsSameType<Q_T, bfloat16_t>::value && IsSameType<KV_T, bfloat16_t>::value &&
++        PAGE_ATTENTION && LAYOUT_T == FIA_LAYOUT::TND && PA_LAYOUT == FIA_LAYOUT::BSH &&
++        !CFG::S2_BASICSIZE_IS_1024 && CFG::PRELOAD_NUM == 2 && !CFG::ENABLE_UNIFLAG;
++#else
++    static constexpr bool THESIS_MM2_PREFETCH_STATIC = false;
++#endif
+     // =================================L1 Buffer=================================
+     static constexpr uint32_t L1_Q_SIZE = CFG::S2_BASICSIZE_IS_1024 ? 128 * 192 : 256 * 192; // 64KB or 96KB
+     static constexpr uint32_t L1_V_SIZE = 256 * 128; // 64KB
+@@ -1316,6 +1328,22 @@
+ }
+ 
+ template <typename FIAT, typename Config>
++template <CubeFormat AFormat>
++__aicore__ inline void FiaBlockCubeNonQuantGqa<FIAT, Config>::PrefetchMm2Block(
++    const RunInfo &info, const Axis &m, const Axis &k, uint32_t kpBufId, uint32_t vBufId)
++{
++    // Each slot still needs its original ownership token, including after MM1.
++    WaitFlag<HardEvent::MTE1_MTE2>(KP_EVENT0 + kpBufId);
++    CopyPToL1<AFormat>(kpBufId, info,
++                      AFormat == CubeFormat::NZ ? m.AlignedSize() : info.actualSingleProcessSInnerSizeAlign,
++                      m.start, m.sizeAct, k.start, k.sizeAct);
++    SetFlag<HardEvent::MTE2_MTE1>(KP_EVENT0 + kpBufId);
++    WaitFlag<HardEvent::MTE1_MTE2>(V_EVENT0 + vBufId);
++    CopyVToL1(vBufId, info, k.start, k.sizeAct);
++    SetFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);
++}
++
++template <typename FIAT, typename Config>
+ template <CubeFormat OutFormat, CubeFormat AFormat>
+ __aicore__ inline void FiaBlockCubeNonQuantGqa<FIAT, Config>::ComputeMm2(const RunInfo &info)
+ {
+@@ -1345,6 +1373,15 @@
+ 
+     ResetLoad3DConfig<M_SPLIT_SIZE>();
+ 
++    const bool prefetchMm2 = THESIS_MM2_PREFETCH_STATIC && constInfo.headDim == 256U &&
++        constInfo.headDimRope == 0U && !constInfo.ropeSplitMode && constInfo.keySinkNumber == 0U &&
++        constInfo.gSize == 6U && constInfo.kvHeadNum == 2U && constInfo.qHeadNum == 12U &&
++        constInfo.qSeqSize == 4U && constInfo.headDimAlign == 256U && constInfo.preLoadNum == 2U &&
++        constInfo.kvCacheBlockSize == 128U && constInfo.subBlockNum == 2U && constInfo.sinkNumber == 0 &&
++        constInfo.s2BaseSize > 0U && constInfo.s2BaseSize <= 512U && !info.isSinkTensor &&
++        info.actMBaseSize > 0U && info.actMBaseSize <= D256_MM2_QUERY_ROWS &&
++        info.actualSingleProcessSInnerSize > 0U && info.actualSingleProcessSInnerSize <= 512U;
++
+     auto KL1Slices = k.Split(K_SPLIT_SIZE);
+ 
+     bool canFullLoadV = (KL1Slices.size() <= L1_V_BUFCNT);
+@@ -1357,39 +1394,54 @@
+     for (auto &mL1 : m.Split(mSplit)) {
+         WaitFlag<HardEvent::FIX_M>(L0C_EVENT0 + this->cL0BufId);
+ 
++        if (prefetchMm2) {
++            // syncV1C2 above covers the complete P of this task, never the next task.
++            PrefetchMm2Block<AFormat>(info, mL1, Axis(0, k.sizeAct < K_SPLIT_SIZE ? k.sizeAct : K_SPLIT_SIZE),
++                                     this->kpL1BufId, this->vL1BufId);
++        }
++
+         int32_t kL1Id = -1;
+         for (auto &kL1 : KL1Slices) {
+             ++kL1Id;
+-            WaitFlag<HardEvent::MTE1_MTE2>(KP_EVENT0 + this->kpL1BufId);
+-
+-            CopyPToL1<AFormat>(this->kpL1BufId,
+-                               info,
+-                               (AFormat == CubeFormat::NZ)
+-                                   ? m.AlignedSize()
+-                                   : info.actualSingleProcessSInnerSizeAlign, /* P为ND时，每行元素个数会按32对齐 */
+-                               mL1.start,
+-                               mL1.sizeAct,
+-                               kL1.start,
+-                               kL1.sizeAct);
+-
+-            SetFlag<HardEvent::MTE2_MTE1>(KP_EVENT0 + this->kpL1BufId);
+-            WaitFlag<HardEvent::MTE2_MTE1>(KP_EVENT0 + this->kpL1BufId);
+-
+-            if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
++            uint32_t vBufId;
++            if (prefetchMm2) {
++                WaitFlag<HardEvent::MTE2_MTE1>(KP_EVENT0 + this->kpL1BufId);
++                WaitFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + this->vL1BufId);
++                vBufId = this->vL1BufId;
+                 reuseVBuf = false;
+-            }
+-
+-            uint32_t vBufId;
+-            if (unlikely(!reuseVBuf)) {
+-                vBufId = this->vL1BufId;
+-                WaitFlag<HardEvent::MTE1_MTE2>(V_EVENT0 + vBufId);
+-                CopyVToL1(vBufId, info, kL1.start, kL1.sizeAct);
+-
+-                SetFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);
+-                WaitFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);
+-                vL1Snapshot.bufCnt += static_cast<uint32_t>(canFullLoadV); // 不能全载V时，不缓存到快照中
++                vL1Snapshot.bufCnt += static_cast<uint32_t>(canFullLoadV);
+             } else {
+-                vBufId = (vL1Snapshot.firstBufId + kL1Id) % L1_V_BUFCNT;
++                WaitFlag<HardEvent::MTE1_MTE2>(KP_EVENT0 + this->kpL1BufId);
++
++                CopyPToL1<AFormat>(this->kpL1BufId,
++                                   info,
++                                   (AFormat == CubeFormat::NZ)
++                                       ? m.AlignedSize()
++                                       : info.actualSingleProcessSInnerSizeAlign, /* P为ND时，每行元素个数会按32对齐 */
++                                   mL1.start,
++                                   mL1.sizeAct,
++                                   kL1.start,
++                                   kL1.sizeAct);
++
++                SetFlag<HardEvent::MTE2_MTE1>(KP_EVENT0 + this->kpL1BufId);
++                WaitFlag<HardEvent::MTE2_MTE1>(KP_EVENT0 + this->kpL1BufId);
++
++                if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
++                    reuseVBuf = false;
++                }
++
++                if (unlikely(!reuseVBuf)) {
++                    vBufId = this->vL1BufId;
++                    WaitFlag<HardEvent::MTE1_MTE2>(V_EVENT0 + vBufId);
++                    CopyVToL1(vBufId, info, kL1.start, kL1.sizeAct);
++
++                    SetFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);
++                    WaitFlag<HardEvent::MTE2_MTE1>(V_EVENT0 + vBufId);
++                    vL1Snapshot.bufCnt += static_cast<uint32_t>(canFullLoadV); // 不能全载V时，不缓存到快照中
++                } else {
++                    vBufId = (vL1Snapshot.firstBufId + kL1Id) % L1_V_BUFCNT;
++                }
++
+             }
+ 
+             for (auto &kL0 : kL1.Split(K_BASE)) {
+@@ -1423,6 +1475,13 @@
+                     mmadParams.unitFlag = isLastK ? 3 : 2;
+                 }
+                 Mmad(cL0Tensor[this->cL0BufId], aL0Tensor[this->abL0BufId], bL0Tensor[this->abL0BufId], mmadParams);
++                if (prefetchMm2 && !isLastK) {
++                    const uint32_t nextK = kL1.start + K_SPLIT_SIZE;
++                    const uint32_t nextSize = k.sizeAct - nextK;
++                    PrefetchMm2Block<AFormat>(info, mL1, Axis(nextK, nextSize < K_SPLIT_SIZE ? nextSize : K_SPLIT_SIZE),
++                                             (this->kpL1BufId + 1) % L1_KP_BUFCNT,
++                                             (this->vL1BufId + 1) % L1_V_BUFCNT);
++                }
+                 if (likely(!isLastK)) {
+                     AscendC::PipeBarrier<PIPE_M>();
+                 }

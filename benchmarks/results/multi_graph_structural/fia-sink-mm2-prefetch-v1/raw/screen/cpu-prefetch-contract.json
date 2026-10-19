@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "native_helpers": {
+    "fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+    "array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79",
+    "memcopy/copy_gm_to_l1.h": "6293778b165cbeaf1a844bf7489d387abf560217ea7045abe6f1127e7e6117fc",
+    "axis.h": "ea3d5fa888fc9162eb38a10dfc1be116d927f829a6ac07e4261ad8340e6645fa",
+    "fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0"
+  },
+  "actual_complete_compute_methods": true,
+  "actual_prefetch_helper": true,
+  "native_axis": true,
+  "macro_values": [
+    0,
+    1
+  ],
+  "runtime_gate_cases": 22,
+  "static_fallback_cases": 8,
+  "paired_sequences_per_macro": 147458,
+  "consecutive_calls_per_sequence": 3,
+  "source_sha256": "4d439e530097bb79f113cdb687964d5f15381e576c6518787f69642a11fea5bd",
+  "scope": "CPU issue order and token ownership; does not prove device async safety or gain"
+}

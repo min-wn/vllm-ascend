@@ -1,0 +1,11 @@
+Device_id,Level,API Name,Time(us),Count,Avg(us),Min(us),Max(us),Variance
+host,acl,aclmdlRICaptureGetInfo,1.36,1,1.36,1.36,1.36,0
+host,acl,aclmdlRIExecuteAsync,54.33,1,54.33,54.33,54.33,0
+host,acl,aclrtCreateEventExWithFlag,6.02,1,6.02,6.02,6.02,0
+host,acl,aclrtDestroyEvent,2.14,1,2.14,2.14,2.14,0
+host,acl,aclrtGetDeviceCount,5.19,2,2.595,1.79,3.4,0.648
+host,acl,aclrtMemcpyAsync,38.63,2,19.315,9.12,29.51,103.938
+host,acl,aclrtRecordEvent,33.87,2,16.935,12.43,21.44,20.295
+host,acl,aclrtStreamWaitEvent,17.49,1,17.49,17.49,17.49,0
+host,acl,aclrtSynchronizeDeviceWithTimeout,78.4,3,26.133,19.67,38.81,80.359
+host,acl,aclrtSynchronizeEvent,3646.77,1,3646.77,3646.77,3646.77,0

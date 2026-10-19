@@ -1,0 +1,19 @@
+[2026-10-19-12:36:47.888] [INFO] [AscendProfiler_ProfilingParser:97] Profiler logger initialized at: /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-counters-screen-v1/cell-1-candidate/profiles/cap400/counters/16b0f9cecd11_216331_20261019123642832_ascend_pt/logs/profiler_20261019123647_257566_ProfilingParser.log
+[2026-10-19-12:36:47.939] [INFO] [AscendProfiler_ProfilingParser:100] TorchOpParser start.
+[2026-10-19-12:36:47.940] [INFO] [AscendProfiler_ProfilingParser:82] TaskQueueParser start.
+[2026-10-19-12:36:47.981] [INFO] [AscendProfiler_ProfilingParser:208] CANNTimelineParser start.
+[2026-10-19-12:36:47.982] [INFO] [AscendProfiler_ProfilingParser:88] TaskQueueParser finish.
+[2026-10-19-12:36:47.983] [INFO] [AscendProfiler_ProfilingParser:106] TorchOpParser finish.
+[2026-10-19-12:36:47.984] [INFO] [AscendProfiler_ProfilingParser:62] TreeBuildParser start.
+[2026-10-19-12:36:48.047] [INFO] [AscendProfiler_ProfilingParser:70] TreeBuildParser finish.
+[2026-10-19-12:36:49.584] [INFO] [AscendProfiler_ProfilingParser:218] CANNTimelineParser finish.
+[2026-10-19-12:36:50.621] [INFO] [AscendProfiler_ProfilingParser:473] ============================================================
+[2026-10-19-12:36:50.621] [INFO] [AscendProfiler_ProfilingParser:474] Task execution completed
+[2026-10-19-12:36:50.621] [INFO] [AscendProfiler_ProfilingParser:475] ============================================================
+[2026-10-19-12:36:50.621] [INFO] [AscendProfiler_ProfilingParser:478] torch_op                  | PTHREAD         | Succeed    | 0.045s | deps: None
+[2026-10-19-12:36:50.621] [INFO] [AscendProfiler_ProfilingParser:478] task_queue                | PTHREAD         | Succeed    | 0.044s | deps: None
+[2026-10-19-12:36:50.622] [INFO] [AscendProfiler_ProfilingParser:478] trace_prepare             | SUB_PROCESS     | Succeed    | 0.073s | deps: torch_op, task_queue
+[2026-10-19-12:36:50.622] [INFO] [AscendProfiler_ProfilingParser:478] build_tree                | PTHREAD         | Succeed    | 0.064s | deps: torch_op, task_queue
+[2026-10-19-12:36:50.622] [INFO] [AscendProfiler_ProfilingParser:478] export                    | SUB_PROCESS     | Succeed    | 2.114s | deps: None
+[2026-10-19-12:36:50.622] [INFO] [AscendProfiler_ProfilingParser:478] timeline                  | PTHREAD|NON_BLOCKING | Succeed    | 1.605s | deps: None
+[2026-10-19-12:36:50.622] [INFO] [AscendProfiler_ProfilingParser:478] trace                     | SUB_PROCESS     | Succeed    | 0.053s | deps: build_tree, trace_prepare, timeline, task_queue, torch_op

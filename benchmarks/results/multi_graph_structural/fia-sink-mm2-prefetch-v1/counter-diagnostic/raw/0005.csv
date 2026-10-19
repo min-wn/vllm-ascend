@@ -1,0 +1,14 @@
+Name,Input Shapes,Call Stack,Host Self Duration(us),Host Total Duration(us),Device Self Duration(us),Device Total Duration(us),Device Self Duration With AICore(us),Device Total Duration With AICore(us)
+aten::copy_,,,65.2,102.93,0,2.16,0,0
+acl_memcpy_host_to_device,,,37.73,37.73,2.16,2.16,0,0
+aten::copy_,,,7.77,19.58,0,2.4,0,0
+acl_memcpy_host_to_device,,,11.81,11.81,2.4,2.4,0,0
+consumer/whole/cap400/repeat0,,,484.52,4573.05,0,0.04,0,0
+Event::record,,,214.84,239.36,0,0.02,0,0
+record_event,,,24.52,24.52,0.02,0.02,0,0
+Event::wait,,,54.42,76.95,0,0.02,0,0
+wait_event,,,22.53,22.53,0.02,0.02,0,0
+destroy_event,,,6.82,6.82,0,0,0,0
+Event::record,,,50.77,66.22,0,0.0,0,0
+record_event,,,15.45,15.45,0.0,0.0,0,0
+Event::synchronize,,,3699.18,3699.18,0,0,0,0

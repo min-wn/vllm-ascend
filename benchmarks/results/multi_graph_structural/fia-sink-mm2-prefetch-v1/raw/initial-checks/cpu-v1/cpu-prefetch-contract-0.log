@@ -1,0 +1,73 @@
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void FiaBlockCubeNonQuantGqa<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::ND; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:693:54:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::ND; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:751:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:569:36: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  569 |                 if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                    ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void Original<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::ND; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:694:53:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::ND; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:751:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:374:32: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  374 |             if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void FiaBlockCubeNonQuantGqa<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::NZ; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:693:54:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::NZ; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:752:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:569:36: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  569 |                 if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                    ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void Original<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::NZ; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:694:53:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::ND; CubeFormat A = CubeFormat::NZ; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:752:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:374:32: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  374 |             if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void FiaBlockCubeNonQuantGqa<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::ND; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:693:54:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::ND; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:753:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:569:36: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  569 |                 if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                    ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void Original<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::ND; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:694:53:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::ND; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:753:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:374:32: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  374 |             if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void FiaBlockCubeNonQuantGqa<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::NZ; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:693:54:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::NZ; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:754:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:569:36: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  569 |                 if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                    ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp: In instantiation of ‘void Original<FIAT, Config>::ComputeMm2(const RunInfo&) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::NZ; FIAT = Shape<>; Config = Config<>]’:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:694:53:   required from ‘void compare(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) [with CubeFormat O = CubeFormat::NZ; CubeFormat A = CubeFormat::NZ; uint32_t = unsigned int]’
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:754:47:   required from here
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:374:32: warning: comparison of integer expressions of different signedness: ‘int32_t’ {aka ‘int’} and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+  374 |             if (unlikely(kL1Id >= vL1Snapshot.bufCnt)) {
+      |                                ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-screen-v1/cpu-prefetch-contract.cpp:13:22: note: in definition of macro ‘unlikely’
+   13 | #define unlikely(x) (x)
+      |                      ^
+22 runtime gates, 8 static fallbacks, 147456 sequences x 3 calls; events, copies and products match

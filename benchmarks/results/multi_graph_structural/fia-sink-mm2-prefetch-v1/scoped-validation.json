@@ -1,0 +1,46 @@
+{
+  "tests": {
+    "passed": 94,
+    "command": "python -m pytest -q --noconftest --tb=short --basetemp=outputs/pytest-prefetch-final-v1 tests/ut/worker/multi_graph/test_fia_sink_mm2_prefetch.py tests/ut/worker/multi_graph/test_fia_sink_mm2_double_buffer.py tests/ut/worker/multi_graph/test_fia_sink_mm2_transfer.py tests/ut/worker/multi_graph/test_fia_sink_running_o_build.py"
+  },
+  "primary_code_sha256": {
+    "benchmarks/aclgraph_fia_sink_mm2_prefetch_patch.py": "ec4f000b33bd3f6d123ceded8eddb850f6f7608dd291d57b6951b1e9b6af5ccb",
+    "benchmarks/aclgraph_fia_sink_mm2_prefetch_build.py": "ac7fa08bbd8c288855d6cf479d40278a2810b8ff341ba5fdc661bb4aa8cc9014",
+    "benchmarks/aclgraph_fia_sink_mm2_prefetch_contract.py": "87351378876c6ef9a8324ce7f98c757841fd434af5b4b25223f79426fd955d4b",
+    "benchmarks/aclgraph_fia_sink_running_o_build.py": "32a64fff6c87c258fb3366ab304ebb0fea6dd8dc4c864b9a8a1a7fcaf8201ec6",
+    "tests/ut/worker/multi_graph/test_fia_sink_mm2_prefetch.py": "c2e2ae9e2a1294f78f5bb643e5b35830db8f8c3bc968b5fa02ed88a0ea873ed3"
+  },
+  "scoped": [
+    {
+      "hook": "ruff-check",
+      "returncode": 0
+    },
+    {
+      "hook": "ruff-format",
+      "returncode": 0
+    },
+    {
+      "hook": "codespell",
+      "returncode": 0
+    },
+    {
+      "hook": "typos",
+      "returncode": 0
+    },
+    {
+      "hook": "markdownlint",
+      "returncode": 0
+    },
+    {
+      "hook": "check-forbidden-imports",
+      "returncode": 0
+    }
+  ],
+  "full_ci_passed": false,
+  "full_ci_returncode": 1,
+  "hook_edits_restored": 34,
+  "post_format_primary_and_counter_raw_hashes_verified": 263,
+  "source_followup_files": 3,
+  "current_auditor_identities_verified": true,
+  "full_ci_log_lossless_gzip_verified": true
+}

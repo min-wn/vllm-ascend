@@ -1,0 +1,188 @@
+[INFO] RUNTIME(3994202,python3):2026-10-19-12:23:36.346.049 [task_fail_callback_data_manager.cc:93] 3994202 TaskFailCallBackManager: Constructor.
+[INFO] RUNTIME(3994202,python3):2026-10-19-12:23:36.346.147 [xpu_task_fail_callback_data_manager.cc:59] 3994202 XpuTaskFailCallBackManager: XpuTaskFailCallBackManager Constructor.
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1399:58: error: no matching function for call to 'Min'
+            PrefetchMm2Block<AFormat>(info, mL1, Axis(0, Min(K_SPLIT_SIZE, k.sizeAct)),
+                                                         ^~~
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:734:24: note: candidate function template not viable: requires 4 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:682:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:704:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1399:50: error: no matching constructor for initialization of 'Axis'
+            PrefetchMm2Block<AFormat>(info, mL1, Axis(0, Min(K_SPLIT_SIZE, k.sizeAct)),
+                                                 ^    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:29:23: note: candidate constructor not viable: cannot convert argument of incomplete type 'void' to 'uint32_t' (aka 'unsigned int') for 2nd argument
+    __aicore__ inline Axis(uint32_t start_, uint32_t sizeAct_) : start(start_), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:28:23: note: candidate constructor not viable: requires single argument 'sizeAct_', but 2 arguments were provided
+    __aicore__ inline Axis(uint32_t sizeAct_) : start(0), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit copy constructor) not viable: requires 1 argument, but 2 were provided
+struct Axis {
+       ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit move constructor) not viable: requires 1 argument, but 2 were provided
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1480:70: error: no matching function for call to 'Min'
+                    PrefetchMm2Block<AFormat>(info, mL1, Axis(nextK, Min(K_SPLIT_SIZE, k.sizeAct - nextK)),
+                                                                     ^~~
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:734:24: note: candidate function template not viable: requires 4 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:682:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:704:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1480:58: error: no matching constructor for initialization of 'Axis'
+                    PrefetchMm2Block<AFormat>(info, mL1, Axis(nextK, Min(K_SPLIT_SIZE, k.sizeAct - nextK)),
+                                                         ^    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:29:23: note: candidate constructor not viable: cannot convert argument of incomplete type 'void' to 'uint32_t' (aka 'unsigned int') for 2nd argument
+    __aicore__ inline Axis(uint32_t start_, uint32_t sizeAct_) : start(start_), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:28:23: note: candidate constructor not viable: requires single argument 'sizeAct_', but 2 arguments were provided
+    __aicore__ inline Axis(uint32_t sizeAct_) : start(0), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit copy constructor) not viable: requires 1 argument, but 2 were provided
+struct Axis {
+       ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit move constructor) not viable: requires 1 argument, but 2 were provided
+4 errors generated.
+make: *** [/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_tmp_aiv_3994202.mk:4: /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_tmp_aiv_3994202_104000000010222223] Error 1
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1399:58: error: no matching function for call to 'Min'
+            PrefetchMm2Block<AFormat>(info, mL1, Axis(0, Min(K_SPLIT_SIZE, k.sizeAct)),
+                                                         ^~~
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:734:24: note: candidate function template not viable: requires 4 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:682:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:704:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1399:50: error: no matching constructor for initialization of 'Axis'
+            PrefetchMm2Block<AFormat>(info, mL1, Axis(0, Min(K_SPLIT_SIZE, k.sizeAct)),
+                                                 ^    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:29:23: note: candidate constructor not viable: cannot convert argument of incomplete type 'void' to 'uint32_t' (aka 'unsigned int') for 2nd argument
+    __aicore__ inline Axis(uint32_t start_, uint32_t sizeAct_) : start(start_), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:28:23: note: candidate constructor not viable: requires single argument 'sizeAct_', but 2 arguments were provided
+    __aicore__ inline Axis(uint32_t sizeAct_) : start(0), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit copy constructor) not viable: requires 1 argument, but 2 were provided
+struct Axis {
+       ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit move constructor) not viable: requires 1 argument, but 2 were provided
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1480:70: error: no matching function for call to 'Min'
+                    PrefetchMm2Block<AFormat>(info, mL1, Axis(nextK, Min(K_SPLIT_SIZE, k.sizeAct - nextK)),
+                                                                     ^~~
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:734:24: note: candidate function template not viable: requires 4 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:682:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/basic_api/../../impl/basic_api/kernel_operator_vec_binary_intf_impl.h:704:24: note: candidate function template not viable: requires 6 arguments, but 2 were provided
+__aicore__ inline void Min(const LocalTensor<T>& dst, const LocalTensor<T>& src0, const LocalTensor<T>& src1,
+                       ^
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_kernel.cpp:6:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink.cpp:24:
+In file included from /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h:35:
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h:1480:58: error: no matching constructor for initialization of 'Axis'
+                    PrefetchMm2Block<AFormat>(info, mL1, Axis(nextK, Min(K_SPLIT_SIZE, k.sizeAct - nextK)),
+                                                         ^    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:29:23: note: candidate constructor not viable: cannot convert argument of incomplete type 'void' to 'uint32_t' (aka 'unsigned int') for 2nd argument
+    __aicore__ inline Axis(uint32_t start_, uint32_t sizeAct_) : start(start_), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:28:23: note: candidate constructor not viable: requires single argument 'sizeAct_', but 2 arguments were provided
+    __aicore__ inline Axis(uint32_t sizeAct_) : start(0), sizeAct(sizeAct_) {}
+                      ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit copy constructor) not viable: requires 1 argument, but 2 were provided
+struct Axis {
+       ^
+/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/axis.h:24:8: note: candidate constructor (the implicit move constructor) not viable: requires 1 argument, but 2 were provided
+4 errors generated.
+make: *** [/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_tmp_aic_3994202.mk:4: /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_tmp_aic_3994202_104000000010222223] Error 1
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.882.937 [repository_manager_log.py:30][log] [log_utils.py:185][repository_manager] [ascend910b]  FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673 ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673
+Opc tool start working now, please wait for a moment.
+[2026-10-19 12:23:44] [ERROR] [ascend910b] FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673 ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010322223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010322223.o: No such file or directory
+
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.883.346 [op_compilation.py:344][__single_op_compile] Exception occured, An error occurred during compile phases of CompileStage.FATBIN, msg is ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/Fused
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.887.915 [opc_common.py:232][_log_error] Traceback (most recent call last):
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/opc_tool/op_compilation.py", line 336, in __single_op_compile
+    json_file_path = single_op_obj.op_compile()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/opc_tool/single_op_compile.py", line 277, in op_compile
+    json_file_path = self.__call_op()
+                     ^^^^^^^^^^^^^^^^
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/opc_tool/single_op_compile.py", line 171, in __call_op
+    op_func(*inputs, *outputs, *new_attrs, self.__op_info.get(OpcOptions.KERNEL_NAME), **kwargs)
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.887.975 [opc_common.py:232][_log_error]   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/register/operation_func_mgr.py", line 214, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/utils/para_check.py", line 548, in _in_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/source/csrc/attention/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink.py", line 352, in fused_infer_attention_score_v2_sink
+    compile_op(src, origin_func_name, op_info, options, code_channel, '{}', {'valueDepend': {}})
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.011 [opc_common.py:232][_log_error]   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/compile_op.py", line 1435, in compile_op
+    compile_op_common_part(cce_file, origin_func_name, op_info, compile_option_tuple, infered_info_from_ifile,
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/compile_op.py", line 1335, in compile_op_common_part
+    compile_kernel_and_meta(compile_info, op_info, compile_option_tuple, tiling_info)
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/compile_op.py", line 1065, in compile_kernel_and_meta
+    _compile_ascendc_cce_v220_with_kernel_type(compile_info, compile_option_tuple, tiling_info)
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.031 [opc_common.py:232][_log_error]   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/compile_op.py", line 1877, in _compile_ascendc_cce_v220_with_kernel_type
+    _compile_ascendc_cce_v220_with_kernel_type_for_dynamic(compile_info, compile_option_tuple, tiling_info)
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/compile_op.py", line 1861, in _compile_ascendc_cce_v220_with_kernel_type_for_dynamic
+    fatbin_objs(obj_files, compile_info.dst_file, compile_info.is_debug, compile_info.compile_log_path)
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/ascendc_compile_base.py", line 104, in fatbin_objs
+    CommonUtility.run_cmd_inner(compile_cmd, CompileStage.FATBIN, compile_log_path)
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.049 [opc_common.py:232][_log_error]   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/ascendc_common_utility.py", line 335, in run_cmd_inner
+    CommonUtility.dump_build_log(output.decode(), cmds, stage, ret_code)
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/tikcpp/ascendc_common_utility.py", line 604, in dump_build_log
+    raise Exception("An error occurred during compile phases of {}, msg is {}".\
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.065 [opc_common.py:232][_log_error] Exception: An error occurred during compile phases of CompileStage.FATBIN, msg is ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.091 [op_compilation.py:214][record_compile_error_info] Op[FusedInferAttentionScoreV2Sink] of index[0] compile failed, kernelName: FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.268 [opc_common.py:542][opc_log_full] [op_compilation.py:216][record_compile_error_info] reason is:[An error occurred during compile phases of CompileStage.FATBIN, msg is ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010222223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010222223.o: No such file or directory
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.888.304 [opc_common.py:542][opc_log_full] ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aic_104000000010322223.o: No such file or directory
+ld.lld: error: cannot open /workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1/kernel_meta_FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673/kernel_meta/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673_mix_aiv_104000000010322223.o: No such file or directory
+].
+[ERROR] TBE(3994202,python3):2026-10-19-12:23:44.892.113 [opc.py:763][main] Opc tool compile failed.
+[INFO] RUNTIME(3994202,python3):2026-10-19-12:23:45.373.311 [xpu_task_fail_callback_data_manager.cc:64] 3994202 ~XpuTaskFailCallBackManager: XpuTaskFailCallBackManager Destructor.
+[INFO] RUNTIME(3994202,python3):2026-10-19-12:23:45.373.377 [task_fail_callback_data_manager.cc:98] 3994202 ~TaskFailCallBackManager: Destructor.
+[INFO] ATRACE(3994202,python3):2026-10-19-12:23:45.530.107 [stacktrace_signal.c:199](tid:3994202) unregister all signal handlers, can not capture signal.

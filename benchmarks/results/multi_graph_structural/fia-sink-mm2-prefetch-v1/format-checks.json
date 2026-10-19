@@ -1,0 +1,68 @@
+{
+  "full_ci_returncode": 1,
+  "hook_modified_files_restored": [
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/raw/screen/cpu-double-buffer-contract.cpp",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/raw/tools/mm2_double_buffer_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/tools/mm2_double_buffer_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/tools/mm2_double_buffer_deploy.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/tools/mm2_double_buffer_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/tools/mm2_double_buffer_publish.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-double-buffer-v1/tools/mm2_double_buffer_status.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-prefetch-v1/counter-diagnostic/raw/0143.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-prefetch-v1/counter-diagnostic/raw/0146.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-prefetch-v1/raw/initial-checks/cpu-v1/cpu-prefetch-contract.cpp",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-prefetch-v1/raw/initial-checks/screen-v2/cpu-prefetch-contract.cpp",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-prefetch-v1/raw/screen/cpu-prefetch-contract.cpp",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-prefetch-v1/raw/tools/mm2_prefetch_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/raw/screen/cpu-transfer-contract.cpp",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/raw/tools/mm2_transfer_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_deploy.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_publish.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_source_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-mm2-transfer-v1/tools/mm2_transfer_status.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/deployed-tools/running_o_pair_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_pair_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_pair_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/confirmation/running_o_pair_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/deployed-tools/running_o_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_audit.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_collect.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_deploy.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_driver.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_publish.py",
+    "benchmarks/results/multi_graph_structural/fia-sink-running-o-v1/tools/running_o_recompute.py"
+  ],
+  "scoped": [
+    {
+      "hook": "ruff-check",
+      "returncode": 0
+    },
+    {
+      "hook": "ruff-format",
+      "returncode": 0
+    },
+    {
+      "hook": "codespell",
+      "returncode": 0
+    },
+    {
+      "hook": "typos",
+      "returncode": 0
+    },
+    {
+      "hook": "markdownlint",
+      "returncode": 0
+    },
+    {
+      "hook": "check-forbidden-imports",
+      "returncode": 0
+    }
+  ],
+  "full_ci_command": "python -m pre_commit run --all-files --hook-stage manual",
+  "equivalent_to": "format.sh ci pre-commit invocation",
+  "raw_evidence_preserved": true
+}

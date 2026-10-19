@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-tools-v2/aclgraph_fia_sink_mm2_prefetch_build.py", line 43, in <module>
+    main()
+  File "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-tools-v2/aclgraph_fia_sink_mm2_prefetch_build.py", line 36, in main
+    status = base.build(
+             ^^^^^^^^^^^
+  File "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-tools-v2/aclgraph_fia_sink_running_o_build.py", line 246, in build
+    raise RuntimeError("isolated AICore compile failed")
+RuntimeError: isolated AICore compile failed

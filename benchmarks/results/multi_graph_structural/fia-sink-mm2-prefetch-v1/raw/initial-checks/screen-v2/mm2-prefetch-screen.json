@@ -1,0 +1,123 @@
+{
+  "state": "failed",
+  "stage": "build-control",
+  "started_unix": 1792412603.769032,
+  "runs": [],
+  "builds": [
+    {
+      "name": "control",
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-tools-v2/aclgraph_fia_sink_mm2_prefetch_build.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--upstream-vendor",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "--whole-vendor",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-build-control-v1",
+        "--prefetch",
+        "0",
+        "--timeout",
+        "1200"
+      ],
+      "started_unix": 1792412610.0502892,
+      "returncode": 1,
+      "finished_unix": 1792412625.785524
+    }
+  ],
+  "design": {
+    "cells": [
+      "control",
+      "candidate",
+      "candidate",
+      "control"
+    ],
+    "policy": "whole",
+    "trial": 0,
+    "seed": 1703,
+    "warmups": 5,
+    "repeats": 10,
+    "profile_repeats": 1,
+    "capacities": [
+      400,
+      512
+    ],
+    "occurrences": 16
+  },
+  "source_sha256": {
+    "aclgraph_fia_sink_consumer_analyze.py": "d420efdac972e45c52d7fc5c3f8cd5d77027b1f42146f254f99b9fc290c0e71c",
+    "aclgraph_fia_sink_consumer_probe.py": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+    "aclgraph_fia_sink_consumer_suite.py": "ce1f414e5a2a33fb2bc95f4e8a830ec277b5edc443e3416427ac4b366856742b",
+    "aclgraph_fia_sink_mm2_double_buffer_contract.py": "1f41d00e802230b16462cd2cee92fada89750fc0c010a719707ce8cea1b1edc3",
+    "aclgraph_fia_sink_mm2_double_buffer_patch.py": "a9ac91e37ab439c2986cbd3c2c23b7ee9fedbbf470dc961ffa09e86cc3316483",
+    "aclgraph_fia_sink_mm2_prefetch_build.py": "ac7fa08bbd8c288855d6cf479d40278a2810b8ff341ba5fdc661bb4aa8cc9014",
+    "aclgraph_fia_sink_mm2_prefetch_contract.py": "84a358bf31cde63b5af016c67279265c1a1835a45a04ffda98748eae805aab75",
+    "aclgraph_fia_sink_mm2_prefetch_patch.py": "3cc46191f15e589c6537944f53037f62d5e4d75f0ff9a7a7fd160251e35dc5f9",
+    "aclgraph_fia_sink_mm2_transfer_build.py": "154fc0b85418f652bf4df2cf53c7497648841e90cd9029bb78dd2f1e491616ab",
+    "aclgraph_fia_sink_mm2_transfer_patch.py": "df525de8cf2a1c59ce6977b199fbcdb7bbf6c92f789f0888faea2e9b54afc38b",
+    "aclgraph_fia_sink_running_o_build.py": "32a64fff6c87c258fb3366ab304ebb0fea6dd8dc4c864b9a8a1a7fcaf8201ec6",
+    "aclgraph_fia_sink_running_o_patch.py": "0de5b73e22626c825cec46448488c45f5511c223f719ac7d5029162732b9dba4",
+    "aclgraph_fia_sink_stage1_extension.py": "10fd3b4b22f142c1b9575e2c7b960a3c0a908f9e2acb843bcd722da448d22bc4",
+    "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "aclgraph_fia_sink_stage2_graph.py": "40d1a86bd06e29c3ad2f06624177d6f144f12269d0e5fcad3c7a02e811217571",
+    "aclgraph_fia_sink_stage2_patch.py": "0d7853ab651b0ad4392211219933a7a7085cffce2f437b8d6207b7dffb7a4d04",
+    "aclgraph_fia_sink_stage2_summarize.py": "9e46506fcad1880e6074c3d89998d1e085302255974420a8d893c99252ee6212",
+    "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137",
+    "aclgraph_fia_sink_stage3_analyze.py": "2e277b1883ccc500f5cd8bc050020d8e7b640ffe52b49b996ecbadaa603a25af",
+    "aclgraph_fia_sink_stage3_budget.py": "a71e01920680a7a0449f6e041bb49ddf5e5dccc3c583d3b9c1d35ead336a09ca",
+    "aclgraph_fia_sink_stage3_legacy.py": "406562489d9f97d1cf995dabf28fe4977396f24d8060295698940f462f3428a1",
+    "aclgraph_fia_sink_stage3_trace.py": "e99f60febf234336569a3ca5f0b1176eacadf89851c5b20b065b389693d85aa5",
+    "aclgraph_fia_sink_stage4_analyze.py": "79bcd54698afb49ea28d74b99b64f0d7b61c2bb9fa2bd9472f8cb2c757996463",
+    "aclgraph_fia_sink_stage4_budget.py": "3409f61b9f088f497f6c3b3b05d2f2a8b005368080498e8d8064a8c6e7d4bcd3",
+    "aclgraph_fia_sink_stage4_prepare.py": "21a723a09a3bc4e2949e3292c5e9c9756bdcbb5d293853c68cd569a7093f1072",
+    "aclgraph_fia_sink_stage4_whole_analyze.py": "c988da3e0a11f39b85e21e5563f7b4939c646bc64ca0cf647717d0d64e1ef124",
+    "aclgraph_fia_sink_stage4_whole_plan.py": "10d095369cde48cef0538249b2806d0db7ca655fddb208d2819019bf5294e7b8",
+    "aclgraph_fia_sink_stage4_whole_probe.py": "07bd3396584b5370719eac51743d95c8263556c92c66d25e0705236a2e9c2902",
+    "aclgraph_fia_sink_stage5_build.py": "bd37a3f48bbea05267f51631e4e713aef1f5700029d76f38b0bd507997645021",
+    "aclgraph_fia_sink_stage5_gate.py": "88088520c4e961fe1441423f01397204290dd59ee5bda7e9a00c9ec6ac2069e2",
+    "aclgraph_fia_sink_stage5_patch.py": "cdcae709d6bf3072644e87b3bb306545386233aae375841513cd1b9d92ba8008",
+    "aclgraph_fia_sink_stage6_analyze.py": "ebb468e62160b678206baad2f46ad1719214b1bccb186d21e141e8bdf4d27766",
+    "aclgraph_fia_sink_stage6_probe.py": "4c47e5b1797a589c931e38c5da29b06a47bce6ff782596fb44160cf64de04141",
+    "aclgraph_fia_sink_stage6_suite.py": "2818dcf7d2e60360b42ac599f7b3fc71413523c5b04948779abc8fde79952eb5",
+    "aclgraph_fia_sink_stage7_analyze.py": "383641730f7e7308d35222db292602fb135b1c17440f9fc4118ce38daccd6569",
+    "aclgraph_fia_sink_stage7_probe.py": "ae985c186290e5b0ff478488b49c66a984317ed2f4d09a65f4df195b6e0b2604",
+    "aclgraph_fia_sink_stage7_suite.py": "8d2eec1702bf897f265dab85544145568d55c1cc361bafc708fb50411f32cd76",
+    "mm2_prefetch_driver.py": "e5b6291a34f0fe6ca704004173a2826b960afec4ad0f79b359b162dd6c741fa0",
+    "multi_graph_dynamic_trace.py": "dc5dac7685a58508fc425e6587752ba6bd7fc9c71fb2d60e2cb9f0ab422b10b5",
+    "multi_graph_gdn_q4_full_loader.py": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0",
+    "multi_graph_gdn_q4_full_metadata.py": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147"
+  },
+  "scope": "Two synthetic attention-chain records; ABBA same-layout prefetch; not full-model or split-exclusive",
+  "performance_measured": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "cpu_contract": {
+    "passed": true,
+    "native_helpers": {
+      "fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+      "array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79",
+      "memcopy/copy_gm_to_l1.h": "6293778b165cbeaf1a844bf7489d387abf560217ea7045abe6f1127e7e6117fc",
+      "axis.h": "ea3d5fa888fc9162eb38a10dfc1be116d927f829a6ac07e4261ad8340e6645fa",
+      "fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0"
+    },
+    "actual_complete_compute_methods": true,
+    "actual_prefetch_helper": true,
+    "native_axis": true,
+    "macro_values": [
+      0,
+      1
+    ],
+    "runtime_gate_cases": 22,
+    "static_fallback_cases": 8,
+    "paired_sequences_per_macro": 147458,
+    "consecutive_calls_per_sequence": 3,
+    "source_sha256": "5cc2fe2ad501f056a3ea2a279f4dbc95ce871007fdee5e1822e97a38226797e7",
+    "scope": "CPU issue order and token ownership; does not prove device async safety or gain"
+  },
+  "returncode": 1,
+  "error": "Traceback (most recent call last):\n  File \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/mm2-prefetch-tools-v2/mm2_prefetch_driver.py\", line 66, in <module>\n    assert result.returncode == 0\n           ^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "finished_unix": 1792412625.786851
+}

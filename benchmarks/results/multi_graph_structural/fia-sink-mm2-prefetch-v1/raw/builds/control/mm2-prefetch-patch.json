@@ -1,0 +1,21 @@
+{
+  "source_file": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+  "before_sha256": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+  "after_sha256": "0a4963c072885ab70ee14a4c6946beb89a561e5fd5546f106cdff46f15fadcf2",
+  "macro": "THESIS_FIA_MM2_PREFETCH",
+  "macro_enabled_by_patch_tool": false,
+  "target": "A2 BF16 TND paged ND128 Q4/GQA6/D256, single M tile <=64, 0<K<=512, no sink/RoPE/uniflag",
+  "l1_total_bytes": 475136,
+  "l1_kp_slots": 3,
+  "l1_v_slots": 2,
+  "l0_compute_k": 64,
+  "l1_transfer_k": 64,
+  "new_task_or_workspace_prefetch": false,
+  "next_transfer_before_cube_barrier": true,
+  "original_slot_release_position": true,
+  "buffer_allocations_unchanged": true,
+  "unchanged": "MM1, copies, load parameters, Mmad order, slot release, softmax, plans, updates, graph sizes",
+  "fallback": "original loop retained; only gated single-M tasks take the prefetch branch",
+  "qualification": "source only; CPU event model and restricted device checks required",
+  "graph_split_exclusive": false
+}
