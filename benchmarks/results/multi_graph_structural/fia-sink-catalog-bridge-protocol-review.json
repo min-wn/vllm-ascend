@@ -1,0 +1,45 @@
+{
+  "review_state": "design_qualified_with_bounded_interpretation",
+  "review_scope": "Read-only protocol review before execution; no NPU run and no benchmark source change by reviewer.",
+  "question": "Does changing resident graph-catalog construction/context alter the upstream-to-whole policy gap while measuring the identical two original records?",
+  "control_cells": [
+    "two-catalog upstream",
+    "two-catalog whole",
+    "seventeen-catalog upstream",
+    "seventeen-catalog whole"
+  ],
+  "minimum_fresh_processes": 4,
+  "minimum_timing_count": 80,
+  "unchanged_records": [
+    {"step": 0, "capacity": 400, "batch": 98},
+    {"step": 29, "capacity": 512, "batch": 128}
+  ],
+  "seventeen_catalog_capture_order": [400, 304, 288, 352, 272, 496, 464, 480, 320, 448, 384, 368, 432, 256, 512, 336, 416],
+  "seventeen_catalog_first_steps": [0, 1, 2, 3, 4, 5, 7, 9, 11, 14, 17, 18, 21, 24, 29, 37, 38],
+  "two_catalog_capture_order": [400, 512],
+  "critical_implementation_checks": [
+    "Do not edit or monkey-patch the frozen consumer or Stage7 probe source; use a separate bridge probe with explicit new source hashes.",
+    "Use sixteen private resident occurrences, seed1703, original exact lengths, owner page order, mask and the current qualified common consumer/policy binaries.",
+    "Each captured bucket owns an independent graph pool and exact cloned length/table/query extents. Retain every selected catalog frame, graph, pool, output and workspace until measurement ends.",
+    "Preserve original first-use capture order rather than sorted capacities. The different allocation layout and capture history belong to the catalog-context treatment.",
+    "Use an identical explicit measurement-record order in all four cells; do not let trial or cell index rotate the two-record schedule differently.",
+    "Qualification and premeasurement replay history must match for the measured records across cells. Additional unused catalog graphs may undergo capture-time safety gates but must not introduce an extra full-trace replay or full-catalog qualification between the common two-record prequalification and warmup.",
+    "Five warmups and ten repeats per measured record, the same order and synchronization boundaries, and no active profiling during formal timings.",
+    "The complete wall endpoint includes persistent pinned preparation, true necessary H2D, native producer, attention replay and final completion. Readback, hashing, oracle and evidence persistence remain outside timing.",
+    "Hash all private base QKV and actual measured frame queries before and after; compare exact policy-plan words/hash for the same measured record across two- and seventeen-catalog cells.",
+    "Report measured-record preparation counts separately from setup or unused-catalog construction counts; a catalog must not appear equivalent solely because memory summary values match.",
+    "Limit execution to device0 with TASK_QUEUE_ENABLE=0 and preserve every sample and failure without merging prior interrupted or bounded trials."
+  ],
+  "process_order_comment": {
+    "suggested_order_for_interaction_screen": ["upstream-2", "whole-2", "upstream-17", "whole-17"],
+    "primary_contrast": "(upstream_minus_whole_us at catalog2) minus (upstream_minus_whole_us at catalog17)",
+    "linear_drift_note": "With equally spaced run positions this interaction has coefficients +,-,-,+ and cancels a common additive linear position trend. Actual runtime spacing differs, so this is only an ordering aid, not proof that drift is removed.",
+    "limitation": "One fresh process per cell cannot estimate process-to-process uncertainty. If the concurrent two-catalog reference changes strongly or interaction is near noise, preserve an inconclusive result and run a reverse block only then."
+  },
+  "interpretation_gates": {
+    "both_catalogs_retain_large_policy_gap": "Catalog count/construction/residency alone is insufficient to explain Stage7 attenuation; chronological descriptor and execution history becomes the next small control.",
+    "seventeen_catalog_gap_shrinks": "Catalog construction/context affects the policy gap. This does not isolate memory byte count from addresses, graph capture history, allocator placement, device state or any cache mechanism.",
+    "two_catalog_reference_does_not_reproduce": "The historical bounded effect was not concurrently reproduced. Do not attribute a difference to catalog size; retain process/time context as unresolved.",
+    "scope": "A two-record synthetic attention diagnostic, without full-trace, full-model, serving, split-versus-padding or academic-novelty claim."
+  }
+}

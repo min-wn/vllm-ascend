@@ -1,0 +1,25 @@
+{
+  "independent_evidence_audit_passed": true,
+  "independently_checked_assertions": 27731,
+  "unit_tests": {
+    "probe_passed": 23,
+    "suite_passed": 19,
+    "failed": 0
+  },
+  "scoped_checks_passed": true,
+  "full_ci_passed": false,
+  "full_ci_log": "fia-sink-catalog-bridge-v1/format-ci.log",
+  "existing_full_ci_failures": [
+    "Verbatim vendor/raw-evidence spelling",
+    "Existing direct Triton imports",
+    "Windows hooks missing /bin/bash, shellcheck or python3"
+  ],
+  "files": {
+    "benchmarks/aclgraph_fia_sink_catalog_bridge_probe.py": "5ad90cccbddfa36a23758ff4c681c727928c6febea2c8e7eba5e24176f00c3b5",
+    "benchmarks/aclgraph_fia_sink_catalog_bridge_suite.py": "d63a89946c8fc4f7f0d8eeaaa05df991f805f4a1e4356ec71a5d03a24d2b865a",
+    "tests/ut/worker/multi_graph/test_fia_sink_catalog_bridge_probe.py": "6f81a5de867b54215a9607e1f11278485560ab689156588f8de98c8789086e69",
+    "tests/ut/worker/multi_graph/test_fia_sink_catalog_bridge_suite.py": "561e11e0b5d402d0da30995bd3ac418ab56a482b686f61a8b984ff9f4fd7029b"
+  },
+  "frozen_consumer_probe_sha256": "b7472c5ccbdb37d4f5ea1693f2abc5145a71abb773d1e09ea788bf5daca964c9",
+  "scope": "Four-cell context screen, one fresh process each; no stable/full-model/serving gain claim."
+}

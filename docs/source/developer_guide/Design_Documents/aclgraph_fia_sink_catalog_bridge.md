@@ -1,6 +1,7 @@
 # FIA sink graph-catalog context bridge
 
-Status: predeclared bounded diagnostic, 2026-10-19. Measurements are pending.
+Status: four-process bounded diagnostic completed, 2026-10-19. All eighty
+timings and 144 sampled FP32 rows pass the independent evidence audit.
 This is a context screen, not a new scheduling algorithm or complete model
 performance experiment.
 
@@ -95,3 +96,79 @@ establishes full-model gain, split superiority or algorithmic novelty.
 The kernel candidate remains separate: retain running output in UB under
 the whole-head ownership/lifetime contract, with explicit slot and UB-budget
 checks. This bridge does not implement or validate that change.
+
+## Observed result
+
+All four selected processes complete with identical frozen source. The same
+private base Q/K/V and common-bucket queries match across all cells. Same-policy
+complete native plans match across catalogs. No unused captured graph is
+replayed. Pre/post qualification passes all sixteen outputs for finite values
+and KV0 zeros; 144 sampled FP32 rows have maximum absolute error
+0.00029981881380081177. NPU0 is idle after completion.
+
+| Catalog | Original record | Upstream wall us | Whole wall us | Saved us | Reduction |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 2 | step0/B98/capacity400 | 4930.206 | 4630.140 | 300.067 | 6.086% |
+| 2 | step29/B128/capacity512 | 6283.276 | 5943.937 | 339.340 | 5.401% |
+| 17 | step0/B98/capacity400 | 4836.580 | 4469.990 | 366.590 | 7.580% |
+| 17 | step29/B128/capacity512 | 6082.302 | 5576.469 | 505.833 | 8.316% |
+
+Each row contains ten observations per policy. Capacity denotes physical
+Q4 tokens: capacity400 has 100 physical requests, and capacity512 has 128.
+Both catalogs retain the original capture sizes and physical padding.
+
+The larger catalog allocates/reserves 6,789,984,256/11,632,902,144 bytes,
+versus 5,669,344,768/6,400,507,904 for two buckets, matching the earlier
+experiment footprints. The policy difference increases by 66.523 us at
+capacity400 and 166.494 us at capacity512 in this block. This does not
+support catalog count or retained allocation size alone as the explanation
+for Stage 7's much smaller observed gain. It does not prove a benefit from
+more graphs: cell order, process conditions and allocation context remain
+confounded, and each cell has only one fresh process.
+
+The concurrent two-bucket gains are also smaller than the previous
+9.418%/10.095%, so the historical magnitude is not stable across runs.
+Seventeen buckets do not collapse to Stage 7's same-record 1.184%/0.332%
+in this repeated-record protocol. Chronological descriptor/replay history
+and process/device drift remain unresolved. A future narrow history control
+must keep the seventeen-bucket catalog and its capture order fixed, alter
+only the intervening replay sequence and preserve every current descriptor.
+This experiment does not establish either history or frequency as the cause.
+
+The practical decision is to stop treating graph-memory size as a confirmed
+bottleneck. The measured consumer execution gap and explicit workspace
+accumulation round trips remain a concrete, separately testable kernel
+target. Required preparation and native planning stay inside every endpoint.
+Stage 7's 1.788% complete dynamic-descriptor-trace result, including its
+negative round and P99, remains the applicable dynamic-trace evidence.
+
+## Audit, failed attempt and reproduction
+
+The selected `catalog-bridge-v2` bundle contains 52 raw files. An independent
+stdlib audit performs 27,731 assertions over source/native identity, exact
+trace reconstruction, all eighty samples, 144 FP32 row identities, 130 full
+plan payloads and descriptor/address/byte contracts. Only 24 of those plan
+checks refer to actual captured-producer replay output; the others identify
+executed eager preflight explicitly. The source tests contain 23 probe and
+19 suite cases; scoped Ruff, spelling and Markdown checks pass. Full-repository
+CI still has retained vendor/raw-log spelling, pre-existing Triton import and
+Windows hook/tooling failures; the original log is saved.
+
+The initial `catalog-bridge-v1` attempt failed before any timed sample because
+its audit tried to interpret unexecuted graph metadata. Its raw reports and
+exact source are retained under `failed-premeasurement-v1/`. The validation
+fix adds no extra graph replay and changes no frozen preparation, consumer,
+producer or timing helper. No failed-attempt sample enters the table.
+
+Saved repository artifacts:
+
+- `benchmarks/results/multi_graph_structural/fia-sink-catalog-bridge-v1/`:
+  raw suite/reports, deployed source, manifests, failed attempt and audit snapshot.
+- `fia-sink-catalog-bridge-analysis.json`: complete qualified audit and summaries.
+- `fia-sink-catalog-bridge-protocol-review.json`: the predeclared independent
+  design review and limits on causal interpretation.
+- `fia-sink-catalog-bridge-checks.json`: code hashes, tests and quality results.
+
+The audit snapshot accepts the collected `catalog-bridge-suite.json` and an
+explicit `--repo` checkout path; choose a new `--output` outside manifested
+raw evidence. No NPU is needed to reproduce its checks and numerical summary.

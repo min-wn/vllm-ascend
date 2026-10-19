@@ -168,6 +168,15 @@ inputs and plans match Stage 7, but the captured graph catalog and history
 differ. Neither complete dynamic-trace robustness nor a particular allocation
 cause is established.
 
+The [four-process catalog bridge](aclgraph_fia_sink_catalog_bridge.md) preserves
+the repeated two-record protocol while retaining two or seventeen graphs.
+Its wall reductions are 6.086%/5.401% and 7.580%/8.316%, respectively, with
+144 sampled FP32 rows passing. This does not support catalog count alone as
+the explanation for Stage 7 attenuation. A single process per cell cannot
+separate replay history, capture context and process/device drift. The bridge
+adds experimental attribution evidence, not a new algorithm or a stable
+dynamic-trace/full-model performance claim.
+
 Stage 8's three-step real-model integration screen and critical-path headroom
 measurement remain conditional. Establish whether optimized attention work is
 exposed in the real TP2 model; the Stage 7 chain saving is not a promised

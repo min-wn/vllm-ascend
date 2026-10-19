@@ -1,0 +1,1622 @@
+{
+  "qualified": true,
+  "independent_checks": 27731,
+  "raw_manifest_files": 52,
+  "sample_count": 80,
+  "fp32_sampled_rows": 144,
+  "maximum_fp32_absolute_error": 0.00029981881380081177,
+  "complete_plan_payload_checks": 130,
+  "actual_replayed_plan_payload_checks": 24,
+  "common_non_policy_native_artifacts": {
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink.h": "9240608d02f454561b6761077dc30f3b07999aeee4b254d7110b1b2e8a46e1ac",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_metadata.h": "a4445c69629109a875b30e7b6d8d8a9e1e419fde7da415177641e9df165afcda",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_metadata_v2.h": "974f148c7f32f7807a87c56f0dd2566c7dff064619a48838680c2c5f588c60e5",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_v2.h": "f74d9114812f5343261844664d71ffd52fba53655649333c37da76fc17bbcea7",
+    "op_api/include/aclnnop/aclnn_fused_infer_attention_score_v2_sink_v3.h": "38a4b1500c92e9544600782eb856f08c15928ab1b342f846d35bf6d6642dcc7b",
+    "op_api/include/aclnnop/aclnn_ops_transformer_thesis_fia_stage2.h": "74af955a6836a1584a1d1328c2e3b0baa9b2c1a564ee12576353fa9697f49091",
+    "op_api/lib/libcust_opapi.so": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+    "op_impl/ai_core/tbe/config/ascend910b/aic-ascend910b-ops-info.json": "5c898b0c1ed531ba6486a7511f30eb7169af7668d297d0f6680133dafe0b6a06",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_22fd7a23ae3f8d2befb5fcbdfbcfd219.json": "f71490f20f8906bc94c5bf7eb734db09cd07b2e4430c58201cdf4783d415b564",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_22fd7a23ae3f8d2befb5fcbdfbcfd219.o": "37267378d76ca6110f7e1a87a5c215b44f70991ad5f0c4f71beffde119efa70e",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3623e899e9d3a1f66ad6fe99f4cadbf5.json": "6fded4ea9ce9e48c426959a46d469762b7a9bb67655344228087934df41a1633",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3623e899e9d3a1f66ad6fe99f4cadbf5.o": "83a15048bc7b57692a5477b746b109068c123cb5321c9a60b8b11edfc6948e46",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3af553d2e3779008f566bfbd8e20c9b1.json": "57a291beb9b039ad730dadd02c389ea28da0921a2577de4460ab2dae9420aaeb",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_3af553d2e3779008f566bfbd8e20c9b1.o": "d9944374d3c709941428b473cf39a2bc99feee9e545ab887c68521e531203a28",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_5a319bb1985b55f485f46cf2da6f30c5.json": "705939545c70a16eb9709b08f936f8367c90b537bc14bb2f8b8a45ef84cce093",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_5a319bb1985b55f485f46cf2da6f30c5.o": "e44b532d6b42278e6c133c6a688984c229891b4eb2635f78bb317b3120566ad1",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_78549e07db252c9cb755753e9af14a18.json": "79111b36a8dcc69af0e4bc680836951431e06b2711efcb2672ecbbd00a50399f",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_78549e07db252c9cb755753e9af14a18.o": "e0b76fca6c9fbc9dcb54a9cc4e9a779b90ced1d2a8892a225bb3b60bc72a15f7",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_9763cafe0d9b6c14d767e9cc6d2b745e.json": "80eb6cb85148ecc8d8416b9eec1e37abfc63344a944570bb3e4119503d33a991",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_9763cafe0d9b6c14d767e9cc6d2b745e.o": "2c734b63938d4a4f42feeb73424a0b9f752c5166b5aaa810db7a4bfa65d68cd0",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_ac1fcefd2c5202b9568e867f7227bd18.json": "ea147acaa1a36db05e7cf4fb374ce90ed4d44451a57f452df523d98ef1966aee",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_ac1fcefd2c5202b9568e867f7227bd18.o": "1f6833483d86214312ee97408de336d32a98f8166aca26cbd2ca745ad6b53a40",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.json": "789cc7c75440484c7e93f3a379072535799ab18b35df82238822b529c0b08f76",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_cacc23924ba5ed25533f5fc5005e0673.o": "9098b4ac6441c9c730e15d362c1cd42bc93df2a80c0ced523c1df530bf3f04ea",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_d85d0408456b0e088e525f5df8ea9960.json": "fda5093862d9a7c2e30a1d1c1d8502f1d74771e7bdb967af7b17ef25ba6004ab",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_d85d0408456b0e088e525f5df8ea9960.o": "f46a35ee78e20fdbfb6101dbef2753d5b31af334e3ee36c847ef7201696ae5aa",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_e4b3528397fbaa4fd0671478823aa029.json": "86e2b5edbb67c32729545caebb44ed04e07cb0eb7b01b17063414eede4d4a583",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_e4b3528397fbaa4fd0671478823aa029.o": "1edc9aa2e986924e6855c407201379360e26613b9b0972ed67d6fce947123ff8",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f3c1a2a54ea0ebef38257460b01a81f3.json": "c5b232c8a6741e32f40ac29453faa4a5a2dc01fffbd3c80717deeedb5adb37c5",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f3c1a2a54ea0ebef38257460b01a81f3.o": "094f2c8e008c8e02240b99822f464cf8d26fc0cc557550fe2d2d203dd3cc47da",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f94076a7655ef41b5c54277d6ebc204f.json": "0efe13b84975e4102f04ac7bc66feb4e6daaab129f5cd8739386ae5388bef390",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f94076a7655ef41b5c54277d6ebc204f.o": "4971e124306ad36ff307394b044311eb930fc325fbc9984a58436f884ec355da",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f9bae0033134e0df2b402ea5dee83479.json": "e9818a85691e8ae29a8490e25aeef8bb0c8b17e73a3fa7ca8d68ec832213db28",
+    "op_impl/ai_core/tbe/kernel/ascend910b/fused_infer_attention_score_v2_sink/FusedInferAttentionScoreV2Sink_f9bae0033134e0df2b402ea5dee83479.o": "79128ea1f8aaf6902012ece8fa245b2300a9376238a0ac63974d50952cd0ff6f",
+    "op_impl/ai_core/tbe/kernel/config/ascend910b/binary_info_config.json": "4e2ed53452c14ce0d7150aa9691cc29e6fc4d6b5e07ebec05ee56009d3a36141",
+    "op_impl/ai_core/tbe/kernel/config/ascend910b/fused_infer_attention_score_v2_sink.json": "bc82fe788f504f6c118756df51939bcd5ca8bea881cbb861fdffc25fdf441454",
+    "op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64/libcust_opmaster_rt2.0.so": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+    "op_impl/ai_core/tbe/op_tiling/liboptiling.so": "ad919fcb836219cc901b2efc17878ad5949e9f70e39342d76ab26d8c55eae949",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/common.h": "d26d042b297cf862c584e05b2625136e7ee99de3be53be2e32fb28efe62d60d9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/common_func.h": "1de03871c582d97e9ed1814763e65f30381bdaaa0dae6705a74ea0281ffa809b",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/dropmask.h": "b93b07a2d06c590243cd1ba757c281a6b268d03ff819b311fb5aa088e06a7654",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/gm_to_l1_iterator.h": "4e7e3b9b489e8b60ae356aa8f95d088ed2ddf1013a4518032312f4e13eefa7f9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/gm_to_ub_iterator.h": "a28634b12f044aad50eca3a46af52e3d0eb1a024b6301d1a948d917d3095a508",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/hardware.h": "05a8bf30e465e22ea13b71f0eb2b71075de4396da35e3d95c80ba086ae5f42a8",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/iterator.h": "70535c8c9c01aa935d45aed44d977f69f0ed2eeebeea1d80f060e4b1d1fbd39f",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l0c_to_gm_iterator.h": "a3eea68d194669fb7db53a3b38d3117cb1584f6637d22085081e4c0768a2429e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l0c_to_l1_iterator.h": "2b73136bb76f3ef99649406fdba15c8dc7f50b606d728ab005e2417860ea7d06",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l0c_to_ub_iterator.h": "ede17f84df3f67a7063792f190b6b66cd328213af0d55ffd9997255988ab73f8",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_bt_iterator.h": "45ae57cd939a7a30e74b33dbfd088f8998445648cee71c8d291d449808233440",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_fb_iterator.h": "db7c233466609cf1b46c94b7d72f2b9d73ab6cc2167ed27f6809e2a097d06d1c",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_l0_iterator.h": "81308eebcfcdabc041d129af63e7de1655f94c232e24b2e360cfb8c5dad4ca90",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/l1_to_ub_iterator.h": "3b4b7e08af1ed4d82b13e4994916c4d2fdd3ebe906cb3c406295b04e410d111a",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/layout.h": "29815798a7238d674b649dbf97b48a250e58ca2b8ff6dc09a5667a2e973fdbde",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/mem.h": "e240841f845f8343bf01e06cf1528c011986504a6da80fe54615f01b2a4428c5",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/mma.h": "1d307e242c4d39c668668f254bb696b421326efbb6117ed9df704876fa6d877d",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/pse.h": "0b1ec227c944e430a8ec354d4b40830626e2282ac06a5192439619b11833cde4",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/simd.h": "88519d7abc601dc4fc6c36de52814901b407d549912c8b51d69b55ef070a5d31",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/common/util.h": "442648c354814d149ba7f8185e4b16cc7d528d1333f8437f07c0f3c5c93187d9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/CopyInL1.h": "42f1619817f636acf4b824624cc1f37b260a8d41dd96f63d2b13acc2c34f5614",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/FixpipeOut.h": "a43d183efc0101a3ede52606846cefa0dfc2e5893febc81f5ae2d6c2b337d5f0",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/array.h": "cbce6327d5ecfb55fc8eac6df172c5dc71938202f55174dd4d308c54cc6d1c79",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/axis.h": "ea3d5fa888fc9162eb38a10dfc1be116d927f829a6ac07e4261ad8340e6645fa",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffer.h": "75f1708ef3b88da6ac0edda4543d123e92e808031126f3b1947f57cbcff8294a",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffer_manager.h": "40bc0c2f6df26955782bf2395c6068f614468ec98c42cae9a5bdf0d3c724b6d8",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffer_mix_core.h": "6ff52c7db120365aa0078395892cb4490a0d049b1a75664d04416310ee6cbb08",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/buffers_policy.h": "846242b5a88b55385776a23b86c770ff66b563f6c7defedbdb854016dd0d52c3",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_cube_nonquant_gqa_sink.h": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_cube_nonquant_mla_sink.h": "05454a599cb2d9b2e56c3c8fb59c1b89dcf0d487dbf2fd822b7abe70f8c382a2",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_cube_nonquant_sink.h": "920c2b0ec94d347a75ada0707de6fdc10d6641b132f765355628c439eb149bc9",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_vec_flashdecode_sink.h": "b8e55ebd2e93a57ff16c291e169db9b7d764c3089b8f99eb46bb500e84ebe4ad",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_vec_nonquant_mla_sink.h": "765066653915e4c5ffec142768557f00a68039339182e4b9eeef0e3bd51a6449",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_block_vec_nonquant_sink.h": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_kernel_nonquant_mla_sink.h": "23df706e2abb8bbb7118579860911c571c8b87ffdb0752d28fa62ec3ec094d1e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_kernel_nonquant_sink.h": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fia_public_define.h": "54150ffef7aae1ad8b0922816b49be37840007bc56e7a43aa310b669fbd2a62e",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fused_infer_attention_score_v2_sink.cpp": "e719a4fa20507166633a963d14e4c6656a44b9336135d34af76bbea565b90b49",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fused_infer_attention_score_v2_sink_metadata.h": "a33c4c3e870b7ca0c9a1bc53d834b44fd6203625d2bcc82c868badb257ee2013",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/fused_infer_attention_score_v2_sink_tilingkey.h": "d35a4d66679194f6f3cc6eaf0cd0da7fb0e9a7445cda6b4206aecbeb42a34c28",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/kernel_common_sink.h": "55e4176d5c796fae002ac2e405fdf047e1c9245097d98229165a8c5306239f96",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/matmul.h": "a224d05ca417a90365b870438b8ec7608aafc8d951059483043678e211c76afd",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/copy_gm_to_l1.h": "6293778b165cbeaf1a844bf7489d387abf560217ea7045abe6f1127e7e6117fc",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/copy_gm_to_ub.h": "98ad825ca31c5f232bb5b9d124d95f019ec31c166711e814f2281f43ddea1b17",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/copy_ub_to_gm.h": "5fd5cab5d7c12e3907e6aaeb9d66fe65db9a5a6c6af04f8eed3531dc8a97f5fa",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/fa_gm_tensor.h": "afea40fda64041724cecb1887cf46dc3d28c0c26084d8fd17201e68b729ca72c",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/fa_l1_tensor.h": "03805d27791ce125513ac07ec6d51f9366c463d0793fe02575275400d0d0287d",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/fa_ub_tensor.h": "97ae6e862d7c80a2e25f95c58f33a63923fce5509a33908e71620ea9e6eead26",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/gm_coord.h": "4a99ca73b1cd1b110a067a4679aac19279a0f00d44f3d44c2617dd35b5238bfb",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/gm_layout.h": "66971b608f79b1ac4ec4b8d58b34f93e39f2b965a77fd1c988b3c3aa9d4e3784",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/offset_calculator_v2.h": "8cae62420aa811a79c1192978476129b88107d76bb745fc823bd1239c83f357c",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memcopy/parser.h": "36293eebadd8d83df4780933a5e4c6ec8c3bbee56ddff49fbb0fc51651ee5823",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/memory_copy.h": "3d735fa9a7fbe689ca9c42ecb133b17c5c0bad7a6fd1d38a5fc129dd55881977",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/offset_calculator.h": "3f1e8642e9eb73166367876f033435dbb2301513b0c08ba9be2e5d982875fd1b",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/ascendc/fused_infer_attention_score_v2_sink/vector_common.h": "3772a293bb875844f6154a5905b212c60a93d2a0a0c13c642af6c14519404b7a",
+    "op_impl/ai_core/tbe/thesis_fia_stage2_transformer_impl/dynamic/fused_infer_attention_score_v2_sink.py": "f3b17010b179eaf4c34efca7c1fb5f90eb67245f85e3c27e63e5169a755cf01a",
+    "op_impl/cpu/aicpu_kernel/impl/libtransformer_aicpu_kernels.so": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+    "op_proto/inc/fused_infer_attention_score_v2_sink_proto.h": "dcf7de5dc06431165905908534158a6e01d4b5cd5bded9b13516d56e780d6e4c",
+    "op_proto/lib/linux/aarch64/libcust_opsproto_rt2.0.so": "fe2986e929daee1e1be3ba05ec0cb80f80f65154e4a26674012fb0550fe1f863",
+    "version.info": "fdd4d0d83c19ab6cd3f874c61c773a54a29e64ac85cd7783f409c4fc4d06c311"
+  },
+  "summary": {
+    "per_cell_capacity": [
+      {
+        "mode": "upstream",
+        "catalog_count": 2,
+        "capacity": 400,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 4930.2063,
+            "minimum_us": 4854.261,
+            "maximum_us": 5012.792,
+            "p50_us": 4929.366,
+            "p95_us": 5012.702,
+            "p99_us": 5012.774
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 4609.157991409302,
+            "minimum_us": 4566.33996963501,
+            "maximum_us": 4663.740158081055,
+            "p50_us": 4608.2000732421875,
+            "p95_us": 4662.255072593689,
+            "p99_us": 4663.4431409835815
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 248.5721,
+            "minimum_us": 215.451,
+            "maximum_us": 274.971,
+            "p50_us": 246.526,
+            "p95_us": 271.04295,
+            "p99_us": 274.18539
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 259.2601,
+            "minimum_us": 209.201,
+            "maximum_us": 314.931,
+            "p50_us": 257.391,
+            "p95_us": 306.50699999999995,
+            "p99_us": 313.2462
+          }
+        }
+      },
+      {
+        "mode": "upstream",
+        "catalog_count": 2,
+        "capacity": 512,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 6283.2762,
+            "minimum_us": 6144.607,
+            "maximum_us": 6584.039,
+            "p50_us": 6252.0064999999995,
+            "p95_us": 6529.48955,
+            "p99_us": 6573.12911
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 5895.897912979126,
+            "minimum_us": 5832.73983001709,
+            "maximum_us": 6064.340114593506,
+            "p50_us": 5879.819869995117,
+            "p95_us": 6011.635994911194,
+            "p99_us": 6053.7992906570435
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 304.1513,
+            "minimum_us": 245.641,
+            "maximum_us": 419.192,
+            "p50_us": 293.481,
+            "p95_us": 407.86999999999995,
+            "p99_us": 416.9276
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 299.7453,
+            "minimum_us": 213.321,
+            "maximum_us": 531.352,
+            "p50_us": 273.996,
+            "p95_us": 463.0869999999998,
+            "p99_us": 517.699
+          }
+        }
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 2,
+        "capacity": 400,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 4630.1397,
+            "minimum_us": 4542.469,
+            "maximum_us": 4776.81,
+            "p50_us": 4624.3145,
+            "p95_us": 4737.7005,
+            "p99_us": 4768.9881000000005
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 4337.043905258179,
+            "minimum_us": 4270.319938659668,
+            "maximum_us": 4412.179946899414,
+            "p50_us": 4334.870100021362,
+            "p95_us": 4397.149920463562,
+            "p99_us": 4409.173941612244
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 231.0909,
+            "minimum_us": 211.29,
+            "maximum_us": 289.251,
+            "p50_us": 223.51600000000002,
+            "p95_us": 270.31949999999995,
+            "p99_us": 285.4647
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 240.8242,
+            "minimum_us": 210.771,
+            "maximum_us": 314.822,
+            "p50_us": 233.076,
+            "p95_us": 289.30204999999995,
+            "p99_us": 309.71801
+          }
+        }
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 2,
+        "capacity": 512,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 5943.9366,
+            "minimum_us": 5838.385,
+            "maximum_us": 6148.286,
+            "p50_us": 5915.906,
+            "p95_us": 6098.264,
+            "p99_us": 6138.2816
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 5586.589956283569,
+            "minimum_us": 5533.0400466918945,
+            "maximum_us": 5660.299777984619,
+            "p50_us": 5580.639839172363,
+            "p95_us": 5651.542901992798,
+            "p99_us": 5658.548402786255
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 287.8252,
+            "minimum_us": 251.221,
+            "maximum_us": 496.402,
+            "p50_us": 260.596,
+            "p95_us": 414.4839999999998,
+            "p99_us": 480.01840000000004
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 243.5401,
+            "minimum_us": 214.741,
+            "maximum_us": 319.832,
+            "p50_us": 239.416,
+            "p95_us": 292.58404999999993,
+            "p99_us": 314.38241
+          }
+        }
+      },
+      {
+        "mode": "upstream",
+        "catalog_count": 17,
+        "capacity": 400,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 4836.5799,
+            "minimum_us": 4692.69,
+            "maximum_us": 5139.052,
+            "p50_us": 4791.876,
+            "p95_us": 5071.81255,
+            "p99_us": 5125.60411
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 4469.215965270996,
+            "minimum_us": 4419.939994812012,
+            "maximum_us": 4569.900035858154,
+            "p50_us": 4445.859909057617,
+            "p95_us": 4554.573035240173,
+            "p99_us": 4566.834635734558
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 296.2603,
+            "minimum_us": 225.531,
+            "maximum_us": 475.522,
+            "p50_us": 276.186,
+            "p95_us": 425.8509999999999,
+            "p99_us": 465.5878
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 300.5571,
+            "minimum_us": 233.831,
+            "maximum_us": 409.521,
+            "p50_us": 297.001,
+            "p95_us": 390.38249999999994,
+            "p99_us": 405.6933
+          }
+        }
+      },
+      {
+        "mode": "upstream",
+        "catalog_count": 17,
+        "capacity": 512,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 6082.3022,
+            "minimum_us": 5943.916,
+            "maximum_us": 6330.548,
+            "p50_us": 6037.8915,
+            "p95_us": 6294.335599999999,
+            "p99_us": 6323.30552
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 5678.104019165039,
+            "minimum_us": 5614.67981338501,
+            "maximum_us": 5765.940189361572,
+            "p50_us": 5662.039995193481,
+            "p95_us": 5762.880110740662,
+            "p99_us": 5765.32817363739
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 323.5743,
+            "minimum_us": 255.691,
+            "maximum_us": 466.712,
+            "p50_us": 307.4715,
+            "p95_us": 436.13854999999995,
+            "p99_us": 460.59731
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 293.7533,
+            "minimum_us": 224.341,
+            "maximum_us": 394.002,
+            "p50_us": 275.266,
+            "p95_us": 382.662,
+            "p99_us": 391.73400000000004
+          }
+        }
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 17,
+        "capacity": 400,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 4469.9902,
+            "minimum_us": 4362.829,
+            "maximum_us": 4627.9,
+            "p50_us": 4442.369000000001,
+            "p95_us": 4594.0464999999995,
+            "p99_us": 4621.1293
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 4159.231948852539,
+            "minimum_us": 4105.500221252441,
+            "maximum_us": 4233.739852905273,
+            "p50_us": 4157.389879226685,
+            "p95_us": 4216.24391078949,
+            "p99_us": 4230.240664482117
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 239.3331,
+            "minimum_us": 197.311,
+            "maximum_us": 295.121,
+            "p50_us": 219.086,
+            "p95_us": 289.24399999999997,
+            "p99_us": 293.94559999999996
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 250.44310000000002,
+            "minimum_us": 203.341,
+            "maximum_us": 342.692,
+            "p50_us": 224.111,
+            "p95_us": 323.06705,
+            "p99_us": 338.76701
+          }
+        }
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 17,
+        "capacity": 512,
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 5576.4691,
+            "minimum_us": 5468.593,
+            "maximum_us": 5704.255,
+            "p50_us": 5561.474,
+            "p95_us": 5697.7345000000005,
+            "p99_us": 5702.9509
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 5218.85404586792,
+            "minimum_us": 5174.41987991333,
+            "maximum_us": 5258.059978485107,
+            "p50_us": 5217.9200649261475,
+            "p95_us": 5256.637978553772,
+            "p99_us": 5257.77557849884
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 288.6775,
+            "minimum_us": 242.271,
+            "maximum_us": 362.022,
+            "p50_us": 279.9915,
+            "p95_us": 352.18499999999995,
+            "p99_us": 360.0546
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 255.38490000000002,
+            "minimum_us": 195.17,
+            "maximum_us": 314.851,
+            "p50_us": 250.061,
+            "p95_us": 313.735,
+            "p99_us": 314.6278
+          }
+        }
+      }
+    ],
+    "catalog_context": [
+      {
+        "mode": "upstream",
+        "capacity": 400,
+        "left_catalog": 2,
+        "right_catalog": 17,
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4930.2063,
+              "minimum_us": 4854.261,
+              "maximum_us": 5012.792,
+              "p50_us": 4929.366,
+              "p95_us": 5012.702,
+              "p99_us": 5012.774
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4836.5799,
+              "minimum_us": 4692.69,
+              "maximum_us": 5139.052,
+              "p50_us": 4791.876,
+              "p95_us": 5071.81255,
+              "p99_us": 5125.60411
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 93.62640000000029,
+              "minimum_us": -228.71099999999933,
+              "maximum_us": 241.6810000000005,
+              "p50_us": 147.1310000000003,
+              "p95_us": 220.66105000000033,
+              "p99_us": 237.4770100000005
+            },
+            "left_reduction_percent": 1.899036151894907,
+            "right_faster_count": 8
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4609.157991409302,
+              "minimum_us": 4566.33996963501,
+              "maximum_us": 4663.740158081055,
+              "p50_us": 4608.2000732421875,
+              "p95_us": 4662.255072593689,
+              "p99_us": 4663.4431409835815
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4469.215965270996,
+              "minimum_us": 4419.939994812012,
+              "maximum_us": 4569.900035858154,
+              "p50_us": 4445.859909057617,
+              "p95_us": 4554.573035240173,
+              "p99_us": 4566.834635734558
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 139.94202613830566,
+              "minimum_us": 25.72011947631836,
+              "maximum_us": 194.0598487854004,
+              "p50_us": 151.01981163024902,
+              "p95_us": 192.09797382354736,
+              "p99_us": 193.66747379302979
+            },
+            "left_reduction_percent": 3.036173340101037,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 248.5721,
+              "minimum_us": 215.451,
+              "maximum_us": 274.971,
+              "p50_us": 246.526,
+              "p95_us": 271.04295,
+              "p99_us": 274.18539
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 296.2603,
+              "minimum_us": 225.531,
+              "maximum_us": 475.522,
+              "p50_us": 276.186,
+              "p95_us": 425.8509999999999,
+              "p99_us": 465.5878
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -47.688199999999995,
+              "minimum_us": -231.641,
+              "maximum_us": 16.82000000000002,
+              "p50_us": -19.485000000000014,
+              "p95_us": 15.092000000000002,
+              "p99_us": 16.47440000000002
+            },
+            "left_reduction_percent": -19.184856224813643,
+            "right_faster_count": 3
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 259.2601,
+              "minimum_us": 209.201,
+              "maximum_us": 314.931,
+              "p50_us": 257.391,
+              "p95_us": 306.50699999999995,
+              "p99_us": 313.2462
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 300.5571,
+              "minimum_us": 233.831,
+              "maximum_us": 409.521,
+              "p50_us": 297.001,
+              "p95_us": 390.38249999999994,
+              "p99_us": 405.6933
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -41.297000000000004,
+              "minimum_us": -151.95,
+              "maximum_us": 19.75999999999999,
+              "p50_us": -35.84500000000003,
+              "p95_us": 19.12999999999999,
+              "p99_us": 19.63399999999999
+            },
+            "left_reduction_percent": -15.92879120234853,
+            "right_faster_count": 3
+          }
+        }
+      },
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "left_catalog": 2,
+        "right_catalog": 17,
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4630.1397,
+              "minimum_us": 4542.469,
+              "maximum_us": 4776.81,
+              "p50_us": 4624.3145,
+              "p95_us": 4737.7005,
+              "p99_us": 4768.9881000000005
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4469.9902,
+              "minimum_us": 4362.829,
+              "maximum_us": 4627.9,
+              "p50_us": 4442.369000000001,
+              "p95_us": 4594.0464999999995,
+              "p99_us": 4621.1293
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 160.14950000000007,
+              "minimum_us": 62.0,
+              "maximum_us": 252.53000000000065,
+              "p50_us": 141.35550000000012,
+              "p95_us": 245.05145000000036,
+              "p99_us": 251.0342900000006
+            },
+            "left_reduction_percent": 3.4588481207165325,
+            "right_faster_count": 10
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4337.043905258179,
+              "minimum_us": 4270.319938659668,
+              "maximum_us": 4412.179946899414,
+              "p50_us": 4334.870100021362,
+              "p95_us": 4397.149920463562,
+              "p99_us": 4409.173941612244
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4159.231948852539,
+              "minimum_us": 4105.500221252441,
+              "maximum_us": 4233.739852905273,
+              "p50_us": 4157.389879226685,
+              "p95_us": 4216.24391078949,
+              "p99_us": 4230.240664482117
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 177.81195640563965,
+              "minimum_us": 131.1197280883789,
+              "maximum_us": 238.1000518798828,
+              "p50_us": 163.3899211883545,
+              "p95_us": 233.92395973205566,
+              "p99_us": 237.26483345031738
+            },
+            "left_reduction_percent": 4.0998422033510575,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 231.0909,
+              "minimum_us": 211.29,
+              "maximum_us": 289.251,
+              "p50_us": 223.51600000000002,
+              "p95_us": 270.31949999999995,
+              "p99_us": 285.4647
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 239.3331,
+              "minimum_us": 197.311,
+              "maximum_us": 295.121,
+              "p50_us": 219.086,
+              "p95_us": 289.24399999999997,
+              "p99_us": 293.94559999999996
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -8.242199999999997,
+              "minimum_us": -55.75999999999999,
+              "maximum_us": 30.600000000000023,
+              "p50_us": -2.444999999999993,
+              "p95_us": 23.120549999999987,
+              "p99_us": 29.10411000000002
+            },
+            "left_reduction_percent": -3.566648448727318,
+            "right_faster_count": 4
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 240.8242,
+              "minimum_us": 210.771,
+              "maximum_us": 314.822,
+              "p50_us": 233.076,
+              "p95_us": 289.30204999999995,
+              "p99_us": 309.71801
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 250.44310000000002,
+              "minimum_us": 203.341,
+              "maximum_us": 342.692,
+              "p50_us": 224.111,
+              "p95_us": 323.06705,
+              "p99_us": 338.76701
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -9.618900000000002,
+              "minimum_us": -84.58100000000002,
+              "maximum_us": 36.261000000000024,
+              "p50_us": -2.9000000000000057,
+              "p95_us": 27.026999999999987,
+              "p99_us": 34.41420000000002
+            },
+            "left_reduction_percent": -3.9941583943806314,
+            "right_faster_count": 5
+          }
+        }
+      },
+      {
+        "mode": "upstream",
+        "capacity": 512,
+        "left_catalog": 2,
+        "right_catalog": 17,
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 6283.2762,
+              "minimum_us": 6144.607,
+              "maximum_us": 6584.039,
+              "p50_us": 6252.0064999999995,
+              "p95_us": 6529.48955,
+              "p99_us": 6573.12911
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 6082.3022,
+              "minimum_us": 5943.916,
+              "maximum_us": 6330.548,
+              "p50_us": 6037.8915,
+              "p95_us": 6294.335599999999,
+              "p99_us": 6323.30552
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 200.974,
+              "minimum_us": -40.02099999999973,
+              "maximum_us": 417.78299999999945,
+              "p50_us": 201.88550000000032,
+              "p95_us": 351.0871499999994,
+              "p99_us": 404.4438299999995
+            },
+            "left_reduction_percent": 3.1985542828755475,
+            "right_faster_count": 9
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 5895.897912979126,
+              "minimum_us": 5832.73983001709,
+              "maximum_us": 6064.340114593506,
+              "p50_us": 5879.819869995117,
+              "p95_us": 6011.635994911194,
+              "p99_us": 6053.7992906570435
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5678.104019165039,
+              "minimum_us": 5614.67981338501,
+              "maximum_us": 5765.940189361572,
+              "p50_us": 5662.039995193481,
+              "p95_us": 5762.880110740662,
+              "p99_us": 5765.32817363739
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 217.7938938140869,
+              "minimum_us": 142.77982711791992,
+              "maximum_us": 386.62004470825195,
+              "p50_us": 200.36983489990234,
+              "p95_us": 333.3940744400023,
+              "p99_us": 375.97485065460205
+            },
+            "left_reduction_percent": 3.6939902459070613,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 304.1513,
+              "minimum_us": 245.641,
+              "maximum_us": 419.192,
+              "p50_us": 293.481,
+              "p95_us": 407.86999999999995,
+              "p99_us": 416.9276
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 323.5743,
+              "minimum_us": 255.691,
+              "maximum_us": 466.712,
+              "p50_us": 307.4715,
+              "p95_us": 436.13854999999995,
+              "p99_us": 460.59731
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -19.423000000000002,
+              "minimum_us": -159.481,
+              "maximum_us": 64.62099999999998,
+              "p50_us": -19.159999999999982,
+              "p95_us": 46.35954999999994,
+              "p99_us": 60.96870999999999
+            },
+            "left_reduction_percent": -6.385966458141064,
+            "right_faster_count": 3
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 299.7453,
+              "minimum_us": 213.321,
+              "maximum_us": 531.352,
+              "p50_us": 273.996,
+              "p95_us": 463.0869999999998,
+              "p99_us": 517.699
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 293.7533,
+              "minimum_us": 224.341,
+              "maximum_us": 394.002,
+              "p50_us": 275.266,
+              "p95_us": 382.662,
+              "p99_us": 391.73400000000004
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 5.991999999999988,
+              "minimum_us": -76.76100000000002,
+              "maximum_us": 244.03099999999995,
+              "p50_us": -16.159999999999997,
+              "p95_us": 148.44154999999972,
+              "p99_us": 224.91311
+            },
+            "left_reduction_percent": 1.99903051023652,
+            "right_faster_count": 4
+          }
+        }
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "left_catalog": 2,
+        "right_catalog": 17,
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 5943.9366,
+              "minimum_us": 5838.385,
+              "maximum_us": 6148.286,
+              "p50_us": 5915.906,
+              "p95_us": 6098.264,
+              "p99_us": 6138.2816
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5576.4691,
+              "minimum_us": 5468.593,
+              "maximum_us": 5704.255,
+              "p50_us": 5561.474,
+              "p95_us": 5697.7345000000005,
+              "p99_us": 5702.9509
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 367.46750000000003,
+              "minimum_us": 263.7610000000004,
+              "maximum_us": 546.4319999999998,
+              "p50_us": 360.8114999999998,
+              "p95_us": 492.2744999999999,
+              "p99_us": 535.6004999999999
+            },
+            "left_reduction_percent": 6.182224420092233,
+            "right_faster_count": 10
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 5586.589956283569,
+              "minimum_us": 5533.0400466918945,
+              "maximum_us": 5660.299777984619,
+              "p50_us": 5580.639839172363,
+              "p95_us": 5651.542901992798,
+              "p99_us": 5658.548402786255
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5218.85404586792,
+              "minimum_us": 5174.41987991333,
+              "maximum_us": 5258.059978485107,
+              "p50_us": 5217.9200649261475,
+              "p95_us": 5256.637978553772,
+              "p99_us": 5257.77557849884
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 367.7359104156494,
+              "minimum_us": 322.95989990234375,
+              "maximum_us": 405.3997993469238,
+              "p50_us": 360.9797954559326,
+              "p95_us": 404.481840133667,
+              "p99_us": 405.21620750427246
+            },
+            "left_reduction_percent": 6.582475415114994,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 287.8252,
+              "minimum_us": 251.221,
+              "maximum_us": 496.402,
+              "p50_us": 260.596,
+              "p95_us": 414.4839999999998,
+              "p99_us": 480.01840000000004
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 288.6775,
+              "minimum_us": 242.271,
+              "maximum_us": 362.022,
+              "p50_us": 279.9915,
+              "p95_us": 352.18499999999995,
+              "p99_us": 360.0546
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -0.8522999999999967,
+              "minimum_us": -95.33100000000002,
+              "maximum_us": 187.2,
+              "p50_us": 3.25,
+              "p95_us": 110.26799999999982,
+              "p99_us": 171.8136
+            },
+            "left_reduction_percent": -0.29611722670565216,
+            "right_faster_count": 6
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 243.5401,
+              "minimum_us": 214.741,
+              "maximum_us": 319.832,
+              "p50_us": 239.416,
+              "p95_us": 292.58404999999993,
+              "p99_us": 314.38241
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 255.38490000000002,
+              "minimum_us": 195.17,
+              "maximum_us": 314.851,
+              "p50_us": 250.061,
+              "p95_us": 313.735,
+              "p99_us": 314.6278
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": -11.844800000000001,
+              "minimum_us": -60.0,
+              "maximum_us": 32.36100000000002,
+              "p50_us": -8.369500000000016,
+              "p95_us": 30.173550000000006,
+              "p99_us": 31.923510000000018
+            },
+            "left_reduction_percent": -4.863593305578836,
+            "right_faster_count": 4
+          }
+        }
+      }
+    ],
+    "native_policy": [
+      {
+        "capacity": 400,
+        "catalog_count": 2,
+        "left_mode": "upstream",
+        "right_mode": "whole",
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4930.2063,
+              "minimum_us": 4854.261,
+              "maximum_us": 5012.792,
+              "p50_us": 4929.366,
+              "p95_us": 5012.702,
+              "p99_us": 5012.774
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4630.1397,
+              "minimum_us": 4542.469,
+              "maximum_us": 4776.81,
+              "p50_us": 4624.3145,
+              "p95_us": 4737.7005,
+              "p99_us": 4768.9881000000005
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 300.0666,
+              "minimum_us": 175.36099999999988,
+              "maximum_us": 391.90200000000004,
+              "p50_us": 311.942,
+              "p95_us": 386.33099999999996,
+              "p99_us": 390.78780000000006
+            },
+            "left_reduction_percent": 6.086288924664268,
+            "right_faster_count": 10
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4609.157991409302,
+              "minimum_us": 4566.33996963501,
+              "maximum_us": 4663.740158081055,
+              "p50_us": 4608.2000732421875,
+              "p95_us": 4662.255072593689,
+              "p99_us": 4663.4431409835815
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4337.043905258179,
+              "minimum_us": 4270.319938659668,
+              "maximum_us": 4412.179946899414,
+              "p50_us": 4334.870100021362,
+              "p95_us": 4397.149920463562,
+              "p99_us": 4409.173941612244
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 272.11408615112305,
+              "minimum_us": 196.7000961303711,
+              "maximum_us": 343.67990493774414,
+              "p50_us": 269.77014541625977,
+              "p95_us": 329.2079925537109,
+              "p99_us": 340.7855224609375
+            },
+            "left_reduction_percent": 5.90376998701928,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 248.5721,
+              "minimum_us": 215.451,
+              "maximum_us": 274.971,
+              "p50_us": 246.526,
+              "p95_us": 271.04295,
+              "p99_us": 274.18539
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 231.0909,
+              "minimum_us": 211.29,
+              "maximum_us": 289.251,
+              "p50_us": 223.51600000000002,
+              "p95_us": 270.31949999999995,
+              "p99_us": 285.4647
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 17.4812,
+              "minimum_us": -26.310000000000002,
+              "maximum_us": 42.14100000000002,
+              "p50_us": 23.674999999999997,
+              "p95_us": 39.20205000000001,
+              "p99_us": 41.55321000000002
+            },
+            "left_reduction_percent": 7.032647670434454,
+            "right_faster_count": 8
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 259.2601,
+              "minimum_us": 209.201,
+              "maximum_us": 314.931,
+              "p50_us": 257.391,
+              "p95_us": 306.50699999999995,
+              "p99_us": 313.2462
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 240.8242,
+              "minimum_us": 210.771,
+              "maximum_us": 314.822,
+              "p50_us": 233.076,
+              "p95_us": 289.30204999999995,
+              "p99_us": 309.71801
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 18.435899999999997,
+              "minimum_us": -51.321000000000026,
+              "maximum_us": 60.17999999999998,
+              "p50_us": 21.34049999999999,
+              "p95_us": 56.638499999999965,
+              "p99_us": 59.47169999999998
+            },
+            "left_reduction_percent": 7.110966940150064,
+            "right_faster_count": 7
+          }
+        }
+      },
+      {
+        "capacity": 400,
+        "catalog_count": 17,
+        "left_mode": "upstream",
+        "right_mode": "whole",
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4836.5799,
+              "minimum_us": 4692.69,
+              "maximum_us": 5139.052,
+              "p50_us": 4791.876,
+              "p95_us": 5071.81255,
+              "p99_us": 5125.60411
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4469.9902,
+              "minimum_us": 4362.829,
+              "maximum_us": 4627.9,
+              "p50_us": 4442.369000000001,
+              "p95_us": 4594.0464999999995,
+              "p99_us": 4621.1293
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 366.5896999999998,
+              "minimum_us": 246.96199999999953,
+              "maximum_us": 708.0929999999998,
+              "p50_us": 333.70149999999967,
+              "p95_us": 582.4390499999997,
+              "p99_us": 682.9622099999999
+            },
+            "left_reduction_percent": 7.579523290827881,
+            "right_faster_count": 10
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 4469.215965270996,
+              "minimum_us": 4419.939994812012,
+              "maximum_us": 4569.900035858154,
+              "p50_us": 4445.859909057617,
+              "p95_us": 4554.573035240173,
+              "p99_us": 4566.834635734558
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 4159.231948852539,
+              "minimum_us": 4105.500221252441,
+              "maximum_us": 4233.739852905273,
+              "p50_us": 4157.389879226685,
+              "p95_us": 4216.24391078949,
+              "p99_us": 4230.240664482117
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 309.98401641845703,
+              "minimum_us": 234.98010635375977,
+              "maximum_us": 429.2001724243164,
+              "p50_us": 303.29012870788574,
+              "p95_us": 381.9139003753661,
+              "p99_us": 419.74291801452637
+            },
+            "left_reduction_percent": 6.935982034147701,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 296.2603,
+              "minimum_us": 225.531,
+              "maximum_us": 475.522,
+              "p50_us": 276.186,
+              "p95_us": 425.8509999999999,
+              "p99_us": 465.5878
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 239.3331,
+              "minimum_us": 197.311,
+              "maximum_us": 295.121,
+              "p50_us": 219.086,
+              "p95_us": 289.24399999999997,
+              "p99_us": 293.94559999999996
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 56.9272,
+              "minimum_us": -12.129999999999995,
+              "maximum_us": 255.15099999999998,
+              "p50_us": 22.61500000000001,
+              "p95_us": 180.4955499999998,
+              "p99_us": 240.21991
+            },
+            "left_reduction_percent": 19.21526441443555,
+            "right_faster_count": 9
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 300.5571,
+              "minimum_us": 233.831,
+              "maximum_us": 409.521,
+              "p50_us": 297.001,
+              "p95_us": 390.38249999999994,
+              "p99_us": 405.6933
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 250.44310000000002,
+              "minimum_us": 203.341,
+              "maximum_us": 342.692,
+              "p50_us": 224.111,
+              "p95_us": 323.06705,
+              "p99_us": 338.76701
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 50.114,
+              "minimum_us": -0.25,
+              "maximum_us": 181.9,
+              "p50_us": 27.97,
+              "p95_us": 139.7979999999999,
+              "p99_us": 173.4796
+            },
+            "left_reduction_percent": 16.67370359908317,
+            "right_faster_count": 9
+          }
+        }
+      },
+      {
+        "capacity": 512,
+        "catalog_count": 2,
+        "left_mode": "upstream",
+        "right_mode": "whole",
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 6283.2762,
+              "minimum_us": 6144.607,
+              "maximum_us": 6584.039,
+              "p50_us": 6252.0064999999995,
+              "p95_us": 6529.48955,
+              "p99_us": 6573.12911
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5943.9366,
+              "minimum_us": 5838.385,
+              "maximum_us": 6148.286,
+              "p50_us": 5915.906,
+              "p95_us": 6098.264,
+              "p99_us": 6138.2816
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 339.33959999999996,
+              "minimum_us": 249.9319999999998,
+              "maximum_us": 614.1329999999998,
+              "p50_us": 319.78150000000005,
+              "p95_us": 507.5855999999996,
+              "p99_us": 592.8235199999999
+            },
+            "left_reduction_percent": 5.400679346230235,
+            "right_faster_count": 10
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 5895.897912979126,
+              "minimum_us": 5832.73983001709,
+              "maximum_us": 6064.340114593506,
+              "p50_us": 5879.819869995117,
+              "p95_us": 6011.635994911194,
+              "p99_us": 6053.7992906570435
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5586.589956283569,
+              "minimum_us": 5533.0400466918945,
+              "maximum_us": 5660.299777984619,
+              "p50_us": 5580.639839172363,
+              "p95_us": 5651.542901992798,
+              "p99_us": 5658.548402786255
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 309.30795669555664,
+              "minimum_us": 231.76002502441406,
+              "maximum_us": 430.1600456237793,
+              "p50_us": 303.8198947906494,
+              "p95_us": 399.35305118560785,
+              "p99_us": 423.998646736145
+            },
+            "left_reduction_percent": 5.24615522963265,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 304.1513,
+              "minimum_us": 245.641,
+              "maximum_us": 419.192,
+              "p50_us": 293.481,
+              "p95_us": 407.86999999999995,
+              "p99_us": 416.9276
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 287.8252,
+              "minimum_us": 251.221,
+              "maximum_us": 496.402,
+              "p50_us": 260.596,
+              "p95_us": 414.4839999999998,
+              "p99_us": 480.01840000000004
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 16.326099999999993,
+              "minimum_us": -77.20999999999998,
+              "maximum_us": 128.88099999999997,
+              "p50_us": 5.124999999999986,
+              "p95_us": 95.6885499999999,
+              "p99_us": 122.24250999999998
+            },
+            "left_reduction_percent": 5.367756113486937,
+            "right_faster_count": 6
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 299.7453,
+              "minimum_us": 213.321,
+              "maximum_us": 531.352,
+              "p50_us": 273.996,
+              "p95_us": 463.0869999999998,
+              "p99_us": 517.699
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 243.5401,
+              "minimum_us": 214.741,
+              "maximum_us": 319.832,
+              "p50_us": 239.416,
+              "p95_us": 292.58404999999993,
+              "p99_us": 314.38241
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 56.20519999999999,
+              "minimum_us": -14.210000000000008,
+              "maximum_us": 211.51999999999998,
+              "p50_us": 36.489999999999995,
+              "p95_us": 174.0939499999999,
+              "p99_us": 204.03479
+            },
+            "left_reduction_percent": 18.750986253996306,
+            "right_faster_count": 9
+          }
+        }
+      },
+      {
+        "capacity": 512,
+        "catalog_count": 17,
+        "left_mode": "upstream",
+        "right_mode": "whole",
+        "metrics": {
+          "wall_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 6082.3022,
+              "minimum_us": 5943.916,
+              "maximum_us": 6330.548,
+              "p50_us": 6037.8915,
+              "p95_us": 6294.335599999999,
+              "p99_us": 6323.30552
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5576.4691,
+              "minimum_us": 5468.593,
+              "maximum_us": 5704.255,
+              "p50_us": 5561.474,
+              "p95_us": 5697.7345000000005,
+              "p99_us": 5702.9509
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 505.8331,
+              "minimum_us": 394.6319999999996,
+              "maximum_us": 681.143,
+              "p50_us": 473.692,
+              "p95_us": 666.3285499999998,
+              "p99_us": 678.18011
+            },
+            "left_reduction_percent": 8.316474311322446,
+            "right_faster_count": 10
+          },
+          "queue_span_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 5678.104019165039,
+              "minimum_us": 5614.67981338501,
+              "maximum_us": 5765.940189361572,
+              "p50_us": 5662.039995193481,
+              "p95_us": 5762.880110740662,
+              "p99_us": 5765.32817363739
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 5218.85404586792,
+              "minimum_us": 5174.41987991333,
+              "maximum_us": 5258.059978485107,
+              "p50_us": 5217.9200649261475,
+              "p95_us": 5256.637978553772,
+              "p99_us": 5257.77557849884
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 459.24997329711914,
+              "minimum_us": 404.599666595459,
+              "maximum_us": 547.9001998901367,
+              "p50_us": 451.38001441955566,
+              "p95_us": 533.5540294647217,
+              "p99_us": 545.0309658050537
+            },
+            "left_reduction_percent": 8.088086652640285,
+            "right_faster_count": 10
+          },
+          "preparation_enqueue_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 323.5743,
+              "minimum_us": 255.691,
+              "maximum_us": 466.712,
+              "p50_us": 307.4715,
+              "p95_us": 436.13854999999995,
+              "p99_us": 460.59731
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 288.6775,
+              "minimum_us": 242.271,
+              "maximum_us": 362.022,
+              "p50_us": 279.9915,
+              "p95_us": 352.18499999999995,
+              "p99_us": 360.0546
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 34.8968,
+              "minimum_us": -14.009999999999991,
+              "maximum_us": 153.01999999999998,
+              "p50_us": 18.559499999999986,
+              "p95_us": 124.46704999999993,
+              "p99_us": 147.30940999999999
+            },
+            "left_reduction_percent": 10.784787296148055,
+            "right_faster_count": 8
+          },
+          "submit_join_cpu_us": {
+            "left": {
+              "count": 10,
+              "mean_us": 293.7533,
+              "minimum_us": 224.341,
+              "maximum_us": 394.002,
+              "p50_us": 275.266,
+              "p95_us": 382.662,
+              "p99_us": 391.73400000000004
+            },
+            "right": {
+              "count": 10,
+              "mean_us": 255.38490000000002,
+              "minimum_us": 195.17,
+              "maximum_us": 314.851,
+              "p50_us": 250.061,
+              "p95_us": 313.735,
+              "p99_us": 314.6278
+            },
+            "left_minus_right": {
+              "count": 10,
+              "mean_us": 38.36840000000001,
+              "minimum_us": -5.010999999999967,
+              "maximum_us": 128.041,
+              "p50_us": 27.010499999999993,
+              "p95_us": 106.49499999999995,
+              "p99_us": 123.7318
+            },
+            "left_reduction_percent": 13.061436245992814,
+            "right_faster_count": 9
+          }
+        }
+      }
+    ],
+    "interaction": [
+      {
+        "capacity": 400,
+        "definition": "(upstream17 - whole17) - (upstream2 - whole2)",
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 66.5230999999998,
+            "minimum_us": -106.94100000000071,
+            "maximum_us": 376.6819999999998,
+            "p50_us": 55.320000000000164,
+            "p95_us": 281.9425999999999,
+            "p99_us": 357.73411999999985
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 37.869930267333984,
+            "minimum_us": -45.85981369018555,
+            "maximum_us": 129.41980361938477,
+            "p50_us": 45.439720153808594,
+            "p95_us": 107.47783184051508,
+            "p99_us": 125.03140926361084
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 39.446,
+            "minimum_us": -15.929999999999978,
+            "maximum_us": 228.511,
+            "p50_us": 13.980000000000004,
+            "p95_us": 157.2840999999998,
+            "p99_us": 214.26562
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": 31.6781,
+            "minimum_us": -40.87999999999997,
+            "maximum_us": 145.58999999999997,
+            "p50_us": 20.230000000000004,
+            "p95_us": 115.47194999999991,
+            "p99_us": 139.56638999999998
+          }
+        }
+      },
+      {
+        "capacity": 512,
+        "definition": "(upstream17 - whole17) - (upstream2 - whole2)",
+        "metrics": {
+          "wall_us": {
+            "count": 10,
+            "mean_us": 166.49350000000004,
+            "minimum_us": -88.54099999999926,
+            "maximum_us": 333.6899999999996,
+            "p50_us": 162.6854999999996,
+            "p95_us": 320.23139999999984,
+            "p99_us": 330.9982799999997
+          },
+          "queue_span_us": {
+            "count": 10,
+            "mean_us": 149.9420166015625,
+            "minimum_us": 16.739845275878906,
+            "maximum_us": 224.3804931640625,
+            "p50_us": 171.20003700256348,
+            "p95_us": 218.3502435684204,
+            "p99_us": 223.17444324493408
+          },
+          "preparation_enqueue_us": {
+            "count": 10,
+            "mean_us": 18.570700000000006,
+            "minimum_us": -122.13099999999997,
+            "maximum_us": 166.779,
+            "p50_us": 22.844499999999982,
+            "p95_us": 137.55194999999992,
+            "p99_us": 160.93359
+          },
+          "submit_join_cpu_us": {
+            "count": 10,
+            "mean_us": -17.83679999999999,
+            "minimum_us": -216.53099999999995,
+            "maximum_us": 82.25100000000003,
+            "p50_us": -3.0400000000000063,
+            "p95_us": 66.56849999999999,
+            "p99_us": 79.11450000000004
+          }
+        }
+      }
+    ]
+  },
+  "source": {
+    "bundle": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\outputs\\thesis_incremental_plan\\catalog-bridge-evidence-v2\\catalog-bridge-suite.json",
+    "bundle_sha256": "d00bb45f7bf130f6ea7663451fb83034d2c778de13e1f675892bfde3d64ae5c5",
+    "auditor_sha256": "f5612e15dd64b18347c39834fd34e07a0c9df8069c7295c57b4703b75ef334a9"
+  },
+  "bounded_context_screen": true,
+  "stable_performance_gain_established": false,
+  "catalog_memory_causality_established": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "limitations": [
+    "One fresh process per cell; capture history, address placement, thermal state and order are confounded.",
+    "Unused captured producer outputs are uninitialized: their plans refer only to executed eager preflight.",
+    "Queue span includes dependencies and gaps, and is not hardware kernel execution time.",
+    "FP32 qualification is separate from timed replay; no per-timed-replay oracle check.",
+    "No profiler in this bridge: no new kernel-level attribution or model/serving throughput evidence."
+  ]
+}

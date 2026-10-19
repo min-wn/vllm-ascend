@@ -1,0 +1,53 @@
+{
+  "qualified": true,
+  "audit_method": "independent stdlib raw-read audit",
+  "manifest_files_verified": 52,
+  "timings_verified": 80,
+  "fp32_rows_verified": 144,
+  "max_abs_error": 0.00029981881380081177,
+  "fixed_process_and_sample_order": true,
+  "pre_post_qualification_flags_pass": true,
+  "input_mask_frame_byte_identity_pass": true,
+  "same_policy_catalog2_catalog17_full_plan_words_match": true,
+  "prepared_descriptor_copy_counts_pass": true,
+  "npu0_idle_after": true,
+  "wall_means_us": {
+    "catalog2": {
+      "capacity400": {
+        "upstream": 4930.2063,
+        "whole": 4630.1397
+      },
+      "capacity512": {
+        "upstream": 6283.2762,
+        "whole": 5943.9366
+      }
+    },
+    "catalog17": {
+      "capacity400": {
+        "upstream": 4836.5799,
+        "whole": 4469.9902
+      },
+      "capacity512": {
+        "upstream": 6082.3022,
+        "whole": 5576.4691
+      }
+    }
+  },
+  "whole_over_upstream_reduction_percent": {
+    "catalog2": {
+      "capacity400": 6.08628892466427,
+      "capacity512": 5.400679346230239
+    },
+    "catalog17": {
+      "capacity400": 7.579523290827877,
+      "capacity512": 8.316474311322443
+    }
+  },
+  "policy_difference_interaction_us_catalog17_minus2": {
+    "capacity400": 66.5231,
+    "capacity512": 166.4935
+  },
+  "document_numbers_consistent": true,
+  "document_causal_and_scope_limits_appropriate": true,
+  "blocking_findings": []
+}

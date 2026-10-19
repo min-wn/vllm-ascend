@@ -1,0 +1,839 @@
+"""Independent standard-library audit of the four-cell catalog bridge screen."""
+
+import argparse
+import bisect
+import hashlib
+import json
+import math
+import statistics
+import struct
+from pathlib import Path, PurePosixPath, PureWindowsPath
+
+CANONICAL = "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524"
+PROBE = "5ad90cccbddfa36a23758ff4c681c727928c6febea2c8e7eba5e24176f00c3b5"
+SUITE = "d63a89946c8fc4f7f0d8eeaaa05df991f805f4a1e4356ec71a5d03a24d2b865a"
+OPAPI = "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40"
+EXTENSION = "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b"
+REGISTRATION = "/usr/local/Ascend/cann-9.1.0/opp/vendors/batch_invariant/op_api/lib/libcust_opapi.so"
+REGISTRATION_SHA = "d1eecbbe84ac8b32af671b09a988f43d953198f671e34c379bb38c2b356670b8"
+POLICIES = {
+    "upstream": (
+        "libfia_v2_sink_aicpu_kernels.so",
+        "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+        "1127c8287069e1ab1f2a681e76a3dd9c1385eb86e2a8584dd02400333ed09203",
+    ),
+    "whole": (
+        "libthesis_stage5_whole_aicpu.so",
+        "1c4ab9fcf2b7d2935be3e60f2a215fb65dc85859bc6fe99fe5271b4c4784ea90",
+        "7d5c6a82a6ae43ffa7ba3fbb2d13f8ebad8b85728fbbc9ddac4a35e3df724d1b",
+    ),
+}
+CELLS = (("upstream", 2), ("whole", 2), ("upstream", 17), ("whole", 17))
+CAPS = [400, 512]
+ORDER = [400, 304, 288, 352, 272, 496, 464, 480, 320, 448, 384, 368, 432, 256, 512, 336, 416]
+STEPS = [0, 1, 2, 3, 4, 5, 7, 9, 11, 14, 17, 18, 21, 24, 29, 37, 38]
+METRICS = ("wall_us", "queue_span_us", "preparation_enqueue_us", "submit_join_cpu_us")
+PREFLIGHT_SOURCE = "executed eager preflight; captured graph producer not yet replayed"
+REPLAY_SOURCE = "captured producer replay on selected qualification/timing path"
+SYMBOLS = {
+    "aclnnFusedInferAttentionScoreV2SinkV3GetWorkspaceSize",
+    "aclnnFusedInferAttentionScoreV2SinkV3",
+    "aclnnFusedInferAttentionScoreV2SinkMetadataGetWorkspaceSize",
+    "aclnnFusedInferAttentionScoreV2SinkMetadata",
+}
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def exact(left, right):
+    return json.dumps(left, sort_keys=True, separators=(",", ":"), default=sorted) == json.dumps(
+        right, sort_keys=True, separators=(",", ":"), default=sorted
+    )
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode("ascii")).hexdigest()
+
+
+def issha(value):
+    return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+
+def finite(value, positive=False):
+    return type(value) in (int, float) and math.isfinite(value) and (value > 0 if positive else value >= 0)
+
+
+class Audit:
+    def __init__(self):
+        self.checks = 0
+
+    def require(self, condition, label):
+        self.checks += 1
+        if not condition:
+            raise ValueError(label)
+
+    def same(self, left, right, label):
+        self.require(exact(left, right), label)
+
+
+def owned(root, relative):
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or PurePosixPath(relative).is_absolute()
+        or PureWindowsPath(relative).drive
+        or ".." in PurePosixPath(relative).parts
+    ):
+        raise ValueError("invalid relative evidence path")
+    path = (root / relative).resolve(strict=True)
+    if not path.is_relative_to(root) or not path.is_file():
+        raise ValueError("evidence path escapes its root")
+    return path
+
+
+def expected_records(repo, deployed, audit):
+    results = repo / "benchmarks/results/multi_graph_structural"
+    trace_path = results / "structural-dynamic-trace-v1.json"
+    selection_path = results / "q4-tile-full-replay-v8-queue0.rank0.json"
+    audit.same(sha(trace_path), deployed[trace_path.name], "deployed canonical trace bytes")
+    audit.same(sha(selection_path), deployed[selection_path.name], "deployed default selection bytes")
+    document, selected = load(trace_path), load(selection_path)
+    trace = document["trace"]
+    normalized = dict(
+        trace, initial_prefix_by_request={int(key): value for key, value in trace["initial_prefix_by_request"].items()}
+    )
+    audit.same(digest(normalized), CANONICAL, "canonical independent digest")
+    audit.same(document["trace_sha256"], CANONICAL, "canonical declared digest")
+    audit.same(selected["trace_sha256"], CANONICAL, "selection digest")
+    selection = selected["selection"]
+    sizes, dispatch = selection["capture_sizes"], selection["dispatched_tokens"]
+    audit.same(sizes, sorted(set(sizes)), "sorted original default catalog")
+    audit.same(
+        selection["config_source"], "installed EngineArgs defaults; no capture sizes supplied", "default catalog origin"
+    )
+    audit.same([row["step"] for row in trace["steps"]], list(range(128)), "canonical chronological steps")
+    maximum = [trace["initial_prefix_by_request"][str(owner)] for owner in range(128)]
+    for step in trace["steps"]:
+        for owner, length in zip(step["request_ids"], step["seq_lengths"], strict=True):
+            maximum[owner] = max(maximum[owner], length)
+    pages, cursor = [], 1
+    for length in maximum:
+        count = (length + 127) // 128
+        pages.append(list(range(cursor, cursor + count)))
+        cursor += count
+    width = max(map(len, pages))
+    audit.same([cursor, width], [1293, 15], "owner reservation geometry")
+    prefix = [trace["initial_prefix_by_request"][str(owner)] for owner in range(128)]
+    pending, previous, seen, records = [1] * 128, set(), set(), []
+    for index, step in enumerate(trace["steps"]):
+        owners, lengths, batch = step["request_ids"], step["seq_lengths"], step["batch"]
+        audit.require(
+            batch == len(owners) == len(lengths) and len(set(owners)) == batch, f"step {index}: unique live owners"
+        )
+        audit.same(step["first_use"], [owner not in seen for owner in owners], f"step {index}: lifecycle first use")
+        audit.same(
+            step["accepted_from_previous"], [pending[owner] for owner in owners], f"step {index}: accepted lengths"
+        )
+        for owner in owners:
+            if owner in seen:
+                prefix[owner] += pending[owner]
+        audit.same(lengths, [prefix[owner] + 4 for owner in owners], f"step {index}: exact lengths")
+        capacity = sizes[bisect.bisect_left(sizes, batch * 4)]
+        audit.same(capacity, dispatch[index], f"step {index}: actual smallest default bucket")
+        physical, padding, positions, slots = capacity // 4, capacity // 4 - batch, [], []
+        for owner, length in zip(owners, lengths, strict=True):
+            positions.extend(range(length - 4, length))
+            slots.extend(pages[owner][position // 128] * 128 + position % 128 for position in range(length - 4, length))
+        current = set(owners)
+        records.append(
+            dict(
+                step=index,
+                batch=batch,
+                live_tokens=batch * 4,
+                physical_tokens=capacity,
+                default_capacity=capacity,
+                physical_batch=physical,
+                padding_requests=padding,
+                request_ids=owners,
+                owner_keys=[[owner, 0] for owner in owners] + [None] * padding,
+                owner_active=[owner in current for owner in range(128)],
+                q_lengths=[4] * physical,
+                actual_seq_qlen=list(range(4, capacity + 1, 4)),
+                kv_lengths=lengths + [0] * padding,
+                block_table=[pages[owner] + [0] * (width - len(pages[owner])) for owner in owners]
+                + [[0] * width for _ in range(padding)],
+                positions=positions + [0] * (padding * 4),
+                slot_mapping=slots + [-1] * (padding * 4),
+                active_tokens=[True] * (batch * 4) + [False] * (padding * 4),
+                first_use=step["first_use"],
+                accepted_from_previous=step["accepted_from_previous"],
+                accepted_after_step=step["accepted_after_step"],
+                admitted=[owner for owner in owners if owner not in seen],
+                resumed=[owner for owner in owners if owner in seen and owner not in previous],
+                departed=sorted(previous - current),
+                retired=[],
+                input_seed=step["input_seed"],
+                page_count=cursor,
+            )
+        )
+        for owner, accepted in zip(owners, step["accepted_after_step"], strict=True):
+            audit.require(type(accepted) is int and 1 <= accepted <= 4, "accepted query prefix bounds")
+            pending[owner] = accepted
+        previous = current
+        seen.update(current)
+    first = {}
+    for record in records:
+        first.setdefault(record["physical_tokens"], record)
+    audit.same(list(first), ORDER, "independent first-use catalog order")
+    audit.same([row["step"] for row in first.values()], STEPS, "independent first-use steps")
+    return records, first, selection, dict(pages=pages, maximum_lengths=maximum, page_count=cursor, width=width)
+
+
+def plan_check(plan, record, mode, audit):
+    words = plan["words"]
+    audit.require(
+        isinstance(words, list)
+        and len(words) == 1024
+        and all(type(value) is int and 0 <= value < 2**31 for value in words),
+        "complete native plan words",
+    )
+    audit.same(hashlib.sha256(struct.pack("<1024i", *words)).hexdigest(), plan["sha256"], "native plan raw byte hash")
+    base = words[576:586]
+    maximum, batch = max(record["kv_lengths"]) or 1024, record["physical_batch"]
+    audit.same(
+        base[:3] + base[6:], [512, min(512, maximum), 8, 4, maximum, batch, batch], "native exact current geometry"
+    )
+    audit.require(type(base[4]) is int and 1 <= base[4] <= 20, "native active core count")
+    audit.require(plan["current_exact_base_verified"] is True, "runtime current-base validation")
+    if mode == "whole":
+        audit.same([base[3], base[5]], [0, 0], "whole plan excludes reduction groups and cores")
+        expected, begin, loads = [0] * 1024, 0, []
+        expected[576:586] = base
+        for core in range(base[4]):
+            slot = words[core * 10 : (core + 1) * 10]
+            end = slot[1]
+            audit.require(
+                slot[0] == 1 and slot[2:] == [0] * 8 and begin < end <= batch * 2, "whole advancing non-FD core range"
+            )
+            load = 0
+            for head in range(begin, end):
+                length = record["kv_lengths"][head // 2]
+                full, tail = divmod(length, base[1])
+                load += full * (12 + 10 * ((base[1] + 63) // 64)) + (12 + 10 * ((tail + 63) // 64) if tail else 0)
+            audit.require(load > 0 or not any(record["kv_lengths"]), "whole active core contains real work")
+            loads.append(load)
+            expected[core * 10 : (core + 1) * 10] = slot
+            begin = end
+        audit.same(begin, batch * 2, "whole complete physical head coverage")
+        for vector in range(2 * base[4]):
+            expected[360 + 3 * vector] = 1
+        audit.same(words, expected, "whole unused and FD words are all zero")
+        audit.same(
+            plan["whole_coverage"],
+            dict(
+                used_cores=base[4],
+                physical_heads=batch * 2,
+                attention_tiles=sum((length + base[1] - 1) // base[1] * 2 for length in record["kv_lengths"]),
+                core_costs=loads,
+                cost_model="abstract_6_10_upper_bound",
+            ),
+            "independent whole coverage result",
+        )
+    return words
+
+
+def tensor_identity(item, shape, audit, dtype="torch.bfloat16"):
+    audit.same(item["shape"], shape, "tensor exact shape")
+    audit.same(item["dtype"], dtype, "tensor exact dtype")
+    audit.require(issha(item["sha256"]), "tensor full byte SHA256")
+
+
+def input_check(report, audit):
+    value = report["input_identity"]
+    audit.same(value, report["post_input_identity"], "resident complete QKV unchanged")
+    audit.same(report["mask_identity"], report["post_mask_identity"], "resident complete mask unchanged")
+    audit.same(value["sha256"], digest(value["occurrences"]), "resident aggregate hash")
+    audit.same(len(value["occurrences"]), 16, "sixteen private QKV occurrences")
+    shapes = dict(query=[512, 12, 256], key=[1293, 128, 2, 256], value=[1293, 128, 2, 256])
+    for occurrence in value["occurrences"]:
+        audit.same(set(occurrence), set(shapes), "QKV tensor identity keys")
+        for key, shape in shapes.items():
+            tensor_identity(occurrence[key], shape, audit)
+    tensor_identity(report["mask_identity"], [2048, 2048], audit, "torch.bool")
+    ranges = report["private_storage_ranges"]
+    audit.same(len(ranges), 48, "all private QKV storage ranges")
+    audit.same(
+        {(row["occurrence"], row["name"]) for row in ranges},
+        {(occurrence, name) for occurrence in range(16) for name in shapes},
+        "private storage identities",
+    )
+    for row in ranges:
+        audit.require(type(row["start"]) is int and row["start"] > 0, "private positive base address")
+        audit.same(row["end"] - row["start"], math.prod(shapes[row["name"]]) * 2, "private storage exact bytes")
+    ordered = sorted((row["start"], row["end"]) for row in ranges)
+    audit.require(all(left[1] <= right[0] for left, right in zip(ordered, ordered[1:])), "private QKV no overlap")
+
+
+def catalog_storage_check(report, captures, audit):
+    keys = {str(row["physical_tokens"]) for row in captures}
+    for name in ("frame_query_identity", "post_frame_query_identity", "captured_addresses", "prepared_descriptors"):
+        audit.same(set(report[name]), keys, f"complete catalog {name} coverage")
+    audit.same(
+        report["frame_query_identity"], report["post_frame_query_identity"], "all retained query frames unchanged"
+    )
+    ranges = []
+    for record in captures:
+        capacity, batch = record["physical_tokens"], record["physical_batch"]
+        for frame in report["frame_query_identity"][str(capacity)]:
+            tensor_identity(frame, [capacity, 12, 256], audit)
+        audit.same(len(report["frame_query_identity"][str(capacity)]), 16, "sixteen per-bucket query frames")
+        shapes = dict(
+            q_lengths=[batch], kv_lengths=[batch], block_table=[batch, 15], atten_mask=[2048, 2048], metadata=[1024]
+        )
+        shapes.update({f"{name}{index}": [capacity, 12, 256] for name in ("query", "output") for index in range(16)})
+        saved = report["captured_addresses"][str(capacity)]
+        audit.same(set(saved), set(shapes), "exact retained descriptor set")
+        for name, shape in shapes.items():
+            descriptor = saved[name]
+            audit.same(descriptor["shape"], shape, "captured descriptor shape")
+            audit.same(
+                descriptor["stride"],
+                [math.prod(shape[i + 1 :]) for i in range(len(shape))],
+                "captured contiguous stride",
+            )
+            audit.require(type(descriptor["pointer"]) is int and descriptor["pointer"] > 0, "captured positive pointer")
+            size = 8 if name in ("q_lengths", "kv_lengths") else 4 if name in ("block_table", "metadata") else 2
+            if name != "atten_mask":
+                ranges.append((descriptor["pointer"], descriptor["pointer"] + math.prod(shape) * size))
+        count = 17 if capacity in CAPS else 0
+        prep = report["prepared_descriptors"][str(capacity)]
+        wanted = dict(
+            mode="sink",
+            physical_tokens=capacity,
+            physical_requests=batch,
+            host_pinned=dict.fromkeys(("q_lengths", "kv_lengths", "block_table"), True),
+            stable_host_allocations=True,
+            stable_device_allocations=True,
+            host_allocation_count=3,
+            device_allocation_count=0,
+            setup_copies=dict(q_lengths=1, kv_lengths=0, block_table=0),
+            step_copies=dict(q_lengths=0, kv_lengths=count, block_table=count),
+            prepared_steps=count,
+            completed_steps=count,
+            inflight=False,
+            q4_invariant=dict(query_length=4, cumulative_q=list(range(4, capacity + 1, 4))),
+        )
+        for key, value in wanted.items():
+            audit.same(prep[key], value, f"capacity {capacity}: persistent descriptor {key}")
+        for key in ("q_lengths", "kv_lengths", "block_table"):
+            for field in ("pointer", "shape", "stride"):
+                audit.same(
+                    prep["device"][key][field], saved[key][field], "prepared source targets exact captured descriptor"
+                )
+    ordered = sorted(ranges)
+    audit.require(
+        all(left[1] <= right[0] for left, right in zip(ordered, ordered[1:])),
+        "independent bucket storage does not overlap",
+    )
+
+
+def native_check(report, mode, audit):
+    library, library_sha, config_sha = POLICIES[mode]
+    policy = report["policy_provenance"]
+    audit.same(policy["policy"], mode, "actual native policy")
+    audit.same(PurePosixPath(policy["library"]).name, library, "actual dispatch library basename")
+    audit.same(policy["library_sha256"], library_sha, "actual dispatch library bytes")
+    audit.same(policy["opapi_sha256"], OPAPI, "common OpAPI bytes")
+    audit.same(report["extension_sha256"], EXTENSION, "common extension bytes")
+    artifacts = report["opp_artifacts"]
+    for name, wanted in (
+        ("op_api/lib/libcust_opapi.so", OPAPI),
+        ("op_impl/cpu/config/cust_aicpu_kernel.json", config_sha),
+        ("op_impl/cpu/aicpu_kernel/impl/" + library, library_sha),
+    ):
+        audit.same(artifacts[name], wanted, "qualified native artifact " + name)
+    audit.require(all(issha(value) for value in artifacts.values()), "native inventory raw hashes")
+    provenance = report["final_native_provenance"]
+    audit.require(
+        provenance["alternate_sink_symbols_absent"] is True and provenance["selected_library_handle_retained"] is True,
+        "no alternate native symbol owner",
+    )
+    selected = str(PurePosixPath(policy["library"]).parents[4] / "op_api/lib/libcust_opapi.so")
+    allowed = {selected: OPAPI, REGISTRATION: REGISTRATION_SHA}
+    mapped = provenance["libraries"]
+    audit.require(
+        len(mapped) in (1, 2) and len({row["path"] for row in mapped}) == len(mapped), "unique mapped OpAPI owners"
+    )
+    audit.require(
+        any(row["path"] == selected and row["sha256"] == OPAPI for row in mapped), "selected mapped OpAPI present"
+    )
+    audit.require(
+        all(allowed.get(row["path"]) == row["sha256"] for row in mapped), "only authorized mapped OpAPI libraries"
+    )
+    symbols = provenance["sink_symbols"]
+    audit.same({row["symbol"] for row in symbols}, SYMBOLS, "all native sink symbols")
+    audit.require(
+        len(symbols) == 4 and all(row["source"] == selected for row in symbols),
+        "all symbols resolved from selected OpAPI",
+    )
+    excluded = {"op_impl/cpu/config/cust_aicpu_kernel.json"}
+    excluded.update("op_impl/cpu/aicpu_kernel/impl/" + row[0] for row in POLICIES.values())
+    return {key: value for key, value in artifacts.items() if key not in excluded}
+
+
+def stats(values):
+    ordered = sorted(values)
+
+    def percentile(fraction):
+        position = (len(ordered) - 1) * fraction
+        lower = int(position)
+        upper = min(lower + 1, len(ordered) - 1)
+        return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
+
+    return dict(
+        count=len(values),
+        mean_us=statistics.mean(values),
+        minimum_us=min(values),
+        maximum_us=max(values),
+        p50_us=percentile(0.5),
+        p95_us=percentile(0.95),
+        p99_us=percentile(0.99),
+    )
+
+
+def summaries(indexed):
+    cells, contexts, policies, interactions = [], [], [], []
+    for mode, count in CELLS:
+        for capacity in CAPS:
+            selected = [indexed[mode, count, capacity, repeat] for repeat in range(10)]
+            cells.append(
+                dict(
+                    mode=mode,
+                    catalog_count=count,
+                    capacity=capacity,
+                    metrics={metric: stats([row[metric] for row in selected]) for metric in METRICS},
+                )
+            )
+
+    def comparison(left_mode, left_count, right_mode, right_count, capacity):
+        result = {}
+        for metric in METRICS:
+            left = [indexed[left_mode, left_count, capacity, repeat][metric] for repeat in range(10)]
+            right = [indexed[right_mode, right_count, capacity, repeat][metric] for repeat in range(10)]
+            deltas = [a - b for a, b in zip(left, right, strict=True)]
+            result[metric] = dict(
+                left=stats(left),
+                right=stats(right),
+                left_minus_right=stats(deltas),
+                left_reduction_percent=100 * sum(deltas) / sum(left),
+                right_faster_count=sum(value > 0 for value in deltas),
+            )
+        return result
+
+    for capacity in CAPS:
+        for mode in ("upstream", "whole"):
+            contexts.append(
+                dict(
+                    mode=mode,
+                    capacity=capacity,
+                    left_catalog=2,
+                    right_catalog=17,
+                    metrics=comparison(mode, 2, mode, 17, capacity),
+                )
+            )
+        for count in (2, 17):
+            policies.append(
+                dict(
+                    capacity=capacity,
+                    catalog_count=count,
+                    left_mode="upstream",
+                    right_mode="whole",
+                    metrics=comparison("upstream", count, "whole", count, capacity),
+                )
+            )
+        metrics = {}
+        for metric in METRICS:
+            values = [
+                (indexed["upstream", 17, capacity, repeat][metric] - indexed["whole", 17, capacity, repeat][metric])
+                - (indexed["upstream", 2, capacity, repeat][metric] - indexed["whole", 2, capacity, repeat][metric])
+                for repeat in range(10)
+            ]
+            metrics[metric] = stats(values)
+        interactions.append(
+            dict(capacity=capacity, definition="(upstream17 - whole17) - (upstream2 - whole2)", metrics=metrics)
+        )
+    return dict(per_cell_capacity=cells, catalog_context=contexts, native_policy=policies, interaction=interactions)
+
+
+def audit_bundle(bundle_path, repo, audit):
+    base = bundle_path.parent.resolve(strict=True)
+    manifest = load(base / "manifest.json")
+    seen = set()
+    for item in manifest:
+        path = owned(base, item["path"])
+        audit.require(path not in seen, "unique raw manifest path")
+        audit.same(sha(path), item["sha256"], "raw manifest byte hash " + item["path"])
+        seen.add(path)
+    audit.require(bundle_path in seen, "suite raw bytes are in the manifest")
+    suite, deployed = load(bundle_path), load(base / "deployed-tools/deployed-tools.json")
+    audit.same(deployed["aclgraph_fia_sink_catalog_bridge_probe.py"], PROBE, "frozen v2 bridge probe SHA")
+    audit.same(deployed["aclgraph_fia_sink_catalog_bridge_suite.py"], SUITE, "frozen bridge suite SHA")
+    audit.same(suite["probe_sha256"], PROBE, "suite executed v2 probe")
+    audit.same(suite["state"], "completed", "completed bridge suite")
+    audit.same(suite["returncode"], 0, "suite successful return")
+    audit.require(
+        suite["context_screen"] is True and suite["performance_measured"] is True, "bounded context performance screen"
+    )
+    for flag in (
+        "stable_performance_gain_established",
+        "catalog_memory_causality_established",
+        "full_trace_measured",
+        "full_model_qualified",
+        "end_to_end_gain_established",
+    ):
+        audit.require(suite[flag] is False, "suite scope excludes " + flag)
+    records, first, selection, reservation = expected_records(repo, deployed, audit)
+    audit.same(suite["canonical_digest"], CANONICAL, "suite canonical trace")
+    wanted_design = dict(
+        modes=["upstream", "whole"],
+        catalog_counts=[2, 17],
+        cells=[dict(mode=mode, catalog_count=count, trial=0) for mode, count in CELLS],
+        capacities=CAPS,
+        steps=[0, 29],
+        occurrences=16,
+        repeats=10,
+        warmups=5,
+        profile_repeats=0,
+        seed=1703,
+        capture_orders={"2": CAPS, "17": ORDER},
+        capture_steps={"2": [0, 29], "17": STEPS},
+        timed_step_order=[[0, 29] if repeat % 2 == 0 else [29, 0] for repeat in range(10)],
+        trial_fixed_for_all_cells=0,
+        independent_graph_pool_per_bucket=True,
+        full_catalog_retained_until_exit=True,
+        extra_catalog_replay_before_measurement=False,
+        context_screen=True,
+        process_replicates_per_cell=1,
+    )
+    audit.same(suite["design"], wanted_design, "entire predeclared four-cell design")
+    reports, indexed, plans, pids, children = {}, {}, {}, set(), set()
+    oracle_count, maximum_error, plan_count, actual_plan_count = 0, 0.0, 0, 0
+    common_binary, baseline = None, None
+    audit.same(len(suite["runs"]), 4, "exactly four fresh processes")
+    previous = suite["started_unix"]
+    for index, (entry, (mode, count)) in enumerate(zip(suite["runs"], CELLS, strict=True)):
+        audit.same(
+            [entry["mode"], entry["catalog_count"], entry["trial"], entry["process_order_index"]],
+            [mode, count, 0, index],
+            "serial four-cell process identity",
+        )
+        audit.same(entry["returncode"], 0, "cell process success")
+        audit.require(
+            previous <= entry["launched_unix"] < entry["finished_unix"] <= suite["finished_unix"],
+            "serial process time interval",
+        )
+        previous = entry["finished_unix"]
+        path = owned(base, entry["report_path"])
+        audit.require(path in seen, "raw process report manifested")
+        audit.same(sha(path), entry["report_sha256"], "suite raw process report SHA")
+        report = load(path)
+        reports[mode, count] = report
+        audit.require(
+            type(entry["pid"]) is int and entry["pid"] > 0 and entry["pid"] not in pids, "unique launcher PID"
+        )
+        audit.require(
+            type(report["child_pid"]) is int and report["child_pid"] > 0 and report["child_pid"] not in children,
+            "unique native PID",
+        )
+        pids.add(entry["pid"])
+        children.add(report["child_pid"])
+        captures = [first[capacity] for capacity in (CAPS if count == 2 else ORDER)]
+        selected = [records[0], records[29]]
+        wanted = dict(
+            state="completed",
+            stage="completed",
+            returncode=0,
+            mode=mode,
+            policy=mode,
+            trial=0,
+            repeats=10,
+            occurrences=16,
+            warmup_replays=5,
+            warmup_count=5,
+            profile_repeats=0,
+            profiles=[],
+            catalog_count=count,
+            npu_work_executed=True,
+            performance_measured=True,
+            canonical_digest=CANONICAL,
+            selected_records=selected,
+            capture_records=captures,
+            capture_order=CAPS if count == 2 else ORDER,
+            core_limit=dict(cube_core_num=20, vector_core_num=40),
+            independent_graph_pool_per_bucket=True,
+            separate_qualification=True,
+            timed_samples_individually_qualified=False,
+            frame_queries_match_base_prefixes=True,
+            additional_catalog_replays_after_capture=0,
+            full_model_qualified=False,
+            full_trace_measured=False,
+            end_to_end_gain_established=False,
+        )
+        for key, value in wanted.items():
+            audit.same(report[key], value, f"cell {mode}/{count}: report {key}")
+        audit.require(
+            all(name in deployed and deployed[name] == value for name, value in report["scripts"].items()),
+            "runtime source hashes match deployed bytes",
+        )
+        for name in (
+            "aclgraph_fia_sink_catalog_bridge_probe.py",
+            "aclgraph_fia_sink_catalog_bridge_suite.py",
+            "aclgraph_fia_sink_consumer_probe.py",
+            "aclgraph_fia_sink_stage7_probe.py",
+        ):
+            audit.same(report["scripts"][name], deployed[name], "required measured dependency " + name)
+        contract = report["trace_contract"]
+        audit.same(contract["canonical_digest"], CANONICAL, "trace contract digest")
+        for key, filename in (
+            ("trace_file_sha256", "structural-dynamic-trace-v1.json"),
+            ("selection_sha256", "q4-tile-full-replay-v8-queue0.rank0.json"),
+            ("metadata_source_sha256", "multi_graph_gdn_q4_full_metadata.py"),
+            ("catalog_resolver_source_sha256", "multi_graph_gdn_q4_full_loader.py"),
+        ):
+            audit.same(contract[key], deployed[filename], "trace dependency hash " + key)
+        audit.same(contract["owner_pages"], reservation, "independent exact owner reservation")
+        audit.same(contract["default_capture_sizes"], selection["capture_sizes"], "default catalog retained")
+        audit.same(contract["required_capture_sizes"], sorted(ORDER), "all seventeen required capacities")
+        installed = report["installed_catalog"]
+        audit.require(installed["installed_catalog_revalidated"] is True, "installed default catalog revalidated")
+        for field in ("capture_sizes", "dispatched_tokens", "config_source"):
+            audit.same(installed["selection"][field], selection[field], "installed original selection " + field)
+        input_check(report, audit)
+        catalog_storage_check(report, captures, audit)
+        binary = native_check(report, mode, audit)
+        if common_binary is None:
+            common_binary = binary
+        audit.same(binary, common_binary, "all cells use common non-policy native artifacts")
+        common_keys = (
+            "input_identity",
+            "mask_identity",
+            "scripts",
+            "extension_sha256",
+            "device_name",
+            "torch_version",
+            "torch_npu_version",
+            "selected_records",
+            "trace_contract",
+        )
+        if baseline is None:
+            baseline = report
+        for key in common_keys:
+            audit.same(report[key], baseline[key], "cross-cell common identity " + key)
+        for capacity in CAPS:
+            audit.same(
+                report["frame_query_identity"][str(capacity)],
+                baseline["frame_query_identity"][str(capacity)],
+                "cross-cell selected frame bytes",
+            )
+        preflight = report["metadata_preflight"]
+        audit.same(len(preflight), count, "all captured buckets have executed eager preflight")
+        for item, record in zip(preflight, captures, strict=True):
+            audit.same(item["record"], record, "exact first-use eager record")
+            audit.same(item["capacity"], record["physical_tokens"], "eager record capacity")
+            audit.require(item["verified_before_attention_capture"] is True, "eager plan validated before capture")
+            words = plan_check(item, record, mode, audit)
+            plan_count += 1
+            identity = mode, record["physical_tokens"]
+            if identity in plans:
+                audit.same(words, plans[identity], "same-policy cross-catalog plan equality, every word")
+            plans[identity] = words
+        for phase in ("catalog_pre_checks", "catalog_post_checks"):
+            audit.same(len(report[phase]), count, "all retained catalog checks present")
+            for item, record in zip(report[phase], captures, strict=True):
+                capacity = record["physical_tokens"]
+                replayed = phase == "catalog_post_checks" and capacity in CAPS
+                wanted = dict(
+                    capacity=capacity,
+                    step=record["step"],
+                    stable_addresses=True,
+                    exact_descriptors_read_only=True,
+                    replay_performed=False,
+                    plan_source=REPLAY_SOURCE if replayed else PREFLIGHT_SOURCE,
+                    plan_is_captured_graph_output=replayed,
+                    graph_metadata_semantically_initialized=replayed,
+                    graph_replays_after_capture=17 if replayed else 0,
+                )
+                for key, value in wanted.items():
+                    audit.same(item[key], value, f"{phase}: truthful plan source {key}")
+                words = plan_check(item["plan"], record, mode, audit)
+                plan_count += 1
+                actual_plan_count += int(replayed)
+                audit.same(
+                    words, plans[mode, capacity], "catalog check plan equals independently verified eager payload"
+                )
+        for phase in ("pre_checks", "post_checks"):
+            audit.same(len(report[phase]), 2, "two measured records qualified separately")
+            for item, record in zip(report[phase], selected, strict=True):
+                capacity = record["physical_tokens"]
+                audit.same(
+                    [item["capacity"], item["step"], item["private_occurrences"]],
+                    [capacity, record["step"], 16],
+                    "qualification identity",
+                )
+                for flag in (
+                    "finite",
+                    "all_outputs_finite",
+                    "exact_zero_padding",
+                    "stable_addresses",
+                    "exact_descriptors_read_only",
+                ):
+                    audit.require(item[flag] is True, "qualification " + flag)
+                audit.same(
+                    [item["legacy_update_calls_delta"], item["legacy_updated_tasks_delta"]],
+                    [0, 0],
+                    "sink no legacy update substitution",
+                )
+                rows = item["fp32_sampled_rows"]
+                wanted_rows = {
+                    (occurrence, row)
+                    for occurrence in (0, 7, 15)
+                    for row in (0, record["batch"] // 2, record["batch"] - 1)
+                }
+                audit.same(len(rows), 9, "nine independent FP32 rows")
+                audit.same(
+                    {(row["occurrence"], row["row"]) for row in rows},
+                    wanted_rows,
+                    "exact sampled occurrence and row identities",
+                )
+                for row in rows:
+                    length = record["kv_lengths"][row["row"]]
+                    real_pages = record["block_table"][row["row"]][: (length + 127) // 128]
+                    audit.same(
+                        [row["kv_length"], row["original_page_ids"], row["local_page_ids"]],
+                        [length, real_pages, list(range(len(real_pages)))],
+                        "FP32 current exact ordered-page oracle",
+                    )
+                    audit.require(finite(row["max_abs_error"]), "finite FP32 absolute error")
+                    maximum_error = max(maximum_error, row["max_abs_error"])
+                    oracle_count += 1
+                audit.same(len(item["output_hashes"]), 16, "all sixteen finite/padding-checked output identities")
+                for output in item["output_hashes"]:
+                    tensor_identity(output, [capacity, 12, 256], audit)
+                audit.same(
+                    plan_check(item["plan"], record, mode, audit),
+                    plans[mode, capacity],
+                    "actual replay plan equals eager payload",
+                )
+                plan_count += 1
+                actual_plan_count += 1
+        audit.same(
+            report["warmups"],
+            [dict(capacity=capacity, replays=5, outside_timing=True) for capacity in CAPS],
+            "five selected-only warmups",
+        )
+        samples = report["samples"]
+        audit.same(len(samples), 20, "twenty unfiltered timings per cell")
+        audit.same(
+            [(row["repeat"], row["capacity"]) for row in samples],
+            [(repeat, capacity) for repeat in range(10) for capacity in (CAPS if repeat % 2 == 0 else CAPS[::-1])],
+            "same trial-zero alternating capacity order",
+        )
+        for row in samples:
+            capacity, repeat = row["capacity"], row["repeat"]
+            record = first[capacity]
+            audit.same(
+                [row["trial"], row["mode"], row["policy"], row["step"], row["batch"]],
+                [0, mode, mode, record["step"], record["batch"]],
+                "timing exact original identity",
+            )
+            audit.require(all(finite(row[metric]) for metric in METRICS) and row["wall_us"] > 0, "finite timings")
+            audit.require(
+                row["preparation_enqueue_us"] + row["submit_join_cpu_us"] <= row["wall_us"] + 1e-6,
+                "same-clock timing boundary",
+            )
+            audit.same(
+                [row["legacy_update_calls_delta"], row["legacy_updated_tasks_delta"]],
+                [0, 0],
+                "sink required producer path retained",
+            )
+            key = mode, count, capacity, repeat
+            audit.require(key not in indexed, "unique timing matrix key")
+            indexed[key] = row
+    audit.require(not pids.intersection(children), "disjoint launcher/native PIDs")
+    audit.same(len(indexed), 80, "complete eighty-sample matrix")
+    audit.same(oracle_count, 144, "complete 144-row pre/post FP32 qualification")
+    for capacity in ORDER:
+        audit.same(
+            reports["upstream", 17]["frame_query_identity"][str(capacity)],
+            reports["whole", 17]["frame_query_identity"][str(capacity)],
+            "all full-catalog frame bytes match native policies",
+        )
+    return dict(
+        qualified=True,
+        independent_checks=audit.checks,
+        raw_manifest_files=len(seen),
+        sample_count=len(indexed),
+        fp32_sampled_rows=oracle_count,
+        maximum_fp32_absolute_error=maximum_error,
+        complete_plan_payload_checks=plan_count,
+        actual_replayed_plan_payload_checks=actual_plan_count,
+        common_non_policy_native_artifacts=common_binary,
+        summary=summaries(indexed),
+        source=dict(bundle=str(bundle_path), bundle_sha256=sha(bundle_path), auditor_sha256=sha(__file__)),
+        bounded_context_screen=True,
+        stable_performance_gain_established=False,
+        catalog_memory_causality_established=False,
+        full_trace_measured=False,
+        full_model_qualified=False,
+        end_to_end_gain_established=False,
+        limitations=[
+            "One fresh process per cell; capture history, address placement, thermal state and order are confounded.",
+            "Unused captured producer outputs are uninitialized: their plans refer only to executed eager preflight.",
+            "Queue span includes dependencies and gaps, and is not hardware kernel execution time.",
+            "FP32 qualification is separate from timed replay; no per-timed-replay oracle check.",
+            "No profiler in this bridge: no new kernel-level attribution or model/serving throughput evidence.",
+        ],
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("bundle", type=Path, help="catalog-bridge-suite.json, or its collected evidence directory")
+    parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[2] / "work/vllm-ascend")
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    path = args.bundle.resolve(strict=True)
+    if path.is_dir():
+        path = path / "catalog-bridge-suite.json"
+    output = args.output.resolve() if args.output else path.parent / "catalog-bridge-independent-audit.json"
+    protected = {owned(path.parent, item["path"]) for item in load(path.parent / "manifest.json")}
+    if output in protected or output == path.parent / "manifest.json":
+        parser.error("audit output cannot overwrite raw manifested evidence")
+    audit = Audit()
+    try:
+        result = audit_bundle(path, args.repo.resolve(strict=True), audit)
+    except (ValueError, KeyError, TypeError, OSError, IndexError, struct.error) as error:
+        result = dict(
+            qualified=False,
+            independent_checks=audit.checks,
+            error=str(error),
+            source=dict(bundle=str(path), auditor_sha256=sha(__file__)),
+        )
+    output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="ascii")
+    print(
+        json.dumps(
+            dict(output=str(output), qualified=result["qualified"], checks=audit.checks, error=result.get("error"))
+        )
+    )
+    return 0 if result["qualified"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

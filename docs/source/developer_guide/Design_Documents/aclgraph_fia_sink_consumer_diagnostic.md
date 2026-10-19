@@ -224,6 +224,13 @@ Keep a change only if its unprofiled endpoint improves and its affected
 pipeline/task evidence agrees; counter ratios alone are not an acceptance
 criterion. Neither variant is implemented or measured yet.
 
+Eligibility must follow the actual native ownership, geometry and lifetime
+contract, not the producer's policy name. If an upstream plan satisfies the
+same consumer conditions, it receives the same fast path. Compare both
+policies with the best legal consumer; otherwise a consumer-only improvement
+would be falsely attributed to the whole-row assignment. The combined result
+must separate consumer benefit, assignment benefit and their interaction.
+
 On-chip online-softmax accumulation is established attention practice, not
 a new algorithm claim. Our potential contribution would be its guarded
 realization under the current A2 whole-head native ownership and task/UB
@@ -261,7 +268,10 @@ two-bucket reference. Upstream/whole crossed with two/seventeen buckets
 requires four fresh processes and eighty timings. A reduced gain would
 implicate catalog construction/retention context, not prove a memory-byte
 cause. An unchanged gain would leave chronological replay history as the
-next control. No such bridge run has been performed yet.
+next control. The [completed bridge](aclgraph_fia_sink_catalog_bridge.md)
+observes 6.086%/5.401% with two buckets and 7.580%/8.316% with seventeen.
+The gain does not collapse with the larger resident catalog in this screen;
+neither memory-byte causality nor historical magnitude stability is proved.
 
 Only a qualified consumer change with exposed real-model headroom would
 justify expanding the conditional Stage 8 integration.

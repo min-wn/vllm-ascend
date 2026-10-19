@@ -1,0 +1,8 @@
+{
+  "selected_run": "catalog-bridge-v2",
+  "failed_run": "catalog-bridge-v1",
+  "failed_samples": 0,
+  "reason": "Initial premeasurement audit incorrectly tried to read not-yet-executed graph metadata. The v2 audit uses executed eager preflight for unused graphs and actual replay payloads only for the two replayed graphs, without adding extra graph replays.",
+  "source_change": "Bridge validation and corresponding regression tests only; frozen timing/producer/consumer helpers unchanged.",
+  "all_four_selected_cells_share_identical_source": true
+}

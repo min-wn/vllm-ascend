@@ -1,0 +1,330 @@
+{
+  "state": "completed",
+  "started_unix": 1792393618.187006,
+  "design": {
+    "modes": [
+      "upstream",
+      "whole"
+    ],
+    "catalog_counts": [
+      2,
+      17
+    ],
+    "cells": [
+      {
+        "mode": "upstream",
+        "catalog_count": 2,
+        "trial": 0
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 2,
+        "trial": 0
+      },
+      {
+        "mode": "upstream",
+        "catalog_count": 17,
+        "trial": 0
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 17,
+        "trial": 0
+      }
+    ],
+    "capacities": [
+      400,
+      512
+    ],
+    "steps": [
+      0,
+      29
+    ],
+    "occurrences": 16,
+    "repeats": 10,
+    "warmups": 5,
+    "profile_repeats": 0,
+    "seed": 1703,
+    "capture_orders": {
+      "2": [
+        400,
+        512
+      ],
+      "17": [
+        400,
+        304,
+        288,
+        352,
+        272,
+        496,
+        464,
+        480,
+        320,
+        448,
+        384,
+        368,
+        432,
+        256,
+        512,
+        336,
+        416
+      ]
+    },
+    "capture_steps": {
+      "2": [
+        0,
+        29
+      ],
+      "17": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        9,
+        11,
+        14,
+        17,
+        18,
+        21,
+        24,
+        29,
+        37,
+        38
+      ]
+    },
+    "timed_step_order": [
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ]
+    ],
+    "trial_fixed_for_all_cells": 0,
+    "independent_graph_pool_per_bucket": true,
+    "full_catalog_retained_until_exit": true,
+    "extra_catalog_replay_before_measurement": false,
+    "context_screen": true,
+    "process_replicates_per_cell": 1
+  },
+  "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "probe_sha256": "5ad90cccbddfa36a23758ff4c681c727928c6febea2c8e7eba5e24176f00c3b5",
+  "scope": "four-cell synthetic attention graph-catalog context screen; one fresh process per cell",
+  "interpretation": "catalog context includes capture history and address placement; memory-byte cause unproven",
+  "context_screen": true,
+  "runs": [
+    {
+      "mode": "upstream",
+      "catalog_count": 2,
+      "trial": 0,
+      "process_order_index": 0,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/aclgraph_fia_sink_catalog_bridge_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-v2/cell-00-upstream-catalog2",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "upstream",
+        "--catalog-count",
+        "2",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800"
+      ],
+      "launched_unix": 1792393618.1882062,
+      "report_path": "cell-00-upstream-catalog2/catalog-bridge-probe.json",
+      "pid": 2330442,
+      "returncode": 0,
+      "finished_unix": 1792393679.0568917,
+      "report_sha256": "0b225917dfe367617a853aeb998c4d5ae147c50209a48ba47c246e2b76497827"
+    },
+    {
+      "mode": "whole",
+      "catalog_count": 2,
+      "trial": 0,
+      "process_order_index": 1,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/aclgraph_fia_sink_catalog_bridge_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-v2/cell-01-whole-catalog2",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "whole",
+        "--catalog-count",
+        "2",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800"
+      ],
+      "launched_unix": 1792393679.0701923,
+      "report_path": "cell-01-whole-catalog2/catalog-bridge-probe.json",
+      "pid": 2412019,
+      "returncode": 0,
+      "finished_unix": 1792393739.1656592,
+      "report_sha256": "dbefc405b65ae256edea7e18145d70d6f4823ba689b300f83e24e691acebf420"
+    },
+    {
+      "mode": "upstream",
+      "catalog_count": 17,
+      "trial": 0,
+      "process_order_index": 2,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/aclgraph_fia_sink_catalog_bridge_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-v2/cell-02-upstream-catalog17",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "upstream",
+        "--catalog-count",
+        "17",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800"
+      ],
+      "launched_unix": 1792393739.1792173,
+      "report_path": "cell-02-upstream-catalog17/catalog-bridge-probe.json",
+      "pid": 2493974,
+      "returncode": 0,
+      "finished_unix": 1792393813.239632,
+      "report_sha256": "7c244985bd147c23011b1d54e43d1f22905f672ae50c3d5f1f0198418b3aeca2"
+    },
+    {
+      "mode": "whole",
+      "catalog_count": 17,
+      "trial": 0,
+      "process_order_index": 3,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/aclgraph_fia_sink_catalog_bridge_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/stage5-no-fd/relinked-v3/opp/packages/vendors/materialized-baseline-v3",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-v2/cell-03-whole-catalog17",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v2/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "whole",
+        "--catalog-count",
+        "17",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800"
+      ],
+      "launched_unix": 1792393813.2941697,
+      "report_path": "cell-03-whole-catalog17/catalog-bridge-probe.json",
+      "pid": 2575928,
+      "returncode": 0,
+      "finished_unix": 1792393887.2257764,
+      "report_sha256": "a244116d90091f8c59eb6c837cd3d48c90267be8df9794ad82fdd7439f8d305c"
+    }
+  ],
+  "performance_measured": true,
+  "stable_performance_gain_established": false,
+  "catalog_memory_causality_established": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "returncode": 0,
+  "finished_unix": 1792393887.2841952
+}

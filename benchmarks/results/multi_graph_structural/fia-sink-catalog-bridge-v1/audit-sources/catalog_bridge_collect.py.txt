@@ -1,0 +1,50 @@
+"""Collect exact owned experiment bytes after completion or failure."""
+
+import argparse
+import base64
+import hashlib
+import json
+import shlex
+import subprocess
+import zlib
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--version", type=int, choices=(1, 2), required=True)
+args = parser.parse_args()
+output = Path(__file__).resolve().parent / f"catalog-bridge-evidence-v{args.version}"
+assert not output.exists()
+script = "VERSION=" + repr(args.version) + "\n" + '''import base64,hashlib,json,zlib,subprocess
+from pathlib import Path
+base=Path('/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e')
+root=base/f'catalog-bridge-v{VERSION}'
+tools=base/f'catalog-bridge-tools-v{VERSION}'
+bundle=json.loads((root/'catalog-bridge-suite.json').read_text())
+assert bundle['state'] in ('completed','failed')
+files=[(path,str(path.relative_to(root))) for path in root.rglob('*') if path.is_file()]
+files += [(path,'deployed-tools/'+path.name) for path in tools.iterdir() if path.is_file()]
+result=[]
+for path,name in files:
+    data=path.read_bytes()
+    result.append(dict(path=name,sha256=hashlib.sha256(data).hexdigest(),bytes=len(data),data=base64.b64encode(zlib.compress(data)).decode()))
+info=subprocess.run(['npu-smi','info'],text=True,stdout=subprocess.PIPE,check=True).stdout
+data=info.encode()
+result.append(dict(path='device-after.txt',sha256=hashlib.sha256(data).hexdigest(),bytes=len(data),data=base64.b64encode(zlib.compress(data)).decode()))
+print(json.dumps(result))
+'''
+result = subprocess.run(
+    ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=20", "vllm-ascend-030", "bash -lc " + shlex.quote("source /etc/profile.d/ascend-multigraph.sh; python -")],
+    input=script.encode(), stdout=subprocess.PIPE, check=True, timeout=90,
+)
+manifest = []
+output.mkdir()
+for item in json.loads(result.stdout):
+    data = zlib.decompress(base64.b64decode(item.pop("data")))
+    assert hashlib.sha256(data).hexdigest() == item["sha256"] and len(data) == item["bytes"]
+    path = output / item["path"]
+    assert path.resolve().is_relative_to(output.resolve())
+    path.parent.mkdir(exist_ok=True, parents=True)
+    path.write_bytes(data)
+    manifest.append(item)
+(output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="ascii")
+print(json.dumps(dict(output=str(output), files=len(manifest))))

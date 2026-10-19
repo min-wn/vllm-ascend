@@ -1,0 +1,205 @@
+{
+  "state": "failed",
+  "started_unix": 1792393222.5166526,
+  "design": {
+    "modes": [
+      "upstream",
+      "whole"
+    ],
+    "catalog_counts": [
+      2,
+      17
+    ],
+    "cells": [
+      {
+        "mode": "upstream",
+        "catalog_count": 2,
+        "trial": 0
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 2,
+        "trial": 0
+      },
+      {
+        "mode": "upstream",
+        "catalog_count": 17,
+        "trial": 0
+      },
+      {
+        "mode": "whole",
+        "catalog_count": 17,
+        "trial": 0
+      }
+    ],
+    "capacities": [
+      400,
+      512
+    ],
+    "steps": [
+      0,
+      29
+    ],
+    "occurrences": 16,
+    "repeats": 10,
+    "warmups": 5,
+    "profile_repeats": 0,
+    "seed": 1703,
+    "capture_orders": {
+      "2": [
+        400,
+        512
+      ],
+      "17": [
+        400,
+        304,
+        288,
+        352,
+        272,
+        496,
+        464,
+        480,
+        320,
+        448,
+        384,
+        368,
+        432,
+        256,
+        512,
+        336,
+        416
+      ]
+    },
+    "capture_steps": {
+      "2": [
+        0,
+        29
+      ],
+      "17": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        9,
+        11,
+        14,
+        17,
+        18,
+        21,
+        24,
+        29,
+        37,
+        38
+      ]
+    },
+    "timed_step_order": [
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ],
+      [
+        0,
+        29
+      ],
+      [
+        29,
+        0
+      ]
+    ],
+    "trial_fixed_for_all_cells": 0,
+    "independent_graph_pool_per_bucket": true,
+    "full_catalog_retained_until_exit": true,
+    "extra_catalog_replay_before_measurement": false,
+    "context_screen": true,
+    "process_replicates_per_cell": 1
+  },
+  "canonical_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "probe_sha256": "baaeba78f390c3e34bc91f6202dbc8315ecf1d16975b5d3fb981b7607550d9d9",
+  "scope": "four-cell synthetic attention graph-catalog context screen; one fresh process per cell",
+  "interpretation": "catalog context includes capture history and address placement; memory-byte cause unproven",
+  "context_screen": true,
+  "runs": [
+    {
+      "mode": "upstream",
+      "catalog_count": 2,
+      "trial": 0,
+      "process_order_index": 0,
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v1/aclgraph_fia_sink_catalog_bridge_probe.py",
+        "--root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e",
+        "--opp-root",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer",
+        "--output-dir",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-v1/cell-00-upstream-catalog2",
+        "--trace",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v1/structural-dynamic-trace-v1.json",
+        "--selection",
+        "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v1/q4-tile-full-replay-v8-queue0.rank0.json",
+        "--model",
+        "/models/Qwen3.5-27B-original",
+        "--mode",
+        "upstream",
+        "--catalog-count",
+        "2",
+        "--trial",
+        "0",
+        "--repeats",
+        "10",
+        "--warmups",
+        "5",
+        "--seed",
+        "1703",
+        "--timeout",
+        "1800"
+      ],
+      "launched_unix": 1792393222.5178268,
+      "report_path": "cell-00-upstream-catalog2/catalog-bridge-probe.json",
+      "pid": 2328931,
+      "returncode": 1,
+      "finished_unix": 1792393267.0553358,
+      "report_sha256": "0d5c53eb519accb182714d933a67e9d8e4bcf9206d6cbb0e0c965f0760e00659"
+    }
+  ],
+  "performance_measured": false,
+  "stable_performance_gain_established": false,
+  "catalog_memory_causality_established": false,
+  "full_trace_measured": false,
+  "full_model_qualified": false,
+  "end_to_end_gain_established": false,
+  "returncode": 1,
+  "error": "Traceback (most recent call last):\n  File \"/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/catalog-bridge-tools-v1/aclgraph_fia_sink_catalog_bridge_suite.py\", line 169, in run_suite\n    raise RuntimeError(f\"probe failed: mode={mode}, catalog_count={count}, returncode={rc}\")\nRuntimeError: probe failed: mode=upstream, catalog_count=2, returncode=1\n",
+  "finished_unix": 1792393267.0577862
+}
