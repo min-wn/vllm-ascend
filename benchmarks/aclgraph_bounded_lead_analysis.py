@@ -12,7 +12,9 @@ from aclgraph_bounded_lead_probe import MODES, pair_samples
 from aclgraph_full_path_budget import intersection, interval
 
 
-def analyze_trace(path, mode):
+def analyze_trace(path, mode, join_before="o"):
+    if join_before not in ("o", "core"):
+        raise ValueError("unknown join boundary")
     events = json.loads(path.read_bytes(), parse_float=Decimal)
     if isinstance(events, dict):
         events = events["traceEvents"]
@@ -29,10 +31,14 @@ def analyze_trace(path, mode):
     commits = [e for e in kernels if e["name"] == "q4_log_deferred_0"]
     split = mode != "padding"
     expected = (10, 4, 2, 2) if split else (7, 3, 1, 1)
+    if split and join_before == "core":
+        expected = (10, 4, 1, 1)
     observed = tuple(map(len, (mm, comm, solves, commits)))
     if mode not in MODES or observed != expected:
         raise ValueError(f"incomplete or unexpected endpoint inventory: {mode}, {observed}")
     down, inputs, out = (mm[1:3], mm[3:7], mm[7]) if split else (mm[1:2], mm[2:4], mm[4])
+    if join_before == "core" and interval(solves[0])[0] + 1 < interval(inputs[-1])[1]:
+        raise ValueError("joined core starts before both input projections complete")
     root = mm[0]["tid"]
     begin, end = interval(down[-1])[1], interval(out)[0]
     # All main-stream work between the last previous Down and next O, including
@@ -54,6 +60,7 @@ def analyze_trace(path, mode):
         other_main_stream_body_us=total(other),
         commit_work_us=total(commits),
         first_collective_us=float(comm[0]["dur"]),
+        join_before=join_before,
         input_gemm_before_previous_down_end_us=float(max(Decimal(0), begin - interval(inputs[0])[0])),
         body_inventory={
             name: dict(count=sum(e["name"] == name for e in body), sum_us=total([e for e in body if e["name"] == name]))
@@ -64,6 +71,10 @@ def analyze_trace(path, mode):
         raise ValueError("next input GEMM starts before previous Down completes")
     if split:
         window = [interval(comm[1])]
+        core_start = min(
+            (interval(e)[0] for e in body if e["name"] == "CausalConv1d"),
+            default=interval(solves[0])[0],
+        )
         row.update(
             last_down_collective_us=float(comm[1]["dur"]),
             input_a_overlap_last_collective_us=float(intersection(window, map(interval, inputs[:2]))),
@@ -71,7 +82,16 @@ def analyze_trace(path, mode):
             body_overlap_last_collective_us=float(intersection(window, map(interval, body))),
             solve_a_start_after_last_collective_us=float(interval(solves[0])[0] - interval(comm[1])[1]),
             join_copy_us=total(
-                [e for e in body if "ConcatD" in e["name"] and interval(e)[0] > interval(solves[-1])[1]]
+                [
+                    e
+                    for e in body
+                    if "ConcatD" in e["name"]
+                    and (
+                        interval(inputs[-1])[1] <= interval(e)[0] < core_start
+                        if join_before == "core"
+                        else interval(e)[0] > interval(solves[-1])[1]
+                    )
+                ]
             ),
         )
         if mode == "split_barrier" and interval(inputs[0])[0] + 1 < interval(comm[1])[1]:
@@ -117,7 +137,7 @@ def analyze(root):
     for rank, report in enumerate(reports):
         for profile in report["profiles"]:
             path = root / "results" / profile["file"]
-            trace = analyze_trace(path, profile["mode"])
+            trace = analyze_trace(path, profile["mode"], report.get("join_before", "o"))
             if trace["sha256"] != profile["sha256"]:
                 raise ValueError("trace hash mismatch")
             traces.append(dict(rank=rank, mode=profile["mode"], **trace))
@@ -129,7 +149,7 @@ def analyze(root):
         numerical_diagnostics=[dict(rank=i, values=r["numerical_diagnostics"]) for i, r in enumerate(reports)],
         limitations=[
             "Unprofiled per-sample slowest-rank measurements determine performance, not profile spans.",
-            "Profiling has large first-collective rank arrival skew; do not use it to estimate transport cost.",
+            "Profile first-collective spans may include rank arrival skew; check before estimating transport cost.",
             "Kernel duration sums diagnose work but are not additive critical-path savings.",
             "Exact eager/replay and schedule agreement do not certify cross-shape model quality.",
             "Synthetic reduced-O input; no preceding FIA/update or full-model/serving result.",

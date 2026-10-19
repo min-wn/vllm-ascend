@@ -57,3 +57,27 @@ def test_incomplete_profile_is_rejected(tmp_path, monkeypatch):
     path.write_text(json.dumps(trace()[:-1]))
     with pytest.raises(ValueError, match="inventory"):
         load(monkeypatch).analyze_trace(path, "split_early")
+
+
+def test_core_join_requires_one_core_after_both_projections(tmp_path, monkeypatch):
+    events = trace()
+    events = [
+        e
+        for e in events
+        if not (
+            e["name"] == "q4_tile_solve_1"
+            and e["ts"] == str(Decimal("1792419813172707.961") + 10)
+            or e["name"] == "q4_log_deferred_0"
+            and e["ts"] == str(Decimal("1792419813172707.961") + 12)
+        )
+    ]
+    path = tmp_path / "trace.json"
+    path.write_text(json.dumps(events))
+    result = load(monkeypatch).analyze_trace(path, "split_early", "core")
+    assert result["counts"]["solve"] == result["counts"]["commit"] == 1
+    for event in events:
+        if event["name"] == "q4_tile_solve_1":
+            event["ts"] = str(Decimal("1792419813172707.961") + 10)
+    path.write_text(json.dumps(events))
+    with pytest.raises(ValueError, match="both input projections"):
+        load(monkeypatch).analyze_trace(path, "split_early", "core")

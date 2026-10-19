@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Closed previous-MLP/next-GDN endpoint with a join before next O.
+"""Closed previous-MLP/next-GDN endpoint with a join before next O or core.
 
 Synthetic reduced attention/residual inputs; real TP2 layer weights and state.
 All controls use the public ready-tile recurrence. No FIA is inside this endpoint.
@@ -15,6 +15,34 @@ from contextlib import contextmanager
 from pathlib import Path
 
 MODES = ("padding", "split_barrier", "split_early")
+
+
+def join_projected_phases(phases, *, cat=None):
+    """Reassemble contiguous request lanes, including initialized core output.
+
+    All six copies execute inside the measured graph. No stateful work has run
+    in either lane; the returned phase uses full metadata and one transaction.
+    """
+    from multi_graph_tp_gdn_phases import GDNPhase
+
+    if len(phases) != 2 or tuple(p.name for p in phases) != ("left", "right"):
+        raise ValueError("require ordered left/right projected request lanes")
+    owner = phases[0].owner
+    fields = ("mixed_qkv", "z", "b", "a", "core_output", "residual")
+    for phase in phases:
+        if phase.owner is not owner or phase.completed or phase.normalized_output is not None:
+            raise ValueError("join requires unconsumed projections from one owner")
+        rows = phase.core_output.shape[0]
+        if any(getattr(phase, field).shape[0] != rows for field in fields):
+            raise ValueError("projected tensors disagree on request extent")
+    if cat is None:
+        import torch
+
+        cat = torch.cat
+    merged = GDNPhase(owner, "full", *(cat([getattr(p, field) for p in phases]) for field in fields))
+    for phase in phases:
+        phase.completed = True
+    return merged
 
 
 def pair_samples(ranks):
@@ -128,6 +156,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             "all stream joins",
         ],
         modes=MODES,
+        join_before=args.join_before,
         converted_weights=converted,
         source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         backend_scratch="private per lane; shared canonical state only for disjoint request owners",
@@ -211,12 +240,20 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                     torch.npu.current_stream().wait_event(done[lane])
                     selected[0] = name
                     phase = fixture.phases.project(partials[lane], prior[start:stop], name)
-                    fixture.phases.core(phase)
-                    backends[name].launch_pending_commit()
+                    if args.join_before == "o":
+                        fixture.phases.core(phase)
+                        backends[name].launch_pending_commit()
                     phases.append(phase)
-                joined = torch.cat([phase.normalized_output for phase in phases])
-                residual = torch.cat([phase.residual for phase in phases])
-            # Rejoin before O. All later projections and collectives retain full M.
+                if args.join_before == "core":
+                    phase = join_projected_phases(phases)
+                    selected[0] = "full"
+                    fixture.phases.core(phase)
+                    backends["full"].launch_pending_commit()
+                    joined, residual = phase.normalized_output, phase.residual
+                else:
+                    joined = torch.cat([phase.normalized_output for phase in phases])
+                    residual = torch.cat([phase.residual for phase in phases])
+            # All later projections and collectives retain full M.
             with fixture.phases.context_for_name("full"):
                 output, _ = gdn.out_proj(joined)
                 output, residual = layer.post_attention_layernorm(output, residual)
@@ -328,6 +365,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             with torch_npu.profiler.profile(
                 activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU]
             ) as prof:
+                # Profiler setup can differ by milliseconds between ranks.
+                # Align after setup, before either rank submits a collective.
+                dist.barrier(group=cpu_group)
                 with torch.npu.stream(root):
                     graphs[mode].replay()
                 torch.npu.synchronize()
@@ -370,6 +410,7 @@ def main():
         parser.add_argument(f"--{name}", type=Path, required=True)
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--repeats", type=int, default=6)
+    parser.add_argument("--join-before", choices=("o", "core"), default="o")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists() or args.rounds < 2 or args.repeats < 3:
