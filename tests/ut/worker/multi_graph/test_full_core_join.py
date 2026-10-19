@@ -143,10 +143,14 @@ def test_full_trace_checks_attention_count_and_modified_boundaries(monkeypatch, 
         emit("MatMul")
         emit("hcom_allReduce", False)
         if layer == 3:
+            emit("aclnnInplaceCopy_TensorMove")
+            events[-1]["tid"] = 99
             emit("MatMul")
             emit("hcom_allReduce", False)
+            emit("aclnnInplaceCopy_TensorMove")
+            events[-1]["tid"] = 99
     for event in events:
-        if event["ts"] >= stream_segment_boundary:
+        if event["ts"] >= stream_segment_boundary and event["tid"] == 1:
             event["tid"] = 2
     path = tmp_path / "trace.json"
     path.write_text(json.dumps(events))
@@ -154,6 +158,7 @@ def test_full_trace_checks_attention_count_and_modified_boundaries(monkeypatch, 
     assert result["counts"]["matmul"] == 307
     assert result["counts"]["all_reduce"] == 130
     assert result["boundaries"][0]["input_overlap_last_ar_us"] == 0
+    assert result["boundaries"][0]["down_output_copy_us"] == 4
     events = [e for e in events if e["name"] != "FusedInferAttentionScore"]
     path.write_text(json.dumps(events))
     with pytest.raises(ValueError, match="inventory"):

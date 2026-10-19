@@ -1,0 +1,54 @@
+[
+  {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "benchmarks/aclgraph_full_core_join.py",
+      "benchmarks/aclgraph_full_core_join_analysis.py",
+      "benchmarks/aclgraph_full_path_profile.py",
+      "benchmarks/multi_graph_gdn_q4_full_probe.py",
+      "tests/ut/worker/multi_graph/test_full_core_join.py"
+    ],
+    "exit_code": 0,
+    "stdout": "All checks passed!\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "benchmarks/aclgraph_full_core_join.py",
+      "benchmarks/aclgraph_full_core_join_analysis.py",
+      "benchmarks/aclgraph_full_path_profile.py",
+      "benchmarks/multi_graph_gdn_q4_full_probe.py",
+      "tests/ut/worker/multi_graph/test_full_core_join.py"
+    ],
+    "exit_code": 0,
+    "stdout": "5 files already formatted\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-c",
+      "import sys,types,pytest; sys.modules['vllm_ascend.logger']=types.ModuleType('vllm_ascend.logger'); raise SystemExit(pytest.main(['--confcutdir=tests/ut/worker/multi_graph', '--basetemp=../pytest-full-core-final', 'tests/ut/worker/multi_graph/test_full_core_join.py', 'tests/ut/worker/multi_graph/test_full_path_profile.py', 'tests/ut/worker/multi_graph/test_gdn_q4_full_probe.py', 'tests/ut/worker/multi_graph/test_gdn_q4_full_stream_audit.py', 'tests/ut/worker/multi_graph/test_bounded_lead_probe.py', '-q']))"
+    ],
+    "exit_code": 0,
+    "stdout": "........................................................................ [ 50%]\n......................................................................   [100%]\n142 passed in 1.05s\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "bash",
+      "format.sh",
+      "ci"
+    ],
+    "exit_code": 1,
+    "note": "Attempted during this turn: WSL warnings followed by CRLF command/syntax errors at format.sh lines 2,21,22; full pre-commit suite did not run."
+  }
+]

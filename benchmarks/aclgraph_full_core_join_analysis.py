@@ -100,6 +100,16 @@ def analyze_trace(path, mode, boundaries):
             raise ValueError("next projection races the preceding Down GEMM")
         if mode == "split_barrier" and interval(projections[0])[0] + 1 < interval(last_ar)[1]:
             raise ValueError("barrier control permits early execution")
+        publication = [
+            e
+            for e in kernels
+            if split
+            and e["tid"] not in main_stream_ids
+            and "InplaceCopy" in e["name"]
+            and interval(downs[0])[1] <= interval(e)[0] < interval(projections[-1])[1]
+        ]
+        if split and len(publication) != 2:
+            raise ValueError("both asynchronous row outputs must be published into the full tensor")
         rows.append(
             dict(
                 boundary=boundary,
@@ -109,6 +119,13 @@ def analyze_trace(path, mode, boundaries):
                 input_overlap_last_ar_us=float(intersection([interval(last_ar)], map(interval, projections[:2]))),
                 concat_us=total([e for e in body if "ConcatD" in e["name"]]),
                 body_kernel_us=total(body),
+                down_output_copy_us=total(publication),
+                closed_boundary_profile_span_us=float(interval(after["O"])[0] - interval(downs[0])[0]),
+                down_b_overlap_first_ar_us=(
+                    float(intersection([interval(collectives[boundary]["DownA"])], [interval(downs[1])]))
+                    if split
+                    else 0.0
+                ),
                 inventory={
                     name: dict(
                         count=sum(e["name"] == name for e in body), sum_us=total([e for e in body if e["name"] == name])
