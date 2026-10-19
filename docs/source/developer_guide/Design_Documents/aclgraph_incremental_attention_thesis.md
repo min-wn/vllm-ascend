@@ -1,7 +1,8 @@
 # Thesis proposal: incremental attention plans with selective KV splitting
 
-Status: research proposal with stage-three budget evidence, 2026-10-19. There
-is no NPU speedup result for the proposed incremental algorithm. The user
+Status: research proposal with native whole-row stage-six evidence and a
+stage-seven chronological experiment in progress, 2026-10-19. There is no
+NPU speedup result for the proposed incremental algorithm. The user
 permits an ACLGraph optimization without request
 splitting and wants an independent graduation-project contribution beyond
 adopting an official PR. Replicating attention or MLP weights is excluded.
@@ -94,8 +95,9 @@ unchanged addresses while lengths/pages/data change. This supersedes the
 stage-one target rejection for this explicitly patched prototype; upstream
 unmodified source still rejects D256.
 
-There is no native incremental planner. Stage-two graph checks cover small
-fixed capacities and two shared attention occurrences. A previously
+There is no native incremental planner. The original stage-two graph checks
+cover small fixed capacities and two shared attention occurrences; later
+stages extend the native nonincremental controls as described below. A previously
 source-derived upper workspace
 formula at 24 cores is 145.5 MiB plus library/executor storage, but that is a
 conditional allocation formula, not evidence of D256 support or a measured
@@ -135,9 +137,48 @@ The [fourth stage](aclgraph_fia_sink_stage4.md) supplies that first concrete
 kernel-work signal. A legal whole-row no-FD plan on capacities 256/400/496/512
 is 292.9 us faster than the native FD plan in an oracle attention comparison,
 with all 60 pairs improving. Including the CPU plan and metadata copy is still
-371.3 us slower than the shared native endpoint, so this is not yet a usable
-speedup. The next implementation gate is a native producer that reproduces the
-whole-row plan with the same exact sparse/causal semantics and ABI.
+371.3 us slower than the shared native endpoint. That stage establishes a
+kernel-work opportunity, rather than a usable CPU-produced speedup.
+
+The [fifth stage](aclgraph_fia_sink_stage5.md) completes the native producer
+gate. Its guarded AICPU producer assigns contiguous complete request/head
+rows, preserves exact sparse/causal semantics and the existing metadata ABI,
+and removes FD reduction on the qualified path. Structural validation checks
+all 1024 metadata words, including advancing endpoints, complete physical
+coverage and zero FD fields; unsupported fallback is not accepted as a
+whole-row result. This is full native planning each replay, not incremental
+maintenance. The qualified artifact is pinned by its dispatch name and
+library hash, including verification that the rebuilt producer was actually
+relinked into the selected shared library.
+
+The [sixth stage](aclgraph_fia_sink_stage6.md) establishes a producer-inclusive
+bounded native-policy benefit. Eight fresh processes in four AB/BA rounds
+compare 16 sequential private attention occurrences at four original default
+capacities, with five repeats each. All 160 observations and 80 matched
+pairs are retained. Complete wall mean falls from 5.101027 ms upstream to
+4.812053 ms whole-row, a 0.288974 ms or 5.665% reduction. Queue mean falls
+5.622%; host submission is slower and overlaps device work. Seventy pairs
+improve and ten regress. Three process rounds improve, while one regresses
+1.149%, and capacity256 P99 also regresses in a small 20-observation sample.
+All 3072 sampled FP32 comparisons pass, with matched complete input identities
+and unchanged Q/K/V and mask bytes. This evidence supports combined native
+complete-row assignment and FD removal under the bounded workload. It does
+not isolate FD merge cost, establish an incremental-planning gain, compare
+against padding, or demonstrate full-model or split-multistream acceleration.
+
+The [seventh stage](aclgraph_fia_sink_stage7.md) is now running the unchanged
+128-step chronological descriptor trace. It retains all 17 required default
+capacities, independent per-bucket graph pools, 16 sequential private
+attention occurrences and fixed synthetic resident Q/K/V. True per-step
+lengths and owner pages are refreshed inside the producer-inclusive endpoint.
+The predeclared formal protocol has three timed passes per process and four
+AB/BA process rounds, plus separate complete pre/post qualification passes.
+Its performance and independent protocol-audit results are pending; planned
+sample counts are not completed evidence. The next decision gate is this
+complete dynamic descriptor trace. Real model-state integration follows only
+after a positive, qualified result, with its own correctness and performance
+checks. Full-model replay, a matched padding control and serving throughput
+remain unmeasured for this native whole-row policy.
 
 ## Existing project results and thesis scope
 
@@ -310,9 +351,12 @@ required. Matching length buckets does not justify replaying an old 4 KiB
 metadata buffer.
 
 This level can compare full device replanning against incremental planning
-without changing attention arithmetic. The A2 sink must first qualify on
-the actual Q4/D256/GQA6/page128 target, inactive rows, capture-to-replay
-workspace growth and the installed driver. See the [research plan][research].
+without changing attention arithmetic. The isolated patched A2 sink has now
+qualified on bounded Q4/D256/GQA6/page128 cases and the stage-six controls;
+this does not extend that qualification to a new incremental producer or
+full-model integration. Those paths must independently check inactive rows,
+capture-to-replay workspace bounds and current exact metadata on the actual
+device. See the [research plan][research].
 
 **Level 2: persistent request-task descriptors.** If dense-row rebuilding or
 native boundary restrictions dominate, add request/row indirection to the
