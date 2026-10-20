@@ -135,6 +135,25 @@ matched_source = HERE / "history/source-34a0d25d8485.py"
 assert digest(matched_source) == read(HERE / "history/cached-python-control.json")["source_sha256"]
 padding_total = sum(row["padding"] for row in capacity_rows)
 pair_total = sum(row["sum"] for row in capacity_rows)
+full_model_path = HERE.parent / "full-core-join-v3/analysis.json"
+full_model = read(full_model_path)
+routing_screen = []
+for metric in ("device_us", "wall_us"):
+    steps = [row for row in full_model["per_step"] if row["metric"] == metric]
+    padding = sum(row["medians"]["padding"] for row in steps)
+    split = sum(row["medians"]["split_early"] for row in steps)
+    hindsight = sum(min(row["medians"]["padding"], row["medians"]["split_early"]) for row in steps)
+    routing_screen.append(
+        dict(
+            metric=metric,
+            per_step=steps,
+            padding_sum_of_medians=padding,
+            split_sum_of_medians=split,
+            hindsight_sum_of_medians=hindsight,
+            incremental_pct_points_vs_best_fixed=100 * (min(padding, split) - hindsight) / padding,
+            note="hindsight aggregation of two step medians, not an online result or bound for other schedules",
+        )
+    )
 result = dict(
     scope="offline source/history audit and exhaustive Q4 capacity enumeration; not a speedup measurement",
     selection_sha256=digest(selection_path),
@@ -154,6 +173,7 @@ result = dict(
     ),
     history=history,
     exact_historical_source=dict(file=matched_source.name, sha256=digest(matched_source)),
+    latest_composite_routing_screen=dict(source_sha256=digest(full_model_path), rows=routing_screen),
     source_anchors=sources,
     limitation="Current source anchors alone do not prove old source topology when exact snapshots are missing.",
 )

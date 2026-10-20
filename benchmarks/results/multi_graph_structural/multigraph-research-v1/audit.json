@@ -1191,6 +1191,71 @@
     "file": "source-34a0d25d8485.py",
     "sha256": "34a0d25d8485447ec5eb895b9ceec2f780a6457addaa941bfce63ee1720fe666"
   },
+  "latest_composite_routing_screen": {
+    "source_sha256": "11949fa53618ccfd38f0355ed89ceaab75177ffee5ff1176afded3683f99cda8",
+    "rows": [
+      {
+        "metric": "device_us",
+        "per_step": [
+          {
+            "step": 0,
+            "metric": "device_us",
+            "medians": {
+              "padding": 120330.26123046875,
+              "split_barrier": 120546.0433959961,
+              "split_early": 119998.45886230469
+            },
+            "early_reduction_percent": 0.27574307973000645
+          },
+          {
+            "step": 1,
+            "metric": "device_us",
+            "medians": {
+              "padding": 111535.00366210938,
+              "split_barrier": 112155.72357177734,
+              "split_early": 111640.380859375
+            },
+            "early_reduction_percent": -0.09447903689936421
+          }
+        ],
+        "padding_sum_of_medians": 231865.26489257812,
+        "split_sum_of_medians": 231638.8397216797,
+        "hindsight_sum_of_medians": 231533.46252441406,
+        "incremental_pct_points_vs_best_fixed": 0.0454475996283642,
+        "note": "hindsight aggregation of two step medians, not an online result or bound for other schedules"
+      },
+      {
+        "metric": "wall_us",
+        "per_step": [
+          {
+            "step": 0,
+            "metric": "wall_us",
+            "medians": {
+              "padding": 130990.109,
+              "split_barrier": 130694.338,
+              "split_early": 130012.905
+            },
+            "early_reduction_percent": 0.7460135787809685
+          },
+          {
+            "step": 1,
+            "metric": "wall_us",
+            "medians": {
+              "padding": 119810.429,
+              "split_barrier": 120338.952,
+              "split_early": 119811.3
+            },
+            "early_reduction_percent": -0.0007269817888788666
+          }
+        ],
+        "padding_sum_of_medians": 250800.538,
+        "split_sum_of_medians": 249824.20500000002,
+        "hindsight_sum_of_medians": 249823.334,
+        "incremental_pct_points_vs_best_fixed": 0.0003472879312618289,
+        "note": "hindsight aggregation of two step medians, not an online result or bound for other schedules"
+      }
+    ]
+  },
   "source_anchors": [
     {
       "path": "benchmarks/multi_graph_bucket_replay.py",
