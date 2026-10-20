@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-20",
+  "scope": "offline research evidence; no new NPU run and no runtime change",
+  "history_sha256": {
+    "cached-native-repeat.json": "dc17ed91227e6555133c597017d1ede22af4e01a993091f8d791c8f2ac4350cd",
+    "cached-python-control.json": "cb05e48e4a309a7c845794c0f18b8e0bf863ca5a111cde2906accca27c3e86ad",
+    "source-34a0d25d8485.py": "34a0d25d8485447ec5eb895b9ceec2f780a6457addaa941bfce63ee1720fe666",
+    "tp2-27b-gdn-core-concurrent-v2.json": "f73b7ce19cdd50907c7e62c87942bdcb09168f98474d43f424cf92951c9a2237",
+    "tp2-27b-gdn-core-pipeline-v1.json": "4ac940294459f88a7a2105c715a053671a2aa356872212084278728e40c62f82",
+    "tp2-27b-kv-balance-2048-v1.json": "55fb869a1ddcfc8d64d99604ee55b7e21bdfbfcd9b1edaf8a90945e2214d3f60"
+  },
+  "audit_script_sha256": "71e84a3edb22daadb222bfd5590bb790b4d2956578689ca5e1aafb1a68bbac9b",
+  "audit_output_sha256": "d6f60cc643f97cd38fe4e659c0942b90467f91745dca7067901c621042aa222f",
+  "checks": {
+    "reproducible_audit_output": true,
+    "raw_report_files": 5,
+    "exact_historical_source_matches": 1,
+    "capacity_batches": 65,
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "local_markdown_links": "passed",
+    "git_diff_check": "passed",
+    "tp_reports_recomputed_from_raw_samples": 3
+  },
+  "format_ci": {
+    "exit_code": 2,
+    "status": "local WSL/CRLF parsing failure; not full CI passed",
+    "log": "format-ci.log"
+  },
+  "remaining_evidence": [
+    "No net multi-graph gain established against equally fused Padding",
+    "No dynamic-state ranking reversal established",
+    "No measured same-budget comparison against composite single graphs"
+  ]
+}

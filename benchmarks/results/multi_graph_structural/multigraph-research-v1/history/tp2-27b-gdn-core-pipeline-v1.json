@@ -1,0 +1,4733 @@
+{
+  "status": "completed_with_numerical_diagnostics",
+  "numerical_assessment": true,
+  "scope": "two_adjacent_decoder_layers_not_full_model",
+  "model": "/models/Qwen3.5-27B-original",
+  "tensor_parallel_size": 2,
+  "selection": {
+    "seed": 20261016,
+    "batch": 98,
+    "query": 4,
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "capacity_tokens": 400,
+    "capacity_requests": 100,
+    "pair_tokens": [
+      200,
+      200
+    ],
+    "pair_requests": [
+      50,
+      50
+    ],
+    "default_config_uses_ngram_for_capacity_only": true
+  },
+  "loader": {
+    "loader": "official_external_launcher_executor_weights_only",
+    "model_type": "qwen3_5",
+    "layer_index": 3,
+    "layer_type": "full_attention",
+    "module_path": "language_model.model.layers.3.self_attn.qkv_proj",
+    "module_type": "AscendQKVParallelLinear",
+    "quant_method": "AscendUnquantizedLinearMethod",
+    "hidden_size": 5120,
+    "num_hidden_layers": 64,
+    "full_attention_layers": 16,
+    "linear_attention_layers": 48,
+    "attention_output_gate": true,
+    "local_qkv_shape": [
+      7168,
+      5120
+    ],
+    "local_query_heads": 12,
+    "local_kv_heads": 2,
+    "head_dim": 256,
+    "full_model_forward": false,
+    "kv_cache_initialized": false,
+    "attention_metadata_initialized": false,
+    "forward_context": "none_local_unquantized_qkv_only",
+    "source_sha256": "7d32cf6ac2c988f7a83dfb68748cb487fe42a1070b459fc7ae5a6b407a9a0e9e"
+  },
+  "layer_name": "language_model.model.layers.3.self_attn.attn",
+  "query": 4,
+  "kv_length_maximum": 512,
+  "local_qkv_shape": [
+    7168,
+    5120
+  ],
+  "local_o_shape": [
+    5120,
+    3072
+  ],
+  "local_gate_up_shape": [
+    17408,
+    5120
+  ],
+  "local_down_shape": [
+    5120,
+    8704
+  ],
+  "o_and_all_reduce_timed": true,
+  "output_layouts": {
+    "joined": {
+      "input_and_qkv_tokens": [
+        400
+      ],
+      "shared_input_norm_qkv": true,
+      "projection_tokens": [
+        400
+      ],
+      "reduction_tokens": [
+        400
+      ],
+      "reduction_stream": "root",
+      "shared_full_bucket": true,
+      "join_copy_timed": false,
+      "collective_order": [
+        "input",
+        "output",
+        "down"
+      ],
+      "mlp": {
+        "projection_tokens": [
+          400
+        ],
+        "down_projection_tokens": [
+          400
+        ],
+        "reduction_tokens": [
+          400
+        ],
+        "reduction_stream": "root",
+        "shared_full_bucket": true,
+        "real_down_all_reduces_per_replay": 1,
+        "hidden_and_residual_join_timed": false
+      }
+    },
+    "split_mlp_overlap": {
+      "input_and_qkv_tokens": [
+        400
+      ],
+      "shared_input_norm_qkv": true,
+      "projection_tokens": [
+        200,
+        200
+      ],
+      "reduction_tokens": [
+        200,
+        200
+      ],
+      "reduction_stream": "comm",
+      "shared_full_bucket": false,
+      "join_copy_timed": false,
+      "collective_order": [
+        "input",
+        "output_A",
+        "output_B",
+        "down_A",
+        "down_B"
+      ],
+      "mlp": {
+        "projection_tokens": [
+          200,
+          200
+        ],
+        "down_projection_tokens": [
+          200,
+          200
+        ],
+        "reduction_tokens": [
+          200,
+          200
+        ],
+        "reduction_stream": "comm",
+        "shared_full_bucket": false,
+        "real_down_all_reduces_per_replay": 2,
+        "hidden_and_residual_join_timed": true
+      }
+    },
+    "split_gdn_core_serial": {
+      "input_and_qkv_tokens": [
+        400
+      ],
+      "shared_input_norm_qkv": true,
+      "projection_tokens": [
+        200,
+        200
+      ],
+      "reduction_tokens": [
+        200,
+        200
+      ],
+      "reduction_stream": "comm",
+      "shared_full_bucket": false,
+      "join_copy_timed": false,
+      "collective_order": [
+        "input",
+        "output_A",
+        "output_B",
+        "down_A",
+        "down_B"
+      ],
+      "mlp": {
+        "projection_tokens": [
+          200,
+          200
+        ],
+        "down_projection_tokens": [
+          200,
+          200
+        ],
+        "reduction_tokens": [
+          200,
+          200
+        ],
+        "reduction_stream": "comm",
+        "shared_full_bucket": false,
+        "real_down_all_reduces_per_replay": 2,
+        "hidden_and_residual_join_timed": true
+      }
+    },
+    "split_gdn_core_pipeline": {
+      "input_and_qkv_tokens": [
+        400
+      ],
+      "shared_input_norm_qkv": true,
+      "projection_tokens": [
+        200,
+        200
+      ],
+      "reduction_tokens": [
+        200,
+        200
+      ],
+      "reduction_stream": "comm",
+      "shared_full_bucket": false,
+      "join_copy_timed": false,
+      "collective_order": [
+        "input",
+        "output_A",
+        "output_B",
+        "down_A",
+        "down_B"
+      ],
+      "mlp": {
+        "projection_tokens": [
+          200,
+          200
+        ],
+        "down_projection_tokens": [
+          200,
+          200
+        ],
+        "reduction_tokens": [
+          200,
+          200
+        ],
+        "reduction_stream": "comm",
+        "shared_full_bucket": false,
+        "real_down_all_reduces_per_replay": 2,
+        "hidden_and_residual_join_timed": true
+      }
+    }
+  },
+  "adjacent_gdn_pipeline": true,
+  "adjacent_gdn_source_sha256": "b0f64bd30936bd9455e029ea7e4d78363402f54291ff1fada88b986c59ec0cbd",
+  "adjacent_gdn_phases_sha256": "6c1ae60e94ba8146a2ee513025e6274401667ff71a2303c7315163090da9d6d4",
+  "adjacent_gdn_shared": true,
+  "adjacent_gdn_wavefront": false,
+  "adjacent_gdn_phases": false,
+  "adjacent_gdn_core_pipeline": true,
+  "shared_gate_up_down_pipeline": false,
+  "first_layer_shared_mlp": false,
+  "first_layer_shared_dense": false,
+  "adjacent_gdn_collectives_per_replay": {
+    "joined": 2,
+    "split_mlp_overlap": 2,
+    "split_gdn_core_serial": 4,
+    "split_gdn_core_pipeline": 4
+  },
+  "shared_input_norm_qkv": true,
+  "gate_up_weight_format": "NZ",
+  "gate_up_channel_partitions": 1,
+  "split_output_overlap": true,
+  "split_output_overlap_requested": false,
+  "include_mlp": true,
+  "post_norm_mlp_and_down_all_reduce_timed": true,
+  "hidden_and_residual_qualified": true,
+  "real_down_all_reduces_per_replay": {
+    "joined": 1,
+    "split_mlp_overlap": 2,
+    "split_gdn_core_serial": 2,
+    "split_gdn_core_pipeline": 2
+  },
+  "shared_rope_lookup": true,
+  "rope_source_sha256": "43111c26ca71e85f76c1f854a464af030214681bdb29feedbb1cfef15ad058cf",
+  "kv_cache_shape": [
+    400,
+    128,
+    2,
+    256
+  ],
+  "cache_layout": "benchmark_owned_contiguous_ND",
+  "real_fia_updates_per_replay": {
+    "joined": 1,
+    "split_mlp_overlap": 2,
+    "split_gdn_core_serial": 2,
+    "split_gdn_core_pipeline": 2
+  },
+  "summaries": {
+    "joined": {
+      "wall_us": 4826.772,
+      "rounds_wall_us": [
+        4826.772,
+        4826.6575,
+        4830.1625
+      ],
+      "device_us": 4764.479875564575,
+      "rounds_device_us": [
+        4764.479875564575,
+        4767.950057983398,
+        4764.400005340576
+      ]
+    },
+    "split_mlp_overlap": {
+      "wall_us": 4781.053,
+      "rounds_wall_us": [
+        4781.053,
+        4778.182,
+        4787.117
+      ],
+      "device_us": 4712.569952011108,
+      "rounds_device_us": [
+        4716.820001602173,
+        4712.500095367432,
+        4712.569952011108
+      ]
+    },
+    "split_gdn_core_serial": {
+      "wall_us": 5098.8035,
+      "rounds_wall_us": [
+        5098.8035,
+        5103.3279999999995,
+        5086.923000000001
+      ],
+      "device_us": 5027.809858322144,
+      "rounds_device_us": [
+        5029.820203781128,
+        5027.809858322144,
+        5015.700101852417
+      ]
+    },
+    "split_gdn_core_pipeline": {
+      "wall_us": 4850.282999999999,
+      "rounds_wall_us": [
+        4853.9475,
+        4849.617,
+        4850.282999999999
+      ],
+      "device_us": 4785.359859466553,
+      "rounds_device_us": [
+        4785.359859466553,
+        4788.450002670288,
+        4782.029867172241
+      ]
+    }
+  },
+  "ranks": [
+    {
+      "rank": 0,
+      "checks": [
+        {
+          "label": "rope_view/expanded/0/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/0/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/0/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/0/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "initial/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "shared_o_vs_official",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "decomposed_vs_official_attention",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "decomposed_vs_official_mlp/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "decomposed_vs_official_mlp/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "initial/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "initial/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "joined/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "joined/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "joined/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7532668251941771
+        },
+        {
+          "label": "joined/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007797732628190994
+        },
+        {
+          "label": "joined/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0018723311554903414,
+          "normalized_rmse": 0.0044526183182954,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "split_mlp_overlap/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002074647417031374,
+          "normalized_rmse": 0.0017884896870310697,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "split_mlp_overlap/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.00046031733593007013,
+          "normalized_rmse": 0.0006110946619896735,
+          "reference_rms": 0.7532668251941771
+        },
+        {
+          "label": "split_mlp_overlap/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.00457763671875,
+          "rmse": 3.5162854106315367e-06,
+          "normalized_rmse": 0.0004509369041353351,
+          "reference_rms": 0.007797732628190994
+        },
+        {
+          "label": "split_mlp_overlap/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0018741155826629704,
+          "normalized_rmse": 0.004456861890856383,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "split_gdn_core_serial/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0020746573298809643,
+          "normalized_rmse": 0.0017884982325936146,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "split_gdn_core_serial/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.00046031733593007013,
+          "normalized_rmse": 0.0006110946619896735,
+          "reference_rms": 0.7532668251941771
+        },
+        {
+          "label": "split_gdn_core_serial/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.00457763671875,
+          "rmse": 3.5162854106315367e-06,
+          "normalized_rmse": 0.0004509369041353351,
+          "reference_rms": 0.007797732628190994
+        },
+        {
+          "label": "split_gdn_core_serial/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0018741155826629704,
+          "normalized_rmse": 0.004456861890856383,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0020746573298809643,
+          "normalized_rmse": 0.0017884982325936146,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.00046031733593007013,
+          "normalized_rmse": 0.0006110946619896735,
+          "reference_rms": 0.7532668251941771
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.00457763671875,
+          "rmse": 3.5162854106315367e-06,
+          "normalized_rmse": 0.0004509369041353351,
+          "reference_rms": 0.007797732628190994
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "b97-v1/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "b97-v1/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 1986560
+        },
+        {
+          "label": "b97-v1/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 1986560
+        },
+        {
+          "label": "joined/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "joined/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "joined/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7464916822364854
+        },
+        {
+          "label": "joined/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.008062467397008038
+        },
+        {
+          "label": "joined/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019634457393441383,
+          "normalized_rmse": 0.004793700928692165,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 5.033827319587629e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022940702878516102,
+          "normalized_rmse": 0.00199971737098825,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.000569423752495117,
+          "normalized_rmse": 0.0007627998624031901,
+          "reference_rms": 0.7464916822364854
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.008038520812988281,
+          "rmse": 5.235984595741459e-06,
+          "normalized_rmse": 0.0006494270721249081,
+          "reference_rms": 0.008062467397008038
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001963773585125173,
+          "normalized_rmse": 0.004794501355509939,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 5.033827319587629e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022940866952910525,
+          "normalized_rmse": 0.001999731673183714,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.000569423752495117,
+          "normalized_rmse": 0.0007627998624031901,
+          "reference_rms": 0.7464916822364854
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.008038520812988281,
+          "rmse": 5.235984595741459e-06,
+          "normalized_rmse": 0.0006494270721249081,
+          "reference_rms": 0.008062467397008038
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001963773585125173,
+          "normalized_rmse": 0.004794501355509939,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 5.033827319587629e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022940866952910525,
+          "normalized_rmse": 0.001999731673183714,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.000569423752495117,
+          "normalized_rmse": 0.0007627998624031901,
+          "reference_rms": 0.7464916822364854
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.008038520812988281,
+          "rmse": 5.235984595741459e-06,
+          "normalized_rmse": 0.0006494270721249081,
+          "reference_rms": 0.008062467397008038
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "b99-v2/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "b99-v2/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2027520
+        },
+        {
+          "label": "b99-v2/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2027520
+        },
+        {
+          "label": "joined/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "joined/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "joined/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7508466402991539
+        },
+        {
+          "label": "joined/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007866918758263165
+        },
+        {
+          "label": "joined/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.00196626003342629,
+          "normalized_rmse": 0.004715329564043073,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022424377351115948,
+          "normalized_rmse": 0.0019632123632047052,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005523126177680918,
+          "normalized_rmse": 0.0007355864541766321,
+          "reference_rms": 0.7508466402991539
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0072858333587646484,
+          "rmse": 5.190614374063452e-06,
+          "normalized_rmse": 0.0006598027173741172,
+          "reference_rms": 0.007866918758263165
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.001967124966966885,
+          "normalized_rmse": 0.004717403779368395,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002242458481202373,
+          "normalized_rmse": 0.0019632305260197823,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005523126177680918,
+          "normalized_rmse": 0.0007355864541766321,
+          "reference_rms": 0.7508466402991539
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0072858333587646484,
+          "rmse": 5.190614374063452e-06,
+          "normalized_rmse": 0.0006598027173741172,
+          "reference_rms": 0.007866918758263165
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.001967124966966885,
+          "normalized_rmse": 0.004717403779368395,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002242458481202373,
+          "normalized_rmse": 0.0019632305260197823,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005523126177680918,
+          "normalized_rmse": 0.0007355864541766321,
+          "reference_rms": 0.7508466402991539
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0072858333587646484,
+          "rmse": 5.190614374063452e-06,
+          "normalized_rmse": 0.0006598027173741172,
+          "reference_rms": 0.007866918758263165
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "b98-v3/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "b98-v3/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "b98-v3/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "joined/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "joined/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "joined/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/0/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019733879679359884,
+          "normalized_rmse": 0.004615566329252416,
+          "reference_rms": 0.42755055981518497
+        },
+        {
+          "label": "continuity/0/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0021796768943995334,
+          "normalized_rmse": 0.0018716789896310708,
+          "reference_rms": 1.1645570135021777
+        },
+        {
+          "label": "continuity/0/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005241830075295792,
+          "normalized_rmse": 0.0006953432490533581,
+          "reference_rms": 0.7538478416856755
+        },
+        {
+          "label": "continuity/0/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.006379485130310059,
+          "rmse": 4.503098259697836e-06,
+          "normalized_rmse": 0.0005676143760746643,
+          "reference_rms": 0.00793337598465881
+        },
+        {
+          "label": "continuity/0",
+          "batch": 98,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/1/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.046875,
+          "rmse": 0.0019414274792385645,
+          "normalized_rmse": 0.004733663283223646,
+          "reference_rms": 0.41013214567227174
+        },
+        {
+          "label": "continuity/1/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 2,
+          "original_tolerance_failure_fraction": 1.0067654639175258e-06,
+          "max_abs": 0.5,
+          "rmse": 0.0020835358014512626,
+          "normalized_rmse": 0.0017978685276935581,
+          "reference_rms": 1.1588921933708802
+        },
+        {
+          "label": "continuity/1/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 8.117726517040731e-08,
+          "max_abs": 0.125,
+          "rmse": 0.000666845903112578,
+          "normalized_rmse": 0.0007227623357404727,
+          "reference_rms": 0.9226351044280579
+        },
+        {
+          "label": "continuity/1/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.008547306060791016,
+          "rmse": 6.2374029747976685e-06,
+          "normalized_rmse": 0.0007847121592879414,
+          "reference_rms": 0.007948650853655146
+        },
+        {
+          "label": "continuity/1",
+          "batch": 97,
+          "accepted": 2,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/2/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.0019749080324821633,
+          "normalized_rmse": 0.0048291868688105505,
+          "reference_rms": 0.4089524978288098
+        },
+        {
+          "label": "continuity/2/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0020775645341400873,
+          "normalized_rmse": 0.0018360808414674503,
+          "reference_rms": 1.1315212746730892
+        },
+        {
+          "label": "continuity/2/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 6,
+          "original_tolerance_failure_fraction": 4.870635910224439e-07,
+          "max_abs": 0.125,
+          "rmse": 0.0006815710178751918,
+          "normalized_rmse": 0.0007383287057894167,
+          "reference_rms": 0.9231268031851207
+        },
+        {
+          "label": "continuity/2/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.006295323371887207,
+          "rmse": 5.624507872896462e-06,
+          "normalized_rmse": 0.0007061146083567188,
+          "reference_rms": 0.00796543196576248
+        },
+        {
+          "label": "continuity/2",
+          "batch": 99,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/3/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.00181624475372627,
+          "normalized_rmse": 0.004603056924764839,
+          "reference_rms": 0.3945736025889053
+        },
+        {
+          "label": "continuity/3/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002083346365589405,
+          "normalized_rmse": 0.0018138403155517446,
+          "reference_rms": 1.1485831182199082
+        },
+        {
+          "label": "continuity/3/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 6,
+          "original_tolerance_failure_fraction": 4.870635910224439e-07,
+          "max_abs": 0.125,
+          "rmse": 0.0007125762564719189,
+          "normalized_rmse": 0.0007743797378019325,
+          "reference_rms": 0.9201896972337603
+        },
+        {
+          "label": "continuity/3/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.008423924446105957,
+          "rmse": 6.995313498736852e-06,
+          "normalized_rmse": 0.0008577750411467982,
+          "reference_rms": 0.008155184241994849
+        },
+        {
+          "label": "continuity/3",
+          "batch": 98,
+          "accepted": 3,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/4/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.046875,
+          "rmse": 0.0018157883651325672,
+          "normalized_rmse": 0.0046772730425906515,
+          "reference_rms": 0.38821517337094286
+        },
+        {
+          "label": "continuity/4/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.002033986779441501,
+          "normalized_rmse": 0.0017812460392814043,
+          "reference_rms": 1.1418898538362832
+        },
+        {
+          "label": "continuity/4/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 6,
+          "original_tolerance_failure_fraction": 4.870635910224439e-07,
+          "max_abs": 0.125,
+          "rmse": 0.0006953776244203895,
+          "normalized_rmse": 0.000753564523489261,
+          "reference_rms": 0.9227844500966601
+        },
+        {
+          "label": "continuity/4/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.006599903106689453,
+          "rmse": 6.196329656806744e-06,
+          "normalized_rmse": 0.0007642381262490826,
+          "reference_rms": 0.008107852047657748
+        },
+        {
+          "label": "continuity/4",
+          "batch": 98,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/5/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.0017213435017898098,
+          "normalized_rmse": 0.004465729638826902,
+          "reference_rms": 0.38545627277203187
+        },
+        {
+          "label": "continuity/5/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0021058697269085917,
+          "normalized_rmse": 0.0017863008703991742,
+          "reference_rms": 1.178899793313097
+        },
+        {
+          "label": "continuity/5/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0006625607617552013,
+          "normalized_rmse": 0.000714471188304769,
+          "reference_rms": 0.9273442688812465
+        },
+        {
+          "label": "continuity/5/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.011057555675506592,
+          "rmse": 7.168515184582494e-06,
+          "normalized_rmse": 0.000876059598880711,
+          "reference_rms": 0.00818267980139853
+        },
+        {
+          "label": "continuity/5",
+          "batch": 97,
+          "accepted": 2,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/6/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.046875,
+          "rmse": 0.0017863491357178935,
+          "normalized_rmse": 0.004748465976828304,
+          "reference_rms": 0.3761949952753098
+        },
+        {
+          "label": "continuity/6/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0020303612903286652,
+          "normalized_rmse": 0.001772788373220438,
+          "reference_rms": 1.1452925351943288
+        },
+        {
+          "label": "continuity/6/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0006589723266529253,
+          "normalized_rmse": 0.000713669176115853,
+          "reference_rms": 0.9233582571680963
+        },
+        {
+          "label": "continuity/6/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007820963859558105,
+          "rmse": 6.900569239477012e-06,
+          "normalized_rmse": 0.0008479411190982408,
+          "reference_rms": 0.008138028790036217
+        },
+        {
+          "label": "continuity/6",
+          "batch": 99,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/7/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001711173030164135,
+          "normalized_rmse": 0.004580193468007962,
+          "reference_rms": 0.37360278383794254
+        },
+        {
+          "label": "continuity/7/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0020731854995207017,
+          "normalized_rmse": 0.0018036061802098817,
+          "reference_rms": 1.149466841635822
+        },
+        {
+          "label": "continuity/7/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0006800233620028209,
+          "normalized_rmse": 0.0007391644900286993,
+          "reference_rms": 0.9199892191471722
+        },
+        {
+          "label": "continuity/7/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.009990274906158447,
+          "rmse": 7.157039852813966e-06,
+          "normalized_rmse": 0.0008788030175151749,
+          "reference_rms": 0.008144077466928338
+        },
+        {
+          "label": "continuity/7",
+          "batch": 98,
+          "accepted": 3,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "assessment_restore/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "assessment_restore/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "assessment_restore/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "joined/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "joined/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_mlp_overlap/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_mlp_overlap/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_serial/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_serial/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_serial/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_serial/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_mlp_overlap/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_mlp_overlap/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "joined/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "joined/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "joined/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "joined/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_mlp_overlap/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_mlp_overlap/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_serial/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_serial/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0005343825782428999,
+          "normalized_rmse": 0.0007126223825282876,
+          "reference_rms": 0.7498818327133971
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.007772564888000488,
+          "rmse": 5.217106447251532e-06,
+          "normalized_rmse": 0.0006623595181422597,
+          "reference_rms": 0.007876547863136492
+        }
+      ],
+      "samples": [
+        {
+          "mode": "joined",
+          "round": 0,
+          "wall_us": [
+            4949.898,
+            4823.117,
+            4822.407,
+            4892.398,
+            4802.457,
+            4830.427
+          ],
+          "device_us": [
+            4757.760047912598,
+            4760.419845581055,
+            4758.600234985352,
+            4821.660041809082,
+            4735.740184783936,
+            4763.219833374023
+          ]
+        },
+        {
+          "mode": "split_mlp_overlap",
+          "round": 0,
+          "wall_us": [
+            4777.778,
+            4764.658,
+            4761.238,
+            4784.328,
+            4792.418,
+            4821.137
+          ],
+          "device_us": [
+            4692.039966583252,
+            4715.139865875244,
+            4703.89986038208,
+            4717.199802398682,
+            4726.560115814209,
+            4745.240211486816
+          ]
+        },
+        {
+          "mode": "split_gdn_core_serial",
+          "round": 0,
+          "wall_us": [
+            5077.248,
+            5080.249,
+            5102.629,
+            5108.498,
+            5094.978,
+            5104.008
+          ],
+          "device_us": [
+            5014.480113983154,
+            5021.140098571777,
+            5027.560234069824,
+            5039.939880371094,
+            5032.080173492432,
+            5040.719985961914
+          ]
+        },
+        {
+          "mode": "split_gdn_core_pipeline",
+          "round": 0,
+          "wall_us": [
+            4867.627,
+            4838.967,
+            4870.968,
+            4862.867,
+            4839.097,
+            4845.028
+          ],
+          "device_us": [
+            4809.579849243164,
+            4766.7999267578125,
+            4793.059825897217,
+            4789.239883422852,
+            4768.080234527588,
+            4781.479835510254
+          ]
+        },
+        {
+          "mode": "split_gdn_core_pipeline",
+          "round": 1,
+          "wall_us": [
+            4893.548,
+            4850.587,
+            4845.957,
+            4841.388,
+            4870.878,
+            4847.597
+          ],
+          "device_us": [
+            4824.960231781006,
+            4775.139808654785,
+            4787.439823150635,
+            4780.300140380859,
+            4788.980007171631,
+            4786.719799041748
+          ]
+        },
+        {
+          "mode": "split_gdn_core_serial",
+          "round": 1,
+          "wall_us": [
+            5105.308,
+            5101.348,
+            5111.729,
+            5093.419,
+            5105.978,
+            5098.338
+          ],
+          "device_us": [
+            5030.759811401367,
+            5007.880210876465,
+            5043.240070343018,
+            5015.719890594482,
+            5035.439968109131,
+            5024.85990524292
+          ]
+        },
+        {
+          "mode": "split_mlp_overlap",
+          "round": 1,
+          "wall_us": [
+            4803.257,
+            4794.068,
+            4767.148,
+            4769.717,
+            4755.657,
+            4786.647
+          ],
+          "device_us": [
+            4737.760066986084,
+            4718.100070953369,
+            4701.36022567749,
+            4698.540210723877,
+            4705.7600021362305,
+            4727.30016708374
+          ]
+        },
+        {
+          "mode": "joined",
+          "round": 1,
+          "wall_us": [
+            4859.047,
+            4825.158,
+            4824.217,
+            4810.027,
+            4856.118,
+            4797.317
+          ],
+          "device_us": [
+            4790.740013122559,
+            4762.899875640869,
+            4766.479969024658,
+            4751.200199127197,
+            4788.760185241699,
+            4738.759994506836
+          ]
+        },
+        {
+          "mode": "joined",
+          "round": 2,
+          "wall_us": [
+            4905.028,
+            4850.958,
+            4824.207,
+            4812.127,
+            4832.887,
+            4827.438
+          ],
+          "device_us": [
+            4835.519790649414,
+            4775.599956512451,
+            4760.240077972412,
+            4738.7800216674805,
+            4768.55993270874,
+            4751.060009002686
+          ]
+        },
+        {
+          "mode": "split_mlp_overlap",
+          "round": 2,
+          "wall_us": [
+            4785.887,
+            4788.347,
+            4819.697,
+            4813.798,
+            4782.058,
+            4765.867
+          ],
+          "device_us": [
+            4705.239772796631,
+            4711.040019989014,
+            4764.939785003662,
+            4737.880229949951,
+            4714.099884033203,
+            4685.82010269165
+          ]
+        },
+        {
+          "mode": "split_gdn_core_serial",
+          "round": 2,
+          "wall_us": [
+            5072.018,
+            5085.249,
+            5090.499,
+            5107.849,
+            5081.938,
+            5088.148
+          ],
+          "device_us": [
+            5000.199794769287,
+            5009.099960327148,
+            5028.600215911865,
+            5028.659820556641,
+            5013.480186462402,
+            5016.180038452148
+          ]
+        },
+        {
+          "mode": "split_gdn_core_pipeline",
+          "round": 2,
+          "wall_us": [
+            4824.717,
+            4861.778,
+            4844.398,
+            4907.337,
+            4856.168,
+            4843.127
+          ],
+          "device_us": [
+            4762.460231781006,
+            4791.160106658936,
+            4775.839805603027,
+            4826.7998695373535,
+            4788.219928741455,
+            4774.139881134033
+          ]
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "checks": [
+        {
+          "label": "rope_view/expanded/0/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/0/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/0/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/0/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/expanded/200/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/0/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/0",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/1",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/2",
+          "bitwise_equal": true
+        },
+        {
+          "label": "rope_view/different_planes/200/3",
+          "bitwise_equal": true
+        },
+        {
+          "label": "initial/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "shared_o_vs_official",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "decomposed_vs_official_attention",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "decomposed_vs_official_mlp/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "decomposed_vs_official_mlp/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "initial/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "initial/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "joined/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "joined/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "joined/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6629370950700774
+        },
+        {
+          "label": "joined/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007702056315003092
+        },
+        {
+          "label": "joined/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0018723311554903414,
+          "normalized_rmse": 0.0044526183182954,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "split_mlp_overlap/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002074647417031374,
+          "normalized_rmse": 0.0017884896870310697,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "split_mlp_overlap/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0004486522479959998,
+          "normalized_rmse": 0.0006767644341105605,
+          "reference_rms": 0.6629370950700774
+        },
+        {
+          "label": "split_mlp_overlap/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0020863115787506104,
+          "rmse": 3.002907083104473e-06,
+          "normalized_rmse": 0.00038988381287929696,
+          "reference_rms": 0.007702056315003092
+        },
+        {
+          "label": "split_mlp_overlap/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0018741155826629704,
+          "normalized_rmse": 0.004456861890856383,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "split_gdn_core_serial/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0020746573298809643,
+          "normalized_rmse": 0.0017884982325936146,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "split_gdn_core_serial/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0004486522479959998,
+          "normalized_rmse": 0.0006767644341105605,
+          "reference_rms": 0.6629370950700774
+        },
+        {
+          "label": "split_gdn_core_serial/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0020863115787506104,
+          "rmse": 3.002907083104473e-06,
+          "normalized_rmse": 0.00038988381287929696,
+          "reference_rms": 0.007702056315003092
+        },
+        {
+          "label": "split_gdn_core_serial/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0018741155826629704,
+          "normalized_rmse": 0.004456861890856383,
+          "reference_rms": 0.4205011572173399
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0020746573298809643,
+          "normalized_rmse": 0.0017884982325936146,
+          "reference_rms": 1.1599996533809105
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0004486522479959998,
+          "normalized_rmse": 0.0006767644341105605,
+          "reference_rms": 0.6629370950700774
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0020863115787506104,
+          "rmse": 3.002907083104473e-06,
+          "normalized_rmse": 0.00038988381287929696,
+          "reference_rms": 0.007702056315003092
+        },
+        {
+          "label": "split_gdn_core_pipeline/initial",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "b97-v1/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "b97-v1/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 1986560
+        },
+        {
+          "label": "b97-v1/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 1986560
+        },
+        {
+          "label": "joined/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "joined/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "joined/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6589293365657884
+        },
+        {
+          "label": "joined/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007844260696238912
+        },
+        {
+          "label": "joined/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019634457393441383,
+          "normalized_rmse": 0.004793700928692165,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 5.033827319587629e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022940702878516102,
+          "normalized_rmse": 0.00199971737098825,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005457974656893599,
+          "normalized_rmse": 0.0008283095552156627,
+          "reference_rms": 0.6589293365657884
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003731369972229004,
+          "rmse": 4.1601412126159185e-06,
+          "normalized_rmse": 0.0005303420390669298,
+          "reference_rms": 0.007844260696238912
+        },
+        {
+          "label": "split_mlp_overlap/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001963773585125173,
+          "normalized_rmse": 0.004794501355509939,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 5.033827319587629e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022940866952910525,
+          "normalized_rmse": 0.001999731673183714,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005457974656893599,
+          "normalized_rmse": 0.0008283095552156627,
+          "reference_rms": 0.6589293365657884
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003731369972229004,
+          "rmse": 4.1601412126159185e-06,
+          "normalized_rmse": 0.0005303420390669298,
+          "reference_rms": 0.007844260696238912
+        },
+        {
+          "label": "split_gdn_core_serial/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001963773585125173,
+          "normalized_rmse": 0.004794501355509939,
+          "reference_rms": 0.4095887016213614
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 5.033827319587629e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022940866952910525,
+          "normalized_rmse": 0.001999731673183714,
+          "reference_rms": 1.1471972595396782
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005457974656893599,
+          "normalized_rmse": 0.0008283095552156627,
+          "reference_rms": 0.6589293365657884
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003731369972229004,
+          "rmse": 4.1601412126159185e-06,
+          "normalized_rmse": 0.0005303420390669298,
+          "reference_rms": 0.007844260696238912
+        },
+        {
+          "label": "split_gdn_core_pipeline/b97-v1",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "b99-v2/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "b99-v2/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2027520
+        },
+        {
+          "label": "b99-v2/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2027520
+        },
+        {
+          "label": "joined/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "joined/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "joined/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6639577678667518
+        },
+        {
+          "label": "joined/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.0076059528928195
+        },
+        {
+          "label": "joined/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.00196626003342629,
+          "normalized_rmse": 0.004715329564043073,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0022424377351115948,
+          "normalized_rmse": 0.0019632123632047052,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005393863856374881,
+          "normalized_rmse": 0.0008123805635567719,
+          "reference_rms": 0.6639577678667518
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003092825412750244,
+          "rmse": 3.7504610079782977e-06,
+          "normalized_rmse": 0.0004930954820294732,
+          "reference_rms": 0.0076059528928195
+        },
+        {
+          "label": "split_mlp_overlap/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.001967124966966885,
+          "normalized_rmse": 0.004717403779368395,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002242458481202373,
+          "normalized_rmse": 0.0019632305260197823,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005393863856374881,
+          "normalized_rmse": 0.0008123805635567719,
+          "reference_rms": 0.6639577678667518
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003092825412750244,
+          "rmse": 3.7504610079782977e-06,
+          "normalized_rmse": 0.0004930954820294732,
+          "reference_rms": 0.0076059528928195
+        },
+        {
+          "label": "split_gdn_core_serial/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.001967124966966885,
+          "normalized_rmse": 0.004717403779368395,
+          "reference_rms": 0.41699312990126536
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002242458481202373,
+          "normalized_rmse": 0.0019632305260197823,
+          "reference_rms": 1.1422288169839598
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005393863856374881,
+          "normalized_rmse": 0.0008123805635567719,
+          "reference_rms": 0.6639577678667518
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003092825412750244,
+          "rmse": 3.7504610079782977e-06,
+          "normalized_rmse": 0.0004930954820294732,
+          "reference_rms": 0.0076059528928195
+        },
+        {
+          "label": "split_gdn_core_pipeline/b99-v2",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "b98-v3/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "b98-v3/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "b98-v3/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "joined/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "joined/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "joined/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_mlp_overlap/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_serial/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_pipeline/b98-v3",
+          "same_schedule_eager_replay_bitwise": true,
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/0/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019733879679359884,
+          "normalized_rmse": 0.004615566329252416,
+          "reference_rms": 0.42755055981518497
+        },
+        {
+          "label": "continuity/0/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0021796768943995334,
+          "normalized_rmse": 0.0018716789896310708,
+          "reference_rms": 1.1645570135021777
+        },
+        {
+          "label": "continuity/0/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005060083306590117,
+          "normalized_rmse": 0.0007633255641620347,
+          "reference_rms": 0.6628997565599664
+        },
+        {
+          "label": "continuity/0/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.002037152647972107,
+          "rmse": 3.5924965007793393e-06,
+          "normalized_rmse": 0.0004591108846554832,
+          "reference_rms": 0.007824899432465315
+        },
+        {
+          "label": "continuity/0",
+          "batch": 98,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/1/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.046875,
+          "rmse": 0.0019414274792385645,
+          "normalized_rmse": 0.004733663283223646,
+          "reference_rms": 0.41013214567227174
+        },
+        {
+          "label": "continuity/1/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 2,
+          "original_tolerance_failure_fraction": 1.0067654639175258e-06,
+          "max_abs": 0.5,
+          "rmse": 0.0020835358014512626,
+          "normalized_rmse": 0.0017978685276935581,
+          "reference_rms": 1.1588921933708802
+        },
+        {
+          "label": "continuity/1/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.125,
+          "rmse": 0.0006408440046618347,
+          "normalized_rmse": 0.0007899364606405483,
+          "reference_rms": 0.8112601919174403
+        },
+        {
+          "label": "continuity/1/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0038120150566101074,
+          "rmse": 4.336329028273905e-06,
+          "normalized_rmse": 0.0005926133864030941,
+          "reference_rms": 0.007317298474463325
+        },
+        {
+          "label": "continuity/1",
+          "batch": 97,
+          "accepted": 2,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/2/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.0019749080324821633,
+          "normalized_rmse": 0.0048291868688105505,
+          "reference_rms": 0.4089524978288098
+        },
+        {
+          "label": "continuity/2/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.932133838383838e-07,
+          "max_abs": 0.5,
+          "rmse": 0.0020775645341400873,
+          "normalized_rmse": 0.0018360808414674503,
+          "reference_rms": 1.1315212746730892
+        },
+        {
+          "label": "continuity/2/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 2,
+          "original_tolerance_failure_fraction": 1.6235453034081463e-07,
+          "max_abs": 0.0625,
+          "rmse": 0.0006518514014729712,
+          "normalized_rmse": 0.0008026458996773868,
+          "reference_rms": 0.8121282395324945
+        },
+        {
+          "label": "continuity/2/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003966659307479858,
+          "rmse": 4.315046279831543e-06,
+          "normalized_rmse": 0.0006062394542402596,
+          "reference_rms": 0.007117725924386046
+        },
+        {
+          "label": "continuity/2",
+          "batch": 99,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/3/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.00181624475372627,
+          "normalized_rmse": 0.004603056924764839,
+          "reference_rms": 0.3945736025889053
+        },
+        {
+          "label": "continuity/3/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 1,
+          "original_tolerance_failure_fraction": 4.982461734693878e-07,
+          "max_abs": 0.5,
+          "rmse": 0.002083346365589405,
+          "normalized_rmse": 0.0018138403155517446,
+          "reference_rms": 1.1485831182199082
+        },
+        {
+          "label": "continuity/3/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 2,
+          "original_tolerance_failure_fraction": 1.6235453034081463e-07,
+          "max_abs": 0.0625,
+          "rmse": 0.000689117573045425,
+          "normalized_rmse": 0.0008494410484023901,
+          "reference_rms": 0.8112600331023584
+        },
+        {
+          "label": "continuity/3/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003327667713165283,
+          "rmse": 5.368131999731167e-06,
+          "normalized_rmse": 0.0007739016978683076,
+          "reference_rms": 0.006936452025518938
+        },
+        {
+          "label": "continuity/3",
+          "batch": 98,
+          "accepted": 3,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/4/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.046875,
+          "rmse": 0.0018157883651325672,
+          "normalized_rmse": 0.0046772730425906515,
+          "reference_rms": 0.38821517337094286
+        },
+        {
+          "label": "continuity/4/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.002033986779441501,
+          "normalized_rmse": 0.0017812460392814043,
+          "reference_rms": 1.1418898538362832
+        },
+        {
+          "label": "continuity/4/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 2,
+          "original_tolerance_failure_fraction": 1.6235453034081463e-07,
+          "max_abs": 0.0625,
+          "rmse": 0.0006674024139043117,
+          "normalized_rmse": 0.0008215358919519468,
+          "reference_rms": 0.8123837563792641
+        },
+        {
+          "label": "continuity/4/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0036965012550354004,
+          "rmse": 5.159771146167281e-06,
+          "normalized_rmse": 0.000747903738414195,
+          "reference_rms": 0.006898977610551479
+        },
+        {
+          "label": "continuity/4",
+          "batch": 98,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/5/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.03125,
+          "rmse": 0.0017213435017898098,
+          "normalized_rmse": 0.004465729638826902,
+          "reference_rms": 0.38545627277203187
+        },
+        {
+          "label": "continuity/5/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 1986560,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0021058697269085917,
+          "normalized_rmse": 0.0017863008703991742,
+          "reference_rms": 1.178899793313097
+        },
+        {
+          "label": "continuity/5/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0006417096903470784,
+          "normalized_rmse": 0.0007876859447410794,
+          "reference_rms": 0.8146770862567759
+        },
+        {
+          "label": "continuity/5/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0030253231525421143,
+          "rmse": 5.002099047099864e-06,
+          "normalized_rmse": 0.0007316181524236602,
+          "reference_rms": 0.006837035180892127
+        },
+        {
+          "label": "continuity/5",
+          "batch": 97,
+          "accepted": 2,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/6/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.046875,
+          "rmse": 0.0017863491357178935,
+          "normalized_rmse": 0.004748465976828304,
+          "reference_rms": 0.3761949952753098
+        },
+        {
+          "label": "continuity/6/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2027520,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0020303612903286652,
+          "normalized_rmse": 0.001772788373220438,
+          "reference_rms": 1.1452925351943288
+        },
+        {
+          "label": "continuity/6/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0006453431065943343,
+          "normalized_rmse": 0.0007914928492683367,
+          "reference_rms": 0.8153492570285322
+        },
+        {
+          "label": "continuity/6/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0036721229553222656,
+          "rmse": 5.3607994881013494e-06,
+          "normalized_rmse": 0.0007886998018568968,
+          "reference_rms": 0.006797008792800513
+        },
+        {
+          "label": "continuity/6",
+          "batch": 99,
+          "accepted": 1,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "continuity/7/padding/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001711173030164135,
+          "normalized_rmse": 0.004580193468007962,
+          "reference_rms": 0.37360278383794254
+        },
+        {
+          "label": "continuity/7/padding/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.5,
+          "rmse": 0.0020731854995207017,
+          "normalized_rmse": 0.0018036061802098817,
+          "reference_rms": 1.149466841635822
+        },
+        {
+          "label": "continuity/7/padding/conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0006584810112828751,
+          "normalized_rmse": 0.0008118313309777858,
+          "reference_rms": 0.8111056892689611
+        },
+        {
+          "label": "continuity/7/padding/ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003992438316345215,
+          "rmse": 5.79029778035517e-06,
+          "normalized_rmse": 0.0008561619956902873,
+          "reference_rms": 0.006763086669931777
+        },
+        {
+          "label": "continuity/7",
+          "batch": 98,
+          "accepted": 3,
+          "matched_controls_bitwise": [
+            "split_gdn_core_serial",
+            "eager_split"
+          ],
+          "inactive_and_null_unchanged": true
+        },
+        {
+          "label": "assessment_restore/collective_vs_cpu",
+          "max_abs": 0.00390625,
+          "elements": 2048000
+        },
+        {
+          "label": "assessment_restore/decomposed_vs_official_layer/hidden",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "assessment_restore/decomposed_vs_official_layer/residual",
+          "max_abs": 0.0,
+          "elements": 2007040
+        },
+        {
+          "label": "joined/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "joined/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_mlp_overlap/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_mlp_overlap/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_serial/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_serial/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_pipeline/round0/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_pipeline/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_serial/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_serial/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_mlp_overlap/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_mlp_overlap/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "joined/round1/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/round1/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/round1/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "joined/round1/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "joined/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "joined/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "joined/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "joined/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0,
+          "rmse": 0.0,
+          "normalized_rmse": 0.0,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_mlp_overlap/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0019714538915695233,
+          "normalized_rmse": 0.004653970026721383,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_mlp_overlap/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607500791436343,
+          "normalized_rmse": 0.0018769683442962548,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_mlp_overlap/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_mlp_overlap/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_serial/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_serial/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_serial/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_serial/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/hidden",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.001973314989933133,
+          "normalized_rmse": 0.004658363482758099,
+          "reference_rms": 0.4236069162994519
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/residual",
+          "numerical_diagnostic": true,
+          "elements": 2007040,
+          "original_tolerance_failures": 3,
+          "original_tolerance_failure_fraction": 1.4947385204081632e-06,
+          "max_abs": 0.25,
+          "rmse": 0.0021607466705787786,
+          "normalized_rmse": 0.0018769653833946701,
+          "reference_rms": 1.1511915401821973
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/gdn_conv",
+          "numerical_diagnostic": true,
+          "elements": 12318720,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.0625,
+          "rmse": 0.0005189534066755498,
+          "normalized_rmse": 0.0007863424798773657,
+          "reference_rms": 0.6599585040305637
+        },
+        {
+          "label": "split_gdn_core_pipeline/round2/gdn_ssm",
+          "numerical_diagnostic": true,
+          "elements": 157679616,
+          "original_tolerance_failures": 0,
+          "original_tolerance_failure_fraction": 0.0,
+          "max_abs": 0.003068387508392334,
+          "rmse": 3.8094515341025057e-06,
+          "normalized_rmse": 0.0004954228715351504,
+          "reference_rms": 0.007689292830382022
+        }
+      ],
+      "samples": [
+        {
+          "mode": "joined",
+          "round": 0,
+          "wall_us": [
+            4951.378,
+            4811.837,
+            4806.747,
+            4811.168,
+            4822.507,
+            4801.847
+          ],
+          "device_us": [
+            4765.739917755127,
+            4750.219821929932,
+            4744.9798583984375,
+            4732.560157775879,
+            4767.419815063477,
+            4748.91996383667
+          ]
+        },
+        {
+          "mode": "split_mlp_overlap",
+          "round": 0,
+          "wall_us": [
+            4771.808,
+            4774.728,
+            4763.898,
+            4759.588,
+            4767.957,
+            4769.047
+          ],
+          "device_us": [
+            4707.399845123291,
+            4716.440200805664,
+            4700.900077819824,
+            4704.539775848389,
+            4712.339878082275,
+            4712.279796600342
+          ]
+        },
+        {
+          "mode": "split_gdn_core_serial",
+          "round": 0,
+          "wall_us": [
+            5075.298,
+            5076.579,
+            5087.189,
+            5084.818,
+            5074.928,
+            5086.128
+          ],
+          "device_us": [
+            5020.699977874756,
+            5012.519836425781,
+            5024.00016784668,
+            5024.740219116211,
+            5022.09997177124,
+            5024.960041046143
+          ]
+        },
+        {
+          "mode": "split_gdn_core_pipeline",
+          "round": 0,
+          "wall_us": [
+            4858.317,
+            4824.837,
+            4851.048,
+            4839.757,
+            4827.337,
+            4839.658
+          ],
+          "device_us": [
+            4796.140193939209,
+            4760.439872741699,
+            4777.299880981445,
+            4777.140140533447,
+            4761.519908905029,
+            4775.619983673096
+          ]
+        },
+        {
+          "mode": "split_gdn_core_pipeline",
+          "round": 1,
+          "wall_us": [
+            4847.788,
+            4826.117,
+            4831.947,
+            4834.168,
+            4859.278,
+            4848.647
+          ],
+          "device_us": [
+            4804.959774017334,
+            4767.300128936768,
+            4772.140026092529,
+            4774.300098419189,
+            4790.200233459473,
+            4789.460182189941
+          ]
+        },
+        {
+          "mode": "split_gdn_core_serial",
+          "round": 1,
+          "wall_us": [
+            5072.728,
+            5081.148,
+            5085.979,
+            5069.999,
+            5083.718,
+            5077.938
+          ],
+          "device_us": [
+            5013.239860534668,
+            5007.93981552124,
+            5025.459766387939,
+            5013.400077819824,
+            5013.7200355529785,
+            5018.620014190674
+          ]
+        },
+        {
+          "mode": "split_mlp_overlap",
+          "round": 1,
+          "wall_us": [
+            4758.557,
+            4778.368,
+            4760.478,
+            4750.887,
+            4757.057,
+            4781.507
+          ],
+          "device_us": [
+            4710.020065307617,
+            4719.240188598633,
+            4703.060150146484,
+            4692.160129547119,
+            4701.7998695373535,
+            4722.45979309082
+          ]
+        },
+        {
+          "mode": "joined",
+          "round": 1,
+          "wall_us": [
+            4808.417,
+            4811.767,
+            4808.407,
+            4828.157,
+            4844.168,
+            4808.497
+          ],
+          "device_us": [
+            4737.020015716553,
+            4751.0199546813965,
+            4750.860214233398,
+            4769.420146942139,
+            4779.0398597717285,
+            4747.439861297607
+          ]
+        },
+        {
+          "mode": "joined",
+          "round": 2,
+          "wall_us": [
+            4867.527,
+            4808.538,
+            4799.207,
+            4797.077,
+            4799.077,
+            4805.628
+          ],
+          "device_us": [
+            4809.160232543945,
+            4733.520030975342,
+            4742.760181427002,
+            4738.080024719238,
+            4727.220058441162,
+            4749.380111694336
+          ]
+        },
+        {
+          "mode": "split_mlp_overlap",
+          "round": 2,
+          "wall_us": [
+            4755.947,
+            4766.777,
+            4816.977,
+            4798.258,
+            4760.918,
+            4761.627
+          ],
+          "device_us": [
+            4688.960075378418,
+            4709.780216217041,
+            4760.980129241943,
+            4738.900184631348,
+            4699.560165405273,
+            4699.079990386963
+          ]
+        },
+        {
+          "mode": "split_gdn_core_serial",
+          "round": 2,
+          "wall_us": [
+            5085.698,
+            5076.318,
+            5081.109,
+            5097.848,
+            5076.428,
+            5071.228
+          ],
+          "device_us": [
+            5013.08012008667,
+            5015.220165252686,
+            5019.979953765869,
+            5018.799781799316,
+            5012.919902801514,
+            5011.879920959473
+          ]
+        },
+        {
+          "mode": "split_gdn_core_pipeline",
+          "round": 2,
+          "wall_us": [
+            4829.287,
+            4826.008,
+            4839.438,
+            4843.457,
+            4829.818,
+            4819.137
+          ],
+          "device_us": [
+            4764.979839324951,
+            4775.420188903809,
+            4772.960186004639,
+            4774.139881134033,
+            4772.600173950195,
+            4759.759902954102
+          ]
+        }
+      ]
+    }
+  ],
+  "source_sha256": "0b2e2d1a0911f873005359d4492ff453f09361667d8d991bbc69d635aec1315d",
+  "limitations": "Synthetic rank-local Down outputs/residuals and a projected synthetic single-layer prefix. Official attention is an untimed eager oracle. Timed graphs include O and all output reductions; output_layouts identifies shared output work or split output work with timed result-join copies. This scope also times post-Norm, real MLP weights/activation and final Down reductions. Both returned hidden and residual are checked against the official selected decoder layer. No complete hybrid model forward, GDN state, draft execution, serving or real scheduler. Both schedules pay identical source restoration; true producer cost is absent. Single replay times include all FIA updates and host submission gaps.",
+  "output_layouts_scope": "layer_3_only",
+  "two_layer_collective_order": {
+    "joined": [
+      "input",
+      "output",
+      "down",
+      "gdn_output",
+      "gdn_down"
+    ],
+    "split_mlp_overlap": [
+      "input",
+      "output_A",
+      "output_B",
+      "down_A",
+      "down_B",
+      "gdn_output",
+      "gdn_down"
+    ],
+    "split_gdn_core_serial": [
+      "input",
+      "output_A",
+      "output_B",
+      "down_A",
+      "down_B",
+      "gdn_output_A",
+      "gdn_output_B",
+      "gdn_down_A",
+      "gdn_down_B"
+    ],
+    "split_gdn_core_pipeline": [
+      "input",
+      "output_A",
+      "output_B",
+      "down_A",
+      "down_B",
+      "gdn_output_A",
+      "gdn_output_B",
+      "gdn_down_A",
+      "gdn_down_B"
+    ]
+  }
+}
