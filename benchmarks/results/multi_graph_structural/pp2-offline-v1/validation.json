@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-20",
+  "scope": "offline PP2 and graph-resource screening; only read remote checkpoint headers; no new NPU execution",
+  "checks": {
+    "scope": "CPU ledger verification only; not graph capture, NPU correctness or measured performance",
+    "regeneration_matches": true,
+    "independent_exhaustive_partition_cases": 155,
+    "all_step_group_owner_coverage_checks": 384,
+    "actual_reservation_null_page_checked": true,
+    "checkpoint_header_and_gemm_shapes_checked": true,
+    "pipeline_recurrence_and_negative_time_checked": true
+  },
+  "local_markdown_links_checked": 38,
+  "chinese_document_content_and_fences": "passed",
+  "ruff_check": "passed",
+  "ruff_format": "passed",
+  "artifacts": {
+    "audit.json": "84fa9ca90f36696520dd8123b99454549ab7babdcba104dad7becb0575004098",
+    "audit.py": "639d16b35d6d7829d4e8def6d70ed372e19357f419bd9239daf960b07fdd8df4",
+    "checkpoint-headers.json": "8819569f377b2640fd7ad2b1d5b289994b7f744bb734f43a1b6a9b6263596b0f",
+    "checkpoint_headers.py": "7e9b623faed20f339d160505346f6cd057d37efb6ca2f0112014ea80abe689c2",
+    "checks.json": "76e2c51e7c8a4679bf62576f2b042e276ef3c47656bc35f46acd911b842356ed",
+    "format-ci.log": "5078af2becd99984928c8a738a97a57aae06478bcb139ff81ecafa7bd7865139",
+    "verify.py": "269c442ca640fa0f00e2beec6b8bf77e36639872fe81a28b88680fb76b581fb5"
+  },
+  "format_ci": {
+    "exit_code": 2,
+    "status": "blocked by Windows WSL/CRLF shell parsing; full CI did not pass",
+    "log": "format-ci.log"
+  },
+  "remaining": [
+    "No independent multigraph net win established",
+    "Full-head compact GDN, PP loader/state lifecycle and P2P not qualified",
+    "Useful dynamic choices and actual limiting capture resources not established"
+  ],
+  "git_diff_cached_check": "passed"
+}
