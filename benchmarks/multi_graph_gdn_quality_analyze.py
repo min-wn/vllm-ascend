@@ -4,11 +4,31 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 from multi_graph_gdn_q4_full_metadata import load_fixed_trace
 from multi_graph_gdn_quality import score_layout, summarize
 from multi_graph_gdn_quality_probe import load_inputs, task_summary
+
+
+def same_statistics(actual, expected):
+    """Allow cross-platform libm rounding; decisions and discrete data stay exact."""
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(actual, dict):
+        return actual.keys() == expected.keys() and all(same_statistics(actual[key], expected[key]) for key in actual)
+    if isinstance(actual, list):
+        return len(actual) == len(expected) and all(
+            same_statistics(a, b) for a, b in zip(actual, expected, strict=True)
+        )
+    if isinstance(actual, float):
+        return (
+            math.isfinite(actual)
+            and math.isfinite(expected)
+            and math.isclose(actual, expected, rel_tol=1e-12, abs_tol=1e-12)
+        )
+    return actual == expected
 
 
 def analyze(root):
@@ -50,7 +70,7 @@ def analyze(root):
         if abs(row["delta_nll"] - (row["compact_nll"] - row["official_nll"])) > 1e-6:
             raise ValueError("inconsistent saved paired NLL")
     recomputed = summarize(rows, expected_tokens=payload["screen_expected_tokens"])
-    if recomputed != report["summary"]:
+    if not same_statistics(recomputed, report["summary"]):
         raise ValueError("stored quality gate or bootstrap does not reproduce")
     segments = []
     for start in range(0, 128, 32):
@@ -83,6 +103,7 @@ def analyze(root):
             any(not doc["hidden_diagnostics"][step]["screen_passed"] for doc in (report, peer)) for step in range(128)
         ),
         task_run=False,
+        derived_statistics_audit_tolerance=dict(absolute=1e-12, relative=1e-12, decisions="exact"),
     )
     result["largest_kl_observations"] = sorted(rows, key=lambda row: row["kl"], reverse=True)[:20]
     result["largest_nll_losses"] = sorted(rows, key=lambda row: row["delta_nll"], reverse=True)[:20]
@@ -130,7 +151,7 @@ def analyze(root):
             ):
                 raise ValueError("task word/token alignment mismatch")
         summary = task_summary(task_rows)
-        if summary != task["summary"]:
+        if not same_statistics(summary, task["summary"]):
             raise ValueError("task paired accounting does not reproduce")
         result.update(task_run=True, task=summary)
     return result

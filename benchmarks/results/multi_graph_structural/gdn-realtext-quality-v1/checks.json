@@ -1,10 +1,10 @@
 {
   "provenance": "Recorded from tool outputs in this task; no additional NPU performance rounds.",
   "unit": {
-    "command": "python -m pytest tests/ut/worker/multi_graph/test_gdn_quality.py --noconftest -q --basetemp=../gdn-quality-ut-v4",
+    "command": "python -m pytest tests/ut/worker/multi_graph/test_gdn_quality.py --noconftest -q --basetemp=../gdn-quality-ut-v5",
     "exit_code": 0,
-    "passed": 10,
-    "elapsed_seconds": 2.79,
+    "passed": 11,
+    "elapsed_seconds": 2.87,
     "isolation": "--noconftest avoids unrelated project-wide vLLM imports on this CPU-only host"
   },
   "ruff": {
@@ -25,9 +25,9 @@
   "frozen_preprocessor_ast_equal": true,
   "files": {
     "benchmarks\\multi_graph_gdn_quality.py": "90f0a0db39b1848f89c888cf35c125753195866fedadd080ced2baffc1e89041",
-    "benchmarks\\multi_graph_gdn_quality_analyze.py": "02ff843016f06d7d02dab501fa2e1f07e7c7ee2a866bacd8ff967d9ecc660ea2",
+    "benchmarks\\multi_graph_gdn_quality_analyze.py": "39fd3823ed17a13a75470a36b05c3516464c8964030cdc95104d631464284d1b",
     "benchmarks\\multi_graph_gdn_quality_inputs.py": "7670636edec692fb26e75f44fc97c301c3e5be6107d616f111b467971cc25f90",
     "benchmarks\\multi_graph_gdn_quality_probe.py": "40881678c9c410381989b194fe0bc315453ee8ebeb1aaf0358a6a46a1915f7fe",
-    "tests\\ut\\worker\\multi_graph\\test_gdn_quality.py": "25e55c10ccba3b6e62c96b203e1042c6aa38498d10a35e68269ab9a400eb8d30"
+    "tests\\ut\\worker\\multi_graph\\test_gdn_quality.py": "ca6e1f6cdceb5311f5bd8fa4fdaa06812ecb4f4524e945259e42ae58fcd2533a"
   }
 }

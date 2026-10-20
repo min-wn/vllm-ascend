@@ -253,3 +253,11 @@ def test_independent_audit_rejects_modified_acceptance_result(saved_quality_audi
     path.write_text(json.dumps(data))
     with pytest.raises(ValueError, match="does not reproduce"):
         audit.analyze(root)
+
+
+def test_cross_platform_derived_rounding_never_changes_gates(quality):
+    audit = importlib.import_module("multi_graph_gdn_quality_analyze")
+    assert audit.same_statistics(dict(value=1.0 + 1e-14, passed=False), dict(value=1.0, passed=False))
+    assert not audit.same_statistics(dict(value=1.0 + 1e-5, passed=False), dict(value=1.0, passed=False))
+    assert not audit.same_statistics(dict(value=1.0, passed=True), dict(value=1.0, passed=False))
+    assert not audit.same_statistics(True, 1)
