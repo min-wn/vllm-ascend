@@ -84,6 +84,34 @@ def analyze(root):
         ),
         task_run=False,
     )
+    result["largest_kl_observations"] = sorted(rows, key=lambda row: row["kl"], reverse=True)[:20]
+    result["largest_nll_losses"] = sorted(rows, key=lambda row: row["delta_nll"], reverse=True)[:20]
+    result["largest_nll_gains"] = sorted(rows, key=lambda row: row["delta_nll"])[:20]
+    result["paired_target_accuracy"] = dict(
+        official_correct_compact_wrong=sum(
+            bool(r["official_correct"]) and not bool(r["compact_correct"]) for r in rows
+        ),
+        official_wrong_compact_correct=sum(
+            bool(r["compact_correct"]) and not bool(r["official_correct"]) for r in rows
+        ),
+        both_correct=sum(bool(r["official_correct"]) and bool(r["compact_correct"]) for r in rows),
+        both_wrong=sum(not bool(r["official_correct"]) and not bool(r["compact_correct"]) for r in rows),
+    )
+    owner_rows = []
+    for owner in sorted({row["owner"] for row in rows}):
+        part = [row for row in rows if row["owner"] == owner]
+        owner_rows.append(
+            dict(
+                owner=owner,
+                article=part[0]["article"],
+                tokens=len(part),
+                means={
+                    key: sum(r[key] for r in part) / len(part)
+                    for key in ("official_nll", "compact_nll", "delta_nll", "kl", "tv", "top1_disagreement")
+                },
+            )
+        )
+    result["owners"] = owner_rows
     if (root / "task.rank0.json").exists():
         task = json.loads((root / "task.rank0.json").read_bytes())
         if not recomputed["screen_passed"]:

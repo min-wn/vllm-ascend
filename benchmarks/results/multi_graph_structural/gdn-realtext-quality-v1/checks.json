@@ -1,0 +1,33 @@
+{
+  "provenance": "Recorded from tool outputs in this task; no additional NPU performance rounds.",
+  "unit": {
+    "command": "python -m pytest tests/ut/worker/multi_graph/test_gdn_quality.py --noconftest -q --basetemp=../gdn-quality-ut-v4",
+    "exit_code": 0,
+    "passed": 10,
+    "elapsed_seconds": 2.79,
+    "isolation": "--noconftest avoids unrelated project-wide vLLM imports on this CPU-only host"
+  },
+  "ruff": {
+    "command": "python -m ruff check benchmarks/multi_graph_gdn_quality*.py tests/ut/worker/multi_graph/test_gdn_quality.py",
+    "exit_code": 0
+  },
+  "ruff_format": {
+    "command": "python -m ruff format --check benchmarks/multi_graph_gdn_quality*.py tests/ut/worker/multi_graph/test_gdn_quality.py",
+    "exit_code": 0,
+    "files": 5
+  },
+  "full_format": {
+    "command": "bash format.sh ci",
+    "exit_code": 1,
+    "hooks_reached": false,
+    "reason": "Existing CRLF script: format.sh line 2: $'\\r': command not found; line 22 syntax error near unexpected token $'{\\r'"
+  },
+  "frozen_preprocessor_ast_equal": true,
+  "files": {
+    "benchmarks\\multi_graph_gdn_quality.py": "90f0a0db39b1848f89c888cf35c125753195866fedadd080ced2baffc1e89041",
+    "benchmarks\\multi_graph_gdn_quality_analyze.py": "02ff843016f06d7d02dab501fa2e1f07e7c7ee2a866bacd8ff967d9ecc660ea2",
+    "benchmarks\\multi_graph_gdn_quality_inputs.py": "7670636edec692fb26e75f44fc97c301c3e5be6107d616f111b467971cc25f90",
+    "benchmarks\\multi_graph_gdn_quality_probe.py": "40881678c9c410381989b194fe0bc315453ee8ebeb1aaf0358a6a46a1915f7fe",
+    "tests\\ut\\worker\\multi_graph\\test_gdn_quality.py": "25e55c10ccba3b6e62c96b203e1042c6aa38498d10a35e68269ab9a400eb8d30"
+  }
+}

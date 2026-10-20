@@ -224,6 +224,9 @@ def test_independent_audit_rejects_wrong_next_token_and_unclosed_peer(saved_qual
     result = audit.analyze(root)
     assert result["status"] == "audited_real_text_quality"
     assert not result["summary"]["screen_passed"]  # This miniature fixture has only one owner/article.
+    assert result["paired_target_accuracy"]["both_correct"] == 128
+    assert result["paired_target_accuracy"]["official_correct_compact_wrong"] == 0
+    assert len(result["owners"]) == 1
     path = root / "screen.rank0.json"
     data = json.loads(path.read_bytes())
     data["rows"][0]["target"] += 1
