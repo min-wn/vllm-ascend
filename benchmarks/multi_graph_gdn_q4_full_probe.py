@@ -871,6 +871,11 @@ def experiment(args, trace, runner, model, config):
 
             qualify(args, torch, dist, model, bundle, factory, registry, forward, vocabulary, report, checkpoint=save)
             return report
+        if args.phase == "fp32-step0":
+            from multi_graph_gdn_fp32_step0 import diagnose
+
+            diagnose(args, torch, dist, model, bundle, factory, registry, forward, vocabulary, report, checkpoint=save)
+            return report
         if args.phase in ("replay", "diagnostic", "profile"):
             schedule_context = nullcontext(None)
             if getattr(args, "split_boundaries", None):
@@ -934,7 +939,7 @@ def main():
     )
     parser.add_argument(
         "--phase",
-        choices=("allocation", "prefix", "eager", "replay", "diagnostic", "profile", "numeric"),
+        choices=("allocation", "prefix", "eager", "replay", "diagnostic", "profile", "numeric", "fp32-step0"),
         default="eager",
     )
     parser.add_argument(
@@ -986,8 +991,10 @@ def main():
         args.ready_timing_evidence is not None or not args.ready_lifecycle or args.phase != "replay"
     ):
         parser.error("ready qualification reuse requires a complete ready lifecycle and no timing reuse")
-    if args.phase == "numeric" and (args.tile_extension is None or args.prefix_limit is not None):
+    if args.phase in ("numeric", "fp32-step0") and (args.tile_extension is None or args.prefix_limit is not None):
         parser.error("independent official numerical audit requires tile kernel and all fixed owners")
+    if args.phase == "fp32-step0" and not args.dense_nz:
+        parser.error("FP32 step-zero attribution must retain the measured common NZ weight format")
     if args.output.exists() or (args.prefix_limit is not None and not 1 <= args.prefix_limit <= 128):
         parser.error("require a new output path and prefix-limit in 1..128")
     if args.trials < 2 or not 2 <= args.qualification_steps <= 128:

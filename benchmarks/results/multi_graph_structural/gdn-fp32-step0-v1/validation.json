@@ -1,0 +1,39 @@
+{
+  "checks": [
+    {
+      "check": "ruff check: four benchmark modules and three test modules",
+      "exit_code": 0,
+      "output": "All checks passed!",
+      "source": "completed validate_gdn_fp32.py invocation, session 82845"
+    },
+    {
+      "check": "ruff format --check: same seven files",
+      "exit_code": 0,
+      "output": "7 files already formatted",
+      "source": "completed validate_gdn_fp32.py invocation, session 82845"
+    },
+    {
+      "check": "pytest --noconftest: test_gdn_fp32_step0.py, test_gdn_full_numeric.py, test_gdn_q4_full_probe.py",
+      "exit_code": 0,
+      "output": "87 passed in 7.05s",
+      "source": "completed validate_gdn_fp32.py invocation, session 82845; post-check console encoding failed before JSON serialization"
+    },
+    {
+      "check": "git diff --check",
+      "exit_code": 0,
+      "source": "completed validate_gdn_fp32.py invocation, session 82845"
+    }
+  ],
+  "full_format": {
+    "exit_code": 2,
+    "status": "failed_before_hooks",
+    "reason": "existing CRLF format.sh entry",
+    "log": "format-ci.log"
+  },
+  "chinese_documents_nonempty_utf8_and_bom_copies_verified": true,
+  "root_document_links_verified": true,
+  "remote_process_exit_code": 0,
+  "remote_numerical_probe": "one step0 pair, two same-input layers, one substitution per TP rank",
+  "performance_rounds": 0,
+  "complete_numerical_requalification": false
+}

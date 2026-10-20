@@ -141,3 +141,8 @@
 /tests/ut/worker/multi_graph/test_gdn_q4_full_stream_audit.py text eol=lf
 /tests/ut/worker/multi_graph/test_gdn_q4_full_probe.py text eol=lf
 /docs/source/developer_guide/Design_Documents/aclgraph_gdn_ready_full_zh.md text eol=lf
+/benchmarks/multi_graph_gdn_fp32*.py text eol=lf
+/tests/ut/worker/multi_graph/test_gdn_fp32_step0.py text eol=lf
+/docs/source/developer_guide/Design_Documents/aclgraph_gdn_fp32_step0_zh.md text eol=lf
+/benchmarks/results/multi_graph_structural/gdn-fp32-step0-v*/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
+/benchmarks/results/multi_graph_structural/gdn-fp32-step0-v*/format-ci.log -diff
