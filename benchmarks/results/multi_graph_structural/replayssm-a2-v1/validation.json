@@ -1,0 +1,85 @@
+{
+  "ruff_check": {
+    "exit_code": 0,
+    "output": "All checks passed!\n"
+  },
+  "ruff_format": {
+    "exit_code": 0,
+    "output": "7 files already formatted\n"
+  },
+  "clang_format": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "cpu_protocol": {
+    "exit_code": 0,
+    "output": ".......                                                                  [100%]\r\n7 passed in 0.15s\r\n"
+  },
+  "analysis_audit": {
+    "exit_code": 0,
+    "output": "{\"decision\": \"retain_ready_as_conditional_A2_execution_mainline_not_new_state_algorithm\", \"ready_net_percent\": [6.2650590140097995, 5.765685199988235, 4.786147358999681, 7.400882410417831, 4.295686786474562, 4.672799512130121], \"means\": {\"official\": {\"wall_us\": 129515.07318454485, \"closed_wall_us\": 129515.07318454485, \"device_us\": 122920.60634307563, \"terminal_us\": 109.40000042319298}, \"compact_ready\": {\"wall_us\": 102706.52050773303, \"closed_wall_us\": 105851.70732034992, \"device_us\": 96372.5565324227, \"terminal_us\": 415.176659822464}, \"ring_delayed\": {\"wall_us\": 125275.52049141377, \"closed_wall_us\": 128064.85562274854, \"device_us\": 118629.09663716952, \"terminal_us\": 790.4999951521555}, \"ring_ready\": {\"wall_us\": 118168.04242941241, \"closed_wall_us\": 120961.9725511099, \"device_us\": 111785.0333750248, \"terminal_us\": 788.1399989128113}}, \"max_output_nrmse\": {\"compact_ready\": 0.0031313137151300907, \"ring_delayed\": 0.0032996886875480413, \"ring_ready\": 0.0032996886875480413}, \"max_terminal_state_nrmse\": {\"compact_ready\": 1.6471699382236693e-07, \"ring_delayed\": 1.6880146347375558e-07, \"ring_ready\": 1.6880146347375558e-07}, \"persistent_bytes_per_rank\": {\"ring\": 240784000, \"compact\": 169175808}}\r\n"
+  },
+  "repository_format_ci": {
+    "exit_code": 2,
+    "passed": false,
+    "limitation": "WSL bash reads existing format.sh with CRLF; failure before hooks, see raw log"
+  },
+  "measured_source_relations": {
+    "benchmarks\\multi_graph_replayssm_kernel\\CMakeLists.txt": {
+      "measured_sha256": "fe2eeaf2daa841b37c0f6ac59debc7f5f2903319b88dc87b7289c6fa4d09c64f",
+      "current_LF_sha256": "fe2eeaf2daa841b37c0f6ac59debc7f5f2903319b88dc87b7289c6fa4d09c64f",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_kernel\\load.py": {
+      "measured_sha256": "2cbea9e91722acfded462ea381055027da5b82dea1db087b794f63c1f7c44ce3",
+      "current_LF_sha256": "2cbea9e91722acfded462ea381055027da5b82dea1db087b794f63c1f7c44ce3",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_kernel\\replay_kernel.cpp": {
+      "measured_sha256": "4607568c6bb7a2c407738277ffcd7842956f128552fe2bd6ca2a9d9664930bb5",
+      "current_LF_sha256": "f8f664f2fb5bf128572856c1f4dc5b56d538f2c0c00c3e09a48d8eb7b17005aa",
+      "relation": "identical_clang_format_canonical_source"
+    },
+    "benchmarks\\multi_graph_replayssm_kernel\\ring_solve.h": {
+      "measured_sha256": "660eca9555909679d86954477139a52ab671e6b0463aed5fd0e4d541a1e8fbc2",
+      "current_LF_sha256": "660eca9555909679d86954477139a52ab671e6b0463aed5fd0e4d541a1e8fbc2",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_kernel\\state_kernel.cpp": {
+      "measured_sha256": "d04d3216da2e8f525b61b71bb80e9613702de5b3430260ae2d11e369d1d4dcbc",
+      "current_LF_sha256": "719a369b0279966a28ea0c7bee66d81d1ca06c70a47fc809e7a110340d2c8292",
+      "relation": "identical_clang_format_canonical_source"
+    },
+    "benchmarks\\multi_graph_replayssm_kernel\\tiling_generator.cpp": {
+      "measured_sha256": "ae5037582fcd56d56115dda081a4e1c5c1fdb105d6bb2a399fa8cc2be41a15a5",
+      "current_LF_sha256": "ae5037582fcd56d56115dda081a4e1c5c1fdb105d6bb2a399fa8cc2be41a15a5",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_kernel\\torch_binding.cpp": {
+      "measured_sha256": "ab7d542e68d47196b4a6cbb6d56031cc87a5afe6dc1aa318e7019d6d82387777",
+      "current_LF_sha256": "51c49b02acb3c2b4a820be7ff115da848da5969ce92799592a6fad175d577e79",
+      "relation": "identical_clang_format_canonical_source"
+    },
+    "benchmarks\\multi_graph_replayssm_backend.py": {
+      "measured_sha256": "9f6846328ad2fc108981e9f552f11da82e6f93014e37b20fb44064738bc6ab2c",
+      "current_LF_sha256": "9f6846328ad2fc108981e9f552f11da82e6f93014e37b20fb44064738bc6ab2c",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_layer_probe.py": {
+      "measured_sha256": "9adba68a786602776db1ea353473a0f70934bce211050e4d9fdcb67ac4dac59a",
+      "current_LF_sha256": "9adba68a786602776db1ea353473a0f70934bce211050e4d9fdcb67ac4dac59a",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_probe.py": {
+      "measured_sha256": "364906c229bab83ef18b022cd91328e8f16f5fafcbc1d45fbca512c7e18f5708",
+      "current_LF_sha256": "364906c229bab83ef18b022cd91328e8f16f5fafcbc1d45fbca512c7e18f5708",
+      "relation": "identical_after_LF_normalization"
+    },
+    "benchmarks\\multi_graph_replayssm_protocol.py": {
+      "measured_sha256": "4b3bbfb1dfbf0d0e86d52e6b987fb262c163e8f8dd23e47a8d6135f06b4f520a",
+      "current_LF_sha256": "4b3bbfb1dfbf0d0e86d52e6b987fb262c163e8f8dd23e47a8d6135f06b4f520a",
+      "relation": "identical_after_LF_normalization"
+    }
+  },
+  "evidence_bundle_transport_sha256": "32688de4e4d677b546755cedfcacd44cd85a932584d12a576ad19b38edbdca6e"
+}
