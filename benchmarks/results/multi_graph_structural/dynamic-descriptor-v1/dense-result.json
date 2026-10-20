@@ -1,0 +1,933 @@
+{
+  "scope": "Bounded existing-GMM qualification for device counts in a fixed ACLGraph.\n\nOne synthetic Down matrix, no model loading or communication. Timing uses only\nthe ordinary default-capacity B98/Q4 case, not the small correctness cases.\nThis probes an existing community mechanism; it is not a new dense operator.\n",
+  "status": "complete_bounded_community_gmm_probe",
+  "samples": [
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 0,
+      "device_us": 232.2400063276291,
+      "wall_us": 344.592
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 1,
+      "device_us": 228.6199927330017,
+      "wall_us": 353.792
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 2,
+      "device_us": 234.01999473571777,
+      "wall_us": 345.841
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 3,
+      "device_us": 221.3599979877472,
+      "wall_us": 341.281
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 4,
+      "device_us": 232.6200008392334,
+      "wall_us": 349.351
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 5,
+      "device_us": 233.06000232696533,
+      "wall_us": 363.411
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 6,
+      "device_us": 232.0600003004074,
+      "wall_us": 342.842
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 7,
+      "device_us": 231.31999373435974,
+      "wall_us": 348.572
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 8,
+      "device_us": 232.5199991464615,
+      "wall_us": 344.782
+    },
+    {
+      "trial": 0,
+      "mode": "matmul_nz",
+      "sample": 9,
+      "device_us": 232.9999953508377,
+      "wall_us": 342.981
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 0,
+      "device_us": 214.13999795913696,
+      "wall_us": 341.671
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 1,
+      "device_us": 213.5400027036667,
+      "wall_us": 322.261
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 2,
+      "device_us": 214.3000066280365,
+      "wall_us": 325.312
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 3,
+      "device_us": 213.13999593257904,
+      "wall_us": 334.551
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 4,
+      "device_us": 209.61999893188477,
+      "wall_us": 327.871
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 5,
+      "device_us": 214.17999267578125,
+      "wall_us": 325.191
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 6,
+      "device_us": 213.7400060892105,
+      "wall_us": 344.032
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 7,
+      "device_us": 213.86000514030457,
+      "wall_us": 323.331
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 8,
+      "device_us": 214.56000208854675,
+      "wall_us": 325.821
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_full",
+      "sample": 9,
+      "device_us": 214.6800011396408,
+      "wall_us": 337.211
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 0,
+      "device_us": 251.9400119781494,
+      "wall_us": 369.491
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 1,
+      "device_us": 265.5400037765503,
+      "wall_us": 383.971
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 2,
+      "device_us": 264.2599940299988,
+      "wall_us": 378.621
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 3,
+      "device_us": 252.33998894691467,
+      "wall_us": 364.991
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 4,
+      "device_us": 264.0799880027771,
+      "wall_us": 378.961
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 5,
+      "device_us": 252.05999612808228,
+      "wall_us": 369.611
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 6,
+      "device_us": 271.9799876213074,
+      "wall_us": 380.431
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 7,
+      "device_us": 263.1399929523468,
+      "wall_us": 376.561
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 8,
+      "device_us": 262.21999526023865,
+      "wall_us": 374.772
+    },
+    {
+      "trial": 0,
+      "mode": "gmm_dynamic",
+      "sample": 9,
+      "device_us": 248.33999574184418,
+      "wall_us": 370.922
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 0,
+      "device_us": 253.38000059127808,
+      "wall_us": 364.852
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 1,
+      "device_us": 251.61999464035034,
+      "wall_us": 363.452
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 2,
+      "device_us": 263.57999444007874,
+      "wall_us": 387.212
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 3,
+      "device_us": 277.2200107574463,
+      "wall_us": 391.102
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 4,
+      "device_us": 253.8599967956543,
+      "wall_us": 374.682
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 5,
+      "device_us": 257.3600113391876,
+      "wall_us": 371.842
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 6,
+      "device_us": 262.4399960041046,
+      "wall_us": 373.642
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 7,
+      "device_us": 257.38000869750977,
+      "wall_us": 380.612
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 8,
+      "device_us": 278.4999907016754,
+      "wall_us": 390.952
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_dynamic",
+      "sample": 9,
+      "device_us": 256.13999366760254,
+      "wall_us": 365.782
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 0,
+      "device_us": 216.07999503612518,
+      "wall_us": 327.521
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 1,
+      "device_us": 215.71999788284302,
+      "wall_us": 327.241
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 2,
+      "device_us": 215.85999429225922,
+      "wall_us": 327.972
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 3,
+      "device_us": 215.80000221729279,
+      "wall_us": 324.091
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 4,
+      "device_us": 214.78000283241272,
+      "wall_us": 328.451
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 5,
+      "device_us": 211.31999790668488,
+      "wall_us": 323.301
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 6,
+      "device_us": 215.13999998569489,
+      "wall_us": 326.222
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 7,
+      "device_us": 203.62000167369843,
+      "wall_us": 345.961
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 8,
+      "device_us": 214.90000188350677,
+      "wall_us": 328.341
+    },
+    {
+      "trial": 1,
+      "mode": "gmm_full",
+      "sample": 9,
+      "device_us": 215.2000069618225,
+      "wall_us": 326.871
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 0,
+      "device_us": 234.3599945306778,
+      "wall_us": 358.451
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 1,
+      "device_us": 236.12000048160553,
+      "wall_us": 351.541
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 2,
+      "device_us": 222.66000509262085,
+      "wall_us": 345.931
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 3,
+      "device_us": 236.3400012254715,
+      "wall_us": 361.862
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 4,
+      "device_us": 233.43999683856964,
+      "wall_us": 343.702
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 5,
+      "device_us": 236.12000048160553,
+      "wall_us": 345.302
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 6,
+      "device_us": 236.68000102043152,
+      "wall_us": 356.262
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 7,
+      "device_us": 234.06000435352325,
+      "wall_us": 342.301
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 8,
+      "device_us": 231.36000335216522,
+      "wall_us": 347.261
+    },
+    {
+      "trial": 1,
+      "mode": "matmul_nz",
+      "sample": 9,
+      "device_us": 234.13999378681183,
+      "wall_us": 353.051
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 0,
+      "device_us": 234.55999791622162,
+      "wall_us": 343.802
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 1,
+      "device_us": 230.9200018644333,
+      "wall_us": 346.852
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 2,
+      "device_us": 235.8199954032898,
+      "wall_us": 354.802
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 3,
+      "device_us": 234.28000509738922,
+      "wall_us": 346.241
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 4,
+      "device_us": 234.89999771118164,
+      "wall_us": 345.651
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 5,
+      "device_us": 236.39999330043793,
+      "wall_us": 366.851
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 6,
+      "device_us": 234.99999940395355,
+      "wall_us": 343.431
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 7,
+      "device_us": 234.86000299453735,
+      "wall_us": 346.512
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 8,
+      "device_us": 234.28000509738922,
+      "wall_us": 354.652
+    },
+    {
+      "trial": 2,
+      "mode": "matmul_nz",
+      "sample": 9,
+      "device_us": 233.74000191688538,
+      "wall_us": 347.362
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 0,
+      "device_us": 204.2199969291687,
+      "wall_us": 321.511
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 1,
+      "device_us": 215.44000506401062,
+      "wall_us": 337.742
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 2,
+      "device_us": 214.6800011396408,
+      "wall_us": 327.411
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 3,
+      "device_us": 211.5200012922287,
+      "wall_us": 324.381
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 4,
+      "device_us": 216.19999408721924,
+      "wall_us": 333.781
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 5,
+      "device_us": 215.7599925994873,
+      "wall_us": 334.342
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 6,
+      "device_us": 215.32000601291656,
+      "wall_us": 329.082
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 7,
+      "device_us": 215.80000221729279,
+      "wall_us": 335.751
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 8,
+      "device_us": 203.8400024175644,
+      "wall_us": 320.661
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_full",
+      "sample": 9,
+      "device_us": 216.29999577999115,
+      "wall_us": 326.341
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 0,
+      "device_us": 254.97999787330627,
+      "wall_us": 370.681
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 1,
+      "device_us": 278.7399888038635,
+      "wall_us": 1217.415
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 2,
+      "device_us": 257.22000002861023,
+      "wall_us": 380.072
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 3,
+      "device_us": 264.4999921321869,
+      "wall_us": 396.892
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 4,
+      "device_us": 255.95998764038086,
+      "wall_us": 371.752
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 5,
+      "device_us": 255.47999143600464,
+      "wall_us": 372.412
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 6,
+      "device_us": 265.639990568161,
+      "wall_us": 380.912
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 7,
+      "device_us": 280.01999855041504,
+      "wall_us": 391.792
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 8,
+      "device_us": 269.320011138916,
+      "wall_us": 381.362
+    },
+    {
+      "trial": 2,
+      "mode": "gmm_dynamic",
+      "sample": 9,
+      "device_us": 254.0000081062317,
+      "wall_us": 365.062
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 0,
+      "device_us": 266.60001277923584,
+      "wall_us": 380.681
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 1,
+      "device_us": 252.9599964618683,
+      "wall_us": 367.941
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 2,
+      "device_us": 255.6999921798706,
+      "wall_us": 372.411
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 3,
+      "device_us": 255.5600106716156,
+      "wall_us": 369.801
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 4,
+      "device_us": 268.1800127029419,
+      "wall_us": 380.391
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 5,
+      "device_us": 266.9000029563904,
+      "wall_us": 378.751
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 6,
+      "device_us": 240.55999517440796,
+      "wall_us": 361.371
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 7,
+      "device_us": 256.13999366760254,
+      "wall_us": 371.332
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 8,
+      "device_us": 264.75998759269714,
+      "wall_us": 377.922
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_dynamic",
+      "sample": 9,
+      "device_us": 275.7200002670288,
+      "wall_us": 388.222
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 0,
+      "device_us": 216.78000688552856,
+      "wall_us": 327.872
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 1,
+      "device_us": 202.31999456882477,
+      "wall_us": 319.792
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 2,
+      "device_us": 215.59999883174896,
+      "wall_us": 336.551
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 3,
+      "device_us": 210.87999641895294,
+      "wall_us": 322.621
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 4,
+      "device_us": 239.6399974822998,
+      "wall_us": 352.911
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 5,
+      "device_us": 217.17999875545502,
+      "wall_us": 343.002
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 6,
+      "device_us": 215.29999375343323,
+      "wall_us": 323.672
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 7,
+      "device_us": 214.69999849796295,
+      "wall_us": 324.851
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 8,
+      "device_us": 216.8000042438507,
+      "wall_us": 339.381
+    },
+    {
+      "trial": 3,
+      "mode": "gmm_full",
+      "sample": 9,
+      "device_us": 204.23999428749084,
+      "wall_us": 323.531
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 0,
+      "device_us": 234.65999960899353,
+      "wall_us": 344.612
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 1,
+      "device_us": 235.62000691890717,
+      "wall_us": 356.531
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 2,
+      "device_us": 234.06000435352325,
+      "wall_us": 343.541
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 3,
+      "device_us": 234.6400022506714,
+      "wall_us": 343.381
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 4,
+      "device_us": 229.90000247955322,
+      "wall_us": 364.942
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 5,
+      "device_us": 235.66000163555145,
+      "wall_us": 353.642
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 6,
+      "device_us": 234.47999358177185,
+      "wall_us": 346.262
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 7,
+      "device_us": 234.33999717235565,
+      "wall_us": 352.702
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 8,
+      "device_us": 233.64000022411346,
+      "wall_us": 347.331
+    },
+    {
+      "trial": 3,
+      "mode": "matmul_nz",
+      "sample": 9,
+      "device_us": 234.20000076293945,
+      "wall_us": 345.421
+    }
+  ],
+  "checks": [
+    {
+      "step": 0,
+      "live": 392,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    },
+    {
+      "step": 1,
+      "live": 400,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    },
+    {
+      "step": 2,
+      "live": 4,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    },
+    {
+      "step": 3,
+      "live": 0,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    },
+    {
+      "step": 4,
+      "live": 396,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    },
+    {
+      "step": 5,
+      "live": 388,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    },
+    {
+      "step": 6,
+      "live": 392,
+      "fixed_addresses": true,
+      "active_close": true,
+      "tail_zero_exact": true
+    }
+  ],
+  "versions": {
+    "torch": "2.10.0+cpu",
+    "torch_npu": "2.10.0.post4"
+  },
+  "schemas": [
+    "npu::npu_grouped_matmul(Tensor[] x, Tensor[] weight, *, Tensor[]? bias=None, Tensor[]? scale=None, Tensor[]? offset=None, Tensor[]? antiquant_scale=None, Tensor[]? antiquant_offset=None, Tensor[]? per_token_scale=None, Tensor? group_list=None, Tensor[]? activation_input=None, Tensor[]? activation_quant_scale=None, Tensor[]? activation_quant_offset=None, int? split_item=0, int? group_type=None, int? group_list_type=0, int? act_type=0, int[]? tuning_config=None, int? output_dtype=None, int? x_dtype=None, int? weight_dtype=None, int? scale_dtype=None, int? per_token_scale_dtype=None) -> Tensor[]",
+    "npu::npu_grouped_matmul.List(Tensor[] x, Tensor[] weight, *, Tensor[]? bias=None, Tensor[]? scale=None, Tensor[]? offset=None, Tensor[]? antiquant_scale=None, Tensor[]? antiquant_offset=None, Tensor[]? per_token_scale=None, int[]? group_list=None, Tensor[]? activation_input=None, Tensor[]? activation_quant_scale=None, Tensor[]? activation_quant_offset=None, int? split_item=0, int? group_type=None, int? group_list_type=0, int? act_type=0, ScalarType? output_dtype=None) -> Tensor[]"
+  ],
+  "documentation": "\n\u529f\u80fd\u63cf\u8ff0:\n\u7b97\u5b50\u529f\u80fd: npu_grouped_matmul\u662f\u4e00\u79cd\u5bf9\u591a\u4e2a\u77e9\u9635\u4e58\u6cd5(matmul)\u64cd\u4f5c\u8fdb\u884c\u5206\u7ec4\u8ba1\u7b97\u7684\u9ad8\u6548\u65b9\u6cd5. \u8be5API\u5b9e\u73b0\u4e86\u5bf9\u591a\u4e2a\u77e9\u9635\u4e58\u6cd5\u64cd\u4f5c\u7684\u6279\u91cf\u5904\u7406, \u901a\u8fc7\u5c06\u5177\u6709\u76f8\u540c\u5f62\u72b6\u6216\u76f8\u4f3c\u5f62\u72b6\u7684\u77e9\u9635\u4e58\u6cd5\u64cd\u4f5c\u7ec4\u5408\u5728\u4e00\u8d77, \u51cf\u5c11\u5185\u5b58\u8bbf\u95ee\u5f00\u9500\u548c\u8ba1\u7b97\u8d44\u6e90\u7684\u6d6a\u8d39, \u4ece\u800c\u63d0\u9ad8\u8ba1\u7b97\u6548\u7387.\n\u8ba1\u7b97\u516c\u5f0f:\n\u975e\u91cf\u5316\u573a\u666f(\u516c\u5f0f1):\ny_{i}=x_{i}\u00d7weight_{i}+bias_{i}\nper-channel\u91cf\u5316\u573a\u666f (\u516c\u5f0f2):\ny_{i}=(x_{i}\u00d7weight_{i}+bias_{i})\u00d7scale_{i}+offset_{i}\nper-token\u91cf\u5316\u573a\u666f (\u516c\u5f0f3):\ny_{i}=(x_{i}\u00d7weight_{i}+bias_{i})\u00d7scale_{i}+pertokenscale_{i}\n\u4f2a\u91cf\u5316\u573a\u666f (\u516c\u5f0f4):\ny_{i}=x_{i}\u00d7(weight_{i}+antiquant_offset_{i})\u00d7antiquantscale_{i}+bias_{i}\n\n\u63a5\u53e3\u539f\u578b:\nnpu_grouped_matmul(x, weight, *, bias=None, scale=None, offset=None, antiquant_scale=None, antiquant_offset=None, per_token_scale=None, group_list=None, activation_input=None, activation_quant_scale=None, activation_quant_offset=None, split_item=0, group_type=None, group_list_type=0, act_type=0, output_dtype=None, int[]? tuning_config) -> List[torch.Tensor]\n\n\u53c2\u6570\u8bf4\u660e:\nx (List[torch.Tensor]): \u8f93\u5165\u77e9\u9635\u5217\u8868, \u8868\u793a\u77e9\u9635\u4e58\u6cd5\u4e2d\u7684\u5de6\u77e9\u9635.\n\u652f\u6301\u7684\u6570\u636e\u7c7b\u578b\u5982\u4e0b:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: torch.float16\u3001torch.float32\u3001torch.bfloat16\u548ctorch.int8.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: torch.float16. .\n\u5217\u8868\u6700\u5927\u957f\u5ea6\u4e3a128.\n\u5f53split_item=0\u65f6, \u5f20\u91cf\u652f\u63012\u81f36\u7ef4\u8f93\u5165; \u5176\u4ed6\u60c5\u51b5\u4e0b, \u5f20\u91cf\u4ec5\u652f\u63012\u7ef4\u8f93\u5165.\nweight (List[torch.Tensor]): \u6743\u91cd\u77e9\u9635\u5217\u8868, \u8868\u793a\u77e9\u9635\u4e58\u6cd5\u4e2d\u7684\u53f3\u77e9\u9635.\n\u652f\u6301\u7684\u6570\u636e\u7c7b\u578b\u5982\u4e0b:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1:\n\u5f53group_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6, \u652f\u6301torch.float16\u3001torch.float32\u3001torch.bfloat16\u548ctorch.int8.\n\u5f53group_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6, \u652f\u6301torch.float16\u3001torch.float32\u3001torch.bfloat16\u3001int4\u548ctorch.int8.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: torch.float16.\n\u5217\u8868\u6700\u5927\u957f\u5ea6\u4e3a128.\n\u6bcf\u4e2a\u5f20\u91cf\u652f\u63012\u7ef4\u62163\u7ef4\u8f93\u5165.\nbias (List[torch.Tensor]): \u6bcf\u4e2a\u5206\u7ec4\u7684\u77e9\u9635\u4e58\u6cd5\u8f93\u51fa\u7684\u72ec\u7acb\u504f\u7f6e\u9879.\n\u652f\u6301\u7684\u6570\u636e\u7c7b\u578b\u5982\u4e0b:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: torch.float16\u3001torch.float32\u548ctorch.int32.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: torch.float16.\n\u5217\u8868\u957f\u5ea6\u4e0eweight\u5217\u8868\u957f\u5ea6\u76f8\u540c.\n\u6bcf\u4e2a\u5f20\u91cf\u4ec5\u652f\u63011\u7ef4\u8f93\u5165.\nscale (List[torch.Tensor]): \u7528\u4e8e\u7f29\u653e\u539f\u6570\u503c\u4ee5\u5339\u914d\u91cf\u5316\u540e\u7684\u8303\u56f4\u503c, \u4ee3\u8868\u91cf\u5316\u53c2\u6570\u4e2d\u7684\u7f29\u653e\u56e0\u5b50, \u5bf9\u5e94\u516c\u5f0f(2)\u3001\u516c\u5f0f(3)\u548c\u516c\u5f0f(5).\n\u652f\u6301\u7684\u6570\u636e\u7c7b\u578b\u5982\u4e0b:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1:\n\u5f53group_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6, \u652f\u6301torch.int64.\n\u5f53group_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6, \u652f\u6301torch.float32\u3001torch.bfloat16\u548ctorch.int64.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u4ec5\u652f\u6301\u4f20\u5165None. .\n\u5217\u8868\u957f\u5ea6\u4e0eweight\u5217\u8868\u957f\u5ea6\u76f8\u540c.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1\u6bcf\u4e2a\u5f20\u91cf\u4ec5\u652f\u63011\u7ef4\u8f93\u5165.\noffset (List[torch.Tensor]): \u7528\u4e8e\u8c03\u6574\u91cf\u5316\u540e\u7684\u6570\u503c\u504f\u79fb\u91cf, \u4ece\u800c\u66f4\u51c6\u786e\u5730\u8868\u793a\u539f\u59cb\u6d6e\u70b9\u6570\u503c, \u5bf9\u5e94\u516c\u5f0f(2). \u5f53\u524d\u4ec5\u652f\u6301\u4f20\u5165None.\nantiquant_scale (List[torch.Tensor]): \u7528\u4e8e\u7f29\u653e\u539f\u6570\u503c\u4ee5\u5339\u914d\u4f2a\u91cf\u5316\u540e\u7684\u8303\u56f4\u503c, \u4ee3\u8868\u4f2a\u91cf\u5316\u53c2\u6570\u4e2d\u7684\u7f29\u653e\u56e0\u5b50, \u5bf9\u5e94\u516c\u5f0f(4).\n\u652f\u6301\u7684\u6570\u636e\u7c7b\u578b\u5982\u4e0b:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: torch.float16\u3001torch.bfloat16.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u4ec5\u652f\u6301\u4f20\u5165None.\n\u5217\u8868\u957f\u5ea6\u4e0eweight\u5217\u8868\u957f\u5ea6\u76f8\u540c.\n\u6bcf\u4e2a\u5f20\u91cf\u652f\u6301\u8f93\u5165\u7ef4\u5ea6\u5982\u4e0b(\u5176\u4e2dg\u4e3amatmul\u7ec4\u6570, G\u4e3aper-group\u6570, Gi\u4e3a\u7b2ci\u4e2atensor\u7684per-group\u6570):\n\u4f2a\u91cf\u5316per-channel\u573a\u666f, weight\u4e3a\u5355tensor\u65f6, shape\u9650\u5236\u4e3a[g, n]; weight\u4e3a\u591atensor\u65f6, shape\u9650\u5236\u4e3a[ni].\n\u4f2a\u91cf\u5316per-group\u573a\u666f, weight\u4e3a\u5355tensor\u65f6, shape\u9650\u5236\u4e3a[g, G, n]; weight\u4e3a\u591atensor\u65f6, shape\u9650\u5236\u4e3a[Gi, ni].\nantiquant_offset (List[torch.Tensor]): \u7528\u4e8e\u8c03\u6574\u4f2a\u91cf\u5316\u540e\u7684\u6570\u503c\u504f\u79fb\u91cf, \u4ece\u800c\u66f4\u51c6\u786e\u5730\u8868\u793a\u539f\u59cb\u6d6e\u70b9\u6570\u503c, \u5bf9\u5e94\u516c\u5f0f(4).\n\u652f\u6301\u7684\u6570\u636e\u7c7b\u578b\u5982\u4e0b:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: torch.float16\u3001torch.bfloat16.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u4ec5\u652f\u6301\u4f20\u5165None.\n\u5217\u8868\u957f\u5ea6\u4e0eweight\u5217\u8868\u957f\u5ea6\u76f8\u540c.\n\u6bcf\u4e2a\u5f20\u91cf\u8f93\u5165\u7ef4\u5ea6\u548cantiquant_scale\u8f93\u5165\u7ef4\u5ea6\u4e00\u81f4.\nper_token_scale (List[torch.Tensor]): \u7528\u4e8e\u7f29\u653e\u539f\u6570\u503c\u4ee5\u5339\u914d\u91cf\u5316\u540e\u7684\u8303\u56f4\u503c, \u4ee3\u8868per-token\u91cf\u5316\u53c2\u6570\u4e2d\u7531x\u91cf\u5316\u5f15\u5165\u7684\u7f29\u653e\u56e0\u5b50, \u5bf9\u5e94\u516c\u5f0f(3)\u548c\u516c\u5f0f(5).\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6, \u5f53\u524d\u53ea\u652f\u6301\u4f20\u5165None.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: \u6570\u636e\u7c7b\u578b\u652f\u6301torch.float32.\n\u5217\u8868\u957f\u5ea6\u4e0ex\u5217\u8868\u957f\u5ea6\u76f8\u540c.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: \u6bcf\u4e2a\u5f20\u91cf\u4ec5\u652f\u63011\u7ef4\u8f93\u5165.\ngroup_list (List[int]/torch.Tensor): \u7528\u4e8e\u6307\u5b9a\u5206\u7ec4\u7684\u7d22\u5f15, \u8868\u793ax\u7684\u7b2c0\u7ef4\u77e9\u9635\u4e58\u6cd5\u7684\u7d22\u5f15\u60c5\u51b5. \u6570\u636e\u7c7b\u578b\u652f\u6301torch.int64.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u4ec5\u652f\u6301torch.Tensor\u7c7b\u578b.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: \u652f\u6301List[int]\u6216torch.Tensor\u7c7b\u578b.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u6bcf\u4e2a\u5f20\u91cf\u4ec5\u652f\u63011\u7ef4\u8f93\u5165, \u957f\u5ea6\u4e0eweight\u5217\u8868\u957f\u5ea6\u76f8\u540c.\n\u548cAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: \u6bcf\u4e2a\u5f20\u91cf\u4ec5\u652f\u63011\u7ef4\u8f93\u5165, \u957f\u5ea6\u4e0eweight\u5217\u8868\u957f\u5ea6\u76f8\u540c.\n\u914d\u7f6e\u503c\u8981\u6c42\u5982\u4e0b:\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6, \u914d\u7f6e\u503c\u5fc5\u987b\u4e3a\u975e\u8d1f\u9012\u589e\u6570\u5217, \u4e14\u957f\u5ea6\u4e0d\u80fd\u4e3a1.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6:\n\u5f53group_list_type\u4e3a0\u65f6, group_list\u5fc5\u987b\u4e3a\u975e\u8d1f\u5355\u8c03\u975e\u9012\u51cf\u6570\u5217.\n\u5f53group_list_type\u4e3a1\u65f6, group_list\u5fc5\u987b\u4e3a\u975e\u8d1f\u6570\u5217, \u4e14\u957f\u5ea6\u4e0d\u80fd\u4e3a1.\nactivation_input (List[torch.Tensor]): \u4ee3\u8868\u6fc0\u6d3b\u51fd\u6570\u7684\u53cd\u5411\u8f93\u5165, \u5f53\u524d\u4ec5\u652f\u6301\u4f20\u5165None.\nactivation_quant_scale (List[torch.Tensor]): \u9884\u7559\u53c2\u6570, \u5f53\u524d\u53ea\u652f\u6301\u4f20\u5165None.\nactivation_quant_offset (List[torch.Tensor]): \u9884\u7559\u53c2\u6570, \u5f53\u524d\u53ea\u652f\u6301\u4f20\u5165None.\nsplit_item (int): \u7528\u4e8e\u6307\u5b9a\u5207\u5206\u6a21\u5f0f. \u6570\u636e\u7c7b\u578b\u652f\u6301torch.int32.\n0/1: \u8f93\u51fa\u4e3a\u591a\u4e2a\u5f20\u91cf, \u6570\u91cf\u4e0eweight\u76f8\u540c.\n2/3: \u8f93\u51fa\u4e3a\u5355\u4e2a\u5f20\u91cf.\ngroup_type (int): \u4ee3\u8868\u9700\u8981\u5206\u7ec4\u7684\u8f74. \u6570\u636e\u7c7b\u578b\u652f\u6301torch.int32.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6\u4ec5\u652f\u6301\u4f20\u5165None.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6, \u82e5\u77e9\u9635\u4e58\u4e3aC[m,n]=A[m,k]xB[k,n], group_type\u652f\u6301\u7684\u679a\u4e3e\u503c\u4e3a: -1\u4ee3\u8868\u4e0d\u5206\u7ec4; 0\u4ee3\u8868m\u8f74\u5206\u7ec4; 1\u4ee3\u8868n\u8f74\u5206\u7ec4.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: \u5f53\u524d\u652f\u6301\u53d6-1\u30010.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u5f53\u524d\u53ea\u652f\u6301\u53d60.\ngroup_list_type (int): \u4ee3\u8868group_list\u7684\u8868\u8fbe\u5f62\u5f0f. \u6570\u636e\u7c7b\u578b\u652f\u6301torch.int32.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6\u4ec5\u652f\u6301\u4f20\u5165None.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6:\n\u53ef\u53d6\u503c0\u62161, 0\u4ee3\u8868group_list_type\u4e2d\u6570\u503c\u4e3a\u5206\u7ec4\u8f74\u5927\u5c0f\u7684cumsum\u7ed3\u679c(\u7d2f\u79ef\u548c), 1\u4ee3\u8868group_list_type\u4e2d\u6570\u503c\u4e3a\u5206\u7ec4\u8f74\u4e0a\u6bcf\u7ec4\u5927\u5c0f.\nact_type (int): \u4ee3\u8868\u6fc0\u6d3b\u51fd\u6570\u7c7b\u578b. \u6570\u636e\u7c7b\u578b\u652f\u6301torch.int32.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6\u4ec5\u652f\u6301\u4f20\u5165None.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6, \u652f\u6301\u7684\u679a\u4e3e\u503c\u5305\u62ec: 0\u4ee3\u8868\u4e0d\u6fc0\u6d3b; 1\u4ee3\u8868RELU\u6fc0\u6d3b; 2\u4ee3\u8868GELU_TANH\u6fc0\u6d3b; 3\u4ee3\u8868\u6682\u4e0d\u652f\u6301; 4\u4ee3\u8868FAST_GELU\u6fc0\u6d3b; 5\u4ee3\u8868SILU\u6fc0\u6d3b.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1: \u53d6\u503c\u8303\u56f4\u4e3a0-5.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1: \u5f53\u524d\u53ea\u652f\u6301\u4f20\u51650.\noutput_dtype (torch.dtype): \u8f93\u51fa\u6570\u636e\u7c7b\u578b. \u652f\u6301\u7684\u914d\u7f6e\u5305\u62ec:\nNone: \u9ed8\u8ba4\u503c, \u8868\u793a\u8f93\u51fa\u6570\u636e\u7c7b\u578b\u4e0e\u8f93\u5165x\u7684\u6570\u636e\u7c7b\u578b\u76f8\u540c.\n\u4e0e\u8f93\u51fay\u6570\u636e\u7c7b\u578b\u4e00\u81f4\u7684\u7c7b\u578b, \u5177\u4f53\u53c2\u8003\u7ea6\u675f\u8bf4\u660e.\n\n\u8f93\u51fa\u8bf4\u660e:\nList[torch.Tensor]: \u5f53split_item\u4e3a0\u62161\u65f6, \u8fd4\u56de\u7684\u5f20\u91cf\u6570\u91cf\u4e0eweight\u76f8\u540c. \u5f53split_item\u4e3a2\u62163\u65f6, \u8fd4\u56de\u7684\u5f20\u91cf\u6570\u91cf\u4e3a1.\n\n\u7ea6\u675f\u8bf4\u660e:\n\u8be5\u63a5\u53e3\u652f\u6301\u63a8\u7406\u573a\u666f\u4e0b\u4f7f\u7528.\n\u8be5\u63a5\u53e3\u652f\u6301\u56fe\u6a21\u5f0f.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1\u7684\u5185\u8f74\u9650\u5236InnerLimit\u4e3a65536. x\u548cweight\u4e2d\u6bcf\u4e00\u7ec4tensor\u7684\u6700\u540e\u4e00\u7ef4\u5927\u5c0f\u90fd\u5e94\u5c0f\u4e8eInnerLimit. xi\u7684\u6700\u540e\u4e00\u7ef4\u6307\u5f53x\u4e0d\u8f6c\u7f6e\u65f6xi\u7684K\u8f74\u6216\u5f53x\u8f6c\u7f6e\u65f6xi\u7684M\u8f74. weighti\u7684\u6700\u540e\u4e00\u7ef4\u6307\u5f53weight\u4e0d\u8f6c\u7f6e\u65f6weighti\u7684N\u8f74\u6216\u5f53weight\u8f6c\u7f6e\u65f6weighti\u7684K\u8f74.\n\u5404\u573a\u666f\u8f93\u5165\u4e0e\u8f93\u51fa\u6570\u636e\u7c7b\u578b\u4f7f\u7528\u7ea6\u675f:\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6, Atlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1\u6570\u636e\u7c7b\u578b\u4f7f\u7528\u7ea6\u675f:\n\u88681 \u6570\u636e\u7c7b\u578b\u7ea6\u675f\u573a\u666f\n\u975e\u91cf\u5316\nx: torch.float16, torch.bfloat16, torch.float32\nweight: torch.float16, torch.bfloat16, torch.float32\nbias: torch.float16, torch.float32, torch.float32\nscale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_offset:  \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\noutput_dtype: torch.float16, torch.bfloat16, torch.float32\ny: torch.float16, torch.bfloat16, torch.float32\nper-channel\u91cf\u5316\nx: torch.int8\nweight: torch.int8\nbias: torch.int32\nscale: torch.int64\nantiquant_scale: \u65e0\u9700\u8d4b\u503c\nantiquant_offset:  \u65e0\u9700\u8d4b\u503c\noutput_dtype: torch.int8\ny: torch.int8\n\u4f2a\u91cf\u5316\nx: torch.float16, torch.bfloat16\nweight: torch.int8, torch.int8\nbias: torch.float16, torch.float32\nscale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_scale: torch.float16, torch.bfloat16\nantiquant_offset: torch.float16, torch.bfloat16\noutput_dtype: torch.float16, torch.bfloat16\ny: torch.float16, torch.bfloat16\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6, \u6570\u636e\u7c7b\u578b\u4f7f\u7528\u7ea6\u675f:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1:\n\u88681 \u6570\u636e\u7c7b\u578b\u7ea6\u675f\u573a\u666f\n\u975e\u91cf\u5316\nx: torch.float16, torch.bfloat16, torch.float32\nweight: torch.float16, torch.bfloat16, torch.float32\nbias: torch.float16, torch.float32, torch.float32\nscale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_offset: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nper_token_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\noutput_dtype: None/torch.float16, None/torch.bfloat16, None/torch.float32(\u4ec5x/weight/y\u5747\u4e3a\u5355\u5f20\u91cf)\ny: torch.float16, torch.bfloat16,torch.float32\nper-channel\u91cf\u5316\nx: torch.int8, torch.int8, torch.int8\nweight: torch.int8, torch.int8, torch.int8\nbias: torch.int32, torch.int32, torch.int32\nscale: torch.int64, torch.bfloat16, torch.float32\nantiquant_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_offset: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nper_token_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\noutput_dtype: None/torch.int8, torch.bfloat16, torch.float16\ny: torch.int8, torch.bfloat16, torch.float16\nper-token\u91cf\u5316\nx: torch.int8, torch.int8\nweight: torch.int8, torch.int8\nbias: torch.int32, torch.int32\nscale: torch.bfloat16, torch.float32\nantiquant_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_offset: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nper_token_scale: torch.float32, torch.float32\noutput_dtype: torch.bfloat16, torch.float16\ny: torch.bfloat16, torch.float16\n\u4f2a\u91cf\u5316\nx: torch.float16, torch.bfloat16\nweight: torch.int8/int4, torch.int8/int4\nbias: torch.float16, torch.float32\nscale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\nantiquant_scale: torch.float16, torch.bfloat16\nantiquant_offset: torch.float16, torch.bfloat16\nper_token_scale: \u65e0\u9700\u8d4b\u503c, \u65e0\u9700\u8d4b\u503c\noutput_dtype: None/torch.float16, None/torch.bfloat16\ny: torch.float16, torch.bfloat16\n\u4f2a\u91cf\u5316\u573a\u666f, \u82e5weight\u7684\u7c7b\u578b\u4e3atorch.int8, \u4ec5\u652f\u6301per-channel\u6a21\u5f0f; \u82e5weight\u7684\u7c7b\u578b\u4e3aint4, \u652f\u6301per-channel\u548cper-group\u4e24\u79cd\u6a21\u5f0f. \u82e5\u4e3aper-group, per-group\u6570G\u6216Gi\u5fc5\u987b\u8981\u80fd\u6574\u9664\u5bf9\u5e94\u7684ki. \u82e5weight\u4e3a\u591atensor, \u5b9a\u4e49per-group\u957f\u5ea6si = ki / Gi, \u8981\u6c42\u6240\u6709si(i=1,2,...g)\u90fd\u76f8\u7b49.\n\u4f2a\u91cf\u5316\u573a\u666f, \u82e5weight\u7684\u7c7b\u578b\u4e3aint4, \u5219weight\u4e2d\u6bcf\u4e00\u7ec4tensor\u7684\u6700\u540e\u4e00\u7ef4\u5927\u5c0f\u90fd\u5e94\u662f\u5076\u6570. weighti\u7684\u6700\u540e\u4e00\u7ef4\u6307weight\u4e0d\u8f6c\u7f6e\u65f6weighti\u7684N\u8f74\u6216\u5f53weight\u8f6c\u7f6e\u65f6weighti\u7684K\u8f74. \u5e76\u4e14\u5728per-group\u573a\u666f\u4e0b, \u5f53weight\u8f6c\u7f6e\u65f6, \u8981\u6c42per-group\u957f\u5ea6si\u662f\u5076\u6570. tensor\u8f6c\u7f6e: \u6307\u82e5tensor shape\u4e3a[M,K]\u65f6, \u5219stride\u4e3a[1,M],\u6570\u636e\u6392\u5e03\u4e3a[K,M]\u7684\u573a\u666f, \u5373\u975e\u8fde\u7eedtensor.\n\u5f53\u524dPyTorch\u4e0d\u652f\u6301int4\u7c7b\u578b\u6570\u636e, \u9700\u8981\u4f7f\u7528\u65f6\u53ef\u4ee5\u901a\u8fc7torch_npu.npu_quantize\u63a5\u53e3\u4f7f\u7528torch.int32\u6570\u636e\u8868\u793aint4.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1:\n\u88681 \u6570\u636e\u7c7b\u578b\u7ea6\u675f\nx: torch.float16\nweight: torch.float16\nbias: torch.float16\nscale: \u65e0\u9700\u8d4b\u503c\nantiquant_scale: \u65e0\u9700\u8d4b\u503c\nantiquant_offset: \u65e0\u9700\u8d4b\u503c\nper_token_scale: torch.float32\noutput_dtype: torch.float16\ny: torch.float16\n\u6839\u636e\u8f93\u5165x\u3001\u8f93\u5165weight\u4e0e\u8f93\u51fay\u7684Tensor\u6570\u91cf\u4e0d\u540c, \u652f\u6301\u4ee5\u4e0b\u51e0\u79cd\u573a\u666f. \u573a\u666f\u4e2d\u7684\u201c\u5355\u201d\u8868\u793a\u5355\u4e2a\u5f20\u91cf, \u201c\u591a\u201d\u8868\u793a\u591a\u4e2a\u5f20\u91cf. \u573a\u666f\u987a\u5e8f\u4e3ax\u3001weight\u3001y, \u4f8b\u5982\u201c\u5355\u591a\u5355\u201d\u8868\u793ax\u4e3a\u5355\u5f20\u91cf, weight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u5355\u5f20\u91cf.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3aList[int]\u65f6, Atlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1\u5404\u573a\u666f\u7684\u9650\u5236.\n\u573a\u666f\u8bf4\u660e\n\u591a\u591a\u591a: x\u548cweight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u591a\u5f20\u91cf. \u6bcf\u7ec4\u6570\u636e\u7684\u5f20\u91cf\u662f\u72ec\u7acb\u7684.\n\u5355\u591a\u5355: x\u4e3a\u5355\u5f20\u91cf, weight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u5355\u5f20\u91cf.\n\u5355\u591a\u591a: x\u4e3a\u5355\u5f20\u91cf, weight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u591a\u5f20\u91cf.\n\u591a\u591a\u5355: x\u548cweight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u5355\u5f20\u91cf. \u6bcf\u7ec4\u77e9\u9635\u4e58\u6cd5\u7684\u7ed3\u679c\u8fde\u7eed\u5b58\u653e\u5728\u540c\u4e00\u4e2a\u5f20\u91cf\u4e2d.\n\u573a\u666f\u9650\u5236\n\u591a\u591a\u591a: \u4ec5\u652f\u6301split_item\u4e3a0\u62161. x\u4e2dtensor\u8981\u6c42\u7ef4\u5ea6\u4e00\u81f4, \u652f\u63012-6\u7ef4, weight\u4e2dtensor\u9700\u4e3a2\u7ef4, y\u4e2dtensor\u7ef4\u5ea6\u548cx\u4fdd\u6301\u4e00\u81f4. x\u4e2dtensor\u5927\u4e8e2\u7ef4, group_list\u5fc5\u987b\u4f20\u7a7a. x\u4e2dtensor\u4e3a2\u7ef4\u4e14\u4f20\u5165group_list, group_list\u7684\u5dee\u503c\u9700\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u4e00\u4e00\u5bf9\u5e94.\n\u5355\u591a\u5355: \u4ec5\u652f\u6301split_item\u4e3a2\u62163. \u5fc5\u987b\u4f20group_list, \u4e14\u6700\u540e\u4e00\u4e2a\u503c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49. x\u3001weight\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4. weight\u4e2d\u6bcf\u4e2atensor\u7684N\u8f74\u5fc5\u987b\u76f8\u7b49.\n\u5355\u591a\u591a: \u4ec5\u652f\u6301split_item\u4e3a0\u62161. \u5fc5\u987b\u4f20group_list, group_list\u7684\u5dee\u503c\u9700\u4e0ey\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u4e00\u4e00\u5bf9\u5e94. x\u3001weight\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4.\n\u591a\u591a\u5355: \u4ec5\u652f\u6301split_item\u4e3a2\u62163. x\u3001weight\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4. weight\u4e2d\u6bcf\u4e2atensor\u7684N\u8f74\u5fc5\u987b\u76f8\u7b49. \u82e5\u4f20\u5165group_list, group_list\u7684\u5dee\u503c\u9700\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u4e00\u4e00\u5bf9\u5e94.\ngroup_list\u8f93\u5165\u7c7b\u578b\u4e3atorch.Tensor\u65f6, \u5404\u573a\u666f\u7684\u9650\u5236.\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1:\n\u91cf\u5316\u3001\u4f2a\u91cf\u5316\u4ec5\u652f\u6301group_type\u4e3a-1\u548c0\u573a\u666f.\n\u4ec5per-token\u91cf\u5316\u573a\u666f\u652f\u6301\u6fc0\u6d3b\u51fd\u6570\u8ba1\u7b97.\ngroup_type\n-1: \u591a\u591a\u591a, x\u548cweight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u591a\u5f20\u91cf. \u6bcf\u7ec4\u6570\u636e\u7684\u5f20\u91cf\u662f\u72ec\u7acb\u7684.\n0: \u5355\u5355\u5355, x\u3001weight\u4e0ey\u5747\u4e3a\u5355\u5f20\u91cf.\n0: \u5355\u591a\u5355, x\u4e3a\u5355\u5f20\u91cf, weight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u5355\u5f20\u91cf.\n0: \u591a\u591a\u5355, x\u548cweight\u4e3a\u591a\u5f20\u91cf, y\u4e3a\u5355\u5f20\u91cf. \u6bcf\u7ec4\u77e9\u9635\u4e58\u6cd5\u7684\u7ed3\u679c\u8fde\u7eed\u5b58\u653e\u5728\u540c\u4e00\u4e2a\u5f20\u91cf\u4e2d.\n\u573a\u666f\u9650\u5236\n-1: \u4ec5\u652f\u6301split_item\u4e3a0\u62161. x\u4e2dtensor\u8981\u6c42\u7ef4\u5ea6\u4e00\u81f4, \u652f\u63012-6\u7ef4, weight\u4e2dtensor\u9700\u4e3a2\u7ef4, y\u4e2dtensor\u7ef4\u5ea6\u548cx\u4fdd\u6301\u4e00\u81f4. group_list\u5fc5\u987b\u4f20\u7a7a. \u652f\u6301weight\u8f6c\u7f6e, \u4f46weight\u4e2d\u6bcf\u4e2atensor\u662f\u5426\u8f6c\u7f6e\u9700\u4fdd\u6301\u7edf\u4e00. x\u4e0d\u652f\u6301\u8f6c\u7f6e.\n0: \u4ec5\u652f\u6301split_item\u4e3a2\u62163. weight\u4e2dtensor\u9700\u4e3a3\u7ef4, x\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4. \u5fc5\u987b\u4f20group_list, \u4e14\u5f53group_list_type\u4e3a0\u65f6, \u6700\u540e\u4e00\u4e2a\u503c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49, \u5f53group_list_type\u4e3a1\u65f6, \u6570\u503c\u7684\u603b\u548c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49. group_list\u7b2c1\u7ef4\u6700\u5927\u652f\u63011024, \u5373\u6700\u591a\u652f\u63011024\u4e2agroup. \u652f\u6301weight\u8f6c\u7f6e. x\u4e0d\u652f\u6301\u8f6c\u7f6e.\n0: \u4ec5\u652f\u6301split_item\u4e3a2\u62163. \u5fc5\u987b\u4f20group_list, \u4e14\u5f53group_list_type\u4e3a0\u65f6, \u6700\u540e\u4e00\u4e2a\u503c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49, \u5f53group_list_type\u4e3a1\u65f6, \u6570\u503c\u7684\u603b\u548c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49, \u957f\u5ea6\u6700\u5927\u4e3a128. x\u3001weight\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4. weight\u4e2d\u6bcf\u4e2atensor\u7684N\u8f74\u5fc5\u987b\u76f8\u7b49. \u652f\u6301weight\u8f6c\u7f6e, \u4f46weight\u4e2d\u6bcf\u4e2atensor\u662f\u5426\u8f6c\u7f6e\u9700\u4fdd\u6301\u7edf\u4e00. x\u4e0d\u652f\u6301\u8f6c\u7f6e.\n0:  \u4ec5\u652f\u6301split_item\u4e3a2\u62163. x\u3001weight\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4. weight\u4e2d\u6bcf\u4e2atensor\u7684N\u8f74\u5fc5\u987b\u76f8\u7b49. \u82e5\u4f20\u5165group_list, \u5f53group_list_type\u4e3a0\u65f6, group_list\u7684\u5dee\u503c\u9700\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u4e00\u4e00\u5bf9\u5e94, \u5f53group_list_type\u4e3a1\u65f6, group_list\u7684\u6570\u503c\u9700\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u4e00\u4e00\u5bf9\u5e94, \u4e14\u957f\u5ea6\u6700\u5927\u4e3a128. \u652f\u6301weight\u8f6c\u7f6e, \u4f46weight\u4e2d\u6bcf\u4e2atensor\u662f\u5426\u8f6c\u7f6e\u9700\u4fdd\u6301\u7edf\u4e00. x\u4e0d\u652f\u6301\u8f6c\u7f6e.\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1:\n\u8f93\u5165\u8f93\u51fa\u53ea\u652f\u6301float16\u7684\u6570\u636e\u7c7b\u578b, \u8f93\u51fay\u7684n\u8f74\u5927\u5c0f\u9700\u8981\u662f16\u7684\u500d\u6570.\ngroup_type\n0: \u5355\u5355\u5355, x\u3001weight\u4e0ey\u5747\u4e3a\u5355\u5f20\u91cf\n\u573a\u666f\u9650\u5236\n0: \u4ec5\u652f\u6301split_item\u4e3a2\u62163. weight\u4e2dtensor\u9700\u4e3a3\u7ef4, x\u3001y\u4e2dtensor\u9700\u4e3a2\u7ef4. \u5fc5\u987b\u4f20group_list, \u4e14\u5f53group_list_type\u4e3a0\u65f6, \u6700\u540e\u4e00\u4e2a\u503c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49, \u5f53group_list_type\u4e3a1\u65f6, \u6570\u503c\u7684\u603b\u548c\u4e0ex\u4e2dtensor\u7684\u7b2c\u4e00\u7ef4\u76f8\u7b49. group_list\u7b2c1\u7ef4\u6700\u5927\u652f\u63011024, \u5373\u6700\u591a\u652f\u63011024\u4e2agroup. \u652f\u6301weight\u8f6c\u7f6e, \u4e0d\u652f\u6301x\u8f6c\u7f6e.\n\n\u652f\u6301\u7684PyTorch\u7248\u672c\nPyTorch 2.4\nPyTorch 2.3\nPyTorch 2.2\nPyTorch 2.1\nPyTorch 2.0\nPyTorch 1.11\n\n\u652f\u6301\u7684\u578b\u53f7:\nAtlas A2 \u8bad\u7ec3\u7cfb\u5217\u4ea7\u54c1/Atlas 800I A2 \u63a8\u7406\u4ea7\u54c1\nAtlas \u63a8\u7406\u7cfb\u5217\u4ea7\u54c1\n\n\u8c03\u7528\u793a\u4f8b:\n\n\u5355\u7b97\u5b50\u6a21\u5f0f\u8c03\u7528\n\u901a\u7528\u8c03\u7528\u793a\u4f8b\nimport torch\nimport torch_npu\nx1 = torch.randn(256, 256, device='npu', dtype=torch.float16)\nx2 = torch.randn(1024, 256, device='npu', dtype=torch.float16)\nx3 = torch.randn(512, 1024, device='npu', dtype=torch.float16)\nx = [x1, x2, x3]\nweight1 = torch.randn(256, 256, device='npu', dtype=torch.float16)\nweight2 = torch.randn(256, 1024, device='npu', dtype=torch.float16)\nweight3 = torch.randn(1024, 128, device='npu', dtype=torch.float16)\nweight = [weight1, weight2, weight3]\nbias1 = torch.randn(256, device='npu', dtype=torch.float16)\nbias2 = torch.randn(1024, device='npu', dtype=torch.float16)\nbias3 = torch.randn(128, device='npu', dtype=torch.float16)\nbias = [bias1, bias2, bias3]\ngroup_list = None\nsplit_item = 0\nnpu_out = torch_npu.npu_grouped_matmul(x, weight, bias=bias, group_list=group_list, split_item=split_item, group_type=-1)\n\u56fe\u6a21\u5f0f\u8c03\u7528\nimport torch\nimport torch.nn as nn\nimport torch_npu\nimport torchair as tng\nfrom torchair.configs.compiler_config import CompilerConfig\n\nconfig = CompilerConfig()\nnpu_backend = tng.get_npu_backend(compiler_config=config)\n\nclass GMMModel(nn.Module):\n    def __init__(self):\n        super().__init__()\n\n    def forward(self, x, weight):\n        return torch_npu.npu_grouped_matmul(x, weight, group_type=-1)\n\ndef main():\n    x1 = torch.randn(256, 256, device='npu', dtype=torch.float16)\n    x2 = torch.randn(1024, 256, device='npu', dtype=torch.float16)\n    x3 = torch.randn(512, 1024, device='npu', dtype=torch.float16)\n    x = [x1, x2, x3]\n\n    weight1 = torch.randn(256, 256, device='npu', dtype=torch.float16)\n    weight2 = torch.randn(256, 1024, device='npu', dtype=torch.float16)\n    weight3 = torch.randn(1024, 128, device='npu', dtype=torch.float16)\n    weight = [weight1, weight2, weight3]\n\n    model = GMMModel().npu()\n    model = torch.compile(model, backend=npu_backend, dynamic=False)\n    custom_output = model(x, weight)\n\nif __name__ == '__main__':\n    main()\n",
+  "source_sha256": "6871383800a4412c044b2cd455cfbd552e9ca23cd252134fcbc85957dea31d1a",
+  "geometry": {
+    "capacity": 400,
+    "k": 8704,
+    "n": 5120,
+    "live": 392,
+    "dtype": "BF16"
+  },
+  "eager": {
+    "shape": [
+      400,
+      5120
+    ],
+    "passed": true
+  },
+  "post_timing_full_output_checked": true,
+  "median_device_us": {
+    "matmul_nz": 234.16999727487564,
+    "gmm_full": 214.74000066518784,
+    "gmm_dynamic": 259.8000019788742
+  },
+  "limitations": [
+    "One synthetic weight and warm-cache endpoint, not a model or service benchmark.",
+    "Existing GMM uses ND 3-D weight; matmul uses qualified NZ, so dispatch and layout change together.",
+    "No tensor parallel communication, new kernel or dense innovation is established.",
+    "Small and zero counts are correctness cases only; timed live count is B98/Q4=392 at default400."
+  ]
+}

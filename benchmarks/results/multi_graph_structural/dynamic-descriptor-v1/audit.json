@@ -1,0 +1,315 @@
+{
+  "scope": "Candidate cost and metadata mechanism audit; no model, router or multigraph prerequisite.",
+  "trace_digest": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "input_files": {
+    "benchmarks/results/multi_graph_structural/structural-dynamic-trace-v1.json": "1160d980adf79f85042f6d05c4e45483a7cd609beb626b58dccc1c9c07e13ce4",
+    "benchmarks/results/multi_graph_structural/two-layer-fused-v1/analysis.json": "aba85bfed9a8c043e60a6c972149ff5ecc855ba9927059d0ae1fbf47b3fd8cd1",
+    "benchmarks/results/multi_graph_structural/fia-sink-consumer-analysis.json": "93fa4f88ea4cb9a9db3c46cdb30ae4e0eb5cc535a4db70676bb7358ab38ec9be",
+    "benchmarks/aclgraph_fia_sink_stage4_whole_plan.py": "10d095369cde48cef0538249b2806d0db7ca655fddb208d2819019bf5294e7b8",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/dense-result.json": "9d3ee14557e39620d876bb2d0573933c7911c33912dfc74a3de6b5824f4aec82",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/plan-result-v4.json": "e83503ac15b78a55e343d52b397c9fe3a7d14ecd5569ac93a761ffc056387777",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/plan-result-v5.json": "cf1958e48bcefc5fb348615ac3ae4f4e6e252ac7dc916b7a4341751df61a72c7",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/plan-profile-result.json": "40d93c416953dc3cc95b17044faf5de10b4425c542284693792a708f28163877",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/plan-cases.json": "38ef6e206cad1d8cb86988e5bdf5a61dae328f61c69984ad28dace6036101398",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/profile/aicpu.json": "a74e1d2b98e0f37af1cdad3375c4b860ab590d3c0aef80d925e6e3c3eabb5a6d",
+    "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/profile/aiv.json": "ea1f264cc3a509afa6d6c686d3b5a3e69f571e10442f031c079fdbfebf2bf976"
+  },
+  "dense": {
+    "steps": 128,
+    "live_rows": 49972,
+    "capacity_rows": 50688,
+    "unused_rows": 716,
+    "unused_row_fraction_percent": 1.412563131313127,
+    "tile_count_models": {
+      "16": {
+        "capacity_blocks": 3168,
+        "live_blocks": 3168
+      },
+      "32": {
+        "capacity_blocks": 1614,
+        "live_blocks": 1614
+      },
+      "64": {
+        "capacity_blocks": 841,
+        "live_blocks": 841
+      },
+      "128": {
+        "capacity_blocks": 450,
+        "live_blocks": 450
+      }
+    },
+    "note": "Counts only; neither FLOP fraction nor missing tile count proves a latency bound.",
+    "community_gmm_median_device_us": {
+      "matmul_nz": 234.16999727487564,
+      "gmm_full": 214.74000066518784,
+      "gmm_dynamic": 259.8000019788742
+    },
+    "dynamic_vs_community_full_slowdown_pct": 20.98351549506685
+  },
+  "attention": {
+    "current_shared_whole_profile_records": [
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "producer_us": 70.741375,
+        "sixteen_attention_us": 3781.315625
+      },
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "producer_us": 75.2215,
+        "sixteen_attention_us": 3782.535375
+      },
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "producer_us": 77.881625,
+        "sixteen_attention_us": 3795.775875
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "producer_us": 115.882375,
+        "sixteen_attention_us": 4908.277875
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "producer_us": 112.64225,
+        "sixteen_attention_us": 4845.3565
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "producer_us": 118.102375,
+        "sixteen_attention_us": 4826.756375
+      },
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "producer_us": 76.521625,
+        "sixteen_attention_us": 3771.9155
+      },
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "producer_us": 69.121375,
+        "sixteen_attention_us": 3778.935375
+      },
+      {
+        "mode": "whole",
+        "capacity": 400,
+        "producer_us": 75.2815,
+        "sixteen_attention_us": 3792.055875
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "producer_us": 99.942,
+        "sixteen_attention_us": 4942.418
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "producer_us": 112.18225,
+        "sixteen_attention_us": 4850.756875
+      },
+      {
+        "mode": "whole",
+        "capacity": 512,
+        "producer_us": 113.92225,
+        "sixteen_attention_us": 4846.336875
+      }
+    ],
+    "shared_producers_per_step": 1,
+    "cpu_parallel_partition_cases": 16221,
+    "golden_cases": 7,
+    "mechanism": "Prefix costs, parallel successors, binary lifting, canonical reservation; unchanged ABI.",
+    "producer_endpoints": {
+      "v4": {
+        "source": "benchmarks/results/multi_graph_structural/dynamic-descriptor-v1/plan-probe-v4.py",
+        "costs": {
+          "device_us": {
+            "aicpu": 125.4199966788292,
+            "aiv": 199.4199976325035
+          },
+          "wall_us": {
+            "aicpu": 319.12649999999996,
+            "aiv": 390.972
+          },
+          "rounds": [
+            {
+              "trial": 0,
+              "device_us": {
+                "aicpu": 131.7799985408783,
+                "aiv": 199.29999858140945
+              },
+              "wall_us": {
+                "aicpu": 327.0665,
+                "aiv": 395.0565
+              }
+            },
+            {
+              "trial": 1,
+              "device_us": {
+                "aicpu": 126.0099932551384,
+                "aiv": 196.94000482559204
+              },
+              "wall_us": {
+                "aicpu": 320.25149999999996,
+                "aiv": 389.98199999999997
+              }
+            },
+            {
+              "trial": 2,
+              "device_us": {
+                "aicpu": 124.32999908924103,
+                "aiv": 199.51000064611435
+              },
+              "wall_us": {
+                "aicpu": 318.602,
+                "aiv": 392.712
+              }
+            },
+            {
+              "trial": 3,
+              "device_us": {
+                "aicpu": 124.83999878168106,
+                "aiv": 199.4899958372116
+              },
+              "wall_us": {
+                "aicpu": 318.5715,
+                "aiv": 389.202
+              }
+            }
+          ]
+        },
+        "all_seven_generations_equal": true,
+        "post_timing_all_words_checked": false,
+        "device_slowdown_percent": 59.00175642897738,
+        "wall_slowdown_percent": 22.51317267603914
+      },
+      "v5": {
+        "source": "benchmarks/aclgraph_descriptor_plan_probe.py",
+        "costs": {
+          "device_us": {
+            "aicpu": 126.29000097513199,
+            "aiv": 199.2499977350235
+          },
+          "wall_us": {
+            "aicpu": 315.4515,
+            "aiv": 387.87649999999996
+          },
+          "rounds": [
+            {
+              "trial": 0,
+              "device_us": {
+                "aicpu": 129.03999537229538,
+                "aiv": 199.34000074863434
+              },
+              "wall_us": {
+                "aicpu": 319.431,
+                "aiv": 391.817
+              }
+            },
+            {
+              "trial": 1,
+              "device_us": {
+                "aicpu": 126.68000161647797,
+                "aiv": 196.76999747753143
+              },
+              "wall_us": {
+                "aicpu": 315.7815,
+                "aiv": 387.832
+              }
+            },
+            {
+              "trial": 2,
+              "device_us": {
+                "aicpu": 126.54000520706177,
+                "aiv": 199.38000291585922
+              },
+              "wall_us": {
+                "aicpu": 315.3165,
+                "aiv": 387.11199999999997
+              }
+            },
+            {
+              "trial": 3,
+              "device_us": {
+                "aicpu": 124.03000146150589,
+                "aiv": 199.78000223636627
+              },
+              "wall_us": {
+                "aicpu": 312.28200000000004,
+                "aiv": 387.807
+              }
+            }
+          ]
+        },
+        "all_seven_generations_equal": true,
+        "post_timing_all_words_checked": true,
+        "device_slowdown_percent": 57.77179206314062,
+        "wall_slowdown_percent": 22.95915536936739
+      }
+    },
+    "diagnostic_profiles": {
+      "aicpu": {
+        "kernels": [
+          {
+            "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+            "task": "KERNEL_AIVEC",
+            "duration_us": 1.5
+          },
+          {
+            "name": "FusedInferAttentionScoreV2SinkMetadata",
+            "task": "KERNEL_AICPU",
+            "duration_us": 102.582125
+          }
+        ],
+        "dma_us": [
+          2.54
+        ],
+        "note": "Single diagnostic replay with profiler perturbation; not an unprofiled endpoint or instruction attribution."
+      },
+      "aiv": {
+        "kernels": [
+          {
+            "name": "descriptor_plan",
+            "task": "KERNEL_AIVEC",
+            "duration_us": 304.146
+          }
+        ],
+        "dma_us": [
+          2.36
+        ],
+        "note": "Single diagnostic replay with profiler perturbation; not an unprofiled endpoint or instruction attribution."
+      }
+    },
+    "decision": "AIV producer is slower; stop this implementation before consumer/model expansion."
+  },
+  "communication_fusion": {
+    "current_fused_inventory": [
+      {
+        "rank": 0,
+        "down_rs_us": 219.504375,
+        "all_gather_us": 126.222,
+        "projections_us": 170.4235
+      },
+      {
+        "rank": 1,
+        "down_rs_us": 225.6,
+        "all_gather_us": 124.86,
+        "projections_us": 169.72
+      }
+    ],
+    "note": "Existing AG is necessary output reconstruction, not automatically removable cost."
+  },
+  "selected": "Shared attention metadata: replace AICPU by AIV, retaining canonical whole-head policy.",
+  "pending": [],
+  "not_measured": [
+    "Consumer-inclusive net benefit",
+    "Full model performance"
+  ],
+  "next_boundary": "Change plan-generation mechanism before another bounded producer gate; no router or model expansion."
+}

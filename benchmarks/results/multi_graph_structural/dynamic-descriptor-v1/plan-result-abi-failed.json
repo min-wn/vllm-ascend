@@ -1,0 +1,18 @@
+{
+  "status": "failed_metadata_only_probe",
+  "scope": "One fixed-graph metadata producer probe, not attention/model performance.\n\nThe existing AICPU whole-head producer and an experimental AIV implementation\nread the same changing device lengths and export the same 1024-word ABI.\n",
+  "checks": [],
+  "samples": [],
+  "source_sha256": "0745b642992774dca8d41f1c379cb8c95929873c7502bdd146bf7a18de20632d",
+  "kernel_sha256": "cc8f3c8e63f98d5256d53e20043158dd858bc6624e7c04e565e21c3927f07180",
+  "cases_sha256": "38ef6e206cad1d8cb86988e5bdf5a61dae328f61c69984ad28dace6036101398",
+  "extension_sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+  "opapi_sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+  "aicpu_sha256": "46bafeb84baa095b84063a2d0c262f04aef1fd5d8ba51b975ca7d44a618078f2",
+  "versions": {
+    "torch": "2.10.0+cpu",
+    "torch_npu": "2.10.0.post4"
+  },
+  "stage": "qualification",
+  "error": "Traceback (most recent call last):\n  File \"/workspace/aclgraph-descriptor-selection-v1/aclgraph_descriptor_plan_probe.py\", line 174, in main\n    run(args, report, save)\n  File \"/workspace/aclgraph-descriptor-selection-v1/aclgraph_descriptor_plan_probe.py\", line 89, in run\n    raise AssertionError(f\"AIV versus native whole policy: {case['name']}, words={differences[:20]}\")\nAssertionError: AIV versus native whole policy: original_step0, words=[4, 6, 8, 9, 14, 16, 17, 18, 19, 24, 26, 27, 28, 29, 34, 36, 38, 39, 44, 46]\n"
+}

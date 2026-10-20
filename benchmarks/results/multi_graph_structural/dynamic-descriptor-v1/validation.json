@@ -1,0 +1,25 @@
+{
+  "scoped_ruff_check": "passed: four descriptor benchmark scripts and one unit test module",
+  "scoped_ruff_format_check": "passed: five files already formatted",
+  "cpu_pytest": {
+    "command": "python -m pytest --noconftest -q tests/ut/worker/multi_graph/test_descriptor_audit.py",
+    "status": "passed",
+    "tests": 18
+  },
+  "cpu_audit": "passed: 16221 partitions, candidate budgets, seven device-case oracles and report hashes",
+  "device": {
+    "dense": "seven changing-M generations and post-timing full-output checks passed",
+    "planner": "seven changing-KV generations, all 1024 words, fixed pointers and post-timing check passed",
+    "plan_v5_report_sha256": "cf1958e48bcefc5fb348615ac3ae4f4e6e252ac7dc916b7a4341751df61a72c7"
+  },
+  "required_format_ci": {
+    "command": "bash format.sh ci",
+    "exit_code": 2,
+    "status": "blocked",
+    "reason": "Windows bash invokes WSL; WSL warnings and CRLF shell parse error",
+    "log_sha256": "cc4df5938d2fa20bf72cc4ccab2d245ed8ab3c5353bfb701b31e49c257d46210"
+  },
+  "full_ci_passed": false,
+  "attention_consumer_or_model_speedup_measured": false,
+  "implementation_disposition": "negative producer result: no consumer or model expansion"
+}
