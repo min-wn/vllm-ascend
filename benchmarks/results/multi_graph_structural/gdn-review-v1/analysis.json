@@ -1,0 +1,296 @@
+{
+  "decision": "retain_as_conditional_mainline_candidate_not_established_independent_algorithm",
+  "rounds": [
+    {
+      "source_file": "lifecycle-v1.json",
+      "source_sha256": "4bca357a174130f37cf9965befddb5f8010405d94b977934df7d73a6d9e62462",
+      "scope": "eight continuous steps of one real GDN layer per round; no serving/model result",
+      "measured_steps": 8,
+      "best_nonready_control_by_mean_wall": "compact_deferred_overlap",
+      "comparisons": {
+        "compact_deferred_overlap": {
+          "round_device_us": [
+            5.96805359994943,
+            9.581531588058445,
+            6.751331898204649
+          ],
+          "round_wall_us": [
+            5.565781255078761,
+            9.10565302033801,
+            6.429280359836653
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            4.7900252290106415,
+            7.873589865640518,
+            5.536882136464227
+          ]
+        },
+        "compact_deferred_serial": {
+          "round_device_us": [
+            14.169433284780997,
+            14.100371769839127,
+            14.337473288558977
+          ],
+          "round_wall_us": [
+            13.484610605251202,
+            13.209679849569378,
+            13.454212316337221
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            11.7423736276137,
+            11.492522955657257,
+            11.708751959556007
+          ]
+        },
+        "compact_deferred_tile_delayed": {
+          "round_device_us": [
+            6.251560575054837,
+            14.272805994972938,
+            6.270155377361542
+          ],
+          "round_wall_us": [
+            5.817863250714295,
+            13.444636549796908,
+            5.6732444383633895
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            5.008835733174699,
+            11.70105483302727,
+            4.880312395806962
+          ]
+        },
+        "compact_padding": {
+          "round_device_us": [
+            12.401156884319098,
+            16.750780076534934,
+            18.060274533349386
+          ],
+          "round_wall_us": [
+            11.702906856512518,
+            15.7337613890286,
+            17.608803203190238
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            10.163825517658665,
+            13.740439080584832,
+            15.42038871430792
+          ]
+        },
+        "official_padding": {
+          "round_device_us": [
+            20.801586618363956,
+            20.2017861926998,
+            19.93932031720107
+          ],
+          "round_wall_us": [
+            20.93609509324814,
+            19.01144091334309,
+            19.016091902767563
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            7.376827698800492,
+            5.068737804741885,
+            5.066799447586778
+          ]
+        }
+      },
+      "versus_best_per_round_wall_percent": [
+        5.565781255078761,
+        9.10565302033801,
+        5.6732444383633895
+      ],
+      "one_time_compact_import_wall_us": 3600.9049508720636,
+      "terminal_device_us": {
+        "compact_deferred_overlap": [
+          363.9400005340576,
+          381.24001026153564,
+          378.6199986934662
+        ],
+        "compact_deferred_serial": [
+          409.92000699043274,
+          376.76000595092773,
+          380.0800144672394
+        ],
+        "compact_deferred_tile_delayed": [
+          376.8399953842163,
+          378.9199888706207,
+          378.2399892807007
+        ],
+        "compact_deferred_tile_ready": [
+          379.46000695228577,
+          371.96001410484314,
+          378.03998589515686
+        ],
+        "compact_padding": [
+          438.8999938964844,
+          373.97998571395874,
+          387.8999948501587
+        ],
+        "official_padding": [
+          27.10000053048134,
+          38.18000108003616,
+          3.220000071451068
+        ]
+      },
+      "worst_terminal_request_nrmse": 9.398272737826119e-08,
+      "qualifications": {
+        "rank_step_mode_checks": 96,
+        "rank_round_mode_lifecycle_checks": 36,
+        "post_terminal_pending_logs": false
+      },
+      "limitations": [
+        "No matched A2 RecoverSSM or periodic-flush ReplaySSM implementation is measured.",
+        "One-time import is one observation per process, not a stable initialization distribution.",
+        "Owner pause/resume is covered; arbitrary owner eviction/reuse and production KV integration are not.",
+        "Per-step completion and terminal drain are charged; graph setup and frozen fixture generation are excluded.",
+        "Eight-step correctness and no output validation of a serving workload; no tail claim."
+      ]
+    },
+    {
+      "source_file": "lifecycle-v2.json",
+      "source_sha256": "d8825850f3e56dce866ec3589679545241af578b1240bd504e24192e78f29173",
+      "scope": "eight continuous steps of one real GDN layer per round; no serving/model result",
+      "measured_steps": 8,
+      "best_nonready_control_by_mean_wall": "compact_deferred_overlap",
+      "comparisons": {
+        "compact_deferred_overlap": {
+          "round_device_us": [
+            6.047315908950135,
+            6.570943204841662,
+            6.492254385447838
+          ],
+          "round_wall_us": [
+            5.4723081176952455,
+            6.20370956250762,
+            6.12731921626557
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            4.706641683883916,
+            5.333586760423225,
+            5.266277324551516
+          ]
+        },
+        "compact_deferred_serial": {
+          "round_device_us": [
+            13.686987625640167,
+            14.253444208182152,
+            14.412571027948228
+          ],
+          "round_wall_us": [
+            12.90845626797622,
+            13.396499072157365,
+            13.572367275226139
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            11.225910178412747,
+            11.642753195648625,
+            11.796583089117018
+          ]
+        },
+        "compact_deferred_tile_delayed": {
+          "round_device_us": [
+            8.962417763244746,
+            6.591368547437149,
+            6.465461972881014
+          ],
+          "round_wall_us": [
+            8.508306892179052,
+            6.153838811308043,
+            6.065752299483496
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            7.350887260159345,
+            5.290316282634877,
+            5.21288166161773
+          ]
+        },
+        "compact_padding": {
+          "round_device_us": [
+            11.407587517780371,
+            11.928351769248746,
+            12.068450819697851
+          ],
+          "round_wall_us": [
+            10.794430825431988,
+            11.116335872231964,
+            11.311389825041918
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            9.357828777969724,
+            9.62790322029341,
+            9.797891905105194
+          ]
+        },
+        "official_padding": {
+          "round_device_us": [
+            19.975030777971437,
+            19.762973526467377,
+            20.362767110702407
+          ],
+          "round_wall_us": [
+            19.887324917786376,
+            18.701283384515932,
+            19.714000844011835
+          ],
+          "one_import_plus_trajectory_wall_us": [
+            6.100297106514341,
+            4.560964198544493,
+            5.730331313231785
+          ]
+        }
+      },
+      "versus_best_per_round_wall_percent": [
+        5.4723081176952455,
+        6.153838811308043,
+        6.065752299483496
+      ],
+      "one_time_compact_import_wall_us": 3607.20488242805,
+      "terminal_device_us": {
+        "compact_deferred_overlap": [
+          381.0800015926361,
+          377.8400123119354,
+          375.4599988460541
+        ],
+        "compact_deferred_serial": [
+          400.84001421928406,
+          369.2600131034851,
+          375.5199909210205
+        ],
+        "compact_deferred_tile_delayed": [
+          382.27999210357666,
+          362.26001381874084,
+          363.2600009441376
+        ],
+        "compact_deferred_tile_ready": [
+          379.68000769615173,
+          378.52001190185547,
+          376.37999653816223
+        ],
+        "compact_padding": [
+          434.8999857902527,
+          383.5200071334839,
+          372.90000915527344
+        ],
+        "official_padding": [
+          6.279999855905771,
+          3.9599998854100704,
+          4.360000137239695
+        ]
+      },
+      "worst_terminal_request_nrmse": 9.398272737826119e-08,
+      "qualifications": {
+        "rank_step_mode_checks": 96,
+        "rank_round_mode_lifecycle_checks": 36,
+        "post_terminal_pending_logs": false
+      },
+      "limitations": [
+        "No matched A2 RecoverSSM or periodic-flush ReplaySSM implementation is measured.",
+        "One-time import is one observation per process, not a stable initialization distribution.",
+        "Owner pause/resume is covered; arbitrary owner eviction/reuse and production KV integration are not.",
+        "Per-step completion and terminal drain are charged; graph setup and frozen fixture generation are excluded.",
+        "Eight-step correctness and no output validation of a serving workload; no tail claim."
+      ]
+    }
+  ],
+  "decisive_missing_evidence": "same-A2 matched compact-state community control versus ready schedule over the same closed lifecycle, with sustained correctness and repeatable net benefit"
+}

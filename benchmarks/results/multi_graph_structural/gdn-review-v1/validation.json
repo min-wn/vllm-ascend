@@ -1,0 +1,14 @@
+{
+  "cpu_tests": "54 passed: lifecycle accounting, real-layer adapter, Q4 CPU reference, tile solve contract",
+  "ruff": "passed on three probe/analyzer files and lifecycle test",
+  "format_ci": {
+    "exit_code": 2,
+    "passed": false,
+    "blocker": "WSL warnings and existing CRLF format.sh parse failure before CI checks"
+  },
+  "npu": "two independent processes; 3 paired rounds each; 8 continued steps per mode; 6 modes; 2 ranks",
+  "unchanged_native_libraries": true,
+  "measured_v2_source_identity": "verified against current layer and lifecycle sources before commit",
+  "git_diff_check": "passed",
+  "no_full_ci_pass_claim": true
+}

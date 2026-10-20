@@ -181,9 +181,20 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         seed = dense_state[quartet[0]].clone()
         for slot in quartet:
             dense_state[slot].copy_(seed)
+    torch.npu.synchronize()
+    import_started = time.perf_counter()
     compact_state = Q4LogState(torch, dense_state, candidate_slots, [1] * workload.capacity)
+    torch.npu.synchronize()
+    import_wall_us = (time.perf_counter() - import_started) * 1e6
     prefix = fixture.phases.gdn.prefix
     modes = layer_modes(args.deferred_extension, args.tile_extension)
+    if getattr(args, "lifecycle", False):
+        modes = tuple(
+            mode
+            for mode in modes
+            if mode
+            not in ("compact_serial", "compact_pipeline", "compact_deferred_pipeline", "compact_deferred_tile_separate")
+        )
     schedule = qualification_schedule(workload.batch, workload.capacity)
     graphs, graph_outputs, checks, diagnostics, samples = {}, {}, [], [], []
 
@@ -382,10 +393,33 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             # All partition trials consume the same generation. Publish only
             # canonical compact once to the next step's persistent history.
             histories["compact_padding"] = canonical
+        lifecycle = None
+        if getattr(args, "lifecycle", False):
+            from multi_graph_gdn_lifecycle_probe import lifecycle_samples
+
+            lifecycle = lifecycle_samples(
+                torch,
+                dist,
+                cpu_group,
+                args,
+                fixture,
+                compact_state,
+                backend,
+                modes,
+                schedule,
+                prepare,
+                restore,
+                initial,
+                graphs,
+                graph_outputs,
+                hidden,
+                residual,
+                output_active,
+            )
         timing_entry = dict(step=101, live=workload.batch, accepted=schedule[-1]["accepted"])
         prepare(timing_entry)
         torch.npu.reset_peak_memory_stats()
-        for round_id in range(args.rounds):
+        for round_id in range(0 if lifecycle is not None else args.rounds):
             for mode in modes if round_id % 2 == 0 else reversed(modes):
                 before = histories["official_padding" if mode == "official_padding" else "compact_padding"]
                 restore(before)
@@ -416,6 +450,8 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             checks=checks,
             diagnostics=diagnostics,
             samples=samples,
+            lifecycle=lifecycle,
+            compact_import_wall_us=import_wall_us,
             memory=dict(
                 peak_allocated_bytes=torch.npu.max_memory_allocated(),
                 peak_reserved_bytes=torch.npu.max_memory_reserved(),
@@ -439,15 +475,19 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             )
             for index, row in enumerate(ranks[0]["samples"])
         ]
-        round_medians = {
-            mode: [
-                statistics.median(
-                    row["device_us"] for row in joined_samples if row["mode"] == mode and row["round"] == round_id
-                )
-                for round_id in range(args.rounds)
-            ]
-            for mode in modes
-        }
+        round_medians = (
+            {}
+            if getattr(args, "lifecycle", False)
+            else {
+                mode: [
+                    statistics.median(
+                        row["device_us"] for row in joined_samples if row["mode"] == mode and row["round"] == round_id
+                    )
+                    for round_id in range(args.rounds)
+                ]
+                for mode in modes
+            }
+        )
         report = dict(
             status="qualified_complete_gdn_layer_not_full_model",
             scope="one_real_gdn_decoder_layer_including_mlp_and_tp_reductions",
@@ -489,6 +529,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             numerical_gate=(
                 f"cross algorithm worst-request NRMSE <= {args.max_nrmse}; same-schedule and partition controls exact"
             ),
+            lifecycle=None,
             source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             libraries={
                 name: dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
@@ -499,9 +540,28 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 )
             },
         )
+        if getattr(args, "lifecycle", False):
+            from multi_graph_gdn_lifecycle_probe import summarize_lifecycle
+
+            report["lifecycle"] = summarize_lifecycle(ranks, max(item["compact_import_wall_us"] for item in ranks))
+            report["status"] = "qualified_dynamic_real_gdn_layer_lifecycle_not_model"
+            report["includes"] = ranks[0]["lifecycle"]["boundary"]
+            report["excludes"] = ranks[0]["lifecycle"]["excludes"]
+            report["preparation"] = (
+                "frozen synthetic payloads outside timing; descriptor packing/upload and D2D input staging inside; "
+                "one-time dense-to-compact import separately measured and added to trajectory wall time"
+            )
         args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         print(
-            json.dumps(dict(status=report["status"], round_medians_us=report["round_medians_us"]), indent=2), flush=True
+            json.dumps(
+                dict(
+                    status=report["status"],
+                    round_medians_us=report["round_medians_us"],
+                    lifecycle_summary=report["lifecycle"]["summary"] if report["lifecycle"] else None,
+                ),
+                indent=2,
+            ),
+            flush=True,
         )
 
 
@@ -523,12 +583,17 @@ def main():
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--repeats", type=int, default=8)
     parser.add_argument("--max-nrmse", type=float, default=0.005)
+    parser.add_argument(
+        "--lifecycle", action="store_true", help="time continuous Q4 generations and terminal state handoff"
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists() or args.rounds < 2 or args.repeats < 3 or not 0 < args.max_nrmse <= 0.005:
         parser.error("new output, rounds >= 2, repeats >= 3 and 0 < max-nrmse <= 0.005 required")
     if args.tile_extension is not None and args.deferred_extension is None:
         parser.error("--tile-extension requires --deferred-extension")
+    if args.lifecycle and args.tile_extension is None:
+        parser.error("--lifecycle requires --tile-extension and --deferred-extension")
     if int(os.environ.get("WORLD_SIZE", "1")) != 2 or args.tensor_parallel_size != 2:
         parser.error("launch through torchrun with exactly two ranks")
     args.query, args.dtype, args.batch_invariant, args.compiled = 4, "bfloat16", False, False

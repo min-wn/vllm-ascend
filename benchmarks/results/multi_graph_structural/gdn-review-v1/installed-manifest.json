@@ -1,0 +1,53 @@
+{
+  "ascend_revision": "cf67a3cc9f6ffd7891cceb8b84869f7acedbb195",
+  "vllm_revision": "ced6857afa0ea7b2e3f0846a62e1394e90f15607",
+  "packages": {
+    "vllm_ascend": "0.30.0rc1+multigraph.732514948",
+    "flash-linear-attention-npu-a2": "26.9.1+deva4a7958",
+    "Flask": "3.1.3",
+    "torch": "2.10.0+cpu",
+    "torch_npu": "2.10.0.post4",
+    "torchaudio": "2.10.0+cpu",
+    "torchvision": "0.25.0+cpu",
+    "vllm": "0.30.0+empty"
+  },
+  "files": {
+    "gdn.py": {
+      "path": "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn.py",
+      "sha256": "e9ed210b4ca4431ee40916f06f0272e5e781eb04b61b084bacea216799fbca98"
+    },
+    "fla-ascendc-init.py": {
+      "path": "/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/ops/ascendc/__init__.py",
+      "sha256": "f1111574e58df1e9a3578780d141fa7e97784cea955de38d86841a148a455027"
+    },
+    "fla-stable.py": {
+      "path": "/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/ops/ascendc/_stable.py",
+      "sha256": "d6be8820bb54e0177cf92e396099011402f97066b0974a2f1a8a90187f08aae0"
+    },
+    "fla-init.py": {
+      "path": "/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/__init__.py",
+      "sha256": "4a16a5bc131c982965a3ea3feab0b9515ec3d16d1ab20ce3821c08046a59ca98"
+    },
+    "fla-library": {
+      "path": "/usr/local/python3.12.13/lib/python3.12/site-packages/fla_npu/libfla_npu_stable.so",
+      "sha256": "3a4031a273d29bce91ffc1f9ac9056baa9d2bba238fd0b2fe6dada45ed25d5b9"
+    },
+    "gdn_q4_log.so": {
+      "path": "/workspace/multi-graph-results/q4-log-build-v3-ranges/gdn_q4_log.so",
+      "sha256": "787efd722754a96e2fa5ef4194bec5b86bc070ae9ea3bc86f3826d233b2b1068"
+    },
+    "gdn_q4_products.so": {
+      "path": "/workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so",
+      "sha256": "49f2157b07d363f62a6a24969005973981e8f0b9a848d61e5b312cd22ee6cb6c"
+    },
+    "gdn_q4_log_deferred.so": {
+      "path": "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so",
+      "sha256": "55be9250ed36220de088317b1d5241ee9e8e5c2076ae43f8966225eb6f9675cb"
+    },
+    "gdn_q4_tile_pipeline.so": {
+      "path": "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so",
+      "sha256": "b244dcbe372ab11c8b12b7965e8ccde5e628f781fd4bc35277bc791586142ff8"
+    }
+  },
+  "binary_source_identity": "compiled library SHA retained; exact public-source-to-binary revision is not established"
+}
