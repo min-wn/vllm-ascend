@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-20",
+  "scope": "offline mechanism screening; no new NPU execution, graph-memory measurement or latency prediction",
+  "checks": {
+    "deterministic_regeneration": true,
+    "original_trace_digest": true,
+    "steps_independently_checked_by_residue_formula": 128,
+    "trace_unions_independently_checked": 6,
+    "all_trace_hashes_verified": true,
+    "local_markdown_links": "passed",
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "git_diff_check": "passed"
+  },
+  "artifacts": {
+    "audit.py": "a37e529b667a2ea4e55066791996576d4502f8ece8159bd3794cde6ce82197a3",
+    "audit.json": "b47d4af1b08579dfa65253ea4480437e7d3cd04584a0c44f8cbd14d3b3c04aa1"
+  },
+  "format_ci": {
+    "exit_code": 2,
+    "status": "WSL/CRLF shell parsing failure; not full CI passed",
+    "log": "format-ci.log"
+  },
+  "remaining": [
+    "No independent multigraph net win established",
+    "No useful dynamic specialization or actual graph-resource saving established",
+    "PP costs and capture/P2P eligibility not qualified"
+  ]
+}
