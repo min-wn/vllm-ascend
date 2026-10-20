@@ -1,0 +1,14 @@
+{
+  "cpu_test_count": 8,
+  "cpu_command": "python -m pytest -q --noconftest tests/ut/worker/multi_graph/test_varlen_query_trace.py",
+  "cpu_result": "passed; isolated from unavailable vllm-dependent conftest",
+  "ruff": "four new Python files passed",
+  "format_ci": {
+    "command": "bash format.sh ci",
+    "exit_code": 2,
+    "result": "blocked by WSL warning and format.sh CRLF syntax",
+    "raw_log_sha256": "50859941107381a27b84b54b8d30af0c32deea66d13a5360599f4e5bda9bcd45"
+  },
+  "npu": "8 variable-Q snapshots; all original 128 Q4 snapshots; two independent 3-replay profiles; post-timing sampled oracle passed",
+  "scope": "operator-level screening only; no new kernel, router, model or performance gain claimed"
+}

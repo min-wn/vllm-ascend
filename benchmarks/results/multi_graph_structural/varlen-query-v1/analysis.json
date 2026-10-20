@@ -1,0 +1,253 @@
+{
+  "status": "screening_closed_no_new_attributed_budget",
+  "trace_sha256": "17a08ae8f66864c08aafd94396fa0026fab1c41e76b373b3040a735f602a0a00",
+  "source_hashes_verified": true,
+  "q_histogram": {
+    "1": 647,
+    "2": 1249,
+    "3": 1873,
+    "4": 8724
+  },
+  "q_total": 43660,
+  "all_trajectory_q_range": [
+    223,
+    448
+  ],
+  "checked_variable_steps": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "checked_q4_steps": 128,
+  "profiles": [
+    {
+      "step": 0,
+      "sha256": "d691f0305bc774a4977e62d4380d4a732af22ccb3a9fa17264afaeaaf7891dae",
+      "kernels": {
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 3,
+          "duration_us": [
+            1.16,
+            1.06,
+            1.1
+          ],
+          "median_us": 1.1
+        },
+        "FusedInferAttentionScoreV2SinkMetadata": {
+          "count": 3,
+          "duration_us": [
+            75.2415,
+            85.381625,
+            78.441625
+          ],
+          "median_us": 78.441625
+        },
+        "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink": {
+          "count": 3,
+          "duration_us": [
+            226.3445,
+            232.604625,
+            225.3845
+          ],
+          "median_us": 226.3445
+        }
+      },
+      "dma": {
+        "count": 9,
+        "total_us": 24.04075
+      },
+      "waits": {
+        "count": 3,
+        "duration_us": [
+          290.365875,
+          314.52625,
+          295.965875
+        ],
+        "counted_as_extra_work": false
+      }
+    },
+    {
+      "step": 7,
+      "sha256": "af3e3a4bcc1fbf9a647c69e99044676c9eb451e8c8ba55f28544d8fd49f532d7",
+      "kernels": {
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 3,
+          "duration_us": [
+            1.02,
+            0.82,
+            1.04
+          ],
+          "median_us": 1.02
+        },
+        "FusedInferAttentionScoreV2SinkMetadata": {
+          "count": 3,
+          "duration_us": [
+            89.20175,
+            89.781875,
+            108.842125
+          ],
+          "median_us": 89.781875
+        },
+        "aclnnFusedInferAttentionScoreV2SinkV3_FusedInferAttentionScoreV2Sink_FusedInferAttentionScoreV2Sink": {
+          "count": 3,
+          "duration_us": [
+            259.145125,
+            257.785125,
+            260.02525
+          ],
+          "median_us": 259.145125
+        }
+      },
+      "dma": {
+        "count": 9,
+        "total_us": 26.100625
+      },
+      "waits": {
+        "count": 3,
+        "duration_us": [
+          337.22675,
+          344.926875,
+          361.54725
+        ],
+        "counted_as_extra_work": false
+      }
+    }
+  ],
+  "endpoint_medians": {
+    "closed": {
+      "wall_us": 508.297,
+      "queue_us": 367.0800030231476
+    },
+    "producer": {
+      "wall_us": 271.3515,
+      "queue_us": 140.90999960899353
+    },
+    "consumer": {
+      "wall_us": 452.187,
+      "queue_us": 303.06001007556915
+    },
+    "upload": {
+      "wall_us": 232.37099999999998,
+      "queue_us": 86.94000169634819
+    }
+  },
+  "rounds": [
+    {
+      "trial": 0,
+      "mode": "closed",
+      "wall_us": 539.442,
+      "queue_us": 377.3999959230423
+    },
+    {
+      "trial": 0,
+      "mode": "producer",
+      "wall_us": 282.716,
+      "queue_us": 148.77000451087952
+    },
+    {
+      "trial": 0,
+      "mode": "consumer",
+      "wall_us": 450.1815,
+      "queue_us": 303.6099970340729
+    },
+    {
+      "trial": 0,
+      "mode": "upload",
+      "wall_us": 229.471,
+      "queue_us": 89.60000053048134
+    },
+    {
+      "trial": 1,
+      "mode": "closed",
+      "wall_us": 491.512,
+      "queue_us": 360.9900027513504
+    },
+    {
+      "trial": 1,
+      "mode": "producer",
+      "wall_us": 268.876,
+      "queue_us": 138.67999613285065
+    },
+    {
+      "trial": 1,
+      "mode": "consumer",
+      "wall_us": 447.40200000000004,
+      "queue_us": 296.6800034046173
+    },
+    {
+      "trial": 1,
+      "mode": "upload",
+      "wall_us": 233.64100000000002,
+      "queue_us": 89.10000324249268
+    },
+    {
+      "trial": 2,
+      "mode": "closed",
+      "wall_us": 496.73699999999997,
+      "queue_us": 366.75000190734863
+    },
+    {
+      "trial": 2,
+      "mode": "producer",
+      "wall_us": 267.1615,
+      "queue_us": 139.33999836444855
+    },
+    {
+      "trial": 2,
+      "mode": "consumer",
+      "wall_us": 456.397,
+      "queue_us": 308.66000056266785
+    },
+    {
+      "trial": 2,
+      "mode": "upload",
+      "wall_us": 230.791,
+      "queue_us": 85.65999940037727
+    },
+    {
+      "trial": 3,
+      "mode": "closed",
+      "wall_us": 487.5725,
+      "queue_us": 360.1300120353699
+    },
+    {
+      "trial": 3,
+      "mode": "producer",
+      "wall_us": 270.036,
+      "queue_us": 137.85000145435333
+    },
+    {
+      "trial": 3,
+      "mode": "consumer",
+      "wall_us": 451.04200000000003,
+      "queue_us": 305.1600009202957
+    },
+    {
+      "trial": 3,
+      "mode": "upload",
+      "wall_us": 234.086,
+      "queue_us": 86.18000149726868
+    }
+  ],
+  "gate": {
+    "candidate": "only a new repeated cost remaining after community shared device metadata",
+    "required_fraction": 0.05,
+    "required_us_per_attention": 10,
+    "rule": "both required; attributable removable cost, not total compute or an already shared producer",
+    "no_budget": "close screening without candidate implementation or kernel tuning enumeration"
+  },
+  "decision": {
+    "new_repeated_independent_preparation_kernels_observed": 0,
+    "fused_output_initialization_cost_us": null,
+    "reason": "output initialization and its barrier are inside the fused kernel; no causal removable budget measured",
+    "shared_metadata_producer_excluded": "already once per step and previous candidate closed",
+    "note": "absence of an attributed budget does not prove fused initialization costs zero or cannot be optimized",
+    "candidate_implemented": false,
+    "full_model_gain_established": false
+  }
+}

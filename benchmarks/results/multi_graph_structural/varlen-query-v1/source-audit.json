@@ -1,0 +1,341 @@
+{
+  "retrieved": "2026-10-20",
+  "snapshots": [
+    {
+      "ref": "upstream/main",
+      "revision": "23e8c5afe172fdcb2d6896180eced8d275620f97",
+      "path": "vllm_ascend/attention/attention_v1.py",
+      "sha256": "eef8b411417f419ee26d8e91c662a8afe6bebe8ab7dd9c57a3ae385faf6e0944",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/23e8c5afe172fdcb2d6896180eced8d275620f97/vllm_ascend/attention/attention_v1.py",
+      "anchors": [
+        {
+          "line": 654,
+          "text": "def full_graph_fia("
+        },
+        {
+          "line": 724,
+          "text": "register_task("
+        },
+        {
+          "line": 746,
+          "text": "FIAParamProvider("
+        },
+        {
+          "line": 755,
+          "text": "def full_graph_fia_v2("
+        },
+        {
+          "line": 796,
+          "text": "register_task("
+        },
+        {
+          "line": 842,
+          "text": "register_task("
+        }
+      ]
+    },
+    {
+      "ref": "upstream/main",
+      "revision": "23e8c5afe172fdcb2d6896180eced8d275620f97",
+      "path": "vllm_ascend/compilation/updatable_graph.py",
+      "sha256": "d41d912ce8f4183228fdc182dbdb6a504f07642fddb8872c657e7f4429ac0729",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/23e8c5afe172fdcb2d6896180eced8d275620f97/vllm_ascend/compilation/updatable_graph.py",
+      "anchors": [
+        {
+          "line": 120,
+          "text": "def register_task("
+        },
+        {
+          "line": 177,
+          "text": "def register_task("
+        },
+        {
+          "line": 186,
+          "text": "graph.register_task(operation, kwargs, provider)"
+        }
+      ]
+    },
+    {
+      "ref": "upstream/main",
+      "revision": "23e8c5afe172fdcb2d6896180eced8d275620f97",
+      "path": "docs/source/user_guide/feature_guide/speculative_decoding.md",
+      "sha256": "607ff7f9df05300f31424068c5f05745811672a499ee8b1ed445930ed0fa9483",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/23e8c5afe172fdcb2d6896180eced8d275620f97/docs/source/user_guide/feature_guide/speculative_decoding.md",
+      "anchors": [
+        {
+          "line": 693,
+          "text": "## Dynamic Speculative Decoding {: #dynamic-speculative-decoding }"
+        },
+        {
+          "line": 695,
+          "text": "Dynamic Speculative Decoding adapts the number of draft tokens (K) at runtime, instead of always using a fixed `num_speculative_tokens`. This helps keep speculative decoding beneficial as concurrency and draft confidence change. vLLM Ascend currently provides two approaches:"
+        }
+      ]
+    },
+    {
+      "ref": "community/fia-sink",
+      "revision": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "path": "vllm_ascend/ops/fia_v2_sink.py",
+      "sha256": "31887148c788fe0a431760a43653beec9cca7ee4a540ea3386e3a16183b8af71",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/bec19b8dea1e538e64838f3064f7e91a3fa9ee72/vllm_ascend/ops/fia_v2_sink.py",
+      "anchors": [
+        {
+          "line": 23,
+          "text": "def build_fia_v2_sink_metadata("
+        },
+        {
+          "line": 46,
+          "text": "actual_seq_qlen = actual_seq_qlen.clone()"
+        },
+        {
+          "line": 47,
+          "text": "actual_seq_kvlen = actual_seq_kvlen.clone()"
+        },
+        {
+          "line": 71,
+          "text": "output_buffer[:FIA_V2_SINK_METADATA_SIZE].copy_(metadata)"
+        }
+      ]
+    },
+    {
+      "ref": "community/fia-sink",
+      "revision": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "path": "vllm_ascend/attention/attention_v1.py",
+      "sha256": "88a687f5ee365b09f85f43a0ffcd8d3d0c9ecf5970d88fce93a0f0a211552d88",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/bec19b8dea1e538e64838f3064f7e91a3fa9ee72/vllm_ascend/attention/attention_v1.py",
+      "anchors": [
+        {
+          "line": 388,
+          "text": "def _build_fia_v2_metadata("
+        },
+        {
+          "line": 1243,
+          "text": "def _forward_fia_v2_sink("
+        },
+        {
+          "line": 1288,
+          "text": "def full_graph_fia("
+        },
+        {
+          "line": 1463,
+          "text": "def full_graph_fia_v2("
+        }
+      ]
+    },
+    {
+      "ref": "community/fia-sink",
+      "revision": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h",
+      "sha256": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/bec19b8dea1e538e64838f3064f7e91a3fa9ee72/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h",
+      "anchors": [
+        {
+          "line": 221,
+          "text": "__aicore__ inline bool IsInitAttentionOutGm();"
+        },
+        {
+          "line": 222,
+          "text": "__aicore__ inline void InitOutputSingleCore();"
+        },
+        {
+          "line": 333,
+          "text": "template <typename FIAT> __aicore__ inline bool FiaKernelNonQuant<FIAT>::IsInitAttentionOutGm()"
+        },
+        {
+          "line": 345,
+          "text": "template <typename FIAT> __aicore__ inline void FiaKernelNonQuant<FIAT>::InitOutputSingleCore()"
+        },
+        {
+          "line": 355,
+          "text": "if (IsInitAttentionOutGm()) {"
+        },
+        {
+          "line": 383,
+          "text": "SyncAll();"
+        },
+        {
+          "line": 521,
+          "text": "InitOutputSingleCore();"
+        },
+        {
+          "line": 843,
+          "text": "SyncAll();"
+        },
+        {
+          "line": 1072,
+          "text": "actSeqLensKv = kvActSeqLensParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 1074,
+          "text": "actSeqLensQ = qActSeqLensParser.GetActualSeqLength(bIdx);"
+        }
+      ]
+    },
+    {
+      "ref": "community/fia-sink",
+      "revision": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/kernel_common_sink.h",
+      "sha256": "55e4176d5c796fae002ac2e405fdf047e1c9245097d98229165a8c5306239f96",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/bec19b8dea1e538e64838f3064f7e91a3fa9ee72/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/kernel_common_sink.h",
+      "anchors": []
+    },
+    {
+      "ref": "community/fia-sink",
+      "revision": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/memory_copy.h",
+      "sha256": "3d735fa9a7fbe689ca9c42ecb133b17c5c0bad7a6fd1d38a5fc129dd55881977",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/bec19b8dea1e538e64838f3064f7e91a3fa9ee72/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/memory_copy.h",
+      "anchors": [
+        {
+          "line": 420,
+          "text": "template <ActualSeqLensMode MODE> class ActualSeqLensParser {"
+        },
+        {
+          "line": 423,
+          "text": "template <> class ActualSeqLensParser<ActualSeqLensMode::ACCUM> {"
+        },
+        {
+          "line": 442,
+          "text": "__aicore__ inline uint64_t GetActualSeqLength(uint32_t bIdx) const"
+        },
+        {
+          "line": 460,
+          "text": "template <> class ActualSeqLensParser<ActualSeqLensMode::BY_BATCH> {"
+        },
+        {
+          "line": 471,
+          "text": "__aicore__ inline uint64_t GetActualSeqLength(uint32_t bIdx) const"
+        },
+        {
+          "line": 642,
+          "text": "s1Idx += GetDimS1() - qPaddingSize - actualSeqLensQParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 817,
+          "text": "s2Idx += GetDimS2() - kvPaddingSize - actualSeqLensKVParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 1623,
+          "text": "s1Size = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(gmCoord.bIdx);"
+        },
+        {
+          "line": 1626,
+          "text": "s1Size = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(gmCoord.bIdx);"
+        },
+        {
+          "line": 1738,
+          "text": "s1Size = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(gmCoord.bIdx);"
+        },
+        {
+          "line": 1741,
+          "text": "s1Size = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(gmCoord.bIdx);"
+        },
+        {
+          "line": 2297,
+          "text": "s1Size = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(gmCoord.bIdx);"
+        },
+        {
+          "line": 2300,
+          "text": "s1Size = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(gmCoord.bIdx);"
+        },
+        {
+          "line": 2808,
+          "text": "constInfo.qSeqSize - constInfo.qLeftPaddingSize - qActSeqLensParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 2839,
+          "text": "uint64_t gOffset = mOffset / qActSeqLensParser.GetActualSeqLength(bIdx) * constInfo.qSeqSize;"
+        },
+        {
+          "line": 2840,
+          "text": "uint64_t seqOffset = mOffset % qActSeqLensParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 2844,
+          "text": "constInfo.qSeqSize - constInfo.qLeftPaddingSize - qActSeqLensParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 2849,
+          "text": "if ((qActSeqLensParser.GetActualSeqLength(bIdx) - seqOffset) >= dealCount) {"
+        },
+        {
+          "line": 2860,
+          "text": "uint64_t headActSeq = qActSeqLensParser.GetActualSeqLength(bIdx) - seqOffset;"
+        },
+        {
+          "line": 2867,
+          "text": "outOffset += constInfo.qSeqSize - qActSeqLensParser.GetActualSeqLength(bIdx) + headActSeq;"
+        },
+        {
+          "line": 2871,
+          "text": "while (pendingCount > qActSeqLensParser.GetActualSeqLength(bIdx)) {"
+        },
+        {
+          "line": 2873,
+          "text": "dataCopyParams.blockCount = qActSeqLensParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 2880,
+          "text": "qActSeqLensParser.GetActualSeqLength(bIdx) * AiInfraInferenceCommonFaBaseVector::FP32_BLOCK_ELEMENT_NUM;"
+        },
+        {
+          "line": 2881,
+          "text": "pendingCount -= qActSeqLensParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 2971,
+          "text": "uint32_t s1Count = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(bIdx);"
+        },
+        {
+          "line": 2977,
+          "text": "uint32_t s1Count = offsetCalculator.actualSeqLensQParser.GetActualSeqLength(bIdx);"
+        }
+      ]
+    },
+    {
+      "ref": "community/fia-sink",
+      "revision": "bec19b8dea1e538e64838f3064f7e91a3fa9ee72",
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp",
+      "sha256": "bffd08092e0c431674f1c361681be58315a714d517d80136a18edb1faf1bbeec",
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/bec19b8dea1e538e64838f3064f7e91a3fa9ee72/csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp",
+      "anchors": []
+    }
+  ],
+  "native_source_comparisons": [
+    {
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h",
+      "community_sha256": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+      "native_sha256": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+      "byte_identical": true
+    },
+    {
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+      "community_sha256": "600b15942b202996c480a5b978eb56d7045591aeb40012f6e0463d475964ac06",
+      "native_sha256": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+      "byte_identical": false
+    },
+    {
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h",
+      "community_sha256": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+      "native_sha256": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+      "byte_identical": true
+    },
+    {
+      "path": "csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp",
+      "community_sha256": "bffd08092e0c431674f1c361681be58315a714d517d80136a18edb1faf1bbeec",
+      "native_sha256": "a3e4bbeeca240d55d09f8624efe0a83fc5e77c1f692d72f73ee55a0872e9b51d",
+      "byte_identical": false
+    }
+  ],
+  "metadata_source_diff": [
+    "--- \n",
+    "+++ \n",
+    "@@ -12,5 +12,5 @@\n",
+    " #include <cmath>",
+    " #include \"../../fused_infer_attention_score_v2_sink/op_kernel/fused_infer_attention_score_v2_sink_metadata.h\"",
+    "-#include \"../../common/aicpu/cpu_context_util.h\"",
+    "+#include \"../aicpu/cpu_context_util.h\"",
+    " #include \"fused_infer_attention_score_v2_sink_metadata_aicpu.h\"",
+    " "
+  ]
+}

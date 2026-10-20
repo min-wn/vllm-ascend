@@ -1,0 +1,201 @@
+{
+  "packages": {
+    "torch": "2.10.0+cpu",
+    "torch-npu": "2.10.0.post4",
+    "vllm": "0.30.0+empty",
+    "vllm-ascend": "0.30.0rc1"
+  },
+  "repo_revision": "cf67a3cc9f6ffd7891cceb8b84869f7acedbb195",
+  "installed_sources": {
+    "vllm_ascend/attention/attention_v1.py": {
+      "sha256": "aa1b18fec2a29b37a6c87e3905581ec58e8211fac042d4c5e96e51f8eb78f696",
+      "lines": 1822
+    },
+    "vllm_ascend/compilation/updatable_graph.py": {
+      "sha256": "d41d912ce8f4183228fdc182dbdb6a504f07642fddb8872c657e7f4429ac0729",
+      "lines": 217
+    }
+  },
+  "artifacts": [
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_api/lib/libcust_opapi.so",
+      "sha256": "2c1660f393e0e8cc9c8d935929420e3e3b61297163994ade48eec5ac14c9ad40",
+      "bytes": 202672
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/aicpu_kernel/impl/libfia_v2_sink_aicpu_kernels.so",
+      "sha256": "796983827bc6326a250009a2aacc810c44f65545ec2ae56dab517a5ec4e7111b",
+      "bytes": 5375824
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/opp/packages/vendors/thesis_fia_stage2_transformer/op_impl/cpu/config/cust_aicpu_kernel.json",
+      "sha256": "1127c8287069e1ab1f2a681e76a3dd9c1385eb86e2a8584dd02400333ed09203",
+      "bytes": 437
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/extension-build/thesis_fia_sink_bec19b8dea1e.so",
+      "sha256": "25a41e47473a3bc9c34a50c053766181c7a764ea496b93d4d3b70180b0ecf76b",
+      "bytes": 2581832
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h",
+      "sha256": "785c0d14eff5874a019b570d54c5989c793e91381532e2ad6346cd98348ad041",
+      "bytes": 61453
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h",
+      "sha256": "82779741be8ae3d1954af2758d657b5adeba89267ba9100138e8ff24f771362e",
+      "bytes": 69763
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h",
+      "sha256": "4f1a8185300f1f6bbf7728b778d47ce49dc929658b629d8e330582e49866f1e0",
+      "bytes": 64646
+    },
+    {
+      "path": "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp",
+      "sha256": "a3e4bbeeca240d55d09f8624efe0a83fc5e77c1f692d72f73ee55a0872e9b51d",
+      "bytes": 89559
+    }
+  ],
+  "native_config": {
+    "FusedInferAttentionScoreV2SinkMetadata": {
+      "opInfo": {
+        "computeCost": "100",
+        "engine": "DNN_VM_AICPU",
+        "flagAsync": "False",
+        "flagPartial": "False",
+        "functionName": "RunCpuKernel",
+        "kernelSo": "libfia_v2_sink_aicpu_kernels.so",
+        "opKernelLib": "CUSTAICPUKernel",
+        "userDefined": "True",
+        "workspaceSize": "100"
+      }
+    }
+  },
+  "reused_extension_sources": [
+    "/workspace/aclgraph-sink-stage1-bec19b8dea1e/extension-src/ops_common.cpp",
+    "/workspace/aclgraph-sink-stage1-bec19b8dea1e/extension-src/npu_fused_infer_attention_score_v2_sink.cpp",
+    "/workspace/aclgraph-sink-stage1-bec19b8dea1e/extension-src/npu_fused_infer_attention_score_v2_sink_metadata.cpp",
+    "/workspace/aclgraph-sink-stage1-bec19b8dea1e/extension-src/schemas.cpp"
+  ],
+  "note": "D256 stage-two compatibility port of community sink; not a stock CANN binary, not the Q4 whole-plan variant",
+  "installed_path_anchors": [
+    {
+      "line": 364,
+      "text": "actual_seq_lengths_q = query_start_loc_cpu[1:].tolist()"
+    },
+    {
+      "line": 397,
+      "text": "actual_seq_lengths_q = actual_seq_lengths_q + [common_attn_metadata.num_input_tokens]"
+    },
+    {
+      "line": 650,
+      "text": "def full_graph_fia("
+    },
+    {
+      "line": 662,
+      "text": "actual_seq_lengths_q = attn_metadata.actual_seq_lengths_q"
+    },
+    {
+      "line": 720,
+      "text": "register_task("
+    },
+    {
+      "line": 742,
+      "text": "FIAParamProvider("
+    },
+    {
+      "line": 751,
+      "text": "def full_graph_fia_v2("
+    },
+    {
+      "line": 762,
+      "text": "actual_seq_lengths_q = attn_metadata.actual_seq_lengths_q"
+    },
+    {
+      "line": 792,
+      "text": "register_task("
+    },
+    {
+      "line": 814,
+      "text": "FIAV2ParamProvider(self._layer_name),"
+    },
+    {
+      "line": 838,
+      "text": "register_task("
+    }
+  ],
+  "sink_code_anchors": {
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_kernel_nonquant_sink.h": [
+      {
+        "line": 221,
+        "text": "__aicore__ inline bool IsInitAttentionOutGm();"
+      },
+      {
+        "line": 222,
+        "text": "__aicore__ inline void InitOutputSingleCore();"
+      },
+      {
+        "line": 333,
+        "text": "template <typename FIAT> __aicore__ inline bool FiaKernelNonQuant<FIAT>::IsInitAttentionOutGm()"
+      },
+      {
+        "line": 345,
+        "text": "template <typename FIAT> __aicore__ inline void FiaKernelNonQuant<FIAT>::InitOutputSingleCore()"
+      },
+      {
+        "line": 355,
+        "text": "if (IsInitAttentionOutGm()) {"
+      },
+      {
+        "line": 383,
+        "text": "SyncAll();"
+      },
+      {
+        "line": 521,
+        "text": "InitOutputSingleCore();"
+      },
+      {
+        "line": 636,
+        "text": "actualSeqLengthsGmQ.GetValue(constInfo.actualLenQDims - 1) < 32 * 1024 &&"
+      },
+      {
+        "line": 843,
+        "text": "SyncAll();"
+      },
+      {
+        "line": 1074,
+        "text": "actSeqLensQ = qActSeqLensParser.GetActualSeqLength(bIdx);"
+      }
+    ],
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_cube_nonquant_gqa_sink.h": [],
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink/op_kernel/fia_block_vec_nonquant_sink.h": [
+      {
+        "line": 485,
+        "text": "uint32_t prefixBS1 = info.bIdx == 0U ? 0U : actualSeqLengthsGmQ.GetValue(info.bIdx - 1);"
+      },
+      {
+        "line": 490,
+        "text": "uint32_t prefixBS1 = info.bIdx == 0U ? 0U : actualSeqLengthsGmQ.GetValue(info.bIdx - 1);"
+      },
+      {
+        "line": 491,
+        "text": "uint32_t s1Size = info.bIdx == 0U ? actualSeqLengthsGmQ.GetValue(0U)"
+      },
+      {
+        "line": 492,
+        "text": ": actualSeqLengthsGmQ.GetValue(info.bIdx) -"
+      },
+      {
+        "line": 493,
+        "text": "actualSeqLengthsGmQ.GetValue(info.bIdx - 1U);"
+      }
+    ],
+    "/workspace/aclgraph-sink-stage2-d256-bec19b8dea1e/source/csrc/attention/fused_infer_attention_score_v2_sink_metadata/op_kernel_aicpu/fused_infer_attention_score_v2_sink_metadata_aicpu.cpp": []
+  },
+  "probe_helper_hashes_collected_after_run": {
+    "aclgraph_fia_sink_stage1_smoke.py": "29b7e43a9b927252c863326f9ca62c9668c8d4de88c50a0b1ac9fd8625df18e7",
+    "aclgraph_fia_sink_stage2_validate.py": "87e1f153e3f06f742fc68d51d45066d893ad9d7152c89ab06b0844c61f1d0137"
+  }
+}
