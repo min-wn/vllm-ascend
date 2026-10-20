@@ -1,0 +1,32 @@
+{
+  "scope": "offline historical trace audit and Chinese research-goal documentation; no new NPU execution",
+  "trace_and_source_checks": {
+    "scope": "independent CPU reconstruction; not NPU execution or unprofiled latency validation",
+    "saved_trace_hashes_checked": 18,
+    "archived_source_hashes_checked": 50,
+    "fia_predecessor_gaps_and_polling_unions_cross_checked": 198,
+    "deterministic_regeneration": true,
+    "memory_record_caller_sources_match_launch": true
+  },
+  "scoped_ruff_check": "passed",
+  "scoped_ruff_format_check": "2 files already formatted",
+  "new_document_local_links_checked": 10,
+  "updated_documents_link_to_new_audit": 4,
+  "easy_open_chinese_documents_refreshed": [
+    "MULTIGRAPH_RESEARCH_GOAL_ZH",
+    "FIA_UPDATE_CRITICAL_PATH_ZH",
+    "MULTIGRAPH_RESEARCH_PLAN_ZH",
+    "CURRENT_SCHEME_ZH",
+    "MULTIGRAPH_STAGE1_ZH",
+    "MULTIGRAPH_MECHANISM_ZH"
+  ],
+  "format_ci": {
+    "command": "bash format.sh ci",
+    "exit_code": 2,
+    "reason": "Windows WSL initialization warnings and format.sh CRLF shell syntax failure before formatting checks",
+    "raw_log": "format-ci.log",
+    "raw_log_sha256": "cc4df5938d2fa20bf72cc4ccab2d245ed8ab3c5353bfb701b31e49c257d46210",
+    "passed": false
+  },
+  "no_new_latency_or_speedup_claim": true
+}

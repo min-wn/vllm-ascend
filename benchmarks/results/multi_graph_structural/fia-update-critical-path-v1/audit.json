@@ -1,0 +1,2480 @@
+{
+  "scope": "offline FIA wait and graph-resource attribution; no NPU execution or new speedup result",
+  "graph_execution": "one composite graph per mode/step; modes replayed separately; not independent multigraph parallelism",
+  "units": "microseconds; only within-trace times compared; no cross-rank timestamp subtraction",
+  "provenance": [
+    {
+      "launch_file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/launch.json",
+      "launch_sha256": "f05ae4b04378f116ec32d46d0583b094bfb3a80dd15c2bd31e1fba9938a71f69",
+      "task_queue_enable": "0",
+      "checked_archived_sources": [
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_gdn_q4_log_probe.py",
+          "sha256": "473e740f337a222ef35d5b3574937a055dce32e55af0d2fc19df076441f07c5b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_tp_gdn.py",
+          "sha256": "b0f64bd30936bd9455e029ea7e4d78363402f54291ff1fada88b986c59ec0cbd"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_tp_gdn_phases.py",
+          "sha256": "6c1ae60e94ba8146a2ee513025e6274401667ff71a2303c7315163090da9d6d4"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_gdn_q4_backend.py",
+          "sha256": "98499e60061f2ef73c2f766ee926b935d02642d9e5f2bf1b29cf0b4336fedf21"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_tp_boundary_loader.py",
+          "sha256": "7d32cf6ac2c988f7a83dfb68748cb487fe42a1070b459fc7ae5a6b407a9a0e9e"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_gdn_q4_log_backend.py",
+          "sha256": "073448425c4019ac44e104f6d157cb8df4acaa9cda1a1984c7b4506fec2f2c66"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/aclgraph_full_core_join.py",
+          "sha256": "9de0333f07bf9716abaf7fb44b6c3b1291b879679692a54e6866d7549e12250c"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/multi_graph_tp_attention.py",
+          "sha256": "d94dc97ee9e251f0ba4ade7352de124acd626d87d236e278582b57f32e077685"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/aclgraph_bounded_lead_probe.py",
+          "sha256": "5ab0f138a175fee6260e1c5347a6e439843becd92baa5c9a39de3c2305eaf0ea"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/sources/aclgraph_bounded_lead_fia.py",
+          "sha256": "8a0c1f6ecad38ee907918c30a93f25b528f0c028aad884476107d1d05fb38db5"
+        }
+      ],
+      "historical_runtime_binaries_reconstructed": false
+    },
+    {
+      "launch_file": "benchmarks/results/multi_graph_structural/full-core-join-v3/launch.json",
+      "launch_sha256": "155c50ec3fdfbb3d08111ffd54c179cdce6d63c6ebeafdd0eed315be156b4689",
+      "task_queue_enable": "0",
+      "checked_archived_sources": [
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_log_probe.py",
+          "sha256": "473e740f337a222ef35d5b3574937a055dce32e55af0d2fc19df076441f07c5b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_tp_gdn_phases.py",
+          "sha256": "6c1ae60e94ba8146a2ee513025e6274401667ff71a2303c7315163090da9d6d4"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_log_reference.py",
+          "sha256": "0f7076c5878f8fb0f0a4fa04c27f8689d86ca899e5aee2ed69738e77b950c134"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_backend.py",
+          "sha256": "98499e60061f2ef73c2f766ee926b935d02642d9e5f2bf1b29cf0b4336fedf21"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_full_checks.py",
+          "sha256": "ccfe562bacda3eb11ca35f3c4931b57b2b20ebb41307a32719a2b6bd45f0ffc0"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_full_stream_audit.py",
+          "sha256": "dc802d01a16d92c30181cc1cb98fdcd5c0ff27f7a8d622246fa66d4ee8ffed2e"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_log_backend.py",
+          "sha256": "073448425c4019ac44e104f6d157cb8df4acaa9cda1a1984c7b4506fec2f2c66"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/aclgraph_full_core_join.py",
+          "sha256": "9de0333f07bf9716abaf7fb44b6c3b1291b879679692a54e6866d7549e12250c"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_log_deferred_probe.py",
+          "sha256": "30d1ca7d78a22c4a3f893f1fbec588d8057b9b62bc7c7904653e021dfb280486"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/aclgraph_full_path_profile.py",
+          "sha256": "b40ba3845150d59656dbd420039db399b1151cf4e62428f9ac98a68da06aefc6"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_products_probe.py",
+          "sha256": "5e87a51cb41d5e068495dd642e96486a2f35d0405548e6981a6eaefdee861161"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_full_probe.py",
+          "sha256": "ff7e80b46d7b6974547544e8c8aa5995e2367d8d0649a73fa83a6d0b9fab4269"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_block_probe.py",
+          "sha256": "e5853768abbf179170f2131f3535dd453cffacb368c390bd35f8b52e00d23ae6"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_tile_solve_probe.py",
+          "sha256": "1d3f65b001f8a608d81303af0a6b50ea7477f923e5ecf388de1816ce3e06ede5"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/aclgraph_bounded_lead_probe.py",
+          "sha256": "37f65d35559eac3127eb680e7a8f1452423d4962976de638bd9c651e53ea0365"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_full_metadata.py",
+          "sha256": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_tile_transport_probe.py",
+          "sha256": "ef6092d88e5cbf3601d4f3501a07bdb17911ae9290dbc24949b2d1f8c16a4e0b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_block_reference.py",
+          "sha256": "1ec8054519e76692099da0eebe8143fe0f2dd1a51ae452ca610b364a4856f39b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_log_layer_probe.py",
+          "sha256": "a34edb87e35740be9bc6f61e9853004858c0e38d234c0162f73f5b337c36dd90"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/sources/multi_graph_gdn_q4_full_loader.py",
+          "sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0"
+        }
+      ],
+      "historical_runtime_binaries_reconstructed": false
+    },
+    {
+      "launch_file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/launch.json",
+      "launch_sha256": "ebe48901e412fd2fb889cc1370e31291344126117824a08b86fb1b8f0f9820f0",
+      "task_queue_enable": "0",
+      "checked_archived_sources": [
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_log_probe.py",
+          "sha256": "473e740f337a222ef35d5b3574937a055dce32e55af0d2fc19df076441f07c5b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_tp_gdn_phases.py",
+          "sha256": "6c1ae60e94ba8146a2ee513025e6274401667ff71a2303c7315163090da9d6d4"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_log_reference.py",
+          "sha256": "0f7076c5878f8fb0f0a4fa04c27f8689d86ca899e5aee2ed69738e77b950c134"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_backend.py",
+          "sha256": "98499e60061f2ef73c2f766ee926b935d02642d9e5f2bf1b29cf0b4336fedf21"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_full_checks.py",
+          "sha256": "ccfe562bacda3eb11ca35f3c4931b57b2b20ebb41307a32719a2b6bd45f0ffc0"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_full_stream_audit.py",
+          "sha256": "dc802d01a16d92c30181cc1cb98fdcd5c0ff27f7a8d622246fa66d4ee8ffed2e"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_log_backend.py",
+          "sha256": "073448425c4019ac44e104f6d157cb8df4acaa9cda1a1984c7b4506fec2f2c66"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/aclgraph_full_core_join.py",
+          "sha256": "9de0333f07bf9716abaf7fb44b6c3b1291b879679692a54e6866d7549e12250c"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_log_deferred_probe.py",
+          "sha256": "30d1ca7d78a22c4a3f893f1fbec588d8057b9b62bc7c7904653e021dfb280486"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/aclgraph_full_path_profile.py",
+          "sha256": "faa6392fe678abcae73ae9769a8905384ae0dece939627318ac7c4458ab22517"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_products_probe.py",
+          "sha256": "5e87a51cb41d5e068495dd642e96486a2f35d0405548e6981a6eaefdee861161"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_full_probe.py",
+          "sha256": "2b7fa5dcd4a207d8e28773eb6d457e6671efe7d11a91d2b275937359717d6e05"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_block_probe.py",
+          "sha256": "e5853768abbf179170f2131f3535dd453cffacb368c390bd35f8b52e00d23ae6"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_tile_solve_probe.py",
+          "sha256": "1d3f65b001f8a608d81303af0a6b50ea7477f923e5ecf388de1816ce3e06ede5"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/aclgraph_bounded_lead_probe.py",
+          "sha256": "37f65d35559eac3127eb680e7a8f1452423d4962976de638bd9c651e53ea0365"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_full_metadata.py",
+          "sha256": "5615ee949cbc765eafbd75d51a422aa90b3a32779edf928d2b712c360dd25147"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_tile_transport_probe.py",
+          "sha256": "ef6092d88e5cbf3601d4f3501a07bdb17911ae9290dbc24949b2d1f8c16a4e0b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_block_reference.py",
+          "sha256": "1ec8054519e76692099da0eebe8143fe0f2dd1a51ae452ca610b364a4856f39b"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_log_layer_probe.py",
+          "sha256": "a34edb87e35740be9bc6f61e9853004858c0e38d234c0162f73f5b337c36dd90"
+        },
+        {
+          "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/sources/multi_graph_gdn_q4_full_loader.py",
+          "sha256": "122bacfc5efc1904a4342faa8ad53767f6b4394d69afca18075ea524f7fbe6f0"
+        }
+      ],
+      "historical_runtime_binaries_reconstructed": false
+    }
+  ],
+  "original_reports": [
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.rank0.json",
+      "sha256": "a232b1101b8821f6bab3a828d2ecf8e83eb99010f1c62fa01d4e834cbc0a0b4b"
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.rank1.json",
+      "sha256": "6c3275a69a6ccf5893095803556dd283517d64615be968cece6073b25f013b4c"
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.rank0.json",
+      "sha256": "2138fe502f2cf5ccfff6212d8dea844291265dee8d031edc536b09218c0e292e"
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.rank1.json",
+      "sha256": "88cde24890cc588faf2518008d53fa2c8859cf1655cb59122a3e3f25524b3f67"
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.rank0.json",
+      "sha256": "79ff457dc634082e8fbc9699072dab246ca1a4df644fca572b96d211f784c7f4"
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.rank1.json",
+      "sha256": "199f7cd0001296a6850b61b2334d626273ae944a607c25bfc4929eb380261968"
+    }
+  ],
+  "traces": [
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.fused_padding.rank0.trace.json",
+      "sha256": "8468c29d9ba0da140527a30009f8e7c21626fad34f70e44948f72000129ee96c",
+      "scope": "two_layers",
+      "mode": "fused_padding",
+      "rank": 0,
+      "step": null,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 1,
+      "stream_gap_sum_us": 532.870625,
+      "stream_gap_max_us": 532.870625,
+      "polling_union_sum_us": 523.01025,
+      "last_host_fia_return_before_first_device_fia_us": 62.465,
+      "last_outside_model_write_before_first_device_fia_us": 4.7,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 532.870625,
+          "polling_interval_count": 199,
+          "polling_union_us": 523.01025,
+          "host_fia_call_us": 492.97,
+          "host_call_overlap_with_gap_us": 470.405625,
+          "host_return_before_device_fia_us": 62.465
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.fused_split_barrier.rank0.trace.json",
+      "sha256": "47619b4c21052d61ae661435fe9c374b9b82bcf4d432dfea03fa722a025eab32",
+      "scope": "two_layers",
+      "mode": "fused_split_barrier",
+      "rank": 0,
+      "step": null,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 1,
+      "stream_gap_sum_us": 567.83175,
+      "stream_gap_max_us": 567.83175,
+      "polling_union_sum_us": 556.591,
+      "last_host_fia_return_before_first_device_fia_us": 62.192,
+      "last_outside_model_write_before_first_device_fia_us": 3.82,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 567.83175,
+          "polling_interval_count": 199,
+          "polling_union_us": 556.591,
+          "host_fia_call_us": 454.9,
+          "host_call_overlap_with_gap_us": 454.9,
+          "host_return_before_device_fia_us": 62.192
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.fused_split_early.rank0.trace.json",
+      "sha256": "a18ffdab22d330a969c9867aeee0c8661406a4656858fdb522a3231357778646",
+      "scope": "two_layers",
+      "mode": "fused_split_early",
+      "rank": 0,
+      "step": null,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 1,
+      "stream_gap_sum_us": 527.64975,
+      "stream_gap_max_us": 527.64975,
+      "polling_union_sum_us": 517.070375,
+      "last_host_fia_return_before_first_device_fia_us": 65.017,
+      "last_outside_model_write_before_first_device_fia_us": 5.08,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 527.64975,
+          "polling_interval_count": 185,
+          "polling_union_us": 517.070375,
+          "host_fia_call_us": 457.07,
+          "host_call_overlap_with_gap_us": 457.07,
+          "host_return_before_device_fia_us": 65.017
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.fused_padding.rank1.trace.json",
+      "sha256": "a9bfda89de5d88e0531626cd6aa685566cdf2afa3566f9204abf132874db36fe",
+      "scope": "two_layers",
+      "mode": "fused_padding",
+      "rank": 1,
+      "step": null,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 1,
+      "stream_gap_sum_us": 484.44,
+      "stream_gap_max_us": 484.44,
+      "polling_union_sum_us": 474.02,
+      "last_host_fia_return_before_first_device_fia_us": 64.61,
+      "last_outside_model_write_before_first_device_fia_us": 3.92,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 484.44,
+          "polling_interval_count": 181,
+          "polling_union_us": 474.02,
+          "host_fia_call_us": 415.34,
+          "host_call_overlap_with_gap_us": 415.34,
+          "host_return_before_device_fia_us": 64.61
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.fused_split_barrier.rank1.trace.json",
+      "sha256": "5f242a567fd260246128a79baf80747fec6fa287a32d3dcf8b8bc3969c58e84d",
+      "scope": "two_layers",
+      "mode": "fused_split_barrier",
+      "rank": 1,
+      "step": null,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 1,
+      "stream_gap_sum_us": 569.24,
+      "stream_gap_max_us": 569.24,
+      "polling_union_sum_us": 560.88,
+      "last_host_fia_return_before_first_device_fia_us": 61.38,
+      "last_outside_model_write_before_first_device_fia_us": 3.76,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 569.24,
+          "polling_interval_count": 195,
+          "polling_union_us": 560.88,
+          "host_fia_call_us": 469.91,
+          "host_call_overlap_with_gap_us": 469.91,
+          "host_return_before_device_fia_us": 61.38
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/two-layer-fused-v1/results/probe.fused_split_early.rank1.trace.json",
+      "sha256": "d624782f693b77ef611f94ea425de32eb7804fc8a38ec4e24997698e1456715d",
+      "scope": "two_layers",
+      "mode": "fused_split_early",
+      "rank": 1,
+      "step": null,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 1,
+      "stream_gap_sum_us": 495.78,
+      "stream_gap_max_us": 495.78,
+      "polling_union_sum_us": 487.46,
+      "last_host_fia_return_before_first_device_fia_us": 59.93,
+      "last_outside_model_write_before_first_device_fia_us": 4.22,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 495.78,
+          "polling_interval_count": 171,
+          "polling_union_us": 487.46,
+          "host_fia_call_us": 427.42,
+          "host_call_overlap_with_gap_us": 427.42,
+          "host_return_before_device_fia_us": 59.93
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.padding.step0.rank0.trace.json",
+      "sha256": "af5f8e55bff994397bf7774dcb7093411c1fc6ffcd4b9b7c78096a3587ee037d",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "padding",
+      "rank": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 16,
+      "stream_gap_sum_us": 67.938125,
+      "stream_gap_max_us": 4.51975,
+      "polling_union_sum_us": 27.700625,
+      "last_host_fia_return_before_first_device_fia_us": 5565.011,
+      "last_outside_model_write_before_first_device_fia_us": 5519.65,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.29975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 351.58,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 10716.931
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 3.81975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.600125,
+          "host_fia_call_us": 164.92,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 17803.31
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.359625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.98,
+          "host_fia_call_us": 162.22,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 24900.589
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.27975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.740125,
+          "host_fia_call_us": 151.9,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 31969.527
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.31975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 154.51,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 39067.626
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 3.91975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.52,
+          "host_fia_call_us": 150.56,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 46199.715
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.24075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 149.64,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 53275.564
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.380625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 148.31,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 60406.143
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.51975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.840125,
+          "host_fia_call_us": 155.04,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 67537.122
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.339625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 149.04,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 74618.58
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.059625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.66,
+          "host_fia_call_us": 146.29,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 81748.439
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.179625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 145.7,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 88870.228
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.139625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.7,
+          "host_fia_call_us": 151.78,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 95940.436
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.17975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.480125,
+          "host_fia_call_us": 149.68,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 103064.045
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.459625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 150.04,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 110187.334
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.44075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.960125,
+          "host_fia_call_us": 159.59,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 117266.263
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.split_barrier.step0.rank0.trace.json",
+      "sha256": "19d7737a4aed29ac5d2564ca25fff8b24143792db97a5486c315c6caf57c1f09",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_barrier",
+      "rank": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 16,
+      "stream_gap_sum_us": 66.45925,
+      "stream_gap_max_us": 4.520625,
+      "polling_union_sum_us": 26.720625000000002,
+      "last_host_fia_return_before_first_device_fia_us": 461.592,
+      "last_outside_model_write_before_first_device_fia_us": 422.648,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.279625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.7,
+          "host_fia_call_us": 346.02,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 5818.742
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.339625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 165.12,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 13000.423
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 3.97975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 181.78,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 20073.112
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.45975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.62,
+          "host_fia_call_us": 158.33,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 27124.95
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.26075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 162.83,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 34242.59
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.199625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.64,
+          "host_fia_call_us": 153.71,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 41434.51
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.23975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.620125,
+          "host_fia_call_us": 156.86,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 48523.569
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 3.93975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.7,
+          "host_fia_call_us": 157.23,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 55636.608
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 3.73975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.700125,
+          "host_fia_call_us": 153.02,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 62742.867
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.100625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.540125,
+          "host_fia_call_us": 155.6,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 69882.077
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 3.78075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.62,
+          "host_fia_call_us": 155.29,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 76986.326
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.079625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.68,
+          "host_fia_call_us": 157.83,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 84077.764
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.31975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 152.87,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 91133.922
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.520625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.620125,
+          "host_fia_call_us": 156.51,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 98355.214
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.15975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 156.95,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 105419.022
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.05975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.700125,
+          "host_fia_call_us": 151.76,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 112479.31
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.split_early.step0.rank0.trace.json",
+      "sha256": "eb9c79d1338cdb46eb6a937725e8bebd7e0bd295fb6197fd81077b51760ef2db",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_early",
+      "rank": 0,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 16,
+      "stream_gap_sum_us": 67.3385,
+      "stream_gap_max_us": 4.819625,
+      "polling_union_sum_us": 27.04025,
+      "last_host_fia_return_before_first_device_fia_us": 358.235,
+      "last_outside_model_write_before_first_device_fia_us": 318.247,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.480625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 340.61,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 5836.785
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.159625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.7,
+          "host_fia_call_us": 169.79,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 12869.143
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 3.939625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.62,
+          "host_fia_call_us": 164.7,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 19954.962
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.17975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.500125,
+          "host_fia_call_us": 161.02,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 27018.431
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.219625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 158.76,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 34125.7
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.139625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 169.03,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 41159.538
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.299625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.52,
+          "host_fia_call_us": 157.65,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 48218.406
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 3.759625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 154.49,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 55327.115
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.23975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 156.42,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 62432.984
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 3.879625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.66,
+          "host_fia_call_us": 161.03,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 69438.231
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.380625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.6,
+          "host_fia_call_us": 164.18,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 76539.671
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.41975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 156.8,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 83629.549
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.819625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.98,
+          "host_fia_call_us": 189.49,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 90641.647
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.040625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 156.68,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 97718.286
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 3.80075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.820125,
+          "host_fia_call_us": 154.0,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 104829.555
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.579625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.86,
+          "host_fia_call_us": 164.98,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 111895.503
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.padding.step0.rank1.trace.json",
+      "sha256": "5b1038b5a6a5919bee6d2a9ae6a78c930fa9c507b674ffc878292a2e66e713ab",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "padding",
+      "rank": 1,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 16,
+      "stream_gap_sum_us": 65.26,
+      "stream_gap_max_us": 4.56,
+      "polling_union_sum_us": 26.32,
+      "last_host_fia_return_before_first_device_fia_us": 529.68,
+      "last_outside_model_write_before_first_device_fia_us": 489.4,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.08,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 347.75,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 5600.91
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.06,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.6,
+          "host_fia_call_us": 157.4,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 12693.01
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.06,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 154.16,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 19801.59
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.14,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 146.13,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 26879.04
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.56,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 146.11,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 34010.83
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 3.86,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 168.84,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 41131.92
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 3.98,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 145.34,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 48209.15
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 3.94,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.6,
+          "host_fia_call_us": 144.92,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 55343.29
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.24,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 145.13,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 62477.08
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.2,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 144.51,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 69573.75
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.54,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 143.58,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 76708.22
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 3.54,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.52,
+          "host_fia_call_us": 144.69,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 83834.58
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.38,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.88,
+          "host_fia_call_us": 161.81,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 90886.83
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 3.88,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.52,
+          "host_fia_call_us": 145.19,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 98028.71
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 3.84,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 168.99,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 105135.09
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 3.96,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 145.88,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 112227.8
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.split_barrier.step0.rank1.trace.json",
+      "sha256": "24e92c081a16ebf76b308d46448f4733c89c9bf7d19bb3b98ed532702e01cbd7",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_barrier",
+      "rank": 1,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 16,
+      "stream_gap_sum_us": 66.44,
+      "stream_gap_max_us": 4.74,
+      "polling_union_sum_us": 27.06,
+      "last_host_fia_return_before_first_device_fia_us": 10627.14,
+      "last_outside_model_write_before_first_device_fia_us": 10595.94,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.66,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 348.43,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 15958.69
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 3.74,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.6,
+          "host_fia_call_us": 165.77,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 23131.42
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.04,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 157.46,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 30223.62
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.16,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.64,
+          "host_fia_call_us": 152.37,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 37294.15
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.36,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 151.01,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 44425.23
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.02,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.62,
+          "host_fia_call_us": 148.81,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 51627.87
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 3.42,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.64,
+          "host_fia_call_us": 185.59,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 58673.08
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.74,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.92,
+          "host_fia_call_us": 149.62,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 65805.25
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.12,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 162.18,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 72905.81
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 3.96,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 149.69,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 80050.54
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 3.78,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 156.89,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 87147.18
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.14,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 150.7,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 94245.95
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.36,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 173.27,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 101271.99
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 3.88,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.66,
+          "host_fia_call_us": 148.32,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 108497.03
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.74,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.94,
+          "host_fia_call_us": 148.75,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 115591.65
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.32,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 149.36,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 122661.46
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v3/results/diagnostic.split_early.step0.rank1.trace.json",
+      "sha256": "9a25e47910d97bd656a9fa9b47037468a75da8f50d55a03eaff7aedf69eedd77",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_early",
+      "rank": 1,
+      "step": 0,
+      "batch": 98,
+      "capacity": 400,
+      "fia_count": 16,
+      "stream_gap_sum_us": 66.86,
+      "stream_gap_max_us": 4.9,
+      "polling_union_sum_us": 27.18,
+      "last_host_fia_return_before_first_device_fia_us": 1203.42,
+      "last_outside_model_write_before_first_device_fia_us": 1165.26,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.56,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 330.18,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 6516.16
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.18,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.66,
+          "host_fia_call_us": 158.25,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 13582.46
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.52,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.64,
+          "host_fia_call_us": 156.81,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 20680.83
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 3.7,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.48,
+          "host_fia_call_us": 159.15,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 27739.55
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.16,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 161.19,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 34852.55
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.24,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 153.11,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 41906.04
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.02,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.62,
+          "host_fia_call_us": 152.5,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 48970.16
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.24,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 149.4,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 56089.4
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 3.9,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 189.88,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 63164.45
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 3.9,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.66,
+          "host_fia_call_us": 154.45,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 70167.09
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 3.86,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 149.85,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 77288.38
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 3.96,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.54,
+          "host_fia_call_us": 150.0,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 84385.07
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.9,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.34,
+          "host_fia_call_us": 150.0,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 91456.6
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 3.9,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.56,
+          "host_fia_call_us": 153.47,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 98540.97
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.34,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.58,
+          "host_fia_call_us": 158.76,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 105647.15
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.48,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 147.98,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 112745.12
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.padding.step1.rank0.trace.json",
+      "sha256": "d589ecdffe1b953555c8f6ae1175b27e21032a6d8f94dee997d6d8b87aafa707",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "padding",
+      "rank": 0,
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "fia_count": 16,
+      "stream_gap_sum_us": 69.283,
+      "stream_gap_max_us": 4.74075,
+      "polling_union_sum_us": 28.4405,
+      "last_host_fia_return_before_first_device_fia_us": 11605.79,
+      "last_outside_model_write_before_first_device_fia_us": 11568.051,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.43975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 310.1,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 16409.0
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.34075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 157.88,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 23057.97
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.23975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.7,
+          "host_fia_call_us": 151.64,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 29679.898
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.11975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.760125,
+          "host_fia_call_us": 159.73,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 36291.917
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.53975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.760125,
+          "host_fia_call_us": 149.3,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 42939.006
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.23975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.780125,
+          "host_fia_call_us": 157.16,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 49584.735
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.74075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 148.07,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 56182.824
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.11975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.86,
+          "host_fia_call_us": 146.6,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 62823.132
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.56075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.860125,
+          "host_fia_call_us": 152.96,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 69426.591
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.30075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.7,
+          "host_fia_call_us": 149.75,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 76010.349
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.08075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 162.12,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 82595.867
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.23975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 148.95,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 89204.225
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.57975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 146.1,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 95798.483
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.44075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 148.07,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 102423.772
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.20075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 150.48,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 109066.211
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.09975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 149.45,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 115672.289
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.split_barrier.step1.rank0.trace.json",
+      "sha256": "a0dba1c5525f0ab0a910ed0108d6488aad53598a37f87eaf7d7f141ac399fa8a",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_barrier",
+      "rank": 0,
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "fia_count": 16,
+      "stream_gap_sum_us": 70.8605,
+      "stream_gap_max_us": 4.93975,
+      "polling_union_sum_us": 28.780874999999998,
+      "last_host_fia_return_before_first_device_fia_us": 3188.604,
+      "last_outside_model_write_before_first_device_fia_us": 3146.003,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.05975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 313.08,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 8381.144
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.31975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.840125,
+          "host_fia_call_us": 167.52,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 15125.436
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.479625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 169.14,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 21738.565
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.61975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.820125,
+          "host_fia_call_us": 182.98,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 28153.483
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.579625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 159.71,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 34768.122
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.52075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.720125,
+          "host_fia_call_us": 163.28,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 41506.724
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 3.81975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 164.5,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 48072.922
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.67975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.720125,
+          "host_fia_call_us": 160.24,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 54702.371
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.93975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 156.33,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 61319.29
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.53975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.840125,
+          "host_fia_call_us": 152.01,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 68002.72
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.24075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.800125,
+          "host_fia_call_us": 149.18,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 74620.549
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.700625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.92,
+          "host_fia_call_us": 152.53,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 81212.627
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.50075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 150.17,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 87793.405
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.39975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 148.5,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 94531.636
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.52075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.960125,
+          "host_fia_call_us": 165.87,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 101137.595
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 3.939625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 150.47,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 107747.593
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.split_early.step1.rank0.trace.json",
+      "sha256": "fef861dd8a849206665d56ba1c619219af70b3920a6df7e488c3dc46c018c026",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_early",
+      "rank": 0,
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "fia_count": 16,
+      "stream_gap_sum_us": 70.561375,
+      "stream_gap_max_us": 4.65975,
+      "polling_union_sum_us": 28.800375,
+      "last_host_fia_return_before_first_device_fia_us": 1142.675,
+      "last_outside_model_write_before_first_device_fia_us": 1100.642,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.12075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 333.3,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 6308.515
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.35975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 193.48,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 12881.634
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.499625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 168.44,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 19486.803
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.559625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 207.37,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 26019.671
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.53975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 159.84,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 32642.78
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.560625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 161.16,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 39282.88
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.56075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.760125,
+          "host_fia_call_us": 168.72,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 45862.538
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.13975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 154.01,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 52528.627
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.28075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.780125,
+          "host_fia_call_us": 162.08,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 59111.166
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.12075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.740125,
+          "host_fia_call_us": 155.98,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 65700.064
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.10075,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 153.53,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 72274.572
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.65975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 157.72,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 78873.55
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.55975,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.92,
+          "host_fia_call_us": 185.89,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 85406.168
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.339625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 159.74,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 92036.917
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.59975,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.0,
+          "host_fia_call_us": 155.95,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 98648.576
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.559625,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 157.59,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 105262.215
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.padding.step1.rank1.trace.json",
+      "sha256": "520b9fb53f132b819aa7ac340873bde47dfe3bab019491c626fa6745d4d9b2d6",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "padding",
+      "rank": 1,
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "fia_count": 16,
+      "stream_gap_sum_us": 68.9,
+      "stream_gap_max_us": 4.64,
+      "polling_union_sum_us": 28.96,
+      "last_host_fia_return_before_first_device_fia_us": 496.43,
+      "last_outside_model_write_before_first_device_fia_us": 459.54,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.06,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 330.37,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 5274.75
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.62,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 158.74,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 11918.12
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.1,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 158.1,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 18541.15
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.64,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 148.4,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 25151.55
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.2,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 146.18,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 31805.41
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.44,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 144.85,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 38465.8
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.42,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 145.95,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 45067.52
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.56,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.04,
+          "host_fia_call_us": 147.46,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 51701.15
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.0,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 153.6,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 58302.38
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.1,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.88,
+          "host_fia_call_us": 146.61,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 64888.66
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.32,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 143.45,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 71503.8
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.46,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 153.3,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 78109.75
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.16,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 144.66,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 84703.49
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.5,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 160.51,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 91326.3
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.16,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 145.1,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 97978.08
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.16,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.82,
+          "host_fia_call_us": 170.9,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 104560.19
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.split_barrier.step1.rank1.trace.json",
+      "sha256": "1eb903a086c1d19789108ea8bd5ef397dee852542128e1aea37ecd3e2efb1921",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_barrier",
+      "rank": 1,
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "fia_count": 16,
+      "stream_gap_sum_us": 71.25999999999999,
+      "stream_gap_max_us": 4.96,
+      "polling_union_sum_us": 29.94,
+      "last_host_fia_return_before_first_device_fia_us": 481.635,
+      "last_outside_model_write_before_first_device_fia_us": 443.4,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.06,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 244.76,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 5346.035
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.48,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 160.81,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 12101.135
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.5,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.86,
+          "host_fia_call_us": 153.16,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 18740.655
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.96,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.18,
+          "host_fia_call_us": 154.72,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 25330.585
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.6,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 148.7,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 31968.195
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.38,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 154.08,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 38732.215
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.48,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.9,
+          "host_fia_call_us": 151.23,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 45315.735
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.46,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 147.66,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 51981.205
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.64,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.92,
+          "host_fia_call_us": 152.31,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 58606.465
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.22,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.12,
+          "host_fia_call_us": 153.93,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 65295.925
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 4.54,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.88,
+          "host_fia_call_us": 157.34,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 71898.535
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.02,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 154.12,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 78495.415
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.52,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 150.85,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 85081.705
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.52,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.8,
+          "host_fia_call_us": 156.81,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 91810.885
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.18,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.94,
+          "host_fia_call_us": 162.03,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 98434.175
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.7,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 153.17,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 105043.115
+        }
+      ]
+    },
+    {
+      "file": "benchmarks/results/multi_graph_structural/full-core-join-v4-profile/results/diagnostic.split_early.step1.rank1.trace.json",
+      "sha256": "450a50b40964aa1f69c9bc2c8b9503602f97d95d2317da8929390eacc5d5e3be",
+      "scope": "all_64_decoders_and_final_norm",
+      "mode": "split_early",
+      "rank": 1,
+      "step": 1,
+      "batch": 73,
+      "capacity": 304,
+      "fia_count": 16,
+      "stream_gap_sum_us": 70.64,
+      "stream_gap_max_us": 4.82,
+      "polling_union_sum_us": 29.6,
+      "last_host_fia_return_before_first_device_fia_us": 440.005,
+      "last_outside_model_write_before_first_device_fia_us": 400.5,
+      "all_outside_model_writes_before_first_device_fia": true,
+      "per_fia": [
+        {
+          "fia_index": 0,
+          "stream_gap_us": 4.44,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.86,
+          "host_fia_call_us": 247.67,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 5349.585
+        },
+        {
+          "fia_index": 1,
+          "stream_gap_us": 4.28,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.72,
+          "host_fia_call_us": 171.27,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 11952.835
+        },
+        {
+          "fia_index": 2,
+          "stream_gap_us": 4.18,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.68,
+          "host_fia_call_us": 160.71,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 18576.155
+        },
+        {
+          "fia_index": 3,
+          "stream_gap_us": 4.2,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.76,
+          "host_fia_call_us": 165.18,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 25149.625
+        },
+        {
+          "fia_index": 4,
+          "stream_gap_us": 4.58,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 155.06,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 31774.385
+        },
+        {
+          "fia_index": 5,
+          "stream_gap_us": 4.66,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.0,
+          "host_fia_call_us": 154.97,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 38411.235
+        },
+        {
+          "fia_index": 6,
+          "stream_gap_us": 4.82,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.74,
+          "host_fia_call_us": 152.1,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 45011.485
+        },
+        {
+          "fia_index": 7,
+          "stream_gap_us": 4.46,
+          "polling_interval_count": 3,
+          "polling_union_us": 2.04,
+          "host_fia_call_us": 147.53,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 51675.765
+        },
+        {
+          "fia_index": 8,
+          "stream_gap_us": 4.26,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.86,
+          "host_fia_call_us": 156.7,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 58271.285
+        },
+        {
+          "fia_index": 9,
+          "stream_gap_us": 4.7,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.94,
+          "host_fia_call_us": 151.11,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 64861.465
+        },
+        {
+          "fia_index": 10,
+          "stream_gap_us": 3.86,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.78,
+          "host_fia_call_us": 150.37,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 71457.215
+        },
+        {
+          "fia_index": 11,
+          "stream_gap_us": 4.36,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.92,
+          "host_fia_call_us": 159.04,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 78050.445
+        },
+        {
+          "fia_index": 12,
+          "stream_gap_us": 4.36,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.9,
+          "host_fia_call_us": 145.77,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 84623.625
+        },
+        {
+          "fia_index": 13,
+          "stream_gap_us": 4.78,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.98,
+          "host_fia_call_us": 145.75,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 91284.205
+        },
+        {
+          "fia_index": 14,
+          "stream_gap_us": 4.34,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 153.3,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 97913.685
+        },
+        {
+          "fia_index": 15,
+          "stream_gap_us": 4.36,
+          "polling_interval_count": 3,
+          "polling_union_us": 1.84,
+          "host_fia_call_us": 151.82,
+          "host_call_overlap_with_gap_us": 0.0,
+          "host_return_before_device_fia_us": 104540.665
+        }
+      ]
+    }
+  ],
+  "memory_phase_records": [
+    {
+      "run": "full-core-join-v3",
+      "rank": 0,
+      "graph_count": 6,
+      "buckets": [
+        304,
+        400
+      ],
+      "archived_caller_sha256": "ff7e80b46d7b6974547544e8c8aa5995e2367d8d0649a73fa83a6d0b9fab4269",
+      "same_pool_requested_for_exclusive_captures": true,
+      "before_allocated_bytes": 45797027328,
+      "after_allocated_bytes": 45825337856,
+      "allocated_phase_delta_bytes": 28310528,
+      "reserved_phase_delta_bytes": 654311424,
+      "phase_delta_is_pure_graph_memory": false,
+      "concurrent_pool_aliasing_qualified": false
+    },
+    {
+      "run": "full-core-join-v3",
+      "rank": 1,
+      "graph_count": 6,
+      "buckets": [
+        304,
+        400
+      ],
+      "archived_caller_sha256": "ff7e80b46d7b6974547544e8c8aa5995e2367d8d0649a73fa83a6d0b9fab4269",
+      "same_pool_requested_for_exclusive_captures": true,
+      "before_allocated_bytes": 45797027328,
+      "after_allocated_bytes": 45825337856,
+      "allocated_phase_delta_bytes": 28310528,
+      "reserved_phase_delta_bytes": 654311424,
+      "phase_delta_is_pure_graph_memory": false,
+      "concurrent_pool_aliasing_qualified": false
+    },
+    {
+      "run": "full-core-join-v4-profile",
+      "rank": 0,
+      "graph_count": 6,
+      "buckets": [
+        304,
+        400
+      ],
+      "archived_caller_sha256": "2b7fa5dcd4a207d8e28773eb6d457e6671efe7d11a91d2b275937359717d6e05",
+      "same_pool_requested_for_exclusive_captures": true,
+      "before_allocated_bytes": 45797027328,
+      "after_allocated_bytes": 45825337856,
+      "allocated_phase_delta_bytes": 28310528,
+      "reserved_phase_delta_bytes": 654311424,
+      "phase_delta_is_pure_graph_memory": false,
+      "concurrent_pool_aliasing_qualified": false
+    },
+    {
+      "run": "full-core-join-v4-profile",
+      "rank": 1,
+      "graph_count": 6,
+      "buckets": [
+        304,
+        400
+      ],
+      "archived_caller_sha256": "2b7fa5dcd4a207d8e28773eb6d457e6671efe7d11a91d2b275937359717d6e05",
+      "same_pool_requested_for_exclusive_captures": true,
+      "before_allocated_bytes": 45797027328,
+      "after_allocated_bytes": 45825337856,
+      "allocated_phase_delta_bytes": 28310528,
+      "reserved_phase_delta_bytes": 654311424,
+      "phase_delta_is_pure_graph_memory": false,
+      "concurrent_pool_aliasing_qualified": false
+    }
+  ],
+  "findings": {
+    "local_gap_range_us": [
+      484.44,
+      569.24
+    ],
+    "local_polling_coverage_range": [
+      0.9784906283543885,
+      0.9853137516688918
+    ],
+    "full_sum_of_16_gaps_range_us": [
+      65.26,
+      71.25999999999999
+    ],
+    "full_maximum_single_gap_us": 4.96,
+    "full_16_outside_writes_all_complete_before_first_fia": true,
+    "full_last_write_lead_range_us": [
+      318.247,
+      11568.051
+    ]
+  },
+  "limitations": [
+    "Observed polling/CPU overlap supports update-supply attribution, not a counterfactual speedup.",
+    "No external-event target address is exported; write/task correspondence is count/order/source based.",
+    "Profiler changes host overhead and rank timing; these are not unprofiled endpoints.",
+    "Full-model evidence covers B98 and B73 here, not every step or future fused full-model version.",
+    "A phase allocation delta is not pure graph memory, runtime bytes or proof of concurrent pool safety."
+  ]
+}
