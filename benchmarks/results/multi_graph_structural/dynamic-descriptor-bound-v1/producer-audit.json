@@ -1,0 +1,215 @@
+{
+  "scope": "Exact-planner producer endpoint; bound construction and current-length H2D included.",
+  "costs": {
+    "device_us": {
+      "aicpu": 115.49000069499016,
+      "aiv_unbounded": 186.20000034570694,
+      "aiv_bounded": 163.05000334978104
+    },
+    "wall_us": {
+      "aicpu": 297.021,
+      "aiv_unbounded": 371.1765,
+      "aiv_bounded": 347.751
+    },
+    "rounds": [
+      {
+        "trial": 0,
+        "device_us": {
+          "aicpu": 122.99000099301338,
+          "aiv_unbounded": 186.5300014615059,
+          "aiv_bounded": 163.46000134944916
+        },
+        "wall_us": {
+          "aicpu": 312.5715,
+          "aiv_unbounded": 369.2315,
+          "aiv_bounded": 348.3415
+        }
+      },
+      {
+        "trial": 1,
+        "device_us": {
+          "aicpu": 115.92000350356102,
+          "aiv_unbounded": 185.84000319242477,
+          "aiv_bounded": 164.53000158071518
+        },
+        "wall_us": {
+          "aicpu": 296.55600000000004,
+          "aiv_unbounded": 370.36699999999996,
+          "aiv_bounded": 352.0665
+        }
+      },
+      {
+        "trial": 2,
+        "device_us": {
+          "aicpu": 114.02000114321709,
+          "aiv_unbounded": 186.48000061511993,
+          "aiv_bounded": 162.50000149011612
+        },
+        "wall_us": {
+          "aicpu": 295.316,
+          "aiv_unbounded": 372.427,
+          "aiv_bounded": 344.812
+        }
+      },
+      {
+        "trial": 3,
+        "device_us": {
+          "aicpu": 111.37000098824501,
+          "aiv_unbounded": 186.08000129461288,
+          "aiv_bounded": 162.62999922037125
+        },
+        "wall_us": {
+          "aicpu": 293.68600000000004,
+          "aiv_unbounded": 370.1815,
+          "aiv_bounded": 346.3615
+        }
+      }
+    ]
+  },
+  "improvement_vs_aicpu_by_round": [
+    {
+      "trial": 0,
+      "device_us": -32.905114261064796,
+      "wall_us": -11.443781662755548
+    },
+    {
+      "trial": 1,
+      "device_us": -41.93408955138693,
+      "wall_us": -18.71838708372111
+    },
+    {
+      "trial": 2,
+      "device_us": -42.518856218923176,
+      "wall_us": -16.76035162334586
+    },
+    {
+      "trial": 3,
+      "device_us": -46.02675565885708,
+      "wall_us": -17.935992863125904
+    }
+  ],
+  "gate": "All four paired-round medians improve device AND wall by at least 3% versus AICPU.",
+  "stable_net_benefit": false,
+  "consumer_chain_permitted": false,
+  "disposition": "closed_current_shared_planner_candidate",
+  "device_bound_counters_match_cpu": true,
+  "complete_metadata_unchanged": true,
+  "diagnostic_profiles": {
+    "aicpu": {
+      "sha256": "60cc299234ddb8fe455505a5c44a88de9a0288e760a2c4713ecbe0f88feaf25d",
+      "kernels": [
+        {
+          "name": "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike",
+          "duration_us": 2.300125
+        },
+        {
+          "name": "FusedInferAttentionScoreV2SinkMetadata",
+          "duration_us": 104.342
+        }
+      ],
+      "dma_us": [
+        2.500125
+      ]
+    },
+    "aiv_unbounded": {
+      "sha256": "7f42855dd49daf6005c0caea58d08e9020cb59462ff463b57e1ea5149811a5a5",
+      "kernels": [
+        {
+          "name": "descriptor_plan",
+          "duration_us": 303.226125
+        }
+      ],
+      "dma_us": [
+        2.540125
+      ]
+    },
+    "aiv_bounded": {
+      "sha256": "ef25379121137202325a352770ae7a084bed792873b3192618fe0aafa14a2404",
+      "kernels": [
+        {
+          "name": "descriptor_plan_bound",
+          "duration_us": 244.864875
+        }
+      ],
+      "dma_us": [
+        2.52
+      ]
+    }
+  },
+  "profile_caveat": "One profiled replay per mode, not a performance endpoint or causal breakdown; waits not added twice.",
+  "historical_once_per_step_budget": [
+    {
+      "capacity": 400,
+      "producer_us": 70.741375,
+      "sixteen_attention_us": 3781.315625,
+      "zero_cost_producer_inventory_fraction_percent": 1.8364571188847933
+    },
+    {
+      "capacity": 400,
+      "producer_us": 75.2215,
+      "sixteen_attention_us": 3782.535375,
+      "zero_cost_producer_inventory_fraction_percent": 1.9498766365363551
+    },
+    {
+      "capacity": 400,
+      "producer_us": 77.881625,
+      "sixteen_attention_us": 3795.775875,
+      "zero_cost_producer_inventory_fraction_percent": 2.010544943635311
+    },
+    {
+      "capacity": 512,
+      "producer_us": 115.882375,
+      "sixteen_attention_us": 4908.277875,
+      "zero_cost_producer_inventory_fraction_percent": 2.306502365246013
+    },
+    {
+      "capacity": 512,
+      "producer_us": 112.64225,
+      "sixteen_attention_us": 4845.3565,
+      "zero_cost_producer_inventory_fraction_percent": 2.271929778118641
+    },
+    {
+      "capacity": 512,
+      "producer_us": 118.102375,
+      "sixteen_attention_us": 4826.756375,
+      "zero_cost_producer_inventory_fraction_percent": 2.388387231485631
+    },
+    {
+      "capacity": 400,
+      "producer_us": 76.521625,
+      "sixteen_attention_us": 3771.9155,
+      "zero_cost_producer_inventory_fraction_percent": 1.988381842148454
+    },
+    {
+      "capacity": 400,
+      "producer_us": 69.121375,
+      "sixteen_attention_us": 3778.935375,
+      "zero_cost_producer_inventory_fraction_percent": 1.7962670379016628
+    },
+    {
+      "capacity": 400,
+      "producer_us": 75.2815,
+      "sixteen_attention_us": 3792.055875,
+      "zero_cost_producer_inventory_fraction_percent": 1.9465976898382182
+    },
+    {
+      "capacity": 512,
+      "producer_us": 99.942,
+      "sixteen_attention_us": 4942.418,
+      "zero_cost_producer_inventory_fraction_percent": 1.9820480885934364
+    },
+    {
+      "capacity": 512,
+      "producer_us": 112.18225,
+      "sixteen_attention_us": 4850.756875,
+      "zero_cost_producer_inventory_fraction_percent": 2.26039947648965
+    },
+    {
+      "capacity": 512,
+      "producer_us": 113.92225,
+      "sixteen_attention_us": 4846.336875,
+      "zero_cost_producer_inventory_fraction_percent": 2.2966995701056248
+    }
+  ],
+  "budget_caveat": "Optimistic historical task-inventory fraction only; not a measured gain, end-to-end claim or universal bound."
+}

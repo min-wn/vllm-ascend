@@ -1,0 +1,26 @@
+{
+  "scoped_ruff_check": "passed: three bound benchmark scripts and one unit test module",
+  "scoped_ruff_format_check": "passed: four files already formatted",
+  "cpu_tests": {
+    "command": "python -m pytest --noconftest -q tests/ut/worker/multi_graph/test_descriptor_bound.py",
+    "status": "passed",
+    "tests": 25
+  },
+  "cpu_audit": "passed: 16221 exhaustive cases, 128 original trace steps, feasible bound and exact canonical restoration",
+  "device_audit": "passed: seven generations, all 1024 words, unchanged inputs/addresses and post-timing full-field check",
+  "bound_diagnostics": "passed: device L/U/optimum/iterations/P/S equal CPU oracle for all seven generations",
+  "paired_samples": 120,
+  "source_and_library_hashes": "verified by aclgraph_descriptor_bound_audit.py",
+  "report_sha256": "93a2add27d6090aea345ee3b8d8a86e53de8539ed954ef08a53a2d42032687f7",
+  "required_format_ci": {
+    "command": "bash format.sh ci",
+    "status": "blocked",
+    "exit_code": 2,
+    "reason": "Local WSL warnings and CRLF shell parse error",
+    "log_sha256": "cc4df5938d2fa20bf72cc4ccab2d245ed8ab3c5353bfb701b31e49c257d46210"
+  },
+  "full_ci_passed": false,
+  "disposition": "closed_current_shared_planner_candidate",
+  "consumer_chain_run": false,
+  "model_performance_measured": false
+}
