@@ -1,0 +1,22 @@
+{
+  "pid": 928869,
+  "command": [
+    "torchrun",
+    "--nproc_per_node=2",
+    "--master_port=29762",
+    "/workspace/gdn-quality-v1/tools/multi_graph_gdn_quality_probe.py",
+    "--manifest",
+    "/workspace/gdn-quality-v1/manifest.json",
+    "--protocol",
+    "/workspace/gdn-quality-v1/protocol.md",
+    "--trace",
+    "/workspace/gdn-quality-v1/trace.json",
+    "--output",
+    "/workspace/gdn-quality-v1/screen.json",
+    "--phase",
+    "screen"
+  ],
+  "started": 1792506331.5048,
+  "manifest_sha256": "1f395b8ac1b528e2974bf7b316be3995e833d58370e10d79f75a7c5d7555023b",
+  "protocol_sha256": "3513357a50e0edc6884b13462b241c297a8b2f5f61977deef71364e41e6542c7"
+}
