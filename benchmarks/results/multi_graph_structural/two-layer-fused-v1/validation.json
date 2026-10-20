@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-20",
+  "cpu_tests": {
+    "passed": 22,
+    "files": [
+      "test_bounded_lead_probe.py",
+      "test_full_core_join.py",
+      "test_two_layer_fused_analysis.py"
+    ]
+  },
+  "ruff_check": "passed",
+  "ruff_format_check": "passed: 4 files",
+  "raw_result_reanalysis": "passed: source/trace hashes, six modes, paired rank samples, dependencies",
+  "format_ci": {
+    "exit_code": 2,
+    "status": "blocked by local WSL/CRLF script parsing",
+    "log": "format-ci.log"
+  },
+  "npu_job": "completed; npu-smi reports no running processes on all 8 devices",
+  "scope": "two real complete layers; synthetic segment inputs and prefix; not full-model or serving"
+}

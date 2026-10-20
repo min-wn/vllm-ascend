@@ -1,0 +1,1534 @@
+{
+  "scope": "two complete real layers with synthetic segment inputs/prefix; not full model or serving",
+  "selection": {
+    "seed": 20261016,
+    "batch": 98,
+    "query": 4,
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136,
+      144,
+      152,
+      160,
+      168,
+      176,
+      184,
+      192,
+      200,
+      208,
+      216,
+      224,
+      232,
+      240,
+      248,
+      256,
+      272,
+      288,
+      304,
+      320,
+      336,
+      352,
+      368,
+      384,
+      400,
+      416,
+      432,
+      448,
+      464,
+      480,
+      496,
+      512
+    ],
+    "capacity_tokens": 400,
+    "capacity_requests": 100,
+    "pair_tokens": [
+      200,
+      200
+    ],
+    "pair_requests": [
+      50,
+      50
+    ],
+    "default_config_uses_ngram_for_capacity_only": true
+  },
+  "per_round": [
+    {
+      "round": 0,
+      "metric": "device_us",
+      "medians": {
+        "padding": 3874.5299577713013,
+        "split_barrier": 3940.419912338257,
+        "split_early": 3807.719945907593,
+        "fused_padding": 3781.0699939727783,
+        "fused_split_barrier": 3948.240041732788,
+        "fused_split_early": 3867.550015449524
+      },
+      "public_fusion_pct": 2.4121626317810896,
+      "ordinary_split_pct": 1.7243385027828961,
+      "equal_fusion_split_pct": -2.287183829302264,
+      "fused_early_saves_vs_barrier_us": 80.69002628326416
+    },
+    {
+      "round": 0,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 4012.781,
+        "split_barrier": 4090.542,
+        "split_early": 3981.166,
+        "fused_padding": 3917.427,
+        "fused_split_barrier": 4091.7219999999998,
+        "fused_split_early": 4009.902
+      },
+      "public_fusion_pct": 2.376257263977277,
+      "ordinary_split_pct": 0.7878575980099556,
+      "equal_fusion_split_pct": -2.3606055709525675,
+      "fused_early_saves_vs_barrier_us": 81.81999999999971
+    },
+    {
+      "round": 1,
+      "metric": "device_us",
+      "medians": {
+        "padding": 3860.170006752014,
+        "split_barrier": 3917.8000688552856,
+        "split_early": 3793.4300899505615,
+        "fused_padding": 3777.400016784668,
+        "fused_split_barrier": 3976.469874382019,
+        "fused_split_early": 3870.370030403137
+      },
+      "public_fusion_pct": 2.144205820535605,
+      "ordinary_split_pct": 1.7289372407099823,
+      "equal_fusion_split_pct": -2.461217059494958,
+      "fused_early_saves_vs_barrier_us": 106.09984397888184
+    },
+    {
+      "round": 1,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 4007.392,
+        "split_barrier": 4057.392,
+        "split_early": 3925.5609999999997,
+        "fused_padding": 3923.3014999999996,
+        "fused_split_barrier": 4126.637000000001,
+        "fused_split_early": 4020.9120000000003
+      },
+      "public_fusion_pct": 2.0983846851019394,
+      "ordinary_split_pct": 2.0420013814470894,
+      "equal_fusion_split_pct": -2.4879683603210356,
+      "fused_early_saves_vs_barrier_us": 105.72500000000036
+    },
+    {
+      "round": 2,
+      "metric": "device_us",
+      "medians": {
+        "padding": 3842.519998550415,
+        "split_barrier": 3905.2900075912476,
+        "split_early": 3761.1899375915527,
+        "fused_padding": 3741.719961166382,
+        "fused_split_barrier": 3921.7100143432617,
+        "fused_split_early": 3831.5600156784058
+      },
+      "public_fusion_pct": 2.6232794473954546,
+      "ordinary_split_pct": 2.116581331770395,
+      "equal_fusion_split_pct": -2.4010363000019463,
+      "fused_early_saves_vs_barrier_us": 90.14999866485596
+    },
+    {
+      "round": 2,
+      "metric": "wall_us",
+      "medians": {
+        "padding": 3982.3915,
+        "split_barrier": 4037.987,
+        "split_early": 3897.7315,
+        "fused_padding": 3875.886,
+        "fused_split_barrier": 4055.7515000000003,
+        "fused_split_early": 3965.401
+      },
+      "public_fusion_pct": 2.6744105897172687,
+      "ordinary_split_pct": 2.125858293942229,
+      "equal_fusion_split_pct": -2.3095364517945027,
+      "fused_early_saves_vs_barrier_us": 90.35050000000047
+    }
+  ],
+  "traces": [
+    {
+      "rank": 0,
+      "mode": "padding",
+      "file": "probe.padding.rank0.trace.json",
+      "sha256": "aa77fdd6379843248e8e6964a07a477b357aa5a54f70524091d69c8940bff431",
+      "counts": {
+        "matmul": 9,
+        "all_reduce": 4,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 150.603,
+      "upstream_attention": {
+        "kernel_work_us": 612.212125,
+        "o_collective_us": 246.585,
+        "through_previous_post_norm_span_us": 1282.885,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 204.504125,
+      "input_projection_us": 170.643375,
+      "solve_us": 258.585125,
+      "other_main_stream_body_us": 238.18475,
+      "commit_work_us": 55.781125,
+      "first_collective_us": 252.745,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 1,
+          "sum_us": 22.680375
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 62.76125
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.920375
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 1,
+          "sum_us": 2.000125
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 1,
+          "sum_us": 10.80025
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 8.900125
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 11.92025
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 12.440125
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 37.240875
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 6.920125
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 14.260375
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 2,
+          "sum_us": 170.643375
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 15.18025
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 13.16025
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 258.585125
+        }
+      }
+    },
+    {
+      "rank": 0,
+      "mode": "split_barrier",
+      "file": "probe.split_barrier.rank0.trace.json",
+      "sha256": "e339f0614bf8c1deff14e979c75cf916916ab61a2aaa4ed77b6f44b894c06857",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 146.542875,
+      "upstream_attention": {
+        "kernel_work_us": 611.392125,
+        "o_collective_us": 247.285,
+        "through_previous_post_norm_span_us": 1506.07,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 213.04425,
+      "input_projection_us": 243.464875,
+      "solve_us": 262.66525,
+      "other_main_stream_body_us": 275.9455,
+      "commit_work_us": 57.20125,
+      "first_collective_us": 138.643,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 37.060625
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 61.66125
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 20.280375
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 3.80025
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 4,
+          "sum_us": 35.40075
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 9.740125
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 12.16025
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 11.28025
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 35.340625
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 6.900125
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 14.300375
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 243.464875
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 14.72025
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 13.30025
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 262.66525
+        }
+      },
+      "last_down_collective_us": 139.182,
+      "input_a_overlap_last_collective_us": 0.0,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 0.0,
+      "solve_a_start_after_last_collective_us": 490.55,
+      "join_copy_us": 25.7605
+    },
+    {
+      "rank": 0,
+      "mode": "split_early",
+      "file": "probe.split_early.rank0.trace.json",
+      "sha256": "4da46dd7f912083f7768e8e989ea224cf083a7899ee820c5c7282911859724e0",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 155.923125,
+      "upstream_attention": {
+        "kernel_work_us": 623.952375,
+        "o_collective_us": 246.245,
+        "through_previous_post_norm_span_us": 1376.407,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 206.904125,
+      "input_projection_us": 245.564875,
+      "solve_us": 262.88525,
+      "other_main_stream_body_us": 280.74575,
+      "commit_work_us": 55.401125,
+      "first_collective_us": 142.463,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 35.44075
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 64.981375
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.780375
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 4.12
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 4,
+          "sum_us": 35.66075
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 9.60025
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 12.16025
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 11.46025
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 36.58075
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.100125
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 15.18025
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 245.564875
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 15.520375
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 13.16025
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 262.88525
+        }
+      },
+      "last_down_collective_us": 140.222,
+      "input_a_overlap_last_collective_us": 117.822375,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 140.14275,
+      "solve_a_start_after_last_collective_us": 355.567,
+      "join_copy_us": 26.660625
+    },
+    {
+      "rank": 0,
+      "mode": "fused_padding",
+      "file": "probe.fused_padding.rank0.trace.json",
+      "sha256": "8468c29d9ba0da140527a30009f8e7c21626fad34f70e44948f72000129ee96c",
+      "counts": [
+        8,
+        1,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      "down_fused_work_us": 219.504375,
+      "input_projection_us": 170.4235,
+      "all_gather_work_us": 126.222,
+      "input_a_overlap_last_gather_us": 0,
+      "down_b_overlap_first_gather_us": 0,
+      "boundary_span_us": 1022.061
+    },
+    {
+      "rank": 0,
+      "mode": "fused_split_barrier",
+      "file": "probe.fused_split_barrier.rank0.trace.json",
+      "sha256": "47619b4c21052d61ae661435fe9c374b9b82bcf4d432dfea03fa722a025eab32",
+      "counts": [
+        10,
+        2,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      "down_fused_work_us": 324.7065,
+      "input_projection_us": 244.264875,
+      "all_gather_work_us": 142.962,
+      "input_a_overlap_last_gather_us": 0.0,
+      "down_b_overlap_first_gather_us": 71.061,
+      "boundary_span_us": 1192.184
+    },
+    {
+      "rank": 0,
+      "mode": "fused_split_early",
+      "file": "probe.fused_split_early.rank0.trace.json",
+      "sha256": "a18ffdab22d330a969c9867aeee0c8661406a4656858fdb522a3231357778646",
+      "counts": [
+        10,
+        2,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      "down_fused_work_us": 330.70675,
+      "input_projection_us": 245.204875,
+      "all_gather_work_us": 147.463,
+      "input_a_overlap_last_gather_us": 48.841,
+      "down_b_overlap_first_gather_us": 73.141,
+      "boundary_span_us": 1142.383
+    },
+    {
+      "rank": 1,
+      "mode": "padding",
+      "file": "probe.padding.rank1.trace.json",
+      "sha256": "e02104333ad00bfa362fe8303d62b4a33d09a2a9099ce010ab77ef0b5f272796",
+      "counts": {
+        "matmul": 9,
+        "all_reduce": 4,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 140.12,
+      "upstream_attention": {
+        "kernel_work_us": 611.74,
+        "o_collective_us": 274.66,
+        "through_previous_post_norm_span_us": 1275.94,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 208.36,
+      "input_projection_us": 172.48,
+      "solve_us": 256.18,
+      "other_main_stream_body_us": 237.24,
+      "commit_work_us": 52.96,
+      "first_collective_us": 248.72,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 1,
+          "sum_us": 22.44
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 61.76
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.78
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 1,
+          "sum_us": 1.86
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 1,
+          "sum_us": 9.2
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 8.28
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 17.7
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 11.86
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 34.58
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.66
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 15.24
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 2,
+          "sum_us": 172.48
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 14.72
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 12.16
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 256.18
+        }
+      }
+    },
+    {
+      "rank": 1,
+      "mode": "split_barrier",
+      "file": "probe.split_barrier.rank1.trace.json",
+      "sha256": "bae0744c05b94bf741ff140b8cfbe8bfdd68f00dc10acba3c3c00744fc13dee7",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 141.18,
+      "upstream_attention": {
+        "kernel_work_us": 615.42,
+        "o_collective_us": 581.7,
+        "through_previous_post_norm_span_us": 1749.18,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 237.42,
+      "input_projection_us": 244.26,
+      "solve_us": 262.14,
+      "other_main_stream_body_us": 271.02,
+      "commit_work_us": 54.12,
+      "first_collective_us": 138.54,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 33.04
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 61.2
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.68
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 3.84
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 4,
+          "sum_us": 34.54
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 9.28
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 13.04
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 11.06
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 35.76
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.7
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 15.48
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 244.26
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 13.82
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 12.58
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 262.14
+        }
+      },
+      "last_down_collective_us": 139.26,
+      "input_a_overlap_last_collective_us": 0.0,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 0.0,
+      "solve_a_start_after_last_collective_us": 484.56,
+      "join_copy_us": 25.18
+    },
+    {
+      "rank": 1,
+      "mode": "split_early",
+      "file": "probe.split_early.rank1.trace.json",
+      "sha256": "6f855ef8a4cf360421aa8be528339b1239b0f26c84dc18d7245a9f65155ec7c8",
+      "counts": {
+        "matmul": 12,
+        "all_reduce": 5,
+        "solve": 1,
+        "commit": 1
+      },
+      "fia_count": 1,
+      "fia_kernel_us": 160.94,
+      "upstream_attention": {
+        "kernel_work_us": 627.96,
+        "o_collective_us": 263.16,
+        "through_previous_post_norm_span_us": 1380.46,
+        "note": "Includes input copies and previous post-attention norm; spans may include profiler rank skew."
+      },
+      "previous_down_matmul_us": 232.94,
+      "input_projection_us": 247.4,
+      "solve_us": 261.48,
+      "other_main_stream_body_us": 274.84,
+      "commit_work_us": 56.02,
+      "first_collective_us": 138.76,
+      "join_before": "core",
+      "input_gemm_before_previous_down_end_us": 0.0,
+      "body_inventory": {
+        "AddRmsNormBias": {
+          "count": 2,
+          "sum_us": 33.98
+        },
+        "CausalConv1d": {
+          "count": 1,
+          "sum_us": 62.66
+        },
+        "_layer_norm_fwd_1pass_kernel_npu": {
+          "count": 1,
+          "sum_us": 19.32
+        },
+        "aclnnAdds_AddAiCore_Add": {
+          "count": 2,
+          "sum_us": 4.1
+        },
+        "aclnnCat_ConcatD_ConcatD": {
+          "count": 4,
+          "sum_us": 34.48
+        },
+        "aclnnContiguous_SliceAiCore_Slice": {
+          "count": 1,
+          "sum_us": 9.0
+        },
+        "aclnnIndexSelect_GatherV3AiCore_GatherV3": {
+          "count": 1,
+          "sum_us": 13.4
+        },
+        "aclnnInplaceCopy_CastAiCore_Cast": {
+          "count": 3,
+          "sum_us": 11.04
+        },
+        "aclnnInplaceCopy_SliceAiCore_Slice": {
+          "count": 7,
+          "sum_us": 35.74
+        },
+        "aclnnInplaceCopy_TensorMoveAiCore_TensorMove": {
+          "count": 1,
+          "sum_us": 7.58
+        },
+        "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike": {
+          "count": 2,
+          "sum_us": 16.56
+        },
+        "aclnnMatmulWeightNz_MatMulCommon_MatMulV2": {
+          "count": 4,
+          "sum_us": 247.4
+        },
+        "fused_gdn_gating_kernel": {
+          "count": 1,
+          "sum_us": 14.36
+        },
+        "l2norm_fwd_kernel2": {
+          "count": 2,
+          "sum_us": 12.62
+        },
+        "q4_tile_solve_1": {
+          "count": 1,
+          "sum_us": 261.48
+        }
+      },
+      "last_down_collective_us": 140.34,
+      "input_a_overlap_last_collective_us": 119.34,
+      "solve_a_overlap_last_collective_us": 0.0,
+      "body_overlap_last_collective_us": 140.28,
+      "solve_a_start_after_last_collective_us": 351.54,
+      "join_copy_us": 24.76
+    },
+    {
+      "rank": 1,
+      "mode": "fused_padding",
+      "file": "probe.fused_padding.rank1.trace.json",
+      "sha256": "a9bfda89de5d88e0531626cd6aa685566cdf2afa3566f9204abf132874db36fe",
+      "counts": [
+        8,
+        1,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      "down_fused_work_us": 225.6,
+      "input_projection_us": 169.72,
+      "all_gather_work_us": 124.86,
+      "input_a_overlap_last_gather_us": 0,
+      "down_b_overlap_first_gather_us": 0,
+      "boundary_span_us": 1020.42
+    },
+    {
+      "rank": 1,
+      "mode": "fused_split_barrier",
+      "file": "probe.fused_split_barrier.rank1.trace.json",
+      "sha256": "5f242a567fd260246128a79baf80747fec6fa287a32d3dcf8b8bc3969c58e84d",
+      "counts": [
+        10,
+        2,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      "down_fused_work_us": 320.46,
+      "input_projection_us": 243.72,
+      "all_gather_work_us": 146.32,
+      "input_a_overlap_last_gather_us": 0.0,
+      "down_b_overlap_first_gather_us": 73.82,
+      "boundary_span_us": 1190.38
+    },
+    {
+      "rank": 1,
+      "mode": "fused_split_early",
+      "file": "probe.fused_split_early.rank1.trace.json",
+      "sha256": "d624782f693b77ef611f94ea425de32eb7804fc8a38ec4e24997698e1456715d",
+      "counts": [
+        10,
+        2,
+        3,
+        2,
+        1,
+        1,
+        1
+      ],
+      "down_fused_work_us": 323.2,
+      "input_projection_us": 248.66,
+      "all_gather_work_us": 146.62,
+      "input_a_overlap_last_gather_us": 48.62,
+      "down_b_overlap_first_gather_us": 71.88,
+      "boundary_span_us": 1130.82
+    }
+  ],
+  "numerical_diagnostics": [
+    [
+      {
+        "step": 0,
+        "mode": "fused_padding",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.002545223105698824,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_padding",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008362439111806452,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_barrier",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0026214532554149628,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_barrier",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008461094694212079,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_early",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0026214532554149628,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_early",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008461094694212079,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0025434023700654507,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.000790074875112623,
+        "tolerance_failures": 1
+      },
+      {
+        "step": 0,
+        "field": "conv",
+        "max_abs": 0.0625,
+        "nrmse": 0.0001936688058776781,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "dense_source",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "base",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "logs",
+        "max_abs": 0.006957948207855225,
+        "nrmse": 0.00017247370851691812,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "valid",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "fia_key",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "fia_value",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_padding",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0027683349326252937,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_padding",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008567926124669611,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_barrier",
+        "field": "hidden",
+        "max_abs": 0.03125,
+        "nrmse": 0.002756863832473755,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_barrier",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000866121903527528,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_early",
+        "field": "hidden",
+        "max_abs": 0.03125,
+        "nrmse": 0.002756863832473755,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_early",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000866121903527528,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "hidden",
+        "max_abs": 0.03125,
+        "nrmse": 0.002709960099309683,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "residual",
+        "max_abs": 0.125,
+        "nrmse": 0.0007872876594774425,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "conv",
+        "max_abs": 0.0625,
+        "nrmse": 0.00019948130648117512,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "dense_source",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "base",
+        "max_abs": 0.0038136839866638184,
+        "nrmse": 0.00021399995603132993,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "logs",
+        "max_abs": 0.012939453125,
+        "nrmse": 0.00017280525935348123,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "valid",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "fia_key",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "fia_value",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_padding",
+        "field": "hidden",
+        "max_abs": 0.0625,
+        "nrmse": 0.0029549631290137768,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_padding",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.0008767816470935941,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_barrier",
+        "field": "hidden",
+        "max_abs": 0.0625,
+        "nrmse": 0.002956512151286006,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_barrier",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000934415205847472,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_early",
+        "field": "hidden",
+        "max_abs": 0.0625,
+        "nrmse": 0.002956512151286006,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_early",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000934415205847472,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "hidden",
+        "max_abs": 0.09375,
+        "nrmse": 0.0028734204825013876,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.0008766558021306992,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "conv",
+        "max_abs": 0.125,
+        "nrmse": 0.00021069463400635868,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "dense_source",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "base",
+        "max_abs": 0.003934502601623535,
+        "nrmse": 0.0002546249597799033,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "logs",
+        "max_abs": 0.005130171775817871,
+        "nrmse": 0.00016778484859969467,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "valid",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "fia_key",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "fia_value",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      }
+    ],
+    [
+      {
+        "step": 0,
+        "mode": "fused_padding",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.002545223105698824,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_padding",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008362439111806452,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_barrier",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0026214532554149628,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_barrier",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008461094694212079,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_early",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0026214532554149628,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "mode": "fused_split_early",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008461094694212079,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0025434023700654507,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.000790074875112623,
+        "tolerance_failures": 1
+      },
+      {
+        "step": 0,
+        "field": "conv",
+        "max_abs": 0.0625,
+        "nrmse": 0.0002229850651929155,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "dense_source",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "base",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "logs",
+        "max_abs": 0.0042833685874938965,
+        "nrmse": 0.00016649303142912686,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "valid",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "fia_key",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 0,
+        "field": "fia_value",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_padding",
+        "field": "hidden",
+        "max_abs": 0.046875,
+        "nrmse": 0.0027683349326252937,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_padding",
+        "field": "residual",
+        "max_abs": 0.25,
+        "nrmse": 0.0008567926124669611,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_barrier",
+        "field": "hidden",
+        "max_abs": 0.03125,
+        "nrmse": 0.002756863832473755,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_barrier",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000866121903527528,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_early",
+        "field": "hidden",
+        "max_abs": 0.03125,
+        "nrmse": 0.002756863832473755,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "mode": "fused_split_early",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000866121903527528,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "hidden",
+        "max_abs": 0.03125,
+        "nrmse": 0.002709960099309683,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "residual",
+        "max_abs": 0.125,
+        "nrmse": 0.0007872876594774425,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "conv",
+        "max_abs": 0.125,
+        "nrmse": 0.00023176815011538565,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "dense_source",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "base",
+        "max_abs": 0.0013343095779418945,
+        "nrmse": 0.00016980663349386305,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "logs",
+        "max_abs": 0.0050542354583740234,
+        "nrmse": 0.0001504079846199602,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "valid",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "fia_key",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 1,
+        "field": "fia_value",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_padding",
+        "field": "hidden",
+        "max_abs": 0.0625,
+        "nrmse": 0.0029549631290137768,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_padding",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.0008767816470935941,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_barrier",
+        "field": "hidden",
+        "max_abs": 0.0625,
+        "nrmse": 0.002956512151286006,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_barrier",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000934415205847472,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_early",
+        "field": "hidden",
+        "max_abs": 0.0625,
+        "nrmse": 0.002956512151286006,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "mode": "fused_split_early",
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.000934415205847472,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "hidden",
+        "max_abs": 0.09375,
+        "nrmse": 0.0028734204825013876,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "residual",
+        "max_abs": 0.5,
+        "nrmse": 0.0008766558021306992,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "conv",
+        "max_abs": 0.0625,
+        "nrmse": 0.00023335609876085073,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "dense_source",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "base",
+        "max_abs": 0.001104593276977539,
+        "nrmse": 0.0001929678546730429,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "logs",
+        "max_abs": 0.004481911659240723,
+        "nrmse": 0.00016385767958126962,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "valid",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "fia_key",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      },
+      {
+        "step": 2,
+        "field": "fia_value",
+        "max_abs": 0.0,
+        "nrmse": 0.0,
+        "tolerance_failures": 0
+      }
+    ]
+  ]
+}

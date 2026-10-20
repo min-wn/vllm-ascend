@@ -22,6 +22,16 @@ def test_slowest_rank_is_selected_per_sample_before_statistics():
     assert [row["device_us"] for row in paired] == [19, 29]
 
 
+def test_fusion_controls_and_lane_ownership():
+    module = load()
+    assert module.experiment_modes(False) == module.MODES
+    assert module.experiment_modes(True) == module.MODES + ("fused_padding", "fused_split_barrier", "fused_split_early")
+    module.validate_fused_lanes((200, 200), [200, 400])
+    for pair, catalog in (((196, 204), [196, 204, 400]), ((200, 200), [200]), ((192, 208), [200, 400])):
+        with pytest.raises(ValueError):
+            module.validate_fused_lanes(pair, catalog)
+
+
 @pytest.mark.parametrize("field,value", [("mode", "split_early"), ("round", 1), ("sample", 1)])
 def test_mismatched_rank_identity_is_rejected(field, value):
     row = dict(mode="padding", round=0, sample=0, wall_us=10, device_us=9)

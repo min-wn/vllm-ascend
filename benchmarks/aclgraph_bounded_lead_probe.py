@@ -18,6 +18,17 @@ from pathlib import Path
 MODES = ("padding", "split_barrier", "split_early")
 
 
+def experiment_modes(fused):
+    return MODES + tuple("fused_" + mode for mode in MODES) if fused else MODES
+
+
+def validate_fused_lanes(pair, catalog):
+    if len(pair) != 2 or any(type(n) is not int or n <= 0 or n % 8 or n not in catalog for n in pair):
+        raise ValueError("each fused lane must be a default bucket with whole Q4 requests on both ranks")
+    if sum(pair) not in catalog:
+        raise ValueError("full fused capacity must belong to the default catalog")
+
+
 def join_projected_phases(phases, *, cat=None):
     """Reassemble contiguous request lanes, including initialized core output.
 
@@ -98,6 +109,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
     from multi_graph_tp_gdn import qualify_gdn
     from vllm.distributed.parallel_state import get_tp_group, get_world_group
 
+    modes = experiment_modes(getattr(args, "fused_down", False))
     rank = dist.get_rank()
     group, cpu_group = get_tp_group(), get_world_group().cpu_group
     rows, boundary = workload.capacity * 4, args.pair[0]
@@ -164,7 +176,9 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             "state commits",
             "all stream joins",
         ],
-        modes=MODES,
+        modes=modes,
+        packed_join=args.packed_join,
+        fused_down=args.fused_down,
         join_before=args.join_before,
         include_fia=args.include_fia,
         converted_weights=converted,
@@ -241,25 +255,43 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
         active[: live * 4].fill_(True)
         torch.npu.synchronize()
 
-    def submit(value, lane):
+    hcom = None
+    if args.fused_down:
+        hcom = group.device_group._get_backend(torch.device("npu")).get_hccl_comm_name(group.rank_in_group)
+
+    def fused_partial(value):
+        return torch_npu.npu_mm_reduce_scatter_base(value, previous.mlp.down_proj.weight.t(), hcom, 2, comm_mode="aiv")
+
+    def gather_rows(value):
+        result = torch.empty((value.shape[0] * 2, value.shape[1]), dtype=value.dtype, device=value.device)
+        dist.all_gather_into_tensor(result, value, group=group.device_group)
+        return result
+
+    def submit(value, lane, fused=False):
         ready[lane].record(torch.npu.current_stream())
         with torch.npu.stream(comm):
             comm.wait_event(ready[lane])
-            result = group.all_reduce(value)
+            result = gather_rows(value) if fused else group.all_reduce(value)
             done[lane].record(comm)
+        value.record_stream(comm)
         return result
 
     with installed_lane_backends(backends) as selected:
 
         def operation(mode, capturing=False):
+            fused = mode.startswith("fused_")
+            schedule = mode.removeprefix("fused_")
             for destination, origin in zip(data, source, strict=True):
                 destination.copy_(origin)
             prior_input = upstream.forward(*data, capturing=capturing) if upstream is not None else data
             normalized, prior = previous.post_attention_layernorm(*prior_input)
             packed, _ = previous.mlp.gate_up_proj(normalized)
             intermediate = previous.mlp.act_fn(packed)
-            if mode == "padding":
-                down, _ = previous.mlp.down_proj(intermediate)
+            if schedule == "padding":
+                if fused:
+                    down = gather_rows(fused_partial(intermediate))
+                else:
+                    down, _ = previous.mlp.down_proj(intermediate)
                 selected[0] = "full"
                 phase = fixture.phases.project(down, prior)
                 fixture.phases.core(phase)
@@ -268,22 +300,36 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             else:
                 partials = []
                 for lane, (start, stop) in enumerate(((0, boundary), (boundary, rows))):
-                    value = functional.linear(intermediate[start:stop], previous.mlp.down_proj.weight)
-                    partials.append(submit(value, lane))
+                    value = (
+                        fused_partial(intermediate[start:stop])
+                        if fused
+                        else functional.linear(intermediate[start:stop], previous.mlp.down_proj.weight)
+                    )
+                    partials.append(submit(value, lane, fused=fused))
                 # Both Down GEMMs precede any next-layer GEMM: no Cube/Cube race.
-                if mode == "split_barrier":
+                if schedule == "split_barrier":
                     torch.npu.current_stream().wait_event(done[1])
                 phases = []
                 for lane, (name, start, stop) in enumerate((("left", 0, boundary), ("right", boundary, rows))):
                     torch.npu.current_stream().wait_event(done[lane])
                     selected[0] = name
-                    phase = fixture.phases.project(partials[lane], prior[start:stop], name)
+                    if args.packed_join:
+                        from aclgraph_full_core_join import project_packed
+
+                        phase = project_packed(fixture.phases, partials[lane], prior[start:stop], name)
+                    else:
+                        phase = fixture.phases.project(partials[lane], prior[start:stop], name)
                     if args.join_before == "o":
                         fixture.phases.core(phase)
                         backends[name].launch_pending_commit()
                     phases.append(phase)
                 if args.join_before == "core":
-                    phase = join_projected_phases(phases)
+                    if args.packed_join:
+                        from aclgraph_full_core_join import join_packed
+
+                        phase = join_packed(phases)
+                    else:
+                        phase = join_projected_phases(phases)
                     selected[0] = "full"
                     fixture.phases.core(phase)
                     backends["full"].launch_pending_commit()
@@ -334,7 +380,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             assert_values(tensors(snapshot()), tensors(official_state), "two-official-layers/state")
             report["official_two_layer_exact"] = True
             restore(initial)
-        for mode in MODES:
+        for mode in modes:
             progress(f"warmup/{mode}")
             for _ in range(2):
                 restore(initial)
@@ -358,11 +404,11 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             if upstream is not None:
                 report["fia_update_tasks"][mode] = len(upstream.resolve(graph))
 
-        histories = {mode: initial for mode in MODES}
+        histories = {mode: initial for mode in modes}
         for step, live in enumerate((workload.batch, workload.batch - 1, workload.batch + 1)):
             prepare(step, live)
             step_results = {}
-            for mode in MODES:
+            for mode in modes:
                 before = histories[mode]
                 restore(before)
                 with torch.npu.stream(root):
@@ -382,10 +428,30 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
                 histories[mode] = actual
                 step_results[mode] = (tuple(v.clone() for v in outputs[mode]), actual)
                 checks.append(dict(mode=mode, step=step, live=live, eager_replay_exact=True, inactive_null_exact=True))
-            assert_values(step_results["split_early"][0], step_results["split_barrier"][0], "schedule/output")
-            assert_values(
-                tensors(step_results["split_early"][1]), tensors(step_results["split_barrier"][1]), "schedule/state"
-            )
+            for prefix in ("", "fused_") if args.fused_down else ("",):
+                early, barrier = step_results[prefix + "split_early"], step_results[prefix + "split_barrier"]
+                assert_values(early[0], barrier[0], f"{prefix}schedule/output")
+                assert_values(tensors(early[1]), tensors(barrier[1]), f"{prefix}schedule/state")
+                if prefix:
+                    for mode in ("fused_padding", "fused_split_barrier", "fused_split_early"):
+                        for field, actual_value, reference in zip(
+                            ("hidden", "residual"), step_results[mode][0], step_results["padding"][0], strict=True
+                        ):
+                            delta = actual_value.float() - reference.float()
+                            diagnostics.append(
+                                dict(
+                                    step=step,
+                                    mode=mode,
+                                    field=field,
+                                    max_abs=delta.abs().max().item(),
+                                    nrmse=(delta.square().mean() / reference.float().square().mean().clamp_min(1e-30))
+                                    .sqrt()
+                                    .item(),
+                                    tolerance_failures=(delta.abs() > 0.02 + 0.02 * reference.float().abs())
+                                    .sum()
+                                    .item(),
+                                )
+                            )
             for field, observed, reference in zip(
                 ("hidden", "residual", "conv", "dense_source", "base", "logs", "valid")
                 + (("fia_key", "fia_value") if upstream is not None else ()),
@@ -409,7 +475,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
 
         prepare(10, workload.batch)
         for trial in range(args.rounds):
-            for mode in MODES if trial % 2 == 0 else reversed(MODES):
+            for mode in modes if trial % 2 == 0 else reversed(modes):
                 for sample in range(-2, args.repeats):
                     # Identical coherent initial state for every timed repetition.
                     restore(initial)
@@ -436,7 +502,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             progress(f"timed/round{trial}")
 
         report["profiles"] = []
-        for mode in MODES:
+        for mode in modes:
             restore(initial)
             root.wait_stream(torch.npu.current_stream())
             dist.barrier(group=cpu_group)
@@ -467,7 +533,7 @@ def experiment(args, workload, runner, model, inputs, context, reset_kv, *, modu
             ]
             for metric in ("wall_us", "device_us")
         }
-        for mode in MODES
+        for mode in modes
     }
     report["status"] = "completed_closed_boundary_with_cross_shape_numerical_diagnostics"
     args.output.with_suffix(f".rank{rank}.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
@@ -490,15 +556,21 @@ def main():
     parser.add_argument("--repeats", type=int, default=6)
     parser.add_argument("--join-before", choices=("o", "core"), default="o")
     parser.add_argument("--include-fia", action="store_true")
+    parser.add_argument("--packed-join", action="store_true")
+    parser.add_argument("--fused-down", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists() or args.rounds < 2 or args.repeats < 3:
         parser.error("new output, at least two rounds and three repeats required")
+    if args.packed_join and args.join_before != "core":
+        parser.error("packed join requires rejoining before core")
     args.tensor_parallel_size, args.pair, args.query = 2, (200, 200), 4
     args.dtype, args.batch_invariant, args.compiled = "bfloat16", False, False
     args.gdn_probe, args.gdn_pipeline = True, False
     args.selection = select_workload(args)
     args.pair = args.selection["pair_tokens"]
+    if args.fused_down:
+        validate_fused_lanes(args.pair, args.selection["capture_sizes"])
     batch, capacity = args.selection["batch"], args.selection["capacity_requests"]
     if batch + 1 > capacity:
         raise ValueError("qualification growth must stay in the default bucket")

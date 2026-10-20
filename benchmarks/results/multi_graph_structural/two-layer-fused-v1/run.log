@@ -1,0 +1,301 @@
+W1020 02:00:30.457000 681473 site-packages/torch/distributed/run.py:852] 
+W1020 02:00:30.457000 681473 site-packages/torch/distributed/run.py:852] *****************************************
+W1020 02:00:30.457000 681473 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1020 02:00:30.457000 681473 site-packages/torch/distributed/run.py:852] *****************************************
+INFO 10-20 02:00:40 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-20 02:00:40 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-20 02:00:40 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-20 02:00:40 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-20 02:00:40 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-20 02:00:40 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-20 02:00:40 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-20 02:00:40 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-20 02:00:40 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+INFO 10-20 02:00:40 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+2026-10-20 02:00:50,726 - 681557 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+2026-10-20 02:00:50,881 - 681556 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+INFO 10-20 02:00:51 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-20 02:00:51 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-20 02:00:51 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-20 02:00:51 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-20 02:00:51 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-20 02:00:51 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-20 02:00:51 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-20 02:00:51 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+WARNING 10-20 02:00:52 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-20 02:00:52 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+INFO 10-20 02:00:52 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 02:00:52 [model.py:2030] Using max model len 2048
+WARNING 10-20 02:00:52 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 02:00:52 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 02:00:52 [model.py:2030] Using max model len 2048
+WARNING 10-20 02:00:52 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 02:00:53 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 10-20 02:00:53 [config.py:625] Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+WARNING 10-20 02:00:53 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-20 02:00:53 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-20 02:00:53 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-20 02:00:53 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-20 02:00:53 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 02:00:53 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-20 02:00:53 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 02:00:53 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 02:00:53 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-20 02:00:53 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-20 02:00:53 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-20 02:00:53 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-20 02:00:53 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 02:00:53 [model.py:2030] Using max model len 512
+WARNING 10-20 02:00:53 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 02:00:53 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-20 02:00:53 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-20 02:00:53 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-20 02:00:53 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-20 02:00:53 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=512.
+WARNING 10-20 02:00:53 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-20 02:00:53 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-20 02:00:53 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-20 02:00:53 [vllm.py:2135] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-20 02:00:53 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-20 02:00:53 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 02:00:54 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 02:00:54 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 02:00:54 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-20 02:00:54 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-20 02:00:54 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 10-20 02:00:54 [config.py:625] Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+WARNING 10-20 02:00:54 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-20 02:00:54 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-20 02:00:54 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-20 02:00:54 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-20 02:00:54 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 02:00:54 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-20 02:00:54 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 02:00:54 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 02:00:54 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-20 02:00:54 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-20 02:00:54 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-20 02:00:54 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-20 02:00:54 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 02:00:54 [model.py:2030] Using max model len 512
+WARNING 10-20 02:00:54 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 02:00:54 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-20 02:00:54 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-20 02:00:54 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-20 02:00:54 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-20 02:00:54 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=512.
+WARNING 10-20 02:00:54 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-20 02:00:54 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-20 02:00:54 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-20 02:00:54 [vllm.py:2135] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-20 02:00:54 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-20 02:00:54 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 02:00:54 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 02:00:54 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 02:00:54 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-20 02:00:54 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+WARNING 10-20 02:00:57 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+WARNING 10-20 02:00:57 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+INFO 10-20 02:00:59 [parallel_state.py:1827] world_size=2 rank=1 local_rank=1 distributed_init_method=env:// backend=hccl
+INFO 10-20 02:00:59 [parallel_state.py:1827] world_size=2 rank=0 local_rank=0 distributed_init_method=env:// backend=hccl
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+INFO 10-20 02:01:00 [parallel_state.py:2267] rank 0 in world size 2 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank N/A, EPLB rank N/A
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+WARNING 10-20 02:01:00 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-20 02:01:00 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+[rank0]:[W1020 02:01:00.747800876 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+INFO 10-20 02:01:00 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-20 02:01:00 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+WARNING 10-20 02:01:00 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-20 02:01:00 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+INFO 10-20 02:01:00 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-20 02:01:00 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-20 02:01:01 [interface.py:414] Using default backend AttentionBackendEnum.TORCH_SDPA for vit attention
+INFO 10-20 02:01:01 [mm_encoder_attention.py:372] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+INFO 10-20 02:01:01 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO 10-20 02:01:01 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+INFO 10-20 02:01:01 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-20 02:01:01 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-20 02:01:02 [weight_utils.py:895] Filesystem type for checkpoints: XFS. Checkpoint size: 51.75 GiB. Available RAM: 1974.48 GiB.
+INFO 10-20 02:01:02 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (XFS) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:02,  3.46it/s]
+Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.80it/s]
+Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.47it/s]
+Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.41it/s]
+Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.36it/s]
+Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.35it/s]
+Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.44it/s]
+Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:05<00:01,  1.52it/s]
+Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:07<00:00,  1.25it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.38it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.44it/s]
+
+INFO 10-20 02:01:09 [default_loader.py:430] Loading weights took 7.71 seconds
+INFO 10-20 02:01:09 [model_runner_v1.py:4522] Loading drafter model...
+INFO 10-20 02:01:10 [model_runner_v1.py:4522] Loading drafter model...
+INFO 10-20 02:01:10 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-20 02:01:10 [model_runner_v1.py:4671] Model runner load_model total time: 10.12 seconds
+INFO 10-20 02:01:10 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-20 02:01:10 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-20 02:01:10 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+INFO 10-20 02:01:11 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-20 02:01:11 [model_runner_v1.py:4671] Model runner load_model total time: 10.83 seconds
+INFO 10-20 02:01:11 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-20 02:01:11 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-20 02:01:11 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+WARNING 10-20 02:01:13 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=681556) is multi-threaded, use of fork() may lead to deadlocks in the child.
+WARNING 10-20 02:01:13 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=681557) is multi-threaded, use of fork() may lead to deadlocks in the child.
+{"stage": "warmup/padding"}
+{"stage": "warmup/split_barrier"}
+{"stage": "warmup/split_early"}
+{"stage": "warmup/fused_padding"}
+{"stage": "warmup/fused_split_barrier"}
+{"stage": "warmup/fused_split_early"}
+{"stage": "qualified/step0"}
+{"stage": "qualified/step1"}
+{"stage": "qualified/step2"}
+{"stage": "timed/round0"}
+{"stage": "timed/round1"}
+{"stage": "timed/round2"}
+[2026-10-20 02:01:24] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:24] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:24] [WARNING] [681556] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-20 02:01:25] [INFO] [682500] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681557_20261020020124131_ascend_pt
+[2026-10-20 02:01:25] [INFO] [682522] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681556_20261020020124131_ascend_pt
+||//--[2026-10-20 02:01:27] [INFO] [682552] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031214
+[2026-10-20 02:01:27] [INFO] [682574] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030392
+[2026-10-20 02:01:27] [INFO] [682500] profiler.py: All profiling data parsed in a total time of 0:00:02.781502
+[2026-10-20 02:01:27] [INFO] [682522] profiler.py: All profiling data parsed in a total time of 0:00:02.765133
+[2026-10-20 02:01:28] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:28] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:28] [WARNING] [681556] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-20 02:01:29] [INFO] [683304] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681557_20261020020128149_ascend_pt
+[2026-10-20 02:01:29] [INFO] [683325] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681556_20261020020128150_ascend_pt
+||//--[2026-10-20 02:01:31] [INFO] [683356] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031033
+[2026-10-20 02:01:31] [INFO] [683369] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030390
+[2026-10-20 02:01:31] [INFO] [683304] profiler.py: All profiling data parsed in a total time of 0:00:02.780137
+[2026-10-20 02:01:31] [INFO] [683325] profiler.py: All profiling data parsed in a total time of 0:00:02.779189
+[2026-10-20 02:01:32] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:32] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:32] [WARNING] [681556] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-20 02:01:32] [INFO] [684108] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681556_20261020020132140_ascend_pt
+[2026-10-20 02:01:33] [INFO] [684129] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681557_20261020020132140_ascend_pt
+||//--[2026-10-20 02:01:35] [INFO] [684160] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031275
+[2026-10-20 02:01:35] [INFO] [684181] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031157
+[2026-10-20 02:01:35] [INFO] [684129] profiler.py: All profiling data parsed in a total time of 0:00:02.785069
+[2026-10-20 02:01:35] [INFO] [684108] profiler.py: All profiling data parsed in a total time of 0:00:02.829893
+[2026-10-20 02:01:36] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:36] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:36] [WARNING] [681556] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-20 02:01:36] [INFO] [684951] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681556_20261020020136130_ascend_pt
+[2026-10-20 02:01:37] [INFO] [684967] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681557_20261020020136130_ascend_pt
+||//--[2026-10-20 02:01:39] [INFO] [685003] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031360
+[2026-10-20 02:01:39] [INFO] [685023] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030962
+[2026-10-20 02:01:39] [INFO] [684951] profiler.py: All profiling data parsed in a total time of 0:00:02.775758
+[2026-10-20 02:01:39] [INFO] [684967] profiler.py: All profiling data parsed in a total time of 0:00:02.780591
+[2026-10-20 02:01:40] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:40] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:40] [WARNING] [681556] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-20 02:01:40] [INFO] [685755] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681557_20261020020140122_ascend_pt
+[2026-10-20 02:01:40] [INFO] [685776] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681556_20261020020140122_ascend_pt
+||//--[2026-10-20 02:01:43] [INFO] [685807] profiler.py: CANN profiling data parsed in a total time of 0:00:02.029285
+[2026-10-20 02:01:43] [INFO] [685818] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031546
+[2026-10-20 02:01:43] [INFO] [685776] profiler.py: All profiling data parsed in a total time of 0:00:02.810254
+[2026-10-20 02:01:43] [INFO] [685755] profiler.py: All profiling data parsed in a total time of 0:00:02.847143
+[2026-10-20 02:01:44] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:44] [WARNING] [681556] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-20 02:01:44] [WARNING] [681556] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-20 02:01:44] [INFO] [686559] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681556_20261020020144036_ascend_pt
+|[2026-10-20 02:01:44] [INFO] [686587] profiler.py: Start parsing profiling data in sync mode at: /root/export_only_prof_dir/16b0f9cecd11_681557_20261020020144036_ascend_pt
+|//-[2026-10-20 02:01:46] [INFO] [686585] profiler.py: CANN profiling data parsed in a total time of 0:00:02.031450
+-[2026-10-20 02:01:47] [INFO] [686671] profiler.py: CANN profiling data parsed in a total time of 0:00:02.030818
+[2026-10-20 02:01:47] [INFO] [686559] profiler.py: All profiling data parsed in a total time of 0:00:02.779061
+[2026-10-20 02:01:47] [INFO] [686587] profiler.py: All profiling data parsed in a total time of 0:00:02.783488
+{
+  "padding": {
+    "wall_us": [
+      4012.781,
+      4007.392,
+      3982.3915
+    ],
+    "device_us": [
+      3874.5299577713013,
+      3860.170006752014,
+      3842.519998550415
+    ]
+  },
+  "split_barrier": {
+    "wall_us": [
+      4090.542,
+      4057.392,
+      4037.987
+    ],
+    "device_us": [
+      3940.419912338257,
+      3917.8000688552856,
+      3905.2900075912476
+    ]
+  },
+  "split_early": {
+    "wall_us": [
+      3981.166,
+      3925.5609999999997,
+      3897.7315
+    ],
+    "device_us": [
+      3807.719945907593,
+      3793.4300899505615,
+      3761.1899375915527
+    ]
+  },
+  "fused_padding": {
+    "wall_us": [
+      3917.427,
+      3923.3014999999996,
+      3875.886
+    ],
+    "device_us": [
+      3781.0699939727783,
+      3777.400016784668,
+      3741.719961166382
+    ]
+  },
+  "fused_split_barrier": {
+    "wall_us": [
+      4091.7219999999998,
+      4126.637000000001,
+      4055.7515000000003
+    ],
+    "device_us": [
+      3948.240041732788,
+      3976.469874382019,
+      3921.7100143432617
+    ]
+  },
+  "fused_split_early": {
+    "wall_us": [
+      4009.902,
+      4020.9120000000003,
+      3965.401
+    ],
+    "device_us": [
+      3867.550015449524,
+      3870.370030403137,
+      3831.5600156784058
+    ]
+  }
+}
