@@ -158,3 +158,95 @@ def test_manifest_rejects_changed_protocol_limits_and_owner_order(quality, tmp_p
     protocol.write_text("changed after results")
     with pytest.raises(ValueError, match="protocol changed"):
         probe.load_inputs(manifest, protocol, SimpleNamespace(digest="trace"))
+
+
+@pytest.fixture
+def saved_quality_audit(quality, monkeypatch, tmp_path):
+    import hashlib
+    import json
+
+    audit = importlib.import_module("multi_graph_gdn_quality_analyze")
+    monkeypatch.setattr(quality, "BOOTSTRAP_DRAWS", 20)
+    trace = SimpleNamespace(
+        initial_prefix_by_request=(2,),
+        steps=tuple(dict(step=i, request_ids=(0,), seq_lengths=(6 + i,), accepted_after_step=(1,)) for i in range(128)),
+    )
+    source = dict(tokens=list(range(200)), article=0)
+    frozen = dict(payload=dict(screen=[source], screen_expected_tokens=128), payload_sha256="frozen")
+    monkeypatch.setattr(audit, "load_fixed_trace", lambda _: trace)
+    monkeypatch.setattr(audit, "load_inputs", lambda *args: frozen)
+    (tmp_path / "manifest.json").write_text("{}")
+    rows = []
+    for step, group in enumerate(quality.score_layout(trace)):
+        for item in group:
+            rows.append(
+                dict(
+                    step=step,
+                    owner=0,
+                    position=item["position"],
+                    article=0,
+                    target=source["tokens"][item["position"]],
+                    official_nll=1.0,
+                    compact_nll=1.0,
+                    delta_nll=0.0,
+                    kl=0.0,
+                    js=0.0,
+                    tv=0.0,
+                    top1_disagreement=0.0,
+                    official_correct=1.0,
+                    compact_correct=1.0,
+                    official_margin=0.1,
+                )
+            )
+    for rank in (0, 1):
+        report = dict(
+            status="complete_real_text_quality_audit",
+            rank=rank,
+            completed_steps=128,
+            terminal_closed=True,
+            payload_sha256="frozen",
+            manifest_sha256=hashlib.sha256((tmp_path / "manifest.json").read_bytes()).hexdigest(),
+            prefill={},
+            selection={},
+            rows=rows if rank == 0 else [],
+            hidden_diagnostics=[dict(worst_request_nrmse=0, screen_passed=True) for _ in range(128)],
+        )
+        if rank == 0:
+            report["summary"] = quality.summarize(rows, expected_tokens=128)
+        (tmp_path / f"screen.rank{rank}.json").write_text(json.dumps(report))
+    return audit, tmp_path
+
+
+def test_independent_audit_rejects_wrong_next_token_and_unclosed_peer(saved_quality_audit):
+    import json
+
+    audit, root = saved_quality_audit
+    result = audit.analyze(root)
+    assert result["status"] == "audited_real_text_quality"
+    assert not result["summary"]["screen_passed"]  # This miniature fixture has only one owner/article.
+    path = root / "screen.rank0.json"
+    data = json.loads(path.read_bytes())
+    data["rows"][0]["target"] += 1
+    path.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="misalignment"):
+        audit.analyze(root)
+    data["rows"][0]["target"] -= 1
+    path.write_text(json.dumps(data))
+    peer = root / "screen.rank1.json"
+    data = json.loads(peer.read_bytes())
+    data["terminal_closed"] = False
+    peer.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="incomplete paired-rank"):
+        audit.analyze(root)
+
+
+def test_independent_audit_rejects_modified_acceptance_result(saved_quality_audit):
+    import json
+
+    audit, root = saved_quality_audit
+    path = root / "screen.rank0.json"
+    data = json.loads(path.read_bytes())
+    data["summary"]["screen_passed"] = True
+    path.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="does not reproduce"):
+        audit.analyze(root)
