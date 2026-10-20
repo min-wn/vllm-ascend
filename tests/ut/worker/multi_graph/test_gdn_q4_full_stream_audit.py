@@ -27,14 +27,16 @@ class RegistrySnapshot:
     registry_identity: tuple
 
 
-@pytest.fixture
-def fixture(monkeypatch):
+@pytest.fixture(params=(False, True), ids=("torch_scan", "array_scan"))
+def fixture(monkeypatch, request):
     directory = Path(__file__).resolve().parents[4] / "benchmarks"
     monkeypatch.syspath_prepend(str(directory))
     path = directory / "multi_graph_gdn_q4_full_stream_audit.py"
     spec = importlib.util.spec_from_file_location("full_stream_audit", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    original_checkpoint = module.StreamingCheckpoint
+    module.StreamingCheckpoint = lambda *args, **kwargs: original_checkpoint(*args, cpu_array=request.param, **kwargs)
 
     def tensor(rows, dtype=torch.float32):
         result = torch.arange(rows * 6, dtype=dtype).reshape(rows, 2, 3)

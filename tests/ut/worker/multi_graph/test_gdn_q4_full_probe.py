@@ -2,6 +2,7 @@
 """Full-model launch and traversal gates without importing accelerator runtime."""
 
 import importlib.util
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -456,3 +457,36 @@ def test_replay_attribution_rejects_invalid_latency_in_any_control(tile_enabled,
     means[invalid_mode] = invalid_latency
     with pytest.raises(ValueError, match="finite positive latencies"):
         module.replay_attribution(means, tile_enabled=tile_enabled)
+
+
+def test_launcher_keeps_crash_handler_without_starting_unsafe_frame_watchdog(tmp_path, monkeypatch):
+    directory = Path(__file__).resolve().parents[4] / "benchmarks"
+    monkeypatch.syspath_prepend(str(directory))
+    module = load_benchmark("multi_graph_gdn_q4_full_probe")
+    import multi_graph_gdn_q4_full_loader as loader
+
+    calls = []
+    monkeypatch.setattr(module.faulthandler, "enable", lambda: calls.append("natural_crashes"))
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("periodic unsynchronized frame reader must not be started")
+
+    monkeypatch.setattr(module.faulthandler, "dump_traceback_later", forbidden)
+    monkeypatch.setattr(loader, "run_full_model", lambda args, trace, **kwargs: calls.append("run"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "probe",
+            "--extension",
+            "log.so",
+            "--products-extension",
+            "products.so",
+            "--deferred-extension",
+            "deferred.so",
+            "--output",
+            str(tmp_path / "new.json"),
+        ],
+    )
+    module.main()
+    assert calls == ["natural_crashes", "run"]

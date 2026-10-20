@@ -1,0 +1,1014 @@
+{
+  "trace_sha256": "0519bc80410bd15d0893e0283189425ec285d53003198c163183b79e6249e524",
+  "scheduling": {
+    "same_algorithm_schedule_exact": true,
+    "per_step_audit_reused": true,
+    "audited_steps_per_rank_per_mode": 128,
+    "qualification_records": 512,
+    "timed_closed_checks": 12,
+    "trial_count": 3,
+    "paired": [
+      {
+        "trial": 0,
+        "costs": {
+          "deferred_tile_delayed": {
+            "critical_rank": 0,
+            "execution_us": 18528650.794,
+            "import_us": 118671.437,
+            "terminal_us": 24334.752,
+            "total_us": 18671656.983
+          },
+          "deferred_tile_ready": {
+            "critical_rank": 0,
+            "execution_us": 17620829.251,
+            "import_us": 118671.437,
+            "terminal_us": 23915.651,
+            "total_us": 17763416.338999998
+          }
+        },
+        "ready_percent": 4.864274471338714
+      },
+      {
+        "trial": 1,
+        "costs": {
+          "deferred_tile_delayed": {
+            "critical_rank": 0,
+            "execution_us": 18517520.628000002,
+            "import_us": 118671.437,
+            "terminal_us": 23899.74,
+            "total_us": 18660091.805
+          },
+          "deferred_tile_ready": {
+            "critical_rank": 0,
+            "execution_us": 17624114.484,
+            "import_us": 118671.437,
+            "terminal_us": 23915.811,
+            "total_us": 17766701.732
+          }
+        },
+        "ready_percent": 4.787704596183251
+      },
+      {
+        "trial": 2,
+        "costs": {
+          "deferred_tile_delayed": {
+            "critical_rank": 0,
+            "execution_us": 18526677.046,
+            "import_us": 118671.437,
+            "terminal_us": 23943.1,
+            "total_us": 18669291.583
+          },
+          "deferred_tile_ready": {
+            "critical_rank": 0,
+            "execution_us": 17639633.68,
+            "import_us": 118671.437,
+            "terminal_us": 23928.68,
+            "total_us": 17782233.797
+          }
+        },
+        "ready_percent": 4.75142713399872
+      }
+    ],
+    "mean_costs_us": {
+      "deferred_tile_delayed": {
+        "execution_us": 18524282.822666667,
+        "import_us": 118671.437,
+        "terminal_us": 24059.197333333334,
+        "total_us": 18667013.457
+      },
+      "deferred_tile_ready": {
+        "execution_us": 17628192.471666668,
+        "import_us": 118671.437,
+        "terminal_us": 23920.047333333336,
+        "total_us": 17770783.956
+      }
+    },
+    "mean_paired_percent": 4.801135400506895,
+    "ratio_of_mean_totals_percent": 4.801140273801641,
+    "positive_pairs": 3,
+    "step_latency_us": {
+      "deferred_tile_delayed": {
+        "mean_us": 144733.67793489582,
+        "p50_us": 146006.327,
+        "p95_us": 172170.8495,
+        "p99_us": 172835.65780000002
+      },
+      "deferred_tile_ready": {
+        "mean_us": 137734.6006640625,
+        "p50_us": 138865.96649999998,
+        "p95_us": 162234.46685,
+        "p99_us": 162996.1935
+      }
+    },
+    "setup_observations_us": {
+      "0": 118671.437,
+      "1": 113197.474
+    },
+    "accounting": "additive columns from each mode's closed critical rank; step maxima not summed into lifecycle",
+    "step_statistics": "TP max elapsed_us recomputed from both ranks; raw critical_rank_us is local in this phase"
+  },
+  "preliminary_scheduling": {
+    "same_algorithm_schedule_exact": true,
+    "per_step_audit_reused": false,
+    "audited_steps_per_rank_per_mode": 128,
+    "qualification_records": 512,
+    "timed_closed_checks": 12,
+    "trial_count": 3,
+    "paired": [
+      {
+        "trial": 0,
+        "costs": {
+          "deferred_tile_delayed": {
+            "critical_rank": 1,
+            "execution_us": 18564760.923,
+            "import_us": 112694.828,
+            "terminal_us": 24340.861,
+            "total_us": 18701796.612000003
+          },
+          "deferred_tile_ready": {
+            "critical_rank": 1,
+            "execution_us": 17622803.802,
+            "import_us": 112694.828,
+            "terminal_us": 24012.849,
+            "total_us": 17759511.479000002
+          }
+        },
+        "ready_percent": 5.038473856545867
+      },
+      {
+        "trial": 1,
+        "costs": {
+          "deferred_tile_delayed": {
+            "critical_rank": 1,
+            "execution_us": 18531937.456,
+            "import_us": 112694.828,
+            "terminal_us": 24039.86,
+            "total_us": 18668672.144
+          },
+          "deferred_tile_ready": {
+            "critical_rank": 1,
+            "execution_us": 17615017.029,
+            "import_us": 112694.828,
+            "terminal_us": 23942.37,
+            "total_us": 17751654.227
+          }
+        },
+        "ready_percent": 4.912068249560663
+      },
+      {
+        "trial": 2,
+        "costs": {
+          "deferred_tile_delayed": {
+            "critical_rank": 1,
+            "execution_us": 18525877.722,
+            "import_us": 112694.828,
+            "terminal_us": 24044.35,
+            "total_us": 18662616.900000002
+          },
+          "deferred_tile_ready": {
+            "critical_rank": 1,
+            "execution_us": 17660666.089,
+            "import_us": 112694.828,
+            "terminal_us": 23976.439,
+            "total_us": 17797337.356000002
+          }
+        },
+        "ready_percent": 4.636432010775504
+      }
+    ],
+    "mean_costs_us": {
+      "deferred_tile_delayed": {
+        "execution_us": 18540858.700333335,
+        "import_us": 112694.828,
+        "terminal_us": 24141.690333333332,
+        "total_us": 18677695.21866667
+      },
+      "deferred_tile_ready": {
+        "execution_us": 17632828.973333333,
+        "import_us": 112694.828,
+        "terminal_us": 23977.21933333333,
+        "total_us": 17769501.02066667
+      }
+    },
+    "mean_paired_percent": 4.862324705627345,
+    "ratio_of_mean_totals_percent": 4.862453249008691,
+    "positive_pairs": 3,
+    "step_latency_us": {
+      "deferred_tile_delayed": {
+        "mean_us": 144859.81325520834,
+        "p50_us": 146242.9225,
+        "p95_us": 172115.63150000002,
+        "p99_us": 173167.2655
+      },
+      "deferred_tile_ready": {
+        "mean_us": 137752.22839583334,
+        "p50_us": 138970.267,
+        "p95_us": 162061.78334999998,
+        "p99_us": 162911.80784
+      }
+    },
+    "setup_observations_us": {
+      "0": 112231.206,
+      "1": 112694.828
+    },
+    "accounting": "additive columns from each mode's closed critical rank; step maxima not summed into lifecycle",
+    "step_statistics": "TP max elapsed_us recomputed from both ranks; raw critical_rank_us is local in this phase"
+  },
+  "official_numerical": {
+    "complete_independent_official_trajectory": true,
+    "screen_nrmse": 0.005,
+    "numerical_screen_passed": false,
+    "output_screen_passed": false,
+    "observations": 70336,
+    "categories": {
+      "hidden": {
+        "observations": 256,
+        "worst": {
+          "label": "hidden",
+          "step": 74,
+          "prefix": null,
+          "worst_owner": 55,
+          "worst_request_nrmse": 0.06227755546569824,
+          "pooled_nrmse": 0.011220384389162064,
+          "max_abs": 3.125,
+          "reference_rms": 1.5259681940078735,
+          "elements": 2580480,
+          "screen_passed": false,
+          "rank": 0
+        },
+        "median_worst_request_nrmse": 0.012097998056560755,
+        "failed_observations": 256,
+        "first_failed_step": 0
+      },
+      "residual": {
+        "observations": 256,
+        "worst": {
+          "label": "residual",
+          "step": 74,
+          "prefix": null,
+          "worst_owner": 55,
+          "worst_request_nrmse": 0.04848308488726616,
+          "pooled_nrmse": 0.009261519648134708,
+          "max_abs": 32.0,
+          "reference_rms": 11.053268432617188,
+          "elements": 2580480,
+          "screen_passed": false,
+          "rank": 0
+        },
+        "median_worst_request_nrmse": 0.01080977451056242,
+        "failed_observations": 256,
+        "first_failed_step": 0
+      },
+      "logical_candidate": {
+        "observations": 49152,
+        "worst": {
+          "label": "gdn62/candidate",
+          "step": 74,
+          "prefix": 1,
+          "worst_owner": 55,
+          "worst_request_nrmse": 0.15539884567260742,
+          "pooled_nrmse": 0.01420038565993309,
+          "max_abs": 0.7042873501777649,
+          "elements": 50331648,
+          "screen_passed": false,
+          "rank": 0
+        },
+        "median_worst_request_nrmse": 0.009314767085015774,
+        "failed_observations": 45589,
+        "first_failed_step": 0
+      },
+      "accepted_terminal": {
+        "observations": 96,
+        "worst": {
+          "label": "gdn60/terminal",
+          "step": 128,
+          "prefix": null,
+          "worst_owner": 55,
+          "worst_request_nrmse": 0.019627928733825684,
+          "pooled_nrmse": 0.006350540556013584,
+          "max_abs": 0.11286547780036926,
+          "reference_rms": 0.02504144422709942,
+          "elements": 50331648,
+          "screen_passed": false,
+          "rank": 1
+        },
+        "median_worst_request_nrmse": 0.010204567573964596,
+        "failed_observations": 91,
+        "first_failed_step": 128
+      },
+      "conv": {
+        "observations": 12384,
+        "worst": {
+          "label": "gdn32/conv",
+          "step": 12,
+          "prefix": null,
+          "worst_owner": 47,
+          "worst_request_nrmse": 0.01891886256635189,
+          "pooled_nrmse": 0.006370074115693569,
+          "max_abs": 0.390625,
+          "reference_rms": 0.701829195022583,
+          "elements": 15728640,
+          "screen_passed": false,
+          "rank": 0
+        },
+        "median_worst_request_nrmse": 0.006889697164297104,
+        "failed_observations": 11132,
+        "first_failed_step": 0
+      },
+      "fia_kv_pages": {
+        "observations": 8192,
+        "worst": {
+          "label": "fia39/value/page",
+          "step": 10,
+          "prefix": null,
+          "worst_owner": 643,
+          "worst_request_nrmse": 0.023562436923384666,
+          "pooled_nrmse": 0.0018831025809049606,
+          "max_abs": 0.125,
+          "reference_rms": 0.6731857657432556,
+          "elements": 84738048,
+          "screen_passed": false,
+          "rank": 0
+        },
+        "median_worst_request_nrmse": 0.012554478831589222,
+        "failed_observations": 8168,
+        "first_failed_step": 0
+      }
+    },
+    "output_by_step": [
+      {
+        "step": 0,
+        "hidden": 0.011816109530627728,
+        "residual": 0.010073517449200153
+      },
+      {
+        "step": 1,
+        "hidden": 0.012314305640757084,
+        "residual": 0.010230271145701408
+      },
+      {
+        "step": 2,
+        "hidden": 0.0133072379976511,
+        "residual": 0.010797584429383278
+      },
+      {
+        "step": 3,
+        "hidden": 0.010702692903578281,
+        "residual": 0.010468343272805214
+      },
+      {
+        "step": 4,
+        "hidden": 0.01123666763305664,
+        "residual": 0.01021460723131895
+      },
+      {
+        "step": 5,
+        "hidden": 0.012892019003629684,
+        "residual": 0.010569985955953598
+      },
+      {
+        "step": 6,
+        "hidden": 0.01082098763436079,
+        "residual": 0.009444876573979855
+      },
+      {
+        "step": 7,
+        "hidden": 0.0123153580352664,
+        "residual": 0.010813580825924873
+      },
+      {
+        "step": 8,
+        "hidden": 0.01114744134247303,
+        "residual": 0.009595713578164577
+      },
+      {
+        "step": 9,
+        "hidden": 0.012317194603383541,
+        "residual": 0.011126483790576458
+      },
+      {
+        "step": 10,
+        "hidden": 0.01159448828548193,
+        "residual": 0.010713499039411545
+      },
+      {
+        "step": 11,
+        "hidden": 0.01130624022334814,
+        "residual": 0.009584986604750156
+      },
+      {
+        "step": 12,
+        "hidden": 0.011114265769720078,
+        "residual": 0.011535564437508583
+      },
+      {
+        "step": 13,
+        "hidden": 0.012020466849207878,
+        "residual": 0.010029110126197338
+      },
+      {
+        "step": 14,
+        "hidden": 0.013119765557348728,
+        "residual": 0.01014473382383585
+      },
+      {
+        "step": 15,
+        "hidden": 0.011829790659248829,
+        "residual": 0.010361389257013798
+      },
+      {
+        "step": 16,
+        "hidden": 0.011300010606646538,
+        "residual": 0.01013811957091093
+      },
+      {
+        "step": 17,
+        "hidden": 0.011815567500889301,
+        "residual": 0.009845308028161526
+      },
+      {
+        "step": 18,
+        "hidden": 0.012778672389686108,
+        "residual": 0.011509768664836884
+      },
+      {
+        "step": 19,
+        "hidden": 0.012776742689311504,
+        "residual": 0.011748119257390499
+      },
+      {
+        "step": 20,
+        "hidden": 0.01143005583435297,
+        "residual": 0.010692007839679718
+      },
+      {
+        "step": 21,
+        "hidden": 0.012123613618314266,
+        "residual": 0.012490358203649521
+      },
+      {
+        "step": 22,
+        "hidden": 0.011376921087503433,
+        "residual": 0.012801036238670349
+      },
+      {
+        "step": 23,
+        "hidden": 0.012635523453354836,
+        "residual": 0.010334276594221592
+      },
+      {
+        "step": 24,
+        "hidden": 0.012139882892370224,
+        "residual": 0.010016599670052528
+      },
+      {
+        "step": 25,
+        "hidden": 0.011286831460893154,
+        "residual": 0.009877794422209263
+      },
+      {
+        "step": 26,
+        "hidden": 0.02593175508081913,
+        "residual": 0.02151038683950901
+      },
+      {
+        "step": 27,
+        "hidden": 0.0161164328455925,
+        "residual": 0.012558942660689354
+      },
+      {
+        "step": 28,
+        "hidden": 0.012223617173731327,
+        "residual": 0.010909833014011383
+      },
+      {
+        "step": 29,
+        "hidden": 0.012302162125706673,
+        "residual": 0.01073908619582653
+      },
+      {
+        "step": 30,
+        "hidden": 0.012040164321660995,
+        "residual": 0.011323750950396061
+      },
+      {
+        "step": 31,
+        "hidden": 0.014695621095597744,
+        "residual": 0.013490675017237663
+      },
+      {
+        "step": 32,
+        "hidden": 0.011817117221653461,
+        "residual": 0.010340732522308826
+      },
+      {
+        "step": 33,
+        "hidden": 0.011836342513561249,
+        "residual": 0.010177336633205414
+      },
+      {
+        "step": 34,
+        "hidden": 0.013680299744009972,
+        "residual": 0.011448921635746956
+      },
+      {
+        "step": 35,
+        "hidden": 0.013439224101603031,
+        "residual": 0.010837379842996597
+      },
+      {
+        "step": 36,
+        "hidden": 0.011121591553092003,
+        "residual": 0.010345700196921825
+      },
+      {
+        "step": 37,
+        "hidden": 0.010842815041542053,
+        "residual": 0.01069099921733141
+      },
+      {
+        "step": 38,
+        "hidden": 0.012651432305574417,
+        "residual": 0.011529426090419292
+      },
+      {
+        "step": 39,
+        "hidden": 0.011523459106683731,
+        "residual": 0.010789896361529827
+      },
+      {
+        "step": 40,
+        "hidden": 0.019139934331178665,
+        "residual": 0.01846013404428959
+      },
+      {
+        "step": 41,
+        "hidden": 0.014949966222047806,
+        "residual": 0.010873131453990936
+      },
+      {
+        "step": 42,
+        "hidden": 0.012543097138404846,
+        "residual": 0.010917319916188717
+      },
+      {
+        "step": 43,
+        "hidden": 0.011581453494727612,
+        "residual": 0.01029286254197359
+      },
+      {
+        "step": 44,
+        "hidden": 0.013188072480261326,
+        "residual": 0.012161793187260628
+      },
+      {
+        "step": 45,
+        "hidden": 0.011688759550452232,
+        "residual": 0.010055375285446644
+      },
+      {
+        "step": 46,
+        "hidden": 0.012108227238059044,
+        "residual": 0.012004697695374489
+      },
+      {
+        "step": 47,
+        "hidden": 0.015115825459361076,
+        "residual": 0.011672908440232277
+      },
+      {
+        "step": 48,
+        "hidden": 0.01177937164902687,
+        "residual": 0.010319861583411694
+      },
+      {
+        "step": 49,
+        "hidden": 0.013917307369410992,
+        "residual": 0.011628745123744011
+      },
+      {
+        "step": 50,
+        "hidden": 0.012885712087154388,
+        "residual": 0.010970965027809143
+      },
+      {
+        "step": 51,
+        "hidden": 0.011565154418349266,
+        "residual": 0.010583722963929176
+      },
+      {
+        "step": 52,
+        "hidden": 0.011909956112504005,
+        "residual": 0.010375491343438625
+      },
+      {
+        "step": 53,
+        "hidden": 0.011811859905719757,
+        "residual": 0.009938695468008518
+      },
+      {
+        "step": 54,
+        "hidden": 0.01171837467700243,
+        "residual": 0.010202551260590553
+      },
+      {
+        "step": 55,
+        "hidden": 0.011182315647602081,
+        "residual": 0.010215284302830696
+      },
+      {
+        "step": 56,
+        "hidden": 0.011189800687134266,
+        "residual": 0.011126033030450344
+      },
+      {
+        "step": 57,
+        "hidden": 0.011577660217881203,
+        "residual": 0.010462874546647072
+      },
+      {
+        "step": 58,
+        "hidden": 0.01200976874679327,
+        "residual": 0.01214687805622816
+      },
+      {
+        "step": 59,
+        "hidden": 0.012045511975884438,
+        "residual": 0.011664753779768944
+      },
+      {
+        "step": 60,
+        "hidden": 0.013467076234519482,
+        "residual": 0.01368375401943922
+      },
+      {
+        "step": 61,
+        "hidden": 0.011575347743928432,
+        "residual": 0.011327874846756458
+      },
+      {
+        "step": 62,
+        "hidden": 0.01221493724733591,
+        "residual": 0.010755384340882301
+      },
+      {
+        "step": 63,
+        "hidden": 0.011788912117481232,
+        "residual": 0.010692392475903034
+      },
+      {
+        "step": 64,
+        "hidden": 0.011928070336580276,
+        "residual": 0.01119711808860302
+      },
+      {
+        "step": 65,
+        "hidden": 0.011892907321453094,
+        "residual": 0.00999119970947504
+      },
+      {
+        "step": 66,
+        "hidden": 0.011667141690850258,
+        "residual": 0.010126752778887749
+      },
+      {
+        "step": 67,
+        "hidden": 0.011353525333106518,
+        "residual": 0.010935425758361816
+      },
+      {
+        "step": 68,
+        "hidden": 0.012375886552035809,
+        "residual": 0.010499175637960434
+      },
+      {
+        "step": 69,
+        "hidden": 0.013600718230009079,
+        "residual": 0.010291093029081821
+      },
+      {
+        "step": 70,
+        "hidden": 0.012654301710426807,
+        "residual": 0.011202346533536911
+      },
+      {
+        "step": 71,
+        "hidden": 0.011498406529426575,
+        "residual": 0.010189897380769253
+      },
+      {
+        "step": 72,
+        "hidden": 0.02384503372013569,
+        "residual": 0.01632768101990223
+      },
+      {
+        "step": 73,
+        "hidden": 0.012029213830828667,
+        "residual": 0.010801044292747974
+      },
+      {
+        "step": 74,
+        "hidden": 0.06227755546569824,
+        "residual": 0.04848308488726616
+      },
+      {
+        "step": 75,
+        "hidden": 0.011501198634505272,
+        "residual": 0.011073355562984943
+      },
+      {
+        "step": 76,
+        "hidden": 0.01449368055909872,
+        "residual": 0.01055185403674841
+      },
+      {
+        "step": 77,
+        "hidden": 0.012363934889435768,
+        "residual": 0.0111210523173213
+      },
+      {
+        "step": 78,
+        "hidden": 0.01157271210104227,
+        "residual": 0.010347956791520119
+      },
+      {
+        "step": 79,
+        "hidden": 0.014747601933777332,
+        "residual": 0.011946547776460648
+      },
+      {
+        "step": 80,
+        "hidden": 0.011888966895639896,
+        "residual": 0.010989868082106113
+      },
+      {
+        "step": 81,
+        "hidden": 0.012092964723706245,
+        "residual": 0.01084508839994669
+      },
+      {
+        "step": 82,
+        "hidden": 0.011693279258906841,
+        "residual": 0.010850231163203716
+      },
+      {
+        "step": 83,
+        "hidden": 0.01851382851600647,
+        "residual": 0.013399487361311913
+      },
+      {
+        "step": 84,
+        "hidden": 0.01754443161189556,
+        "residual": 0.013230402022600174
+      },
+      {
+        "step": 85,
+        "hidden": 0.011907531879842281,
+        "residual": 0.01077465433627367
+      },
+      {
+        "step": 86,
+        "hidden": 0.012227195315063,
+        "residual": 0.010953469201922417
+      },
+      {
+        "step": 87,
+        "hidden": 0.013702299445867538,
+        "residual": 0.011342954821884632
+      },
+      {
+        "step": 88,
+        "hidden": 0.011736706830561161,
+        "residual": 0.010576811619102955
+      },
+      {
+        "step": 89,
+        "hidden": 0.011969558894634247,
+        "residual": 0.010711461305618286
+      },
+      {
+        "step": 90,
+        "hidden": 0.012458966113626957,
+        "residual": 0.010765892453491688
+      },
+      {
+        "step": 91,
+        "hidden": 0.01168543566018343,
+        "residual": 0.009993248619139194
+      },
+      {
+        "step": 92,
+        "hidden": 0.01571628823876381,
+        "residual": 0.014376719482243061
+      },
+      {
+        "step": 93,
+        "hidden": 0.012103031389415264,
+        "residual": 0.011383856646716595
+      },
+      {
+        "step": 94,
+        "hidden": 0.012104353867471218,
+        "residual": 0.012066157534718513
+      },
+      {
+        "step": 95,
+        "hidden": 0.011353915557265282,
+        "residual": 0.010025974363088608
+      },
+      {
+        "step": 96,
+        "hidden": 0.026269130408763885,
+        "residual": 0.026588287204504013
+      },
+      {
+        "step": 97,
+        "hidden": 0.011313162744045258,
+        "residual": 0.01022623386234045
+      },
+      {
+        "step": 98,
+        "hidden": 0.011749552562832832,
+        "residual": 0.01100122556090355
+      },
+      {
+        "step": 99,
+        "hidden": 0.013917801901698112,
+        "residual": 0.012359320186078548
+      },
+      {
+        "step": 100,
+        "hidden": 0.011693954467773438,
+        "residual": 0.011131392791867256
+      },
+      {
+        "step": 101,
+        "hidden": 0.012659394182264805,
+        "residual": 0.010781073942780495
+      },
+      {
+        "step": 102,
+        "hidden": 0.011808423325419426,
+        "residual": 0.010912235826253891
+      },
+      {
+        "step": 103,
+        "hidden": 0.011571887880563736,
+        "residual": 0.010720938444137573
+      },
+      {
+        "step": 104,
+        "hidden": 0.011150273494422436,
+        "residual": 0.011068349704146385
+      },
+      {
+        "step": 105,
+        "hidden": 0.012601601891219616,
+        "residual": 0.010211381129920483
+      },
+      {
+        "step": 106,
+        "hidden": 0.012761238031089306,
+        "residual": 0.011835446581244469
+      },
+      {
+        "step": 107,
+        "hidden": 0.012397708371281624,
+        "residual": 0.011283859610557556
+      },
+      {
+        "step": 108,
+        "hidden": 0.011989488266408443,
+        "residual": 0.010802679695189
+      },
+      {
+        "step": 109,
+        "hidden": 0.012569083832204342,
+        "residual": 0.010651695542037487
+      },
+      {
+        "step": 110,
+        "hidden": 0.012218952178955078,
+        "residual": 0.011096437461674213
+      },
+      {
+        "step": 111,
+        "hidden": 0.011698848567903042,
+        "residual": 0.010357607156038284
+      },
+      {
+        "step": 112,
+        "hidden": 0.014690875075757504,
+        "residual": 0.015339311212301254
+      },
+      {
+        "step": 113,
+        "hidden": 0.01212732121348381,
+        "residual": 0.010901478119194508
+      },
+      {
+        "step": 114,
+        "hidden": 0.012496634386479855,
+        "residual": 0.011109232902526855
+      },
+      {
+        "step": 115,
+        "hidden": 0.011651565320789814,
+        "residual": 0.010803209617733955
+      },
+      {
+        "step": 116,
+        "hidden": 0.011157618835568428,
+        "residual": 0.011035626754164696
+      },
+      {
+        "step": 117,
+        "hidden": 0.012923702597618103,
+        "residual": 0.012294935062527657
+      },
+      {
+        "step": 118,
+        "hidden": 0.012980980798602104,
+        "residual": 0.010743134655058384
+      },
+      {
+        "step": 119,
+        "hidden": 0.012030808255076408,
+        "residual": 0.009907900355756283
+      },
+      {
+        "step": 120,
+        "hidden": 0.011823151260614395,
+        "residual": 0.010461678728461266
+      },
+      {
+        "step": 121,
+        "hidden": 0.012761255726218224,
+        "residual": 0.011369307525455952
+      },
+      {
+        "step": 122,
+        "hidden": 0.013098196126520634,
+        "residual": 0.010805968195199966
+      },
+      {
+        "step": 123,
+        "hidden": 0.01224495843052864,
+        "residual": 0.010911080986261368
+      },
+      {
+        "step": 124,
+        "hidden": 0.01386982575058937,
+        "residual": 0.011572356335818768
+      },
+      {
+        "step": 125,
+        "hidden": 0.012166876345872879,
+        "residual": 0.013106642290949821
+      },
+      {
+        "step": 126,
+        "hidden": 0.012469368055462837,
+        "residual": 0.010564935393631458
+      },
+      {
+        "step": 127,
+        "hidden": 0.01145871914923191,
+        "residual": 0.010128107853233814
+      }
+    ],
+    "token_sha256": "64601028fa10a32c8ecc6d7d7453afb567370e32cd626eff6614e9db90083b49",
+    "scope": "FP32 compact vs installed official dense recurrence; independent conv/FIA/SSM histories, not generation quality",
+    "official_timing": "CPU state banks are a correctness harness; no official performance baseline"
+  },
+  "timing_isolation": {
+    "closed_timing_fully_isolated_from_numeric": true,
+    "all_prior_full_model_processes_exited": true,
+    "active_prior_probe_pids": [],
+    "numeric_reference_completed": true,
+    "initialized_at_utc": "2026-10-20T12:45:20Z",
+    "import_and_execution_isolated": true,
+    "terminal_host_decision_upload_timed": true,
+    "reason": "prior full qualification and numerical reference complete, no prior model process alive before isolated timing load"
+  },
+  "qualification_inheritance": {
+    "delayed_steps_per_rank_from_prior_complete_mode": 128,
+    "ready_steps_per_rank_restarted_from_common_initial_state": 128,
+    "incomplete_ready_steps_stitched": false,
+    "reason": "CPython timed frame-dump watchdog removed after two matching native fault PCs"
+  },
+  "model_substitution_qualified": false,
+  "split_exclusive_benefit_proven": false,
+  "fp16": "closed; no additional precision scheme tested",
+  "limitations": [
+    "Three pairs in one process, not independent process replications or a service benchmark.",
+    "Closed TP endpoints include one compact transition, all 128 steps and final SSM acceptance.",
+    "One isolated conversion observation per rank in the primary timing process, not an import distribution.",
+    "Qualification-process import overlapped numerical initialization; primary timing is isolated.",
+    "Model endpoint is 64 real decoders plus final norm; no LM head, sampling, draft model or acceptance-rate measurement.",
+    "Original vocabulary-random token trace and frozen accepted lengths; no text quality claim.",
+    "Ready scheduling uses the same compact arithmetic; padding can reuse the same operator.",
+    "Official offload reference supplies numerical observations only, never a performance denominator."
+  ],
+  "analysis_source_sha256": "6beaac169e98f839353a981eb24af8be005e18d420a5024698e5ec4c19260831"
+}

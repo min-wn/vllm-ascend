@@ -38,6 +38,11 @@ class TerminalDrain:
             implementation="same deferred commit with zero new logs, one captured drain shared by both controls",
         )
 
+    def stage_acceptance(self):
+        """Charge the final host decision and its H2D before the drain replay."""
+        decision = self.torch.tensor(self.contract["accepted"], dtype=self.torch.int32, device="cpu")
+        self.accepted.copy_(decision)
+
     def run(self):
         self.registry._require_joined()
         for item in self.bundle.gdn_entries:

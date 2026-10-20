@@ -1,0 +1,14 @@
+           PID: 1725603 (python3)
+           UID: 0 (root)
+           GID: 0 (root)
+        Signal: 11 (SEGV)
+     Timestamp: Tue 2026-10-20 19:18:07 CST (13min ago)
+  Command Line: /usr/local/python3.12.13/bin/python3 -u /workspace/gdn-ready-full-v2/tools/multi_graph_gdn_q4_full_probe.py --extension /workspace/multi-graph-results/q4-log-build-v3-ranges/gdn_q4_log.so --products-extension /workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so --deferred-extension /workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so --tile-extension /workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so --trace /workspace/gdn-ready-full-v2/trace.json --phase replay --ready-lifecycle --dense-nz --qualification-steps 128 --audit-scan-elements 16777216 --audit-cpu-array --audit-cpu-threads 8 --trials 3 --output /workspace/gdn-ready-full-v2/full.json
+    Executable: /usr/local/python3.12.13/bin/python3.12
+ Control Group: /
+         Slice: -.slice
+       Boot ID: adb34e3b71b84c63852767e668b55e98
+    Machine ID: 2b466cd7b371441595a512c85cb9b4b9
+      Hostname: 16b0f9cecd11
+       Storage: /var/lib/systemd/coredump/core.python3.0.adb34e3b71b84c63852767e668b55e98.1725603.1792495087000000.lz4 (inaccessible)
+       Message: Process 1725603 (python3) of user 0 dumped core.

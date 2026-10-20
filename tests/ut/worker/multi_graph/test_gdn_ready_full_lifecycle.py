@@ -6,6 +6,7 @@ import importlib.util
 from pathlib import Path
 
 import pytest
+import torch
 
 SOURCE = Path(__file__).resolve().parents[4] / "benchmarks" / "multi_graph_gdn_ready_full_lifecycle.py"
 SPEC = importlib.util.spec_from_file_location("ready_lifecycle", SOURCE)
@@ -41,6 +42,26 @@ def test_terminal_acceptance_covers_all_owners_and_prefixes():
     assert len(counts) == 128 and set(counts) == {1, 2, 3, 4}
     with pytest.raises(ValueError, match="128"):
         MODULE.terminal_counts(100)
+
+
+def test_terminal_decision_stages_a_new_cpu_tensor_on_every_call():
+    class Target:
+        def __init__(self):
+            self.uploads = []
+
+        def copy_(self, value):
+            assert value.device.type == "cpu" and value.dtype == torch.int32 and value.shape == (128,)
+            self.uploads.append(value.clone())
+
+    terminal = MODULE.TerminalDrain.__new__(MODULE.TerminalDrain)
+    terminal.torch, terminal.accepted = torch, Target()
+    terminal.contract = dict(accepted=list(MODULE.terminal_counts(128)))
+    terminal.stage_acceptance()
+    terminal.contract["accepted"] = [4] * 128
+    terminal.stage_acceptance()
+    assert len(terminal.accepted.uploads) == 2
+    assert terminal.accepted.uploads[0].tolist() == list(MODULE.terminal_counts(128))
+    assert terminal.accepted.uploads[1].tolist() == [4] * 128
 
 
 def test_critical_rank_and_transition_are_in_the_denominator():

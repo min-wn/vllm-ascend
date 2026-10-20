@@ -348,10 +348,68 @@ def replay_trajectories(
                 raise AssertionError(f"{label}/layer{item.index}: nonzero null candidate")
 
     qualified_outputs, qualified_closed, qualified_continuation = {}, {}, None
-    for mode in modes:
+    previous_threads = torch.get_num_threads()
+    if ready_lifecycle:
+        torch.set_num_threads(getattr(args, "audit_cpu_threads", previous_threads))
+        report["audit_cpu"] = dict(
+            threads=torch.get_num_threads(),
+            array=getattr(args, "audit_cpu_array", False),
+            timed_threads=previous_threads,
+            outside_timing=True,
+        )
+    reuse = getattr(args, "ready_timing_evidence", None)
+    resume_ready = getattr(args, "ready_qualification_evidence", None)
+    if reuse is not None or resume_ready is not None:
+        from multi_graph_gdn_q4_full_checks import compare_complete_snapshots
+        from multi_graph_gdn_ready_reuse import validate
+
+        prior_directory = reuse if reuse is not None else resume_ready
+        proof = validate(
+            prior_directory,
+            Path(__file__).parent,
+            report,
+            extensions=(args.extension, args.products_extension, args.deferred_extension, args.tile_extension),
+            delayed_only=resume_ready is not None,
+        )
+        report["reused_qualification" if reuse is not None else "inherited_delayed_qualification"] = proof
+        select_mode(modes[0])
+        restore_complete(torch, bundle, registry, initial)
+        for index, step in enumerate(steps):
+            capacity = selection["dispatched_tokens"][index]
+            registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
+            frame = prepare(step, capacity)
+            result = forward(frame, tokens[capacity], registry=registry)
+            torch.npu.synchronize()
+            registry.finish_step(step["step"])
+            if any(not torch.isfinite(value).all().item() for value in result):
+                raise AssertionError("nonfinite continued delayed eager reference")
+        if resume_ready is not None:
+            qualified_continuation = complete_snapshot(torch, bundle, registry)
+            old = json.loads((prior_directory / f"full.rank{dist.get_rank()}.json").read_text())
+            report["checks"].extend(
+                c
+                for c in old["checks"]
+                if c["label"] == "complete_same_schedule_eager_replay_exact" and c["mode"] == modes[0]
+            )
+            report["closed_checks"] = old["closed_checks"]
+        terminal.run()
+        torch.npu.synchronize()
+        terminal.require_closed()
+        reference = complete_snapshot(torch, bundle, registry)
+        qualified_closed = dict.fromkeys(modes, reference)
+        report["reference_trajectory"] = dict(mode=modes[0], steps=len(steps), all_owners_closed=True)
+        report["status"] = "closed_reference_ready_for_timing_prior_per_step_audit_reused"
+        checkpoint()
+    qualification_modes = () if reuse is not None else modes[1:] if resume_ready is not None else modes
+    for mode in qualification_modes:
         select_mode(mode)
         restore_complete(torch, bundle, registry, initial)
-        audit = StreamingCheckpoint(torch, initial, scan_elements=getattr(args, "audit_scan_elements", 1 << 20))
+        audit = StreamingCheckpoint(
+            torch,
+            initial,
+            scan_elements=getattr(args, "audit_scan_elements", 1 << 20),
+            cpu_array=getattr(args, "audit_cpu_array", False),
+        )
         for index in range(args.qualification_steps):
             step, capacity = trace.steps[index], selection["dispatched_tokens"][index]
             if ready_lifecycle:
@@ -380,7 +438,7 @@ def replay_trajectories(
                     raise RuntimeError(f"nonfinite full-model replay endpoint {mode}/step{index}/{name}")
             replay_audit = audit.compare_replay(bundle, registry, label=f"{mode}/step{index}")
             check_candidates(candidate_scratch, f"{mode}/step{index}")
-            if ready_lifecycle:
+            if ready_lifecycle and resume_ready is None:
                 if mode == modes[0]:
                     qualified_outputs[index] = eager
                 else:
@@ -443,6 +501,7 @@ def replay_trajectories(
     del candidate_scratch
     if ready_lifecycle:
         del qualified_continuation, qualified_outputs
+        torch.set_num_threads(previous_threads)
     samples = []
     lifecycle_samples = []
     for trial in range(args.trials):
@@ -486,6 +545,7 @@ def replay_trajectories(
             if ready_lifecycle:
                 begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
                 terminal_start = time.perf_counter_ns()
+                terminal.stage_acceptance()
                 begin.record(capture_root)
                 with torch.npu.stream(capture_root):
                     terminal_graph.replay()
@@ -523,15 +583,23 @@ def replay_trajectories(
         gathered = [None] * dist.get_world_size()
         dist.all_gather_object(gathered, local, group=cpu_group)
         report.update(
-            status="qualified_full_dynamic_replay_and_closed_ready_ablation",
+            status=(
+                "closed_ready_timing_with_prior_full_audit"
+                if reuse is not None
+                else "qualified_full_dynamic_replay_and_closed_ready_ablation"
+            ),
             correctness_scope=(
-                "all 128 steps; delayed eager vs delayed/ready graphs; every cache, staging and host field"
+                "prior all-128-step audit reused with unchanged arithmetic; this process checks "
+                "a complete delayed eager reference and every timed closed state"
+                if reuse is not None
+                else "all 128 steps; delayed eager vs delayed/ready graphs; every cache, staging and host field"
             ),
             correctness_limitations=(
                 "same compact FP32 algorithm; no independent official dense full trajectory or generation quality"
             ),
             lifecycle_ranks=gathered,
             paired_closed=paired_lifecycles(gathered, args.trials),
+            terminal_decision_upload_timed=True,
             independent_difference="A2 request-group readiness within legal full-model graphs; padding can use it",
             boundary=(
                 "descriptor staging/H2D, true FIA updates, full model, all commits, per-step join, "
@@ -798,6 +866,11 @@ def experiment(args, trace, runner, model, config):
         torch.npu.synchronize()
         report["compact_transition_us"] = (time.perf_counter_ns() - transition_start) / 1000
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
+        if args.phase == "numeric":
+            from multi_graph_gdn_full_numeric import qualify
+
+            qualify(args, torch, dist, model, bundle, factory, registry, forward, vocabulary, report, checkpoint=save)
+            return report
         if args.phase in ("replay", "diagnostic", "profile"):
             schedule_context = nullcontext(None)
             if getattr(args, "split_boundaries", None):
@@ -860,7 +933,9 @@ def main():
         default=Path(__file__).parent / "results/multi_graph_structural/structural-dynamic-trace-v1.json",
     )
     parser.add_argument(
-        "--phase", choices=("allocation", "prefix", "eager", "replay", "diagnostic", "profile"), default="eager"
+        "--phase",
+        choices=("allocation", "prefix", "eager", "replay", "diagnostic", "profile", "numeric"),
+        default="eager",
     )
     parser.add_argument(
         "--profile-steps", type=int, nargs="+", help="profile selected indices while replaying preceding steps"
@@ -880,7 +955,23 @@ def main():
     parser.add_argument(
         "--ready-lifecycle", action="store_true", help="full 128-step matched ready audit and closed timing"
     )
+    parser.add_argument(
+        "--ready-timing-evidence",
+        type=Path,
+        help="prior complete audit directory; reuse per-step evidence, run a new eager endpoint and closed timings",
+    )
+    parser.add_argument(
+        "--ready-qualification-evidence",
+        type=Path,
+        help="reuse only a complete delayed audit; restart every ready step from the common initial state",
+    )
     parser.add_argument("--qualification-steps", type=int, default=3)
+    parser.add_argument(
+        "--audit-cpu-threads", type=int, default=1, help="CPU threads during untimed complete state scans"
+    )
+    parser.add_argument(
+        "--audit-cpu-array", action="store_true", help="CPU array finite/byte scans outside replay timing"
+    )
     parser.add_argument(
         "--audit-scan-elements",
         type=int,
@@ -889,6 +980,14 @@ def main():
     )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.ready_timing_evidence is not None and (not args.ready_lifecycle or args.phase != "replay"):
+        parser.error("ready timing evidence is limited to the complete ready replay lifecycle")
+    if args.ready_qualification_evidence is not None and (
+        args.ready_timing_evidence is not None or not args.ready_lifecycle or args.phase != "replay"
+    ):
+        parser.error("ready qualification reuse requires a complete ready lifecycle and no timing reuse")
+    if args.phase == "numeric" and (args.tile_extension is None or args.prefix_limit is not None):
+        parser.error("independent official numerical audit requires tile kernel and all fixed owners")
     if args.output.exists() or (args.prefix_limit is not None and not 1 <= args.prefix_limit <= 128):
         parser.error("require a new output path and prefix-limit in 1..128")
     if args.trials < 2 or not 2 <= args.qualification_steps <= 128:
@@ -905,6 +1004,8 @@ def main():
         )
     if not 1 <= args.audit_scan_elements <= 1 << 24:
         parser.error("audit scan chunk must be in 1..16777216 elements")
+    if not 1 <= args.audit_cpu_threads <= 16:
+        parser.error("audit CPU threads must be in 1..16")
     if args.phase in ("diagnostic", "profile") and (
         args.tile_extension is None or not args.qualification_steps <= args.diagnostic_steps <= 128
     ):
@@ -921,7 +1022,9 @@ def main():
         parser.error("packed join requires split boundaries")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     faulthandler.enable()
-    faulthandler.dump_traceback_later(180, repeat=True)
+    # The timed watchdog reads live frames without the GIL. Two A2 host
+    # cores faulted in CPython 3.12 dump_frame, not in the printed model frame.
+    # Keep natural crash diagnostics; explicit progress checkpoints suffice.
     try:
         trace = load_fixed_trace(args.trace)
         run_full_model(args, trace, experiment=experiment)
@@ -934,8 +1037,6 @@ def main():
         if rank == 0:
             args.output.write_text(text, encoding="utf-8")
         raise
-    finally:
-        faulthandler.cancel_dump_traceback_later()
 
 
 if __name__ == "__main__":

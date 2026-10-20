@@ -1,0 +1,20 @@
+{
+  "status": "incomplete_after_native_sigsegv",
+  "observed_failure_utc": "2026-10-20T11:01:12Z",
+  "rank0_exitcode": -11,
+  "rank1_exitcode": -15,
+  "completed_steps": [
+    124,
+    124
+  ],
+  "last_python_frame": "/vllm-workspace/vllm-ascend/vllm_ascend/ops/layernorm.py:121 forward_oot",
+  "root_cause": "not established; last Python frame is not native root-cause proof",
+  "partial_max_output_nrmse": 0.06227755546569824,
+  "original_log_sha256": "bd32dbb348b9f093b94d32f009a924ff2edbbc0114aeb54923efd00ba9ab6855",
+  "retry": {
+    "directory": "/workspace/gdn-full-numeric-v2",
+    "same_frozen_sources": true,
+    "algorithm_or_precision_or_threshold_changed": false
+  },
+  "recorded_utc": "2026-10-20T11:12:26Z"
+}

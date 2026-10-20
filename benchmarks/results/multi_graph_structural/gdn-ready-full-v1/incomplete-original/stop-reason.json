@@ -1,0 +1,6 @@
+{
+  "reason": "Untimed CPU state scans are too slow; preserve incomplete record and restart identical scope with array scans and 8 audit-only CPU threads. No model/kernel/timed path changed.",
+  "status": "partial_continued_replay_qualification_not_a_performance_result",
+  "checks": 23,
+  "command": "/usr/local/python3.12.13/bin/python3 /usr/local/python3.12.13/bin/torchrun --nproc_per_node=2 --master_port=29744 /workspace/gdn-ready-full-v1/tools/multi_graph_gdn_q4_full_probe.py --extension /workspace/multi-graph-results/q4-log-build-v3-ranges/gdn_q4_log.so --products-extension /workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so --deferred-extension /workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so --tile-extension /workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so --trace /workspace/gdn-ready-full-v1/trace.json --phase replay --ready-lifecycle --dense-nz --qualification-steps 128 --audit-scan-elements 16777216 --trials 3 --output /workspace/gdn-ready-full-v1/full.json "
+}

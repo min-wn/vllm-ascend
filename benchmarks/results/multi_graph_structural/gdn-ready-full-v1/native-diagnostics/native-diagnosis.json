@@ -1,0 +1,44 @@
+{
+  "native_faults": [
+    {
+      "name": "audit",
+      "pc": "0xffff9a94a414",
+      "module": "/usr/local/python3.12.13/lib/libpython3.12.so.1.0",
+      "offset": "0x2ea414",
+      "mapping": "      0xffff9a660000     0xffff9ab32000   0x4d2000        0x0 /usr/local/python3.12.13/lib/libpython3.12.so.1.0"
+    },
+    {
+      "name": "numeric",
+      "pc": "0xffffadd8a414",
+      "module": "/usr/local/python3.12.13/lib/libpython3.12.so.1.0",
+      "offset": "0x2ea414",
+      "mapping": "      0xffffadaa0000     0xffffadf72000   0x4d2000        0x0 /usr/local/python3.12.13/lib/libpython3.12.so.1.0"
+    }
+  ],
+  "both_native_offsets_equal": true,
+  "symbol": "PyType_HasFeature -> dump_frame -> dump_traceback",
+  "source_location": "CPython 3.12.13 Python/traceback.c:1260/1346, Include/object.h:966",
+  "fault_threads": "audit LWP 883186 and numeric LWP 884818; both timed watchdog threads, not Python main threads",
+  "core_limit": {
+    "available_bytes": 2147483648,
+    "truncated": true,
+    "audit_expected_file_bytes": 89708060672,
+    "numeric_expected_file_bytes": 72285925376,
+    "full_caller_stack_unavailable": true
+  },
+  "direct_fault_path": "CPython timed asynchronous frame dump; printed main-thread Python location was not native PC",
+  "repair": "remove periodic dump_traceback_later(180, repeat=True); retain faulthandler.enable and all audit checks",
+  "no_model_or_state_algorithm_precision_or_threshold_change": true,
+  "upstream_references": [
+    "https://docs.python.org/3.12/library/faulthandler.html",
+    "https://github.com/python/cpython/issues/116008",
+    "https://github.com/python/cpython/issues/158200",
+    "https://github.com/python/cpython/blob/v3.12.13/Python/traceback.c#L1251-L1270"
+  ],
+  "libpython_sha256": "011895b6ccee0aac1c7dae4b70fa74abd6d02b7dc8d02771681a3426a40e0c92",
+  "original_compressed_core_sha256": {
+    "audit": "a86fa8fd6a882385ec6f451873bd961155f4e6379781aa6e683a1c4b0ed289d8",
+    "numeric": "60c70b2769a74d4e36a16e07f3bf9a5e88b2c38a1ee53782bb95b6b1eca87898"
+  },
+  "utc": "2026-10-20T11:31:52Z"
+}

@@ -100,7 +100,7 @@ class StreamingCheckpoint:
     caller; finite canonical records alone cannot rule out candidate overflow.
     """
 
-    def __init__(self, torch, initial, *, scan_elements=SCAN_ELEMENTS):
+    def __init__(self, torch, initial, *, scan_elements=SCAN_ELEMENTS, cpu_array=False):
         if isinstance(scan_elements, bool) or not isinstance(scan_elements, int) or scan_elements < 1:
             raise ValueError("scan_elements must be a positive integer")
         self.torch, self.scan_elements = torch, scan_elements
@@ -108,6 +108,7 @@ class StreamingCheckpoint:
         self._awaiting_replay = False
         self._failed = False
         self.completed_steps = 0
+        self.cpu_array = cpu_array
 
     def _bindings(self, bundle, registry, label):
         registry._require_joined()
@@ -188,34 +189,39 @@ class StreamingCheckpoint:
         return set(requests), rows
 
     def _copy(self, live, wanted, label, *, protected=None, restore=False):
+        from multi_graph_gdn_cpu_audit import finite, identical, zero
+
         torch = self.torch
+        same = identical if self.cpu_array else _identical
+        is_zero = zero if self.cpu_array else lambda torch, tensor: torch.count_nonzero(tensor).item() == 0
         row_elements = prod(wanted.shape[1:])
         intervals = _protected_intervals(protected or (), row_elements)
         count = 0
         for device_chunk, checkpoint_chunk, start in _paired_chunks(live, wanted, self.scan_elements):
             observed = device_chunk.to(device="cpu", copy=True)
             if observed.is_floating_point() or observed.is_complex():
-                _require(torch.isfinite(observed).all().item(), f"{label}: nonfinite state")
+                is_finite = finite(torch, observed) if self.cpu_array else torch.isfinite(observed).all().item()
+                _require(is_finite, f"{label}: nonfinite state")
             if restore:
                 for first, stop in intervals:
                     left, right = max(first, start) - start, min(stop, start + observed.numel()) - start
                     if left < right:
                         _require(
-                            _identical(torch, observed[left:right], checkpoint_chunk[left:right]),
+                            same(torch, observed[left:right], checkpoint_chunk[left:right]),
                             f"{label}: inactive state changed",
                         )
                 # The null row stays zero even when both executions share a bug.
                 stop = min(row_elements, start + observed.numel()) - start
                 if stop > 0:
-                    _require(torch.count_nonzero(observed[:stop]).item() == 0, f"{label}: null state must stay zero")
+                    _require(is_zero(torch, observed[:stop]), f"{label}: null state must stay zero")
                     _require(
-                        torch.count_nonzero(checkpoint_chunk[:stop]).item() == 0,
+                        is_zero(torch, checkpoint_chunk[:stop]),
                         f"{label}: checkpoint null state must stay zero",
                     )
                 device_chunk.copy_(checkpoint_chunk, non_blocking=False)
                 checkpoint_chunk.copy_(observed)
             else:
-                _require(_identical(torch, observed, checkpoint_chunk), f"{label}: replay tensor values differ")
+                _require(same(torch, observed, checkpoint_chunk), f"{label}: replay tensor values differ")
             count += observed.numel() * observed.element_size()
         return count
 

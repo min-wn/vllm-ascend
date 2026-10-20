@@ -1,0 +1,1550 @@
+W1020 11:09:08.577000 896488 site-packages/torch/distributed/run.py:852] 
+W1020 11:09:08.577000 896488 site-packages/torch/distributed/run.py:852] *****************************************
+W1020 11:09:08.577000 896488 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1020 11:09:08.577000 896488 site-packages/torch/distributed/run.py:852] *****************************************
+INFO 10-20 11:09:18 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-20 11:09:18 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-20 11:09:18 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-20 11:09:18 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-20 11:09:18 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+INFO 10-20 11:09:18 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-20 11:09:18 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-20 11:09:18 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-20 11:09:18 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-20 11:09:18 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+2026-10-20 11:09:27,020 - 896567 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+2026-10-20 11:09:27,716 - 896568 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+INFO 10-20 11:09:29 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-20 11:09:29 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-20 11:09:29 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-20 11:09:29 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+WARNING 10-20 11:09:29 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-20 11:09:29 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-20 11:09:29 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 11:09:29 [model.py:2030] Using max model len 2048
+WARNING 10-20 11:09:29 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 11:09:29 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-20 11:09:29 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-20 11:09:30 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-20 11:09:30 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+WARNING 10-20 11:09:30 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-20 11:09:30 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-20 11:09:30 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 11:09:30 [model.py:2030] Using max model len 2048
+WARNING 10-20 11:09:30 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 11:09:31 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-20 11:09:31 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-20 11:09:31 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-20 11:09:31 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-20 11:09:31 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-20 11:09:31 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-20 11:09:31 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-20 11:09:31 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-20 11:09:31 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-20 11:09:31 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 11:09:31 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-20 11:09:31 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 11:09:31 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 11:09:31 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-20 11:09:31 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-20 11:09:31 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-20 11:09:31 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-20 11:09:31 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 11:09:31 [model.py:2030] Using max model len 2048
+WARNING 10-20 11:09:31 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 11:09:31 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-20 11:09:31 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+WARNING 10-20 11:09:31 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-20 11:09:31 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-20 11:09:31 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-20 11:09:31 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-20 11:09:31 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 11:09:31 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 11:09:31 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 11:09:31 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-20 11:09:31 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-20 11:09:32 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-20 11:09:32 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-20 11:09:32 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-20 11:09:32 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-20 11:09:32 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-20 11:09:32 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-20 11:09:32 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-20 11:09:32 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-20 11:09:32 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-20 11:09:32 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 11:09:32 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-20 11:09:32 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 11:09:32 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 11:09:32 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-20 11:09:32 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-20 11:09:32 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+WARNING 10-20 11:09:32 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-20 11:09:32 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-20 11:09:32 [model.py:2030] Using max model len 2048
+WARNING 10-20 11:09:32 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-20 11:09:32 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-20 11:09:32 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+WARNING 10-20 11:09:32 [vllm.py:1547] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-20 11:09:32 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-20 11:09:32 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-20 11:09:32 [vllm.py:1780] Cudagraph is disabled under eager mode
+WARNING 10-20 11:09:32 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-20 11:09:32 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-20 11:09:32 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-20 11:09:32 [platform.py:1236] Compilation disabled, using eager mode by default
+INFO 10-20 11:09:32 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+WARNING 10-20 11:09:34 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+WARNING 10-20 11:09:36 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+INFO 10-20 11:09:37 [parallel_state.py:1827] world_size=2 rank=0 local_rank=0 distributed_init_method=env:// backend=hccl
+INFO 10-20 11:09:39 [parallel_state.py:1827] world_size=2 rank=1 local_rank=1 distributed_init_method=env:// backend=hccl
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+INFO 10-20 11:09:39 [parallel_state.py:2267] rank 0 in world size 2 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank N/A, EPLB rank N/A
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+WARNING 10-20 11:09:39 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-20 11:09:39 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+[rank0]:[W1020 11:09:39.096218151 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+INFO 10-20 11:09:40 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+WARNING 10-20 11:09:40 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+INFO 10-20 11:09:40 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-20 11:09:40 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+WARNING 10-20 11:09:40 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+INFO 10-20 11:09:40 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-20 11:09:40 [interface.py:414] Using default backend AttentionBackendEnum.TORCH_SDPA for vit attention
+INFO 10-20 11:09:40 [mm_encoder_attention.py:372] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+INFO 10-20 11:09:40 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO 10-20 11:09:40 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+INFO 10-20 11:09:40 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-20 11:09:41 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-20 11:09:41 [weight_utils.py:895] Filesystem type for checkpoints: XFS. Checkpoint size: 51.75 GiB. Available RAM: 1815.85 GiB.
+INFO 10-20 11:09:41 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (XFS) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:02,  3.45it/s]
+Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:04,  1.82it/s]
+Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.59it/s]
+Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.55it/s]
+Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:03,  1.51it/s]
+Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.48it/s]
+Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.48it/s]
+Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:04<00:01,  1.61it/s]
+Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:05<00:01,  1.69it/s]
+Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.36it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.51it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.55it/s]
+
+INFO 10-20 11:09:48 [default_loader.py:430] Loading weights took 7.12 seconds
+INFO 10-20 11:09:48 [model_runner_v1.py:4522] Loading drafter model...
+INFO 10-20 11:09:49 [model_runner_v1.py:4522] Loading drafter model...
+INFO 10-20 11:09:49 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-20 11:09:49 [model_runner_v1.py:4671] Model runner load_model total time: 9.61 seconds
+INFO 10-20 11:09:49 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-20 11:09:49 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-20 11:09:49 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+INFO 10-20 11:09:50 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-20 11:09:50 [model_runner_v1.py:4671] Model runner load_model total time: 10.48 seconds
+INFO 10-20 11:09:50 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-20 11:09:50 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-20 11:09:50 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+WARNING 10-20 11:09:51 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=896567) is multi-threaded, use of fork() may lead to deadlocks in the child.
+WARNING 10-20 11:09:52 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=896568) is multi-threaded, use of fork() may lead to deadlocks in the child.
+full-model prefix owner=1/128 tokens=923
+full-model prefix owner=9/128 tokens=1036
+full-model prefix owner=17/128 tokens=946
+full-model prefix owner=25/128 tokens=697
+full-model prefix owner=33/128 tokens=674
+full-model prefix owner=41/128 tokens=1529
+full-model prefix owner=49/128 tokens=923
+full-model prefix owner=57/128 tokens=668
+full-model prefix owner=65/128 tokens=1330
+full-model prefix owner=73/128 tokens=1167
+full-model prefix owner=81/128 tokens=1065
+full-model prefix owner=89/128 tokens=1224
+full-model prefix owner=97/128 tokens=926
+full-model prefix owner=105/128 tokens=1027
+full-model prefix owner=113/128 tokens=872
+full-model prefix owner=121/128 tokens=941
+full-model prefix owner=128/128 tokens=1039
+rank=1 official numeric step=0 output_nrmse=0.01181611
+rank=0 official numeric step=0 output_nrmse=0.01181611
+rank=0 official numeric step=1 output_nrmse=0.01231431
+rank=1 official numeric step=1 output_nrmse=0.01231431
+Timeout (0:03:00)!
+Thread 0x0000fffdc6fdf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py"Timeout (0:03:00)!
+, line Thread 0x355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "0000fffdbefdf100/usr/local/python3.12.13/lib/python3.12/threading.py (most recent call first):
+", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 355_bootstrap in 
+wait
+
+Thread 0x  File 0000fffdc77ef100 (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "251, line  in 355 in wait
+_feed  File 
+"  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line /usr/local/python3.12.13/lib/python3.12/threading.py251" in , line _feed1012
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File ", line "1012/usr/local/python3.12.13/lib/python3.12/threading.py in "run, line 
+1075  File  in "_bootstrap_inner/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap_inner, line 
+1032  File  in "_bootstrap/usr/local/python3.12.13/lib/python3.12/threading.py
+"
+, line Thread 0x10320000fffdbf7ef100 in  (most recent call first):
+_bootstrap
+
+  File Thread 0x"0000fffdc7fff100/usr/local/python3.12.13/lib/python3.12/threading.py (most recent call first):
+", line   File 355" in /usr/local/python3.12.13/lib/python3.12/threading.pywait"
+, line   File 355" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.pywait"
+, line   File 251" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py_feed"
+, line   File 251" in /usr/local/python3.12.13/lib/python3.12/threading.py_feed"
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun"
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun"
+, line   File 1075" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap_inner"
+, line   File 1075" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap_inner"
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap"
+, line 
+1032Thread 0x in 0000fffdbffff100_bootstrap (most recent call first):
+
+
+Thread 0x0000fffdd4c5f100  File  (most recent call first):
+"/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py355" in , line wait355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"  File , line "251/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "_feed, line 
+251  File  in "_feed/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1012/usr/local/python3.12.13/lib/python3.12/threading.py in "run, line 
+1012  File  in "run/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap_inner, line 
+1075  File  in "_bootstrap_inner/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1032/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap, line 
+1032
+ in Thread 0x_bootstrap0000fffdcc95f100
+ (most recent call first):
+
+Thread 0x0000fffdc67cf100  File  (most recent call first):
+"/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py355" in , line wait355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py251" in , line _feed251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run1012
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1032
+ in 
+_bootstrapThread 0x
+0000fffdbe7cf100
+ (most recent call first):
+Thread 0x0000fffdc5fbf100  File  (most recent call first):
+"/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py355" in , line wait355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py251" in , line _feed251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run1012
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1032
+ in 
+_bootstrapThread 0x
+0000fffdbdfbf100
+ (most recent call first):
+Thread 0x0000fffdc57af100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py"  File , line "355/usr/local/python3.12.13/lib/python3.12/threading.py in "wait, line 
+355  File  in "wait/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py
+"  File , line "251/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "_feed, line 
+251  File  in "_feed/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1012/usr/local/python3.12.13/lib/python3.12/threading.py in "run, line 
+1012  File  in "/usr/local/python3.12.13/lib/python3.12/threading.pyrun", line 
+1075  File  in "_bootstrap_inner/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap_inner, line 
+1032  File  in "_bootstrap/usr/local/python3.12.13/lib/python3.12/threading.py
+"
+, line Thread 0x10320000fffdbd7af100 in  (most recent call first):
+_bootstrap
+
+Thread 0x  File "0000fffdc4f9f100/usr/local/python3.12.13/lib/python3.12/threading.py (most recent call first):
+", line 355 in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py355" in , line wait251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py251" in , line _feed1012
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1032
+ in   File _bootstrap"
+/usr/local/python3.12.13/lib/python3.12/threading.py
+"Thread 0x, line 0000fffdbcf9f1001032 (most recent call first):
+ in _bootstrap  File 
+"
+/usr/local/python3.12.13/lib/python3.12/threading.pyThread 0x"0000fffdd66bf100, line  (most recent call first):
+355 in wait
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 251395 in  in _feed_recv
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 1012430 in  in run_recv_bytes
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 1075250 in  in _bootstrap_inner
+recv  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py", line 1032" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py_bootstrap"
+, line 
+828Thread 0x in _callmethod0000fffe5d34f100
+ (most recent call first):
+  File "<string>"  File , line 2 in get"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py  File "", line /usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py395" in , line _recv68
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py430" in , line _recv_bytes1075
+ in   File _bootstrap_inner
+"  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "250, line  in 1032 in recv_bootstrap
+
+  File 
+Thread 0x"0000fffe74f9f100/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py (most recent call first):
+", line   File 828" in /vllm-workspace/vllm/vllm/usage/usage_lib.py"_callmethod, line 
+255  File  in "_report_continuous_usage<string>
+"  File , line "2/vllm-workspace/vllm/vllm/usage/usage_lib.py in "get, line 
+173  File  in _report_usage_worker
+"  File /usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "68, line  in 1012run in 
+run  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 1075_bootstrap_inner in 
+_bootstrap_inner  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 1032_bootstrap in 
+_bootstrap
+
+Thread 0x
+0000fffeb3fff100Thread 0x (most recent call first):
+0000fffedcb2f100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "359, line  in 359wait in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "655, line  in 655wait in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py""/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py, line "69, line  in 69run in 
+run  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 1075_bootstrap_inner in 
+_bootstrap_inner  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 1032_bootstrap in 
+_bootstrap
+
+Thread 0x
+Thread 0x0000fffed09ef100 (most recent call first):
+  <no Python frame>
+0000fffedd33f100
+ (most recent call first):
+Thread 0x  <no Python frame>
+
+Thread 0x0000fffed11ff100 (most recent call first):
+0000fffeddb4f100  <no Python frame>
+ (most recent call first):
+
+  <no Python frame>
+Thread 0x
+0000ffffa12a6640Thread 0x (most recent call first):
+0000ffffadc1a640  File  (most recent call first):
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py, line "20, line  in 20finite in 
+finite  File 
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py, line "125, line  in 125store in 
+  File store"
+/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py  File ""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843, line  in 1843inner in 
+inner  File 
+"  File /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line , line 18821882 in  in _call_impl_call_impl
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py"", line , line 17761776 in  in _wrapped_call_impl_wrapped_call_impl
+
+  File   File ""/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py"", line 716, line  in 716forward in 
+forward  File 
+"  File /vllm-workspace/vllm/vllm/compilation/decorators.py""/vllm-workspace/vllm/vllm/compilation/decorators.py, line "509, line  in 509__call__ in 
+__call__  File 
+"  File /vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py""/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py, line "591, line  in 591forward in 
+forward  File 
+"  File /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py, line "1787, line  in 1787_call_impl in 
+_call_impl  File 
+"  File /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py, line "1776, line  in 1776_wrapped_call_impl in 
+_wrapped_call_impl  File 
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line , line 743743 in  in forwardforward
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py"", line , line 214214 in  in qualifyqualify
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py"", line , line 819819 in  in experimentexperiment
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py"", line , line 111111 in  in run_full_modelrun_full_model
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py"", line , line 959959 in  in mainmain
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py"", line , line 974974 in  in <module><module>
+
+rank=0 official numeric step=2 output_nrmse=0.01330724
+rank=1 official numeric step=2 output_nrmse=0.01330724
+rank=0 official numeric step=3 output_nrmse=0.01070269
+rank=1 official numeric step=3 output_nrmse=0.01070269
+rank=0 official numeric step=4 output_nrmse=0.01123667
+rank=1 official numeric step=4 output_nrmse=0.01123667
+rank=0 official numeric step=5 output_nrmse=0.01289202
+rank=1 official numeric step=5 output_nrmse=0.01289202
+rank=0 official numeric step=6 output_nrmse=0.01082099
+rank=1 official numeric step=6 output_nrmse=0.01082099
+rank=0 official numeric step=7 output_nrmse=0.01231536
+rank=1 official numeric step=7 output_nrmse=0.01231536
+rank=0 official numeric step=8 output_nrmse=0.01114744
+rank=1 official numeric step=8 output_nrmse=0.01114744
+rank=0 official numeric step=9 output_nrmse=0.01231719
+rank=1 official numeric step=9 output_nrmse=0.01231719
+Timeout (0:03:00)!
+Thread 0x0000fffdc6fdf100Timeout (0:03:00)!
+ (most recent call first):
+Thread 0x  File 0000fffdbefdf100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py", line 355  File  in "wait/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "355/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "wait, line 
+251  File  in "_feed/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py
+"  File , line "251/usr/local/python3.12.13/lib/python3.12/threading.py in ", line _feed1012
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1032
+ in   File _bootstrap"
+/usr/local/python3.12.13/lib/python3.12/threading.py
+"Thread 0x, line 0000fffdc77ef1001032 (most recent call first):
+ in   File _bootstrap"
+/usr/local/python3.12.13/lib/python3.12/threading.py"
+, line Thread 0x3550000fffdbf7ef100 in  (most recent call first):
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "355, line 251 in  in wait_feed
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 2511012 in  in _feedrun
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10121075 in  in run_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10751032 in  in _bootstrap_inner_bootstrap
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffdc7fff100" (most recent call first):
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap"
+, line 
+355Thread 0x in 0000fffdbffff100wait (most recent call first):
+
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File "", line 251/usr/local/python3.12.13/lib/python3.12/threading.py in "_feed, line 
+355  File  in "wait/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1012/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "run, line 
+251  File  in "_feed/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap_inner, line 
+1012  File  in "run/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1032/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap, line 
+1075
+ in Thread 0x_bootstrap_inner0000fffdd4c5f100
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 1032355 in  in _bootstrapwait
+
+
+  File Thread 0x"0000fffdcc95f100/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py" (most recent call first):
+, line   File 251" in /usr/local/python3.12.13/lib/python3.12/threading.py_feed"
+, line   File 355" in /usr/local/python3.12.13/lib/python3.12/threading.pywait"
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.pyrun"
+, line   File 251" in /usr/local/python3.12.13/lib/python3.12/threading.py_feed"
+, line   File 1075" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap_inner"
+  File , line "1012/usr/local/python3.12.13/lib/python3.12/threading.py in "run, line 
+1032  File  in "_bootstrap/usr/local/python3.12.13/lib/python3.12/threading.py
+"
+, line Thread 0x10750000fffdc67cf100 in  (most recent call first):
+_bootstrap_inner  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "355, line  in 1032wait in 
+_bootstrap  File 
+"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.pyThread 0x"0000fffdbe7cf100, line  (most recent call first):
+251  File  in "_feed/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "355/usr/local/python3.12.13/lib/python3.12/threading.py in "wait, line 
+1012  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbdfbf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbd7af100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed in 
+run  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py"", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1032
+ in   File _bootstrap"
+/usr/local/python3.12.13/lib/python3.12/threading.py
+"Thread 0x, line 0000fffdc5fbf1001032 (most recent call first):
+ in   File _bootstrap"
+/usr/local/python3.12.13/lib/python3.12/threading.py
+"Thread 0x, line 0000fffdbcf9f100355 (most recent call first):
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py355" in , line wait251 in 
+_feed  File 
+"  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "251, line  in 1012_feed in 
+run  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1012, line  in 1075run in 
+_bootstrap_inner  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 1032_bootstrap_inner in _bootstrap
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffdc57af100" (most recent call first):
+, line 1032 in   File _bootstrap"
+/usr/local/python3.12.13/lib/python3.12/threading.py
+"Thread 0x, line 0000fffe5d34f100355 (most recent call first):
+ in wait
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 251395 in  in _feed_recv
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 1012430 in  in run_recv_bytes
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 1075250 in  in _bootstrap_innerrecv
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py"", line 1032, line  in 828_bootstrap in 
+_callmethod
+
+Thread 0x  File 0000fffdc4f9f100" (most recent call first):
+<string>  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py2" in , line get355
+ in   File wait"
+/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py68" in , line run251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1012
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1075
+ in 
+_bootstrap_innerThread 0x
+0000fffeb3fff100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 359_bootstrap in 
+wait
+
+Thread 0x  File 0000fffdd66bf100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py"  File , line "655/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py in "wait, line 
+395  File  in "_recv/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py
+"  File , line "69/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py in "run, line 
+430  File  in "_recv_bytes/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py" in , line _bootstrap_inner250
+ in   File recv"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File ", line 1032" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py_bootstrap"
+, line 
+828Thread 0x in 0000fffed09ef100_callmethod (most recent call first):
+
+  <no Python frame>
+  File 
+"Thread 0x<string>"0000fffed11ff100, line  (most recent call first):
+2 in   <no Python frame>
+get
+
+Thread 0x  File 0000ffffa12a6640" (most recent call first):
+/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py  File "", line /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py68" in , line 112run in 
+  File store"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py1075" in , line _bootstrap_inner1843
+ in   File inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py1032" in , line _bootstrap1882
+ in 
+_call_implThread 0x
+0000fffe74f9f100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py""/vllm-workspace/vllm/vllm/usage/usage_lib.py, line "1776, line  in 255_wrapped_call_impl in 
+_report_continuous_usage  File 
+"  File /vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py""/vllm-workspace/vllm/vllm/usage/usage_lib.py, line "716, line  in 173forward in 
+_report_usage_worker  File 
+"  File /vllm-workspace/vllm/vllm/compilation/decorators.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "509, line  in 1012 in __call__run
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py"", line , line 1075591 in  in _bootstrap_innerforward
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py"", line , line 10321787 in  in _bootstrap_call_impl
+
+
+  File Thread 0x"0000fffedcb2f100/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py (most recent call first):
+"  File , line "1776/usr/local/python3.12.13/lib/python3.12/threading.py in "_wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in , line forward359
+ in   File wait"
+/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py214" in , line qualify655
+ in   File wait"
+/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py  File ""/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py", line , line 81969 in  in runexperiment
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py"", line , line 1075111 in  in run_full_model_bootstrap_inner
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 1032959 in  in _bootstrapmain
+
+
+  File Thread 0x"0000fffedd33f100/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py (most recent call first):
+"  <no Python frame>
+, line 
+974Thread 0x in 0000fffeddb4f100<module> (most recent call first):
+
+  <no Python frame>
+
+Thread 0x0000ffffadc1a640 (most recent call first):
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 112 in store
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843 in inner
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in forward
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 214 in qualify
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 819 in experiment
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 959 in main
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 974 in <module>
+rank=0 official numeric step=10 output_nrmse=0.01159449
+rank=1 official numeric step=10 output_nrmse=0.01159449
+rank=0 official numeric step=11 output_nrmse=0.01130624
+rank=1 official numeric step=11 output_nrmse=0.01130624
+rank=0 official numeric step=12 output_nrmse=0.01153556
+rank=1 official numeric step=12 output_nrmse=0.01153556
+rank=0 official numeric step=13 output_nrmse=0.01202047
+rank=1 official numeric step=13 output_nrmse=0.01202047
+rank=0 official numeric step=14 output_nrmse=0.01311977
+rank=1 official numeric step=14 output_nrmse=0.01311977
+rank=0 official numeric step=15 output_nrmse=0.01182979
+rank=1 official numeric step=15 output_nrmse=0.01182979
+rank=0 official numeric step=16 output_nrmse=0.01130001
+rank=1 official numeric step=16 output_nrmse=0.01130001
+rank=0 official numeric step=17 output_nrmse=0.01181557
+rank=1 official numeric step=17 output_nrmse=0.01181557
+Timeout (0:03:00)!
+Thread 0x0000fffdbefdf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+Timeout (0:03:00)!
+  File Thread 0x0000fffdc6fdf100 (most recent call first):
+"/usr/local/python3.12.13/lib/python3.12/threading.py", line   File 1075" in /usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py251" in , line 1032_feed in 
+_bootstrap  File 
+"
+/usr/local/python3.12.13/lib/python3.12/threading.pyThread 0x"0000fffdbf7ef100, line  (most recent call first):
+1012  File  in "run/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "355/usr/local/python3.12.13/lib/python3.12/threading.py in "wait, line 1075
+ in   File _bootstrap_inner
+"  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "251, line  in 1032_feed in 
+_bootstrap  File 
+"
+/usr/local/python3.12.13/lib/python3.12/threading.pyThread 0x"0000fffdc77ef100, line  (most recent call first):
+1012  File  in "run/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "355/usr/local/python3.12.13/lib/python3.12/threading.py in "wait, line 
+1075  File  in "_bootstrap_inner/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py
+"  File , line "251/usr/local/python3.12.13/lib/python3.12/threading.py in _feed"
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap"
+, line 
+1012Thread 0x in 0000fffdbffff100run (most recent call first):
+
+  File "  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line 1032" in , line _bootstrap251
+ in 
+_feedThread 0x
+0000fffdc7fff100  File  (most recent call first):
+"/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdcc95f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbe7cf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbdfbf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in  in waitwait
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line , line 251251 in  in _feed_feed
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py"/usr/local/python3.12.13/lib/python3.12/threading.py, line "1012, line  in 1012run in 
+run  File "
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in _bootstrap_inner, line 
+  File 1075" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap_inner"
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap
+"
+, line Thread 0x1032 in _bootstrap0000fffdd4c5f100
+ (most recent call first):
+
+Thread 0x0000fffdbd7af100 (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 355355 in  in waitwait
+
+  File "  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "251, line  in _feed251
+  File  in "_feed/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1012/usr/local/python3.12.13/lib/python3.12/threading.py in run"
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun"
+, line   File 1075" in _bootstrap_inner/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File ", line /usr/local/python3.12.13/lib/python3.12/threading.py"1075, line  in 1032 in _bootstrap_inner_bootstrap
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffdc67cf100" (most recent call first):
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap"
+, line 
+355Thread 0x in wait0000fffdbcf9f100
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 251355 in  in _feedwait
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line , line 1012251 in  in run_feed
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10751012 in  in _bootstrap_innerrun
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py"/usr/local/python3.12.13/lib/python3.12/threading.py, line 1032" in , line _bootstrap1075
+ in 
+Thread 0x_bootstrap_inner
+0000fffdc5fbf100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 355_bootstrap in 
+wait
+
+Thread 0x  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "0000fffe5d34f100/usr/local/python3.12.13/lib/python3.12/threading.py (most recent call first):
+", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+  File 
+Thread 0x0000fffdc57af100 (most recent call first):
+"  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 355 in 395wait in 
+_recv  File "
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File ", line 251 in _feed
+"  File /usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "430, line  in 1012_recv_bytes in 
+run  File 
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py"", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py1075" in , line _bootstrap_inner250
+ in   File recv"/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line 1032 in _bootstrap
+
+Thread 0x"0000fffdc4f9f100/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py (most recent call first):
+"  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+, line   File 828" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed_callmethod
+
+  File   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012" in <string>run"
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py, line "2, line 1075 in  in get_bootstrap_inner
+
+  File   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x"0000fffdd66bf100/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py (most recent call first):
+", line 68  File  in "run/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py
+"  File , line "395/usr/local/python3.12.13/lib/python3.12/threading.py in "_recv, line 
+1075  File  in "_bootstrap_inner/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py
+"  File , line "430/usr/local/python3.12.13/lib/python3.12/threading.py in "_recv_bytes, line 
+1032  File  in "_bootstrap/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"
+, line 
+250Thread 0x in 0000fffeb3fff100recv (most recent call first):
+
+  File   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 359" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.pywait"
+, line   File 828" in /usr/local/python3.12.13/lib/python3.12/threading.py_callmethod"
+, line   File 655" in <string>wait"
+, line   File 2 in "get/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py
+"  File , line "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py69" in , line run68
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File ""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 1032 in _bootstrap_bootstrap
+
+
+
+Thread 0xThread 0x0000fffe74f9f100 (most recent call first):
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 255 in _report_continuous_usage
+  File 0000fffed09ef100"/vllm-workspace/vllm/vllm/usage/usage_lib.py (most recent call first):
+"  <no Python frame>
+, line 
+173Thread 0x in _report_usage_worker
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 0000fffed11ff1001012 (most recent call first):
+ in   <no Python frame>
+run
+
+  File Thread 0x"0000ffffa12a6640/usr/local/python3.12.13/lib/python3.12/threading.py" (most recent call first):
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 105 in load
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1819 in inner
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in forward
+  File , line "1075/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py in "_bootstrap_inner, line 
+214  File  in "qualify/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line 1032 in _bootstrap
+
+Thread 0x0000fffedcb2f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py, line "359 in , line wait819
+ in   File experiment"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py655" in , line wait111
+ in   File run_full_model"
+/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py  File "", line 69/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py in run"
+, line   File "959/usr/local/python3.12.13/lib/python3.12/threading.py in "main, line 
+1075  File  in "_bootstrap_inner/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py
+  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py974" in , line <module>1032
+ in _bootstrap
+
+Thread 0x0000fffedd33f100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffeddb4f100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffadc1a640 (most recent call first):
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 127 in store
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843 in inner
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in forward
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 214 in qualify
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 819 in experiment
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 959 in main
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 974 in <module>
+rank=1 official numeric step=18 output_nrmse=0.01277867
+rank=0 official numeric step=18 output_nrmse=0.01277867
+rank=0 official numeric step=19 output_nrmse=0.01277674
+rank=1 official numeric step=19 output_nrmse=0.01277674
+rank=1 official numeric step=20 output_nrmse=0.01143006
+rank=0 official numeric step=20 output_nrmse=0.01143006
+rank=1 official numeric step=21 output_nrmse=0.01249036
+rank=0 official numeric step=21 output_nrmse=0.01249036
+rank=1 official numeric step=22 output_nrmse=0.01280104
+rank=0 official numeric step=22 output_nrmse=0.01280104
+rank=1 official numeric step=23 output_nrmse=0.01263552
+rank=0 official numeric step=23 output_nrmse=0.01263552
+rank=0 official numeric step=24 output_nrmse=0.01213988
+rank=1 official numeric step=24 output_nrmse=0.01213988
+rank=1 official numeric step=25 output_nrmse=0.01128683
+rank=0 official numeric step=25 output_nrmse=0.01128683
+Timeout (0:03:00)!
+Thread 0x0000fffdbefdf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbf7ef100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbffff100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in Timeout (0:03:00)!
+_feedThread 0x
+0000fffdc6fdf100  File  (most recent call first):
+"/usr/local/python3.12.13/lib/python3.12/threading.py", line   File 1012" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun"
+, line   File 355" in /usr/local/python3.12.13/lib/python3.12/threading.pywait"
+, line   File 1075" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py_bootstrap_inner"
+, line   File 251" in /usr/local/python3.12.13/lib/python3.12/threading.py_feed"
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap"
+, line 
+1012Thread 0x in 0000fffdcc95f100run (most recent call first):
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 3551075 in  in wait_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 2511032 in  in _feed_bootstrap
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffdc77ef100" (most recent call first):
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun"
+, line   File 355" in /usr/local/python3.12.13/lib/python3.12/threading.pywait"
+, line   File 1075" in /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py_bootstrap_inner"
+, line   File 251" in /usr/local/python3.12.13/lib/python3.12/threading.py_feed"
+, line   File 1032" in /usr/local/python3.12.13/lib/python3.12/threading.py_bootstrap"
+, line 
+1012Thread 0x in 0000fffdbe7cf100run (most recent call first):
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 3551075 in  in wait_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line 1032 in _bootstrap
+
+Thread 0x0000fffdc7fff100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line , line 2511032 in  in _feed_bootstrap
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffdd4c5f100" (most recent call first):
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun"
+, line   File 355" in /usr/local/python3.12.13/lib/python3.12/threading.pywait
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "_bootstrap_inner, line 
+251  File  in "_feed/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1032/usr/local/python3.12.13/lib/python3.12/threading.py in "_bootstrap, line 
+1012
+ in Thread 0xrun0000fffdbdfbf100
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 1075355 in  in _bootstrap_innerwait
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line , line 1032251 in  in _bootstrap
+_feed
+
+Thread 0x  File 0000fffdc67cf100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1075" in , line _bootstrap_inner251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1012
+ in 
+runThread 0x
+0000fffdbd7af100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File "
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1032" in , line _bootstrap251
+ in 
+_feedThread 0x
+0000fffdc5fbf100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1012, line  in 355run in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1075, line  in 251_bootstrap_inner in 
+_feed  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1032, line  in 1012_bootstrap in 
+run
+
+Thread 0x  File 0000fffdbcf9f100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1075" in , line _bootstrap_inner355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1032" in , line _bootstrap
+251
+ in Thread 0x_feed0000fffdc57af100
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 3551012 in  in waitrun
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 2511075 in  in _feed_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10121032 in  in run_bootstrap
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffe5d34f100" (most recent call first):
+, line 1075  File  in "_bootstrap_inner/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py
+"  File , line "395/usr/local/python3.12.13/lib/python3.12/threading.py in "_recv, line 
+1032  File  in "_bootstrap/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py
+"
+, line Thread 0x4300000fffdc4f9f100 in  (most recent call first):
+_recv_bytes  File "
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py355" in , line wait250
+ in   File recv"
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py251" in , line _feed828
+ in   File _callmethod"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line <string>1012" in , line run2
+ in   File get"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py1075" in , line _bootstrap_inner68
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1075
+
+ in Thread 0x_bootstrap_inner0000fffdd66bf100
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 1032395 in  in _bootstrap_recv
+
+  File 
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py0000fffeb3fff100" (most recent call first):
+, line   File 430" in /usr/local/python3.12.13/lib/python3.12/threading.py_recv_bytes
+"  File , line "359/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py in "wait, line 
+250  File  in "recv/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line 655 in "wait/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py
+"  File , line "828/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py in "_callmethod, line 
+69  File  in "run<string>
+"  File , line "2/usr/local/python3.12.13/lib/python3.12/threading.py in "get, line 
+1075  File  in "_bootstrap_inner/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py
+"  File , line "68/usr/local/python3.12.13/lib/python3.12/threading.py in "run, line 
+1032  File  in "_bootstrap/usr/local/python3.12.13/lib/python3.12/threading.py
+"
+, line Thread 0x10750000fffed09ef100 in  (most recent call first):
+_bootstrap_inner  <no Python frame>
+
+
+  File Thread 0x"0000fffed11ff100/usr/local/python3.12.13/lib/python3.12/threading.py (most recent call first):
+", line   <no Python frame>
+1032
+ in Thread 0x_bootstrap0000ffffa12a6640
+ (most recent call first):
+
+  File Thread 0x"0000fffe74f9f100/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py (most recent call first):
+"  File , line 20" in /vllm-workspace/vllm/vllm/usage/usage_lib.pyfinite"
+, line   File 255" in /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py_report_continuous_usage"
+, line   File 125" in /vllm-workspace/vllm/vllm/usage/usage_lib.pystore"
+, line   File 173"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843 in inner
+  File " in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py_report_usage_worker"
+, line   File 1882" in /usr/local/python3.12.13/lib/python3.12/threading.py_call_impl"
+, line   File 1012" in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.pyrun"
+, line   File 1776" in /usr/local/python3.12.13/lib/python3.12/threading.py_wrapped_call_impl"
+, line   File 1075" in /vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py_bootstrap_inner"
+, line   File 716" in /usr/local/python3.12.13/lib/python3.12/threading.pyforward"
+, line   File 1032" in /vllm-workspace/vllm/vllm/compilation/decorators.py_bootstrap"
+, line 
+509Thread 0x in 0000fffedcb2f100__call__ (most recent call first):
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py"", line , line 359591 in  in waitforward
+
+  File "  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py, line "655, line  in 1787wait in 
+_call_impl  File 
+"  File /usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py, line "69, line  in 1776run in 
+_wrapped_call_impl  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py, line "1075, line  in 743_bootstrap_inner in 
+forward  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py, line "1032, line  in 214_bootstrap in 
+qualify
+
+Thread 0x  File 0000fffedd33f100 (most recent call first):
+"  <no Python frame>
+/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py
+"Thread 0x0000fffeddb4f100, line  (most recent call first):
+819  <no Python frame>
+ in 
+experimentThread 0x
+0000ffffadc1a640  File  (most recent call first):
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py", line 20 in finite
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py, line "111, line  in 125run_full_model in 
+store  File 
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py""/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line , line 9591843 in  in maininner
+
+  File   File ""/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py"", line , line 9741882 in  in <module>_call_impl
+
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in forward
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 214 in qualify
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 819 in experiment
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 959 in main
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 974 in <module>
+rank=1 official numeric step=26 output_nrmse=0.02593176
+rank=0 official numeric step=26 output_nrmse=0.02593176
+rank=1 official numeric step=27 output_nrmse=0.01611643
+rank=0 official numeric step=27 output_nrmse=0.01611643
+rank=0 official numeric step=28 output_nrmse=0.01222362
+rank=1 official numeric step=28 output_nrmse=0.01222362
+rank=0 official numeric step=29 output_nrmse=0.01230216
+rank=1 official numeric step=29 output_nrmse=0.01230216
+rank=0 official numeric step=30 output_nrmse=0.01204016
+rank=1 official numeric step=30 output_nrmse=0.01204016
+rank=1 official numeric step=31 output_nrmse=0.01469562
+rank=0 official numeric step=31 output_nrmse=0.01469562
+rank=1 official numeric step=32 output_nrmse=0.01181712
+rank=0 official numeric step=32 output_nrmse=0.01181712
+rank=1 official numeric step=33 output_nrmse=0.01183634
+rank=0 official numeric step=33 output_nrmse=0.01183634
+Timeout (0:03:00)!
+Thread 0x0000fffdbefdf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbf7ef100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbffff100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File Timeout (0:03:00)!
+"Thread 0x/usr/local/python3.12.13/lib/python3.12/threading.py0000fffdc6fdf100" (most recent call first):
+, line 1012 in run
+  File "  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1032, line  in 251_bootstrap in 
+_feed
+
+Thread 0x  File 0000fffdcc95f100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1075" in , line _bootstrap_inner251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1012
+ in 
+runThread 0x
+0000fffdc77ef100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1032, line  in 251_bootstrap in 
+_feed
+
+Thread 0x  File 0000fffdbe7cf100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1075" in , line _bootstrap_inner251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1012
+ in 
+runThread 0x
+0000fffdc7fff100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1032, line  in 251_bootstrap in 
+_feed
+
+Thread 0x  File 0000fffdbdfbf100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1075" in , line _bootstrap_inner251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1012
+ in 
+runThread 0x
+0000fffdd4c5f100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1032, line  in 251_bootstrap in 
+_feed
+
+Thread 0x  File 0000fffdbd7af100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1075" in , line _bootstrap_inner251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1012
+ in 
+runThread 0x
+0000fffdc67cf100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1032, line  in 251_bootstrap in 
+_feed
+
+Thread 0x  File 0000fffdbcf9f100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1012" in , line run355
+ in   File wait"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py1075" in , line _bootstrap_inner251
+ in   File _feed"
+/usr/local/python3.12.13/lib/python3.12/threading.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1032" in , line _bootstrap1012
+ in 
+runThread 0x
+0000fffdc5fbf100  File  (most recent call first):
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "1075, line  in 355_bootstrap_inner in 
+wait  File 
+"  File /usr/local/python3.12.13/lib/python3.12/threading.py""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py, line "1032, line  in 251_bootstrap in 
+_feed
+
+Thread 0x  File 0000fffe5d34f100" (most recent call first):
+/usr/local/python3.12.13/lib/python3.12/threading.py"  File , line "1012/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py in "run, line 
+395  File  in "_recv/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py in "_bootstrap_inner, line 
+430  File  in "_recv_bytes/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1032/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py in "_bootstrap, line 
+250
+ in Thread 0xrecv0000fffdc57af100
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 828355 in  in _callmethodwait
+
+  File   File ""<string>/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line , line 2251 in  in get_feed
+
+  File   File ""/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 681012 in  in runrun
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10751075 in  in _bootstrap_inner_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10321032 in  in _bootstrap_bootstrap
+
+
+
+Thread 0xThread 0x0000fffeb3fff1000000fffdc4f9f100 (most recent call first):
+ (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 359355 in  in waitwait
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line , line 655251 in  in wait_feed
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 691012 in  in runrun
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10751075 in  in _bootstrap_inner_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10321032 in  in _bootstrap_bootstrap
+
+
+
+Thread 0xThread 0x0000fffed09ef1000000fffdd66bf100 (most recent call first):
+ (most recent call first):
+  <no Python frame>
+
+  File Thread 0x"0000fffed11ff100/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py (most recent call first):
+"  <no Python frame>
+, line 
+395Thread 0x in 0000ffffa12a6640_recv (most recent call first):
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/site-packages/numpy/core/_methods.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 64430 in  in _all_recv_bytes
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/site-packages/numpy/core/numeric.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py"", line , line 2439250 in  in array_equalrecv
+
+  File   File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py"", line /usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py10" in , line identical828
+ in   File _callmethod"
+/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py  File "", line <string>123" in , line store2
+ in   File get"
+/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py  File "", line /usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py1843" in , line inner68
+ in   File run"
+/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1882" in , line _call_impl1075
+ in   File _bootstrap_inner"
+/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py  File "", line /usr/local/python3.12.13/lib/python3.12/threading.py1776" in , line _wrapped_call_impl1032
+ in   File _bootstrap"
+/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py
+"Thread 0x, line 0000fffe74f9f100716 (most recent call first):
+ in forward
+  File   File ""/vllm-workspace/vllm/vllm/usage/usage_lib.py/vllm-workspace/vllm/vllm/compilation/decorators.py"", line , line 255509 in  in _report_continuous_usage__call__
+
+  File   File ""/vllm-workspace/vllm/vllm/usage/usage_lib.py/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py"", line , line 173591 in  in _report_usage_workerforward
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py"", line , line 10121787 in  in run_call_impl
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py"", line , line 10751776 in  in _bootstrap_inner_wrapped_call_impl
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py"", line , line 1032743 in  in _bootstrapforward
+
+
+  File Thread 0x"0000fffedcb2f100/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py (most recent call first):
+"  File , line "214/usr/local/python3.12.13/lib/python3.12/threading.py in "qualify, line 
+359  File  in "wait/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py
+"  File "/usr/local/python3.12.13/lib/python3.12/threading.py, line "819, line  in 655experiment in 
+wait  File 
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py""/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py, line "111, line  in 69run_full_model in 
+run  File 
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "959, line  in 1075main in 
+_bootstrap_inner  File 
+"  File /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py""/usr/local/python3.12.13/lib/python3.12/threading.py, line "974, line  in 1032<module> in 
+_bootstrap
+
+Thread 0x0000fffedd33f100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffeddb4f100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffadc1a640 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/numpy/core/_methods.py", line 64 in _all
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/numpy/core/numeric.py", line 2439 in array_equal
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py", line 10 in identical
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 123 in store
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843 in inner
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in forward
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 214 in qualify
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 819 in experiment
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 959 in main
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 974 in <module>
+rank=1 official numeric step=34 output_nrmse=0.01368030
+rank=0 official numeric step=34 output_nrmse=0.01368030
+rank=1 official numeric step=35 output_nrmse=0.01343922
+rank=0 official numeric step=35 output_nrmse=0.01343922
+rank=1 official numeric step=36 output_nrmse=0.01112159
+rank=0 official numeric step=36 output_nrmse=0.01112159
+rank=1 official numeric step=37 output_nrmse=0.01084282
+rank=0 official numeric step=37 output_nrmse=0.01084282
+rank=1 official numeric step=38 output_nrmse=0.01265143
+rank=0 official numeric step=38 output_nrmse=0.01265143
+rank=1 official numeric step=39 output_nrmse=0.01152346
+rank=0 official numeric step=39 output_nrmse=0.01152346
+rank=1 official numeric step=40 output_nrmse=0.01913993
+rank=0 official numeric step=40 output_nrmse=0.01913993
+rank=1 official numeric step=41 output_nrmse=0.01494997
+rank=0 official numeric step=41 output_nrmse=0.01494997
+Timeout (0:03:00)!
+Thread 0x0000fffdbefdf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbf7ef100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdbffff100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdcc95f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0xTimeout (0:03:00)!
+0000fffdbe7cf100 (most recent call first):
+Thread 0x  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 3550000fffdc6fdf100 in  (most recent call first):
+wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py"  File , line "1012/usr/local/python3.12.13/lib/python3.12/threading.py in "run, line 
+355  File  in "wait/usr/local/python3.12.13/lib/python3.12/threading.py
+"  File , line "1075/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "_bootstrap_inner, line 
+251  File  in "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+_feedThread 0x
+0000fffdbdfbf100  File  (most recent call first):
+  File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 3551012 in  in waitrun
+
+  File   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251" in /usr/local/python3.12.13/lib/python3.12/threading.py_feed"
+, line   File 1075" in /usr/local/python3.12.13/lib/python3.12/threading.py", line _bootstrap_inner1012
+ in   File run
+  File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line 1075, line  in 1032_bootstrap_inner in 
+_bootstrap  File 
+"
+/usr/local/python3.12.13/lib/python3.12/threading.pyThread 0x", line 10320000fffdc77ef100 in  (most recent call first):
+_bootstrap
+
+Thread 0x0000fffdbd7af100 (most recent call first):
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 355355 in  in waitwait
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py"", line , line 251251 in  in _feed_feed
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10121012 in  in runrun
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10751075 in  in _bootstrap_inner_bootstrap_inner
+
+  File   File ""/usr/local/python3.12.13/lib/python3.12/threading.py/usr/local/python3.12.13/lib/python3.12/threading.py"", line , line 10321032 in  in _bootstrap_bootstrap
+
+
+
+Thread 0xThread 0x0000fffdbcf9f1000000fffdc7fff100 (most recent call first):
+ (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffe5d34f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 395 in _recv
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430 in _recv_bytes
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250 in recv
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828 in _callmethod
+  File "<string>", line 2 in get
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffeb3fff100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 359 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 655 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffed09ef100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffed11ff100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffa12a6640 (most recent call first):
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py", line 20 in finite
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 125 in store
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843 in inner
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py"  File , line "1787/usr/local/python3.12.13/lib/python3.12/threading.py in "_call_impl, line 
+355  File  in "wait/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py
+"  File , line "1776/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "_wrapped_call_impl, line 
+251  File  in "_feed/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py
+"  File , line "743/usr/local/python3.12.13/lib/python3.12/threading.py in "forward, line 
+1012  File  in "run/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py
+"  File , line "214/usr/local/python3.12.13/lib/python3.12/threading.py in "qualify, line 
+1075  File  in "_bootstrap_inner/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py
+"  File "/usr/local/python3.12.13/lib/python3.12/threading.py, line "819, line  in 1032experiment in 
+_bootstrap  File 
+"
+/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.pyThread 0x"0000fffdd4c5f100 (most recent call first):
+, line   File 111" in /usr/local/python3.12.13/lib/python3.12/threading.pyrun_full_model"
+, line   File 355" in /workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.pywait"
+  File , line "959/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py in "main, line 
+251  File  in "_feed/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py
+"  File , line "974/usr/local/python3.12.13/lib/python3.12/threading.py in "<module>, line 
+1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdc67cf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdc5fbf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdc57af100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdc4f9f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/queues.py", line 251 in _feed
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffdd66bf100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 395 in _recv
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430 in _recv_bytes
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250 in recv
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828 in _callmethod
+  File "<string>", line 2 in get
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffe74f9f100 (most recent call first):
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 255 in _report_continuous_usage
+  File "/vllm-workspace/vllm/vllm/usage/usage_lib.py", line 173 in _report_usage_worker
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffedcb2f100 (most recent call first):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 359 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 655 in wait
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x0000fffedd33f100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000fffeddb4f100 (most recent call first):
+  <no Python frame>
+
+Thread 0x0000ffffadc1a640 (most recent call first):
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_cpu_audit.py", line 20 in finite
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 125 in store
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1843 in inner
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 716 in forward
+  File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 509 in __call__
+  File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591 in forward
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787 in _call_impl
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776 in _wrapped_call_impl
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 743 in forward
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_full_numeric.py", line 214 in qualify
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 819 in experiment
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_loader.py", line 111 in run_full_model
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 959 in main
+  File "/workspace/gdn-full-numeric-v2/tools/multi_graph_gdn_q4_full_probe.py", line 974 in <module>
+rank=1 official numeric step=42 output_nrmse=0.01254310
+rank=0 official numeric step=42 output_nrmse=0.01254310
+rank=1 official numeric step=43 output_nrmse=0.01158145
+rank=0 official numeric step=43 output_nrmse=0.01158145
+W1020 11:27:47.739000 896488 site-packages/torch/distributed/elastic/agent/server/api.py:739] Received 15 death signal, shutting down workers
+W1020 11:27:47.741000 896488 site-packages/torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 896567 closing signal SIGTERM
+W1020 11:27:47.743000 896488 site-packages/torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 896568 closing signal SIGTERM
+Exception in thread Thread-2:
+Traceback (most recent call last):
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+    item = self.task_q.get()
+           ^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in get
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+Exception in thread Thread-1:
+    kind, result = conn.recv()
+Traceback (most recent call last):
+    File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+                 ^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+          ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+    buf = self._recv(4)
+          ^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+    self.run()
+    raise EOFError
+  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+EOFError
+    item = self.task_q.get()
+           ^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in get
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+    kind, result = conn.recv()
+                   ^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+          ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+    buf = self._recv(4)
+          ^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+    raise EOFError
+EOFError
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 30 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 30 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+Traceback (most recent call last):
+  File "/usr/local/python3.12.13/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 308, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 134, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 731, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 908, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 86, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 896488 got signal: 15
+[ERROR] 2026-10-20-11:27:49 (PID:896488, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
