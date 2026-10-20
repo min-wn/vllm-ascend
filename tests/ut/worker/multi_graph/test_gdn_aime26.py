@@ -20,6 +20,7 @@ from multi_graph_gdn_aime26 import (  # noqa: E402
     verify_greedy,
 )
 from multi_graph_gdn_aime26_audit import HistoryNgrams  # noqa: E402
+from multi_graph_gdn_aime26_score import score_all  # noqa: E402
 
 
 @pytest.mark.parametrize(
@@ -142,3 +143,45 @@ def test_ngram_oracle_keeps_earliest_longest_match():
     assert history.propose() == [5, 1, 2]
     empty = HistoryNgrams([7, 8])
     assert empty.propose() == []
+
+
+def test_scoring_retains_missing_runtime_and_parser_failures(tmp_path, monkeypatch):
+    manifest = dict(payload_sha256="frozen", payload=dict(inputs=[dict(index=i, id=str(i)) for i in range(30)]))
+    targets = [dict(index=i, id=str(i), target="7") for i in range(30)]
+
+    class ParserError(Exception):
+        pass
+
+    def rule_score(rules, text, target):
+        if text == "parser_failure":
+            raise ParserError("test unavailable scoring")
+        return dict(matched=text == target, extracted=text, prediction_valid=True, reference_valid=True, reason="test")
+
+    monkeypatch.setattr("multi_graph_gdn_aime26_score.score_output", rule_score)
+    for index in range(30):
+        for variant in ("official", "compact"):
+            if index == 2 and variant == "compact":
+                continue
+            text = "wrong" if (index, variant) in ((0, "compact"), (1, "official")) else "7"
+            if index == 4 and variant == "compact":
+                text = "parser_failure"
+            record = dict(
+                manifest_sha256="frozen",
+                index=index,
+                scorer_text=text,
+                finish_reason="runtime_error" if (index, variant) == (3, "official") else "eos",
+                generated_token_count=10,
+                q4_steps=5,
+                fallback_calls=0,
+            )
+            (tmp_path / f"{variant}.question{index:02}.json").write_text(json.dumps(record), encoding="utf-8")
+    result = score_all(manifest, targets, tmp_path, {"MathEvaluationError": ParserError})
+    assert len(result["rows"]) == 30
+    assert not result["actual_generation_complete_all"]
+    assert result["summary"]["official"]["correct"] == 28
+    assert result["summary"]["compact"]["correct"] == 27
+    assert result["summary"]["official_only"] == 3
+    assert result["summary"]["compact_only"] == 2
+    assert result["summary"]["both_correct"] == 25
+    assert result["summary"]["compact"]["parse_failures"] == 2
+    assert result["rows"][4]["compact"]["reason"] == "scoring_error"

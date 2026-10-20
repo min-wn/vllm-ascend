@@ -32,12 +32,23 @@ def score_all(manifest, targets, output_dir, rules):
                     q4_steps=0,
                     extracted="",
                     reason="missing_output",
+                    generation_available=False,
                 )
                 continue
             generation = json.loads(path.read_text(encoding="utf-8"))
             if generation["manifest_sha256"] != manifest["payload_sha256"] or generation["index"] != index:
                 raise ValueError("output was generated under a different frozen protocol")
-            score = score_output(rules, generation["scorer_text"], str(target["target"]))
+            try:
+                score = score_output(rules, generation["scorer_text"], str(target["target"]))
+            except rules["MathEvaluationError"] as error:
+                score = dict(
+                    matched=False,
+                    prediction_valid=False,
+                    reference_valid=True,
+                    extracted="",
+                    reason="scoring_error",
+                    scoring_error=repr(error),
+                )
             row[variant] = dict(
                 **score,
                 correct=score["matched"] and generation["finish_reason"] != "runtime_error",
@@ -48,16 +59,23 @@ def score_all(manifest, targets, output_dir, rules):
                 fallback_calls=generation["fallback_calls"],
                 output_file=path.name,
                 output_stop_reason=generation.get("output_stop_reason"),
+                generation_available=True,
             )
         row["answer_changed"] = row["official"]["extracted"] != row["compact"]["extracted"]
         row["correctness_changed"] = row["official"]["correct"] != row["compact"]["correct"]
         rows.append(row)
+    complete = all(
+        row[v]["generation_available"] and row[v]["finish_reason"] != "runtime_error"
+        for row in rows
+        for v in ("official", "compact")
+    )
     return dict(
         manifest_sha256=manifest["payload_sha256"],
         rows=rows,
         summary=paired_summary(rows),
         dataset="aime26",
         evaluation="one paired actual generation per question; rule-only",
+        actual_generation_complete_all=complete,
     )
 
 
