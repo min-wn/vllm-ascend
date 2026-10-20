@@ -1,0 +1,123 @@
+{
+  "status": "first_FP16_failure_staged_attribution",
+  "ranks": [
+    {
+      "rank": 0,
+      "step": 1,
+      "owner": 34,
+      "original_threshold": 0.005,
+      "first_failure_reproduced": true,
+      "input_qkv_beta_gate_exact": true,
+      "native_stages_vs_official": {
+        "gated_norm/0": 0.0009073354303836823,
+        "output_projection/0": 0.002056034281849861,
+        "post_attention_norm/0": 0.0024785788264125586,
+        "post_attention_norm/1": 0.0021181348711252213,
+        "mlp_gate_up/0": 0.0028467446099966764,
+        "mlp_activation/0": 0.0045515247620642185,
+        "mlp_down/0": 0.00520601449534297,
+        "hidden": 0.00520601449534297,
+        "residual": 0.0021181348711252213
+      },
+      "accepted_state_nrmse": 9.327310544904321e-05,
+      "native_core_vs_quantized_oracle": 8.306022209580988e-06,
+      "quantized_oracle_vs_official_core": 0.0004094492760486901,
+      "dense_oracle_vs_official_core": 0.0,
+      "counterfactuals": {
+        "quantized_materialized_oracle": {
+          "gated_norm/0": 0.0009072240791283548,
+          "output_projection/0": 0.0020565937738865614,
+          "post_attention_norm/0": 0.0024801823310554028,
+          "post_attention_norm/1": 0.002119548851624131,
+          "mlp_gate_up/0": 0.002846425399184227,
+          "mlp_activation/0": 0.004542900715023279,
+          "mlp_down/0": 0.005199258681386709,
+          "hidden": 0.005199258681386709,
+          "residual": 0.002119548851624131
+        },
+        "official_dense_materialized_oracle": {
+          "gated_norm/0": 0.0,
+          "output_projection/0": 8.334065933013335e-05,
+          "post_attention_norm/0": 0.00012560380855575204,
+          "post_attention_norm/1": 7.618731615366414e-05,
+          "mlp_gate_up/0": 0.00040725150029174984,
+          "mlp_activation/0": 0.0005216888966970146,
+          "mlp_down/0": 0.0011396888876333833,
+          "hidden": 0.0011396888876333833,
+          "residual": 7.618731615366414e-05
+        },
+        "official_recurrence_output": {
+          "gated_norm/0": 0.0,
+          "output_projection/0": 0.0,
+          "post_attention_norm/0": 0.0,
+          "post_attention_norm/1": 0.0,
+          "mlp_gate_up/0": 0.0,
+          "mlp_activation/0": 0.0,
+          "mlp_down/0": 0.0,
+          "hidden": 0.0,
+          "residual": 0.0
+        }
+      },
+      "no_performance_measurement": true
+    },
+    {
+      "rank": 1,
+      "step": 1,
+      "owner": 34,
+      "original_threshold": 0.005,
+      "first_failure_reproduced": true,
+      "input_qkv_beta_gate_exact": true,
+      "native_stages_vs_official": {
+        "gated_norm/0": 0.0006943501648493111,
+        "output_projection/0": 0.002056034281849861,
+        "post_attention_norm/0": 0.0024785788264125586,
+        "post_attention_norm/1": 0.0021181348711252213,
+        "mlp_gate_up/0": 0.0029057401698082685,
+        "mlp_activation/0": 0.004613114055246115,
+        "mlp_down/0": 0.00520601449534297,
+        "hidden": 0.00520601449534297,
+        "residual": 0.0021181348711252213
+      },
+      "accepted_state_nrmse": 9.023283928399906e-05,
+      "native_core_vs_quantized_oracle": 5.200873260946537e-07,
+      "quantized_oracle_vs_official_core": 0.00037046457873657346,
+      "dense_oracle_vs_official_core": 4.152605470153503e-06,
+      "counterfactuals": {
+        "quantized_materialized_oracle": {
+          "gated_norm/0": 0.0006943501648493111,
+          "output_projection/0": 0.0020565937738865614,
+          "post_attention_norm/0": 0.0024801823310554028,
+          "post_attention_norm/1": 0.002119548851624131,
+          "mlp_gate_up/0": 0.0029049108270555735,
+          "mlp_activation/0": 0.004597984720021486,
+          "mlp_down/0": 0.005199258681386709,
+          "hidden": 0.005199258681386709,
+          "residual": 0.002119548851624131
+        },
+        "official_dense_materialized_oracle": {
+          "gated_norm/0": 1.720387103887333e-06,
+          "output_projection/0": 8.334065933013335e-05,
+          "post_attention_norm/0": 0.00012560380855575204,
+          "post_attention_norm/1": 7.618731615366414e-05,
+          "mlp_gate_up/0": 0.00041511133895255625,
+          "mlp_activation/0": 0.000582102220505476,
+          "mlp_down/0": 0.0011396888876333833,
+          "hidden": 0.0011396888876333833,
+          "residual": 7.618731615366414e-05
+        },
+        "official_recurrence_output": {
+          "gated_norm/0": 0.0,
+          "output_projection/0": 0.0,
+          "post_attention_norm/0": 0.0,
+          "post_attention_norm/1": 0.0,
+          "mlp_gate_up/0": 0.0,
+          "mlp_activation/0": 0.0,
+          "mlp_down/0": 0.0,
+          "hidden": 0.0,
+          "residual": 0.0
+        }
+      },
+      "no_performance_measurement": true
+    }
+  ]
+}

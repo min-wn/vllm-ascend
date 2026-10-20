@@ -155,6 +155,7 @@ def replay_trajectories(
     from vllm_ascend.compilation.updatable_graph import ContextSource, UpdatableGraph
 
     trace, selection = bundle.trace, args.selection
+    ready_lifecycle = getattr(args, "ready_lifecycle", False)
     cache_identity = cache_binding_identity(bundle)
     cpu_group = get_world_group().cpu_group
     main = torch.npu.current_stream()
@@ -164,6 +165,8 @@ def replay_trajectories(
         else ("deferred_overlap", "deferred_pipeline")
     )
     candidate = "deferred_tile_ready" if args.tile_extension is not None else "deferred_pipeline"
+    if ready_lifecycle:
+        modes = ("deferred_tile_delayed", "deferred_tile_ready")
     diagnostic = args.phase in ("diagnostic", "profile")
     steps = trace.steps[: args.diagnostic_steps] if diagnostic else trace.steps
     capacities = sorted(set(selection["dispatched_tokens"][: len(steps)]))
@@ -269,6 +272,22 @@ def replay_trajectories(
     report["status"] = "all_default_graphs_captured_replay_unqualified"
     checkpoint()
 
+    terminal_graph = None
+    if ready_lifecycle:
+        from multi_graph_gdn_ready_full_lifecycle import TerminalDrain
+
+        terminal = TerminalDrain(torch, bundle, registry)
+        restore_complete(torch, bundle, registry, initial)
+        capture_root.wait_stream(main)
+        with torch.npu.stream(capture_root):
+            terminal.run()
+        torch.npu.synchronize()
+        terminal_graph = torch.npu.NPUGraph()
+        with torch.npu.graph(terminal_graph, pool=pool, stream=capture_root):
+            terminal.run()
+        torch.npu.synchronize()
+        report["terminal_contract"] = terminal.contract
+
     def replay(entry, frame):
         tasks = entry["graph"].resolve_tasks(ContextSource(frame.mapping))
         entry["prepared"].record(main)
@@ -328,13 +347,16 @@ def replay_trajectories(
             if torch.count_nonzero(scratch[0]).item():
                 raise AssertionError(f"{label}/layer{item.index}: nonzero null candidate")
 
-    qualified_outputs = {}
+    qualified_outputs, qualified_closed, qualified_continuation = {}, {}, None
     for mode in modes:
         select_mode(mode)
         restore_complete(torch, bundle, registry, initial)
         audit = StreamingCheckpoint(torch, initial, scan_elements=getattr(args, "audit_scan_elements", 1 << 20))
         for index in range(args.qualification_steps):
             step, capacity = trace.steps[index], selection["dispatched_tokens"][index]
+            if ready_lifecycle:
+                # Both graphs use the same delayed eager trajectory as oracle.
+                select_mode("deferred_tile_delayed")
             registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
             frame = prepare(step, capacity)
             eager = tuple(value.cpu() for value in forward(frame, tokens[capacity], registry=registry))
@@ -344,6 +366,7 @@ def replay_trajectories(
                 bundle, registry, step["request_ids"], label=f"{mode}/step{index}"
             )
             torch.npu.synchronize()
+            select_mode(mode)
             registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
             frame = prepare(step, capacity)
             replay(entries[mode, capacity], frame)
@@ -357,6 +380,12 @@ def replay_trajectories(
                     raise RuntimeError(f"nonfinite full-model replay endpoint {mode}/step{index}/{name}")
             replay_audit = audit.compare_replay(bundle, registry, label=f"{mode}/step{index}")
             check_candidates(candidate_scratch, f"{mode}/step{index}")
+            if ready_lifecycle:
+                if mode == modes[0]:
+                    qualified_outputs[index] = eager
+                else:
+                    for actual, reference in zip(eager, qualified_outputs[index], strict=True):
+                        torch.testing.assert_close(actual, reference, rtol=0, atol=0)
             report["checks"].append(
                 dict(
                     label="complete_same_schedule_eager_replay_exact",
@@ -393,16 +422,40 @@ def replay_trajectories(
                         torch.testing.assert_close(actual, reference, rtol=0, atol=0)
                     report["checks"].append(dict(label="barrier_early_outputs_exact", step=index))
             del eager
+        if ready_lifecycle:
+            from multi_graph_gdn_q4_full_checks import compare_complete_snapshots
+
+            if mode != modes[0]:
+                compare_complete_snapshots(torch, audit.saved, qualified_continuation, "delayed_ready/final_pending")
+            else:
+                qualified_continuation = audit.saved
+            terminal.run()
+            torch.npu.synchronize()
+            terminal.require_closed()
+            qualified_closed[mode] = complete_snapshot(torch, bundle, registry)
+            if mode != modes[0]:
+                compare_complete_snapshots(
+                    torch, qualified_closed[mode], qualified_closed[modes[0]], "delayed_ready/closed"
+                )
+            report.setdefault("closed_checks", []).append(dict(mode=mode, steps=128, all_state_exact=True))
+            checkpoint()
         del audit
     del candidate_scratch
+    if ready_lifecycle:
+        del qualified_continuation, qualified_outputs
     samples = []
+    lifecycle_samples = []
     for trial in range(args.trials):
         for mode in modes if trial % 2 == 0 else reversed(modes):
             select_mode(mode)
             restore_complete(torch, bundle, registry, initial)
+            if ready_lifecycle:
+                dist.barrier(group=cpu_group)
+                trajectory_start = time.perf_counter_ns()
             for index, step in enumerate(steps):
                 capacity = selection["dispatched_tokens"][index]
-                dist.barrier(group=cpu_group)
+                if not ready_lifecycle:
+                    dist.barrier(group=cpu_group)
                 start = time.perf_counter_ns()
                 registry.prepare_step(step["step"], step["request_ids"], step["accepted_from_previous"])
                 frame = prepare(step, capacity)
@@ -416,7 +469,8 @@ def replay_trajectories(
                 registry.finish_step(step["step"])
                 elapsed_us = (time.perf_counter_ns() - start) / 1000
                 critical = torch.tensor(elapsed_us, dtype=torch.float64)
-                dist.all_reduce(critical, op=dist.ReduceOp.MAX, group=cpu_group)
+                if not ready_lifecycle:
+                    dist.all_reduce(critical, op=dist.ReduceOp.MAX, group=cpu_group)
                 samples.append(
                     dict(
                         trial=trial,
@@ -429,8 +483,67 @@ def replay_trajectories(
                         critical_rank_us=critical.item(),
                     )
                 )
+            if ready_lifecycle:
+                begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
+                terminal_start = time.perf_counter_ns()
+                begin.record(capture_root)
+                with torch.npu.stream(capture_root):
+                    terminal_graph.replay()
+                end.record(capture_root)
+                end.synchronize()
+                terminal_wall_us = (time.perf_counter_ns() - terminal_start) / 1000
+                wall_us = (time.perf_counter_ns() - trajectory_start) / 1000
+                lifecycle_samples.append(
+                    dict(
+                        trial=trial,
+                        mode=mode,
+                        wall_us=wall_us,
+                        transition_us=report["compact_transition_us"],
+                        closed_wall_us=wall_us + report["compact_transition_us"],
+                        terminal_wall_us=terminal_wall_us,
+                        terminal_device_us=begin.elapsed_time(end) * 1000,
+                        steps=len(steps),
+                        terminal_exact=True,
+                    )
+                )
+                terminal.require_closed()
+                actual = complete_snapshot(torch, bundle, registry)
+                compare_complete_snapshots(torch, actual, qualified_closed[mode], f"timed/{trial}/{mode}")
+                del actual
+                print(
+                    f"rank={dist.get_rank()} ready lifecycle trial={trial} mode={mode} wall_us={wall_us:.1f}",
+                    flush=True,
+                )
             report.update(status="partial_complete_replay_timing_not_a_goal_result", samples=samples)
             checkpoint()
+    if ready_lifecycle:
+        from multi_graph_gdn_ready_full_lifecycle import paired_lifecycles
+
+        local = dict(rank=dist.get_rank(), samples=samples, lifecycle_samples=lifecycle_samples)
+        gathered = [None] * dist.get_world_size()
+        dist.all_gather_object(gathered, local, group=cpu_group)
+        report.update(
+            status="qualified_full_dynamic_replay_and_closed_ready_ablation",
+            correctness_scope=(
+                "all 128 steps; delayed eager vs delayed/ready graphs; every cache, staging and host field"
+            ),
+            correctness_limitations=(
+                "same compact FP32 algorithm; no independent official dense full trajectory or generation quality"
+            ),
+            lifecycle_ranks=gathered,
+            paired_closed=paired_lifecycles(gathered, args.trials),
+            independent_difference="A2 request-group readiness within legal full-model graphs; padding can use it",
+            boundary=(
+                "descriptor staging/H2D, true FIA updates, full model, all commits, per-step join, "
+                "terminal SSM drain, one direct compact transition"
+            ),
+            excludes=(
+                "common prefix/model loading, capture, diagnostics, CPU checkpoint audits, "
+                "restoring experiment initial state"
+            ),
+        )
+        checkpoint()
+        return
     latency = {
         mode: latency_statistics([item["critical_rank_us"] for item in samples if item["mode"] == mode])
         for mode in modes
@@ -663,11 +776,12 @@ def experiment(args, trace, runner, model, config):
             save()
             return report
 
-        bundle.transition_to_decode()
         log = load_extension("gdn_q4_log", args.extension)
         products = load_extension("gdn_q4_products", args.products_extension)
         deferred = load_extension("gdn_q4_log_deferred", args.deferred_extension)
         tile = load_extension("gdn_q4_tile_pipeline", args.tile_extension) if args.tile_extension is not None else None
+        transition_start = time.perf_counter_ns()
+        bundle.transition_to_decode()
         registry = CompactSSMRegistry()
         # Complete-model invocations are exclusive; ordered commits from
         # different layers can share one side stream instead of binding the
@@ -681,6 +795,8 @@ def experiment(args, trace, runner, model, config):
                 max_batch=max(args.selection["required_tokens"]) // 4, commit_stream=shared_commit_stream
             )
             registry.register(item.state.handle, backend, item.gdn.out_proj)
+        torch.npu.synchronize()
+        report["compact_transition_us"] = (time.perf_counter_ns() - transition_start) / 1000
         report["memory"].append(memory_record(torch, "compact_decode_transition"))
         if args.phase in ("replay", "diagnostic", "profile"):
             schedule_context = nullcontext(None)
@@ -761,6 +877,9 @@ def main():
     parser.add_argument("--deferred-extension", type=Path, required=True)
     parser.add_argument("--tile-extension", type=Path)
     parser.add_argument("--trials", type=int, default=3)
+    parser.add_argument(
+        "--ready-lifecycle", action="store_true", help="full 128-step matched ready audit and closed timing"
+    )
     parser.add_argument("--qualification-steps", type=int, default=3)
     parser.add_argument(
         "--audit-scan-elements",
@@ -774,6 +893,16 @@ def main():
         parser.error("require a new output path and prefix-limit in 1..128")
     if args.trials < 2 or not 2 <= args.qualification_steps <= 128:
         parser.error("at least two paired trials and 2..128 continued qualification steps required")
+    if args.ready_lifecycle and (
+        args.phase != "replay"
+        or args.tile_extension is None
+        or args.qualification_steps != 128
+        or args.split_boundaries
+        or args.prefix_limit is not None
+    ):
+        parser.error(
+            "ready lifecycle requires complete replay, tile kernel, all 128 qualification steps and all owners"
+        )
     if not 1 <= args.audit_scan_elements <= 1 << 24:
         parser.error("audit scan chunk must be in 1..16777216 elements")
     if args.phase in ("diagnostic", "profile") and (

@@ -1,0 +1,74 @@
+{
+  "checks": [
+    {
+      "command": [
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\ruff.exe",
+        "format",
+        "--check",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_activations.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_full_lifecycle.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_range_analyze.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_range_probe.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_range_protocol.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_q4_full_probe.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_replayssm_fp16_attribution.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_full_lifecycle.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_range_analyze.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_range_protocol.py"
+      ],
+      "exit_code": 0,
+      "output": "10 files already formatted\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\ruff.exe",
+        "check",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_activations.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_full_lifecycle.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_range_analyze.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_range_probe.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_range_protocol.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_q4_full_probe.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_replayssm_fp16_attribution.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_full_lifecycle.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_range_analyze.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_range_protocol.py"
+      ],
+      "exit_code": 0,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": [
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "--noconftest",
+        "-q",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_full_lifecycle.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_range_analyze.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_range_protocol.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_q4_full_probe.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_q4_full_checks.py",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_q4_full_stream_audit.py"
+      ],
+      "exit_code": 0,
+      "output": "........................................................................ [ 40%]\n........................................................................ [ 81%]\n................................                                         [100%]\n176 passed in 3.95s\n"
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output": "warning: in the working copy of 'docs/source/developer_guide/Design_Documents/aclgraph_dynamic_shape_current_scheme_zh.md', CRLF will be replaced by LF the next time Git touches it\n"
+    }
+  ],
+  "full_format": {
+    "status": "failed_before_hooks",
+    "exit_code": 2,
+    "reason": "existing CRLF format.sh; see format-ci.log"
+  }
+}

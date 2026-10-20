@@ -1,0 +1,905 @@
+{
+  "decision": "single_layer_precision_passed_repeatable_medium_high_ready_benefit_full_replay_still_required",
+  "protocol_sha256": "e952a78fd7d8d977de9c6ff67d17cb020719fb54a05d926b64be0b1bdb50a697",
+  "profiles": {
+    "low": {
+      "live_range": [
+        22,
+        26
+      ],
+      "paired": [
+        {
+          "process": 1,
+          "round": 0,
+          "times": {
+            "official": {
+              "wall_us": 97060.86688674986,
+              "closed_wall_us": 97060.86688674986,
+              "device_us": 89975.64029693604,
+              "terminal_us": 170.30000686645508,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 89385.39517112076,
+              "closed_wall_us": 92697.66905345023,
+              "device_us": 83162.21976280212,
+              "terminal_us": 273.00000190734863,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 88935.52282825112,
+              "closed_wall_us": 92247.95689806342,
+              "device_us": 82397.80095219612,
+              "terminal_us": 268.9400017261505,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 94515.20605944097,
+              "closed_wall_us": 97355.82815483212,
+              "device_us": 88325.71956515312,
+              "terminal_us": 412.00000047683716,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 95061.43908947706,
+              "closed_wall_us": 97902.06118486822,
+              "device_us": 88865.28006196022,
+              "terminal_us": 420.83999514579773,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 0.4851385800515584,
+          "ring_ready_percent": -0.5610686492927508,
+          "compact_vs_official_percent": 4.958651352560162
+        },
+        {
+          "process": 1,
+          "round": 1,
+          "times": {
+            "official": {
+              "wall_us": 95153.16900797188,
+              "closed_wall_us": 95153.16900797188,
+              "device_us": 88770.2805697918,
+              "terminal_us": 79.65999841690063,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 88987.22310550511,
+              "closed_wall_us": 92299.6571753174,
+              "device_us": 82824.90047812462,
+              "terminal_us": 230.93999922275543,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 88675.9520508349,
+              "closed_wall_us": 91988.38612064719,
+              "device_us": 82595.85997462273,
+              "terminal_us": 229.44000363349915,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 94352.68607921898,
+              "closed_wall_us": 97193.30817461014,
+              "device_us": 88221.68058156967,
+              "terminal_us": 377.31999158859253,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 93317.92104057968,
+              "closed_wall_us": 96158.54313597083,
+              "device_us": 87187.8602206707,
+              "terminal_us": 384.2200040817261,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 0.3372396650173637,
+          "ring_ready_percent": 1.0646463816010088,
+          "compact_vs_official_percent": 3.3259878996353187
+        },
+        {
+          "process": 1,
+          "round": 2,
+          "times": {
+            "official": {
+              "wall_us": 94853.90782356262,
+              "closed_wall_us": 94853.90782356262,
+              "device_us": 88676.4392927289,
+              "terminal_us": 75.7799968123436,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 89190.56388549507,
+              "closed_wall_us": 92502.99795530736,
+              "device_us": 82837.54009008408,
+              "terminal_us": 218.94000470638275,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 90697.62099534273,
+              "closed_wall_us": 94010.05506515503,
+              "device_us": 84530.93998134136,
+              "terminal_us": 212.65999972820282,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 94345.90605087578,
+              "closed_wall_us": 97186.52814626694,
+              "device_us": 88229.60096597672,
+              "terminal_us": 356.440007686615,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 93287.90102154016,
+              "closed_wall_us": 96128.52311693132,
+              "device_us": 87043.22013258934,
+              "terminal_us": 358.88001322746277,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": -1.6291981267199551,
+          "ring_ready_percent": 1.088633424319163,
+          "compact_vs_official_percent": 0.8896341518972894
+        },
+        {
+          "process": 2,
+          "round": 0,
+          "times": {
+            "official": {
+              "wall_us": 96752.40097567439,
+              "closed_wall_us": 96752.40097567439,
+              "device_us": 89683.9599609375,
+              "terminal_us": 224.53999519348145,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 88712.60797604918,
+              "closed_wall_us": 91991.95099063218,
+              "device_us": 82277.32083201408,
+              "terminal_us": 271.25999331474304,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 87459.28318239748,
+              "closed_wall_us": 90748.92615899444,
+              "device_us": 81124.3793964386,
+              "terminal_us": 272.8799879550934,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 95267.80596934259,
+              "closed_wall_us": 98099.16792437434,
+              "device_us": 88413.10003399849,
+              "terminal_us": 500.77998638153076,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 92919.42580603063,
+              "closed_wall_us": 95962.28785812855,
+              "device_us": 86725.90062022209,
+              "terminal_us": 418.74000430107117,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 1.3512321656971027,
+          "ring_ready_percent": 2.178285617970921,
+          "compact_vs_official_percent": 6.204987944629259
+        },
+        {
+          "process": 2,
+          "round": 1,
+          "times": {
+            "official": {
+              "wall_us": 94529.47205863893,
+              "closed_wall_us": 94529.47205863893,
+              "device_us": 88189.22030180693,
+              "terminal_us": 79.80000227689743,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 88689.00779634714,
+              "closed_wall_us": 91983.34091342986,
+              "device_us": 82199.99988377094,
+              "terminal_us": 227.8199940919876,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 87765.34395292401,
+              "closed_wall_us": 91059.67707000673,
+              "device_us": 81198.95991683006,
+              "terminal_us": 228.15999388694763,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 93843.74995715916,
+              "closed_wall_us": 96892.47189089656,
+              "device_us": 87448.18019866943,
+              "terminal_us": 362.6999855041504,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 92868.73484961689,
+              "closed_wall_us": 95892.2568242997,
+              "device_us": 86514.6601498127,
+              "terminal_us": 387.6200020313263,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 1.0041642695848951,
+          "ring_ready_percent": 1.0322938893778444,
+          "compact_vs_official_percent": 3.670595966599499
+        },
+        {
+          "process": 2,
+          "round": 2,
+          "times": {
+            "official": {
+              "wall_us": 94484.74203236401,
+              "closed_wall_us": 94484.74203236401,
+              "device_us": 88112.68038675189,
+              "terminal_us": 60.440000146627426,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 88367.63701401651,
+              "closed_wall_us": 91651.28995664418,
+              "device_us": 82036.87945008278,
+              "terminal_us": 214.0599936246872,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 87416.32313467562,
+              "closed_wall_us": 90710.65625175834,
+              "device_us": 81114.64014649391,
+              "terminal_us": 210.74000000953674,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 94313.6909045279,
+              "closed_wall_us": 97358.41304063797,
+              "device_us": 87700.7602751255,
+              "terminal_us": 357.8599989414215,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 95235.62504909933,
+              "closed_wall_us": 98066.98700413108,
+              "device_us": 88646.90053462982,
+              "terminal_us": 1952.9000520706177,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 1.0263180205437483,
+          "ring_ready_percent": -0.7277994180095559,
+          "compact_vs_official_percent": 3.9943865003229106
+        }
+      ],
+      "mean_closed_us": {
+        "official": 95472.42646416028,
+        "compact_delayed": 92187.8176741302,
+        "compact_ready": 91794.27626077086,
+        "ring_delayed": 97347.61955526967,
+        "ring_ready": 96685.10985405494
+      },
+      "mean_percent": {
+        "compact_ready_percent": 0.4291490956957855,
+        "ring_ready_percent": 0.6791652076611051,
+        "compact_vs_official_percent": 3.840707302607407
+      },
+      "ready_positive_rounds": {
+        "compact": 5,
+        "ring": 4
+      },
+      "max_output_nrmse": 0.0028494964353740215,
+      "max_terminal_nrmse": 1.9391308114791173e-07
+    },
+    "medium": {
+      "live_range": [
+        54,
+        60
+      ],
+      "paired": [
+        {
+          "process": 1,
+          "round": 0,
+          "times": {
+            "official": {
+              "wall_us": 110429.50302362442,
+              "closed_wall_us": 110429.50302362442,
+              "device_us": 103868.43956261873,
+              "terminal_us": 79.34000343084335,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 98543.2539600879,
+              "closed_wall_us": 101855.6880299002,
+              "device_us": 92145.1598405838,
+              "terminal_us": 306.5800070762634,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 95589.53111991286,
+              "closed_wall_us": 98901.96518972516,
+              "device_us": 89098.05944561958,
+              "terminal_us": 306.21999502182007,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 108914.82699662447,
+              "closed_wall_us": 111755.44909201562,
+              "device_us": 102490.15974998474,
+              "terminal_us": 667.1199798583984,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 105547.13290184736,
+              "closed_wall_us": 108387.75499723852,
+              "device_us": 99126.50060653687,
+              "terminal_us": 666.1800146102905,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 2.8999095654902995,
+          "ring_ready_percent": 3.0134495652236692,
+          "compact_vs_official_percent": 10.43882071210005
+        },
+        {
+          "process": 1,
+          "round": 1,
+          "times": {
+            "official": {
+              "wall_us": 110106.57204315066,
+              "closed_wall_us": 110106.57204315066,
+              "device_us": 103549.39970374107,
+              "terminal_us": 64.53999876976013,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 98346.50182165205,
+              "closed_wall_us": 101658.93589146435,
+              "device_us": 91988.97981643677,
+              "terminal_us": 292.6599979400635,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 95426.99018493295,
+              "closed_wall_us": 98739.42425474524,
+              "device_us": 89018.3197259903,
+              "terminal_us": 294.4200038909912,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 108724.50610622764,
+              "closed_wall_us": 111565.12820161879,
+              "device_us": 102380.24020195007,
+              "terminal_us": 652.8800129890442,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 105761.59413903952,
+              "closed_wall_us": 108602.21623443067,
+              "device_us": 99173.81978034973,
+              "terminal_us": 661.7000102996826,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 2.871869168329788,
+          "ring_ready_percent": 2.6557688902876464,
+          "compact_vs_official_percent": 10.323768670184963
+        },
+        {
+          "process": 1,
+          "round": 2,
+          "times": {
+            "official": {
+              "wall_us": 110173.00188541412,
+              "closed_wall_us": 110173.00188541412,
+              "device_us": 103559.57996100187,
+              "terminal_us": 68.74000281095505,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 98105.85202649236,
+              "closed_wall_us": 101418.28609630466,
+              "device_us": 91553.8400709629,
+              "terminal_us": 292.3400104045868,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 95446.00103981793,
+              "closed_wall_us": 98758.43510963023,
+              "device_us": 88881.6998898983,
+              "terminal_us": 292.80000925064087,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 108699.37599636614,
+              "closed_wall_us": 111539.9980917573,
+              "device_us": 102099.57957267761,
+              "terminal_us": 649.9599814414978,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 105530.77305667102,
+              "closed_wall_us": 108369.89502422512,
+              "device_us": 98922.82021045685,
+              "terminal_us": 655.4399728775024,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 2.6226542461471825,
+          "ring_ready_percent": 2.842122217829268,
+          "compact_vs_official_percent": 10.360584335947987
+        },
+        {
+          "process": 2,
+          "round": 0,
+          "times": {
+            "official": {
+              "wall_us": 111198.39106686413,
+              "closed_wall_us": 111198.39106686413,
+              "device_us": 104741.81964248419,
+              "terminal_us": 83.20000022649765,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 98365.47798477113,
+              "closed_wall_us": 101657.40107186139,
+              "device_us": 91896.28031849861,
+              "terminal_us": 298.44000935554504,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 95488.11591230333,
+              "closed_wall_us": 98779.4001121074,
+              "device_us": 88972.23973274231,
+              "terminal_us": 305.0599992275238,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 108897.3821606487,
+              "closed_wall_us": 111945.56392729282,
+              "device_us": 102600.58015584946,
+              "terminal_us": 662.9800200462341,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 105799.93901774287,
+              "closed_wall_us": 108848.66095148027,
+              "device_us": 99468.8190817833,
+              "terminal_us": 663.6000275611877,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 2.831078632159345,
+          "ring_ready_percent": 2.766436531441252,
+          "compact_vs_official_percent": 11.16831892584591
+        },
+        {
+          "process": 2,
+          "round": 1,
+          "times": {
+            "official": {
+              "wall_us": 111201.56105607748,
+              "closed_wall_us": 111201.56105607748,
+              "device_us": 104951.98006927967,
+              "terminal_us": 64.64000046253204,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 98178.69705148041,
+              "closed_wall_us": 101472.72003814578,
+              "device_us": 91902.4994969368,
+              "terminal_us": 296.35998606681824,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 94788.87310251594,
+              "closed_wall_us": 98083.20621959865,
+              "device_us": 88533.12030434608,
+              "terminal_us": 299.4599938392639,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 108661.59107536077,
+              "closed_wall_us": 111710.31300909817,
+              "device_us": 102390.34032821655,
+              "terminal_us": 652.8800129890442,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 105749.40894730389,
+              "closed_wall_us": 108798.13088104129,
+              "device_us": 99342.27991104126,
+              "terminal_us": 653.5400152206421,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 3.3403202528452414,
+          "ring_ready_percent": 2.606905351540556,
+          "compact_vs_official_percent": 11.796916079139763
+        },
+        {
+          "process": 2,
+          "round": 2,
+          "times": {
+            "official": {
+              "wall_us": 111329.8418931663,
+              "closed_wall_us": 111329.8418931663,
+              "device_us": 104907.62007981539,
+              "terminal_us": 72.24000245332718,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 99096.33197821677,
+              "closed_wall_us": 102390.66509529948,
+              "device_us": 92510.2604329586,
+              "terminal_us": 298.5599935054779,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 94845.4940225929,
+              "closed_wall_us": 98139.82713967562,
+              "device_us": 88561.99988722801,
+              "terminal_us": 320.5200135707855,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 108783.58199261129,
+              "closed_wall_us": 111832.30392634869,
+              "device_us": 102481.3597202301,
+              "terminal_us": 646.4400291442871,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 105413.76704350114,
+              "closed_wall_us": 108443.50885599852,
+              "device_us": 99168.52033138275,
+              "terminal_us": 667.2199964523315,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 4.151587404640278,
+          "ring_ready_percent": 3.030247031825428,
+          "compact_vs_official_percent": 11.847690187279714
+        }
+      ],
+      "mean_closed_us": {
+        "official": 110739.81182804953,
+        "compact_delayed": 101742.2827038293,
+        "compact_ready": 98567.04300424705,
+        "ring_delayed": 111724.7927080219,
+        "ring_ready": 108575.02782406907
+      },
+      "mean_percent": {
+        "compact_ready_percent": 3.119569878268689,
+        "ring_ready_percent": 2.81915493135797,
+        "compact_vs_official_percent": 10.989349818416397
+      },
+      "ready_positive_rounds": {
+        "compact": 6,
+        "ring": 6
+      },
+      "max_output_nrmse": 0.0033454387448728085,
+      "max_terminal_nrmse": 1.9140570373110677e-07
+    },
+    "high": {
+      "live_range": [
+        94,
+        100
+      ],
+      "paired": [
+        {
+          "process": 1,
+          "round": 0,
+          "times": {
+            "official": {
+              "wall_us": 127058.47295001149,
+              "closed_wall_us": 127058.47295001149,
+              "device_us": 120621.22013047338,
+              "terminal_us": 72.15999811887741,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 109108.04686136544,
+              "closed_wall_us": 112420.48093117774,
+              "device_us": 102809.0195953846,
+              "terminal_us": 379.0999948978424,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 103222.98295795918,
+              "closed_wall_us": 106529.31709773839,
+              "device_us": 96936.16065382957,
+              "terminal_us": 389.1200125217438,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 124931.12403899431,
+              "closed_wall_us": 127771.74613438547,
+              "device_us": 118540.72016477585,
+              "terminal_us": 630.7600140571594,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 118406.54700063169,
+              "closed_wall_us": 121247.16909602284,
+              "device_us": 112061.45995855331,
+              "terminal_us": 631.3999891281128,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 5.2402941035680435,
+          "ring_ready_percent": 5.10643177052642,
+          "compact_vs_official_percent": 16.157250575764337
+        },
+        {
+          "process": 1,
+          "round": 1,
+          "times": {
+            "official": {
+              "wall_us": 126861.8619069457,
+              "closed_wall_us": 126861.8619069457,
+              "device_us": 120441.08007848263,
+              "terminal_us": 69.77999955415726,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 108920.59584148228,
+              "closed_wall_us": 112229.50019873679,
+              "device_us": 102623.95986914635,
+              "terminal_us": 366.82000756263733,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 103301.71301029623,
+              "closed_wall_us": 106614.14708010852,
+              "device_us": 97009.76037979126,
+              "terminal_us": 376.57999992370605,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 124855.0028540194,
+              "closed_wall_us": 127695.62494941056,
+              "device_us": 118452.7398943901,
+              "terminal_us": 634.7000002861023,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 118454.88613471389,
+              "closed_wall_us": 121295.50823010504,
+              "device_us": 112111.59944534302,
+              "terminal_us": 633.7599754333496,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 5.003455516316613,
+          "ring_ready_percent": 5.01200939487243,
+          "compact_vs_official_percent": 15.960442738645176
+        },
+        {
+          "process": 1,
+          "round": 2,
+          "times": {
+            "official": {
+              "wall_us": 126947.90214300156,
+              "closed_wall_us": 126947.90214300156,
+              "device_us": 120385.1401694119,
+              "terminal_us": 77.32000201940536,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 108927.78704874218,
+              "closed_wall_us": 112240.22111855447,
+              "device_us": 102621.78012728691,
+              "terminal_us": 383.04001092910767,
+              "import_us": 3312.434069812298
+            },
+            "compact_ready": {
+              "wall_us": 103523.79502728581,
+              "closed_wall_us": 106836.22909709811,
+              "device_us": 96819.00024414062,
+              "terminal_us": 375.2000033855438,
+              "import_us": 3312.434069812298
+            },
+            "ring_delayed": {
+              "wall_us": 124784.35295633972,
+              "closed_wall_us": 127624.97505173087,
+              "device_us": 118120.51892280579,
+              "terminal_us": 632.0199966430664,
+              "import_us": 2840.6220953911543
+            },
+            "ring_ready": {
+              "wall_us": 118488.70618268847,
+              "closed_wall_us": 121329.32827807963,
+              "device_us": 111826.25985145569,
+              "terminal_us": 624.9799728393555,
+              "import_us": 2840.6220953911543
+            }
+          },
+          "compact_ready_percent": 4.814666228916598,
+          "ring_ready_percent": 4.932926937771698,
+          "compact_vs_official_percent": 15.842461912642303
+        },
+        {
+          "process": 2,
+          "round": 0,
+          "times": {
+            "official": {
+              "wall_us": 127972.28107228875,
+              "closed_wall_us": 127972.28107228875,
+              "device_us": 121234.9798604846,
+              "terminal_us": 78.35999876260757,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 108628.04111093283,
+              "closed_wall_us": 111922.37422801554,
+              "device_us": 101946.77942991257,
+              "terminal_us": 381.85998797416687,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 102380.93510270119,
+              "closed_wall_us": 105675.2682197839,
+              "device_us": 95763.8404071331,
+              "terminal_us": 380.3600072860718,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 124330.42610064149,
+              "closed_wall_us": 127365.83780497313,
+              "device_us": 117657.3793888092,
+              "terminal_us": 633.9600086212158,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 118993.20408701897,
+              "closed_wall_us": 122004.59581799805,
+              "device_us": 112227.499127388,
+              "terminal_us": 638.1199955940247,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 5.5816417863908345,
+          "ring_ready_percent": 4.209324948801729,
+          "compact_vs_official_percent": 17.423314381580614
+        },
+        {
+          "process": 2,
+          "round": 1,
+          "times": {
+            "official": {
+              "wall_us": 127506.11896626651,
+              "closed_wall_us": 127506.11896626651,
+              "device_us": 120905.89993447065,
+              "terminal_us": 63.840001821517944,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 108586.65010891855,
+              "closed_wall_us": 111880.98322600126,
+              "device_us": 101821.32029533386,
+              "terminal_us": 374.3000030517578,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 102303.53404767811,
+              "closed_wall_us": 105589.44707736373,
+              "device_us": 95714.0800356865,
+              "terminal_us": 382.7599883079529,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 124367.22684651613,
+              "closed_wall_us": 127415.94878025353,
+              "device_us": 117758.22031497955,
+              "terminal_us": 632.9799890518188,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 118315.13093784451,
+              "closed_wall_us": 121332.85286836326,
+              "device_us": 111651.1595249176,
+              "terminal_us": 632.3599815368652,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 5.623418714446348,
+          "ring_ready_percent": 4.774202892277957,
+          "compact_vs_official_percent": 17.188721660253137
+        },
+        {
+          "process": 2,
+          "round": 2,
+          "times": {
+            "official": {
+              "wall_us": 126947.4069122225,
+              "closed_wall_us": 126947.4069122225,
+              "device_us": 120288.94002363086,
+              "terminal_us": 58.49999934434891,
+              "import_us": 0
+            },
+            "compact_delayed": {
+              "wall_us": 108495.5099504441,
+              "closed_wall_us": 111789.10313174129,
+              "device_us": 101843.54025125504,
+              "terminal_us": 379.6600103378296,
+              "import_us": 3294.333117082715
+            },
+            "compact_ready": {
+              "wall_us": 102305.8039136231,
+              "closed_wall_us": 105600.13703070581,
+              "device_us": 95648.5404074192,
+              "terminal_us": 367.000013589859,
+              "import_us": 3294.333117082715
+            },
+            "ring_delayed": {
+              "wall_us": 124366.92602932453,
+              "closed_wall_us": 127415.64796306193,
+              "device_us": 117703.35960388184,
+              "terminal_us": 634.6399784088135,
+              "import_us": 3048.721933737397
+            },
+            "ring_ready": {
+              "wall_us": 118819.64304484427,
+              "closed_wall_us": 121868.36497858167,
+              "device_us": 111986.40048503876,
+              "terminal_us": 631.600022315979,
+              "import_us": 3048.721933737397
+            }
+          },
+          "compact_ready_percent": 5.536287462420997,
+          "ring_ready_percent": 4.353690518521269,
+          "compact_vs_official_percent": 16.81583767699738
+        }
+      ],
+      "mean_closed_us": {
+        "official": 127215.67399178942,
+        "compact_delayed": 112080.44380570452,
+        "compact_ready": 106140.75760046642,
+        "ring_delayed": 127548.29678063591,
+        "ring_ready": 121512.96987819175
+      },
+      "mean_percent": {
+        "compact_ready_percent": 5.299960635343239,
+        "ring_ready_percent": 4.731431077128584,
+        "compact_vs_official_percent": 16.56467149098049
+      },
+      "ready_positive_rounds": {
+        "compact": 6,
+        "ring": 6
+      },
+      "max_output_nrmse": 0.002956621116027236,
+      "max_terminal_nrmse": 1.9872669554388267e-07
+    }
+  },
+  "imports_us": [
+    {
+      "compact_import_us": 3267.8430434316397,
+      "ring_import_us": 2815.1320293545723
+    },
+    {
+      "compact_import_us": 3312.434069812298,
+      "ring_import_us": 2840.6220953911543
+    },
+    {
+      "compact_import_us": 3257.0441253483295,
+      "ring_import_us": 3048.721933737397
+    },
+    {
+      "compact_import_us": 3294.333117082715,
+      "ring_import_us": 2831.3619550317526
+    }
+  ],
+  "fp16_decision": "retain_failed_configuration_state_approximation_amplified_no_implementation_fault_found_in_first_sample",
+  "qualification_checks": 2400,
+  "closed_timing_checks": 180,
+  "limitations": [
+    "All load ranges use the same 400-token graph; not default small-bucket performance at low load.",
+    "Official first-four-layer real-text activations and coherent prefill; target layer 4 only timed.",
+    "Scheduled accepted prefixes, no autoregressive generation or quality claim.",
+    "One import observation per process/rank, not a stable import distribution.",
+    "Independent difference is A2 request-group ready scheduling; compact/ring state algorithms are prior work.",
+    "Low-load ready benefit is unstable; no router introduced and no all-range acceleration claim."
+  ]
+}
