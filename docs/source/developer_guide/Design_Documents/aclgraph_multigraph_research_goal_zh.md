@@ -59,3 +59,4 @@
 - [第一阶段证据与已有工作对照](aclgraph_multigraph_stage1_analysis_zh.md)。
 - [多图机制审查](aclgraph_multigraph_mechanism_screen_zh.md)。
 - [完整路径 FIA 更新等待核查](aclgraph_fia_update_critical_path_zh.md)。
+- [多图提前消费的接口与收益预算](aclgraph_multigraph_producer_consumer_contract_zh.md)。

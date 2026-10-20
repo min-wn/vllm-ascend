@@ -245,3 +245,12 @@ python benchmarks/results/multi_graph_structural/multigraph-mechanism-v2/audit.p
 
 输出为 `audit.json`，不是新性能测试。原始六条 trace 未修改；
 验证状态与格式脚本限制记录在同目录 `validation.json`。
+
+## 9. 后续生产/消费接口核查
+
+[提前消费可行性报告](aclgraph_multigraph_producer_consumer_contract_zh.md)固定了公开算子源码、
+内部列带进度和资源请求，并独立重建历史清单与有限分组流水模型。
+保住完整 Down 的矩阵效率，并不等于保住 Down/RS 融合收益；在文中固定成本模型下，
+相对融合清单的流体理想差值仅约 59～63 μs，双组未过门槛。
+不能将其外推为硬件上界或加速结果。下一步须先证明融合生产者下的完整行可用与资源进度。
+另找到七个本机 HCCL ELF 导出，仍未取得设备调用资格；没有新 NPU 实验。

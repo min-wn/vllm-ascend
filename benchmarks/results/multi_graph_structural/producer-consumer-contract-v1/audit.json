@@ -1,0 +1,519 @@
+{
+  "scope": "pinned public-source review, read-only installed-file inventory and archived trace recomputation",
+  "limitations": [
+    "Public source revisions are not proven matches for installed tiling or kernel binaries.",
+    "Full-core mixed launch requests and internal barriers are not hardware residency measurements.",
+    "ELF exports do not prove ABI, old-driver compatibility, memory visibility, progress or capture safety.",
+    "This audit does not establish new model correctness, NPU performance or multigraph-exclusive value."
+  ],
+  "source_records": [
+    {
+      "repository": "ops",
+      "revision": "b58ac682305ab2ddc753dccde4111acab8bd6af5",
+      "path": "mc2/matmul_reduce_scatter_v2/op_host/op_tiling/arch22/matmul_reduce_scatter_v2_aiv_mode_tiling.cpp",
+      "git_blob_sha256": "a9da89915570725cd505659f594ad39be909dd62400909fc394d55ba202a63c9",
+      "anchors": {
+        "GetAlgorithmPolicy": [
+          642,
+          672,
+          1025,
+          1202
+        ],
+        "M <= 2048": [
+          644
+        ],
+        "N > 512": [
+          644
+        ],
+        "SetScheduleMode(batch_mode)": [
+          1113
+        ],
+        "CalcTschBlockDim(aivNum, aicNum, aivNum)": [
+          1159
+        ],
+        "SetBlockDim(numBlocks)": [
+          1160
+        ]
+      }
+    },
+    {
+      "repository": "ops",
+      "revision": "b58ac682305ab2ddc753dccde4111acab8bd6af5",
+      "path": "mc2/matmul_reduce_scatter_v2/op_kernel/arch22/matmul_reduce_scatter_v2.cpp",
+      "git_blob_sha256": "35dd52b8d4ccc8a76aaf53997611ca0602ee34d7f8bb43cd2b1fc8c0ae162856",
+      "anchors": {
+        "KERNEL_TYPE_MIX_AIC_1_2": [
+          46
+        ],
+        "MatmulReduceScatterAivModeSmallM": [
+          62,
+          66,
+          70
+        ]
+      }
+    },
+    {
+      "repository": "ops",
+      "revision": "b58ac682305ab2ddc753dccde4111acab8bd6af5",
+      "path": "mc2/matmul_reduce_scatter_v2/op_kernel/matmul_reduce_scatter_aiv_mode_smallM.h",
+      "git_blob_sha256": "e1f4cf6b58da95010dcbd0f2ee5fff0e1107f5f2967ca8164d06e6c08d379cd5",
+      "anchors": {
+        "NotifyRemoteDataCopy(": [
+          167,
+          403,
+          554
+        ],
+        "CompleteRemoteDataCopy(": [
+          169,
+          440,
+          558
+        ],
+        "taskSplit.GetCulumnStartPos(cal_idx)": [
+          410,
+          447
+        ],
+        "taskSplit.GetCulumnEndPos(cal_idx)": [
+          412,
+          449
+        ],
+        "SyncAll<true>()": [
+          422,
+          459,
+          548,
+          555,
+          559
+        ],
+        "n_st * n0": [
+          495,
+          502,
+          503
+        ],
+        "CommColumnSplitter taskSplit": [
+          551
+        ]
+      }
+    },
+    {
+      "repository": "ops",
+      "revision": "b58ac682305ab2ddc753dccde4111acab8bd6af5",
+      "path": "mc2/matmul_reduce_scatter_v2/op_kernel/matmul_reduce_scatter_aiv_mode_util.h",
+      "git_blob_sha256": "4f1806b13313a7a8ef12e8e0059b9a60ae8ab1fddc86088214f21d54c2d9ecf8",
+      "anchors": {
+        "class CommColumnSplitter": [
+          398
+        ],
+        "GetCulumnStartPos": [
+          420
+        ],
+        "GetCulumnEndPos": [
+          429
+        ]
+      }
+    },
+    {
+      "repository": "ops",
+      "revision": "b58ac682305ab2ddc753dccde4111acab8bd6af5",
+      "path": "mc2/all_gather_matmul_v2/op_host/config/ascend910b/all_gather_matmul_v2_binary.json",
+      "git_blob_sha256": "d4b31444728aa32cec27484bcafeac7b5e12808ea50d39e0ae8c8d4752526be7",
+      "anchors": {
+        "AllGatherMatmulV2_AIV_MODE_ND_NZ_BF16_BF16": [
+          509
+        ]
+      }
+    },
+    {
+      "repository": "catccos",
+      "revision": "4359f7fb80decb4a83236f41af5dea980232acc5",
+      "path": "include/catccos/dgemm/kernel/matmul_reduce_scatter.hpp",
+      "git_blob_sha256": "e7868db61a72d55a9535939dd6a68421aca1fc8b239f1bdd846dd068880aa81a",
+      "anchors": {
+        "blockPerComm = aicoreNum * params.commInterval": [
+          179
+        ],
+        "CrossCoreSetFlag<0x2, PIPE_FIX>": [
+          255
+        ],
+        "CrossCoreWaitFlag(flagAicFinishStore": [
+          295
+        ],
+        "aclshmemx_barrier_all_vec()": [
+          297,
+          336
+        ]
+      }
+    },
+    {
+      "repository": "catccos",
+      "revision": "4359f7fb80decb4a83236f41af5dea980232acc5",
+      "path": "include/catccos/dgemm/device/device_dgemm.hpp",
+      "git_blob_sha256": "4db59dc6bdeae5a0728c795014787a8c5040f9c9809efc498d410b2dc6f94b75",
+      "anchors": {
+        "KernelAdapter<DGemmKernel>": [
+          136,
+          138
+        ],
+        "aclrtSynchronizeStream(stream)": [
+          141
+        ]
+      }
+    },
+    {
+      "repository": "catccos",
+      "revision": "4359f7fb80decb4a83236f41af5dea980232acc5",
+      "path": "examples/matmul_reduce_scatter/main.cpp",
+      "git_blob_sha256": "4fe8c2557441c367d6c59c97033fcf4a78b0ed7ca837f71224ca2efd655249a4",
+      "anchors": {
+        "using ElementA = half": [
+          22
+        ],
+        "using LayoutB = Catlass::layout::RowMajor": [
+          19
+        ]
+      }
+    },
+    {
+      "repository": "shmem",
+      "revision": "aa1e4c24f706a4f9d63975c77e527ef1eb37ca9f",
+      "path": "docs/quickstart.md",
+      "git_blob_sha256": "b6883ca59dfd82e5234631ca64c6f92d1fdda3ba1efc03f3d0a682cfb59bf23f",
+      "anchors": {
+        "Ascend HDK 25.0.RC1.1": [
+          39,
+          40,
+          41,
+          42
+        ],
+        "8.5.0": [
+          41
+        ],
+        "8.3.RC1": [
+          42
+        ]
+      }
+    },
+    {
+      "repository": "shmem",
+      "revision": "aa1e4c24f706a4f9d63975c77e527ef1eb37ca9f",
+      "path": "include/device/gm2gm/shmem_device_cc.h",
+      "git_blob_sha256": "2f75052285bdc62c081aafb24307c3f094968c8c9b3902395639707d7deecab4",
+      "anchors": {
+        "only in MIX kernels": [
+          16
+        ],
+        "conflict with SyncAll": [
+          20
+        ]
+      }
+    },
+    {
+      "repository": "catlass",
+      "revision": "db93081ce9b0ad6c04e99b9ed5f2fba081ccdb00",
+      "path": "include/catlass/arch/cross_core_sync.hpp",
+      "git_blob_sha256": "855f12c45c845f2aa83265ad11c9ce3ce0507209370caa02990842ec07c7574d",
+      "anchors": {
+        "MAX_REVERSE_DEPTH = 15": [
+          23
+        ],
+        "CrossCoreSetFlagWithReverse": [
+          105
+        ],
+        "CrossCoreWaitFlagWithReverse": [
+          116
+        ]
+      }
+    }
+  ],
+  "installed_snapshots": {
+    "installed-sdk.json": "6562cfa57ccbd09c697d55fcbdf96fa6193f32c60f55223009ceed4de783916f",
+    "installed-exports.json": "1a466882a3f1a3db72670b9e8cbf56f4a4a0e266b0e82ac3160026891314ab30"
+  },
+  "installed_driver": "24.1.rc3",
+  "elf_symbols_found": 7,
+  "trace_records": [
+    {
+      "rank": 0,
+      "mode": "padding",
+      "file": "probe.padding.rank0.trace.json",
+      "sha256": "aa77fdd6379843248e8e6964a07a477b357aa5a54f70524091d69c8940bff431"
+    },
+    {
+      "rank": 0,
+      "mode": "split_barrier",
+      "file": "probe.split_barrier.rank0.trace.json",
+      "sha256": "e339f0614bf8c1deff14e979c75cf916916ab61a2aaa4ed77b6f44b894c06857"
+    },
+    {
+      "rank": 0,
+      "mode": "split_early",
+      "file": "probe.split_early.rank0.trace.json",
+      "sha256": "4da46dd7f912083f7768e8e989ea224cf083a7899ee820c5c7282911859724e0"
+    },
+    {
+      "rank": 0,
+      "mode": "fused_padding",
+      "file": "probe.fused_padding.rank0.trace.json",
+      "sha256": "8468c29d9ba0da140527a30009f8e7c21626fad34f70e44948f72000129ee96c"
+    },
+    {
+      "rank": 0,
+      "mode": "fused_split_barrier",
+      "file": "probe.fused_split_barrier.rank0.trace.json",
+      "sha256": "47619b4c21052d61ae661435fe9c374b9b82bcf4d432dfea03fa722a025eab32"
+    },
+    {
+      "rank": 0,
+      "mode": "fused_split_early",
+      "file": "probe.fused_split_early.rank0.trace.json",
+      "sha256": "a18ffdab22d330a969c9867aeee0c8661406a4656858fdb522a3231357778646"
+    },
+    {
+      "rank": 1,
+      "mode": "padding",
+      "file": "probe.padding.rank1.trace.json",
+      "sha256": "e02104333ad00bfa362fe8303d62b4a33d09a2a9099ce010ab77ef0b5f272796"
+    },
+    {
+      "rank": 1,
+      "mode": "split_barrier",
+      "file": "probe.split_barrier.rank1.trace.json",
+      "sha256": "bae0744c05b94bf741ff140b8cfbe8bfdd68f00dc10acba3c3c00744fc13dee7"
+    },
+    {
+      "rank": 1,
+      "mode": "split_early",
+      "file": "probe.split_early.rank1.trace.json",
+      "sha256": "6f855ef8a4cf360421aa8be528339b1239b0f26c84dc18d7245a9f65155ec7c8"
+    },
+    {
+      "rank": 1,
+      "mode": "fused_padding",
+      "file": "probe.fused_padding.rank1.trace.json",
+      "sha256": "a9bfda89de5d88e0531626cd6aa685566cdf2afa3566f9204abf132874db36fe"
+    },
+    {
+      "rank": 1,
+      "mode": "fused_split_barrier",
+      "file": "probe.fused_split_barrier.rank1.trace.json",
+      "sha256": "5f242a567fd260246128a79baf80747fec6fa287a32d3dcf8b8bc3969c58e84d"
+    },
+    {
+      "rank": 1,
+      "mode": "fused_split_early",
+      "file": "probe.fused_split_early.rank1.trace.json",
+      "sha256": "d624782f693b77ef611f94ea425de32eb7804fc8a38ec4e24997698e1456715d"
+    }
+  ],
+  "checked_archived_sources": {
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_gdn_q4_log_probe.py": "473e740f337a222ef35d5b3574937a055dce32e55af0d2fc19df076441f07c5b",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_tp_gdn.py": "b0f64bd30936bd9455e029ea7e4d78363402f54291ff1fada88b986c59ec0cbd",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_tp_gdn_phases.py": "6c1ae60e94ba8146a2ee513025e6274401667ff71a2303c7315163090da9d6d4",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_gdn_q4_backend.py": "98499e60061f2ef73c2f766ee926b935d02642d9e5f2bf1b29cf0b4336fedf21",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_tp_boundary_loader.py": "7d32cf6ac2c988f7a83dfb68748cb487fe42a1070b459fc7ae5a6b407a9a0e9e",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_gdn_q4_log_backend.py": "073448425c4019ac44e104f6d157cb8df4acaa9cda1a1984c7b4506fec2f2c66",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/aclgraph_full_core_join.py": "9de0333f07bf9716abaf7fb44b6c3b1291b879679692a54e6866d7549e12250c",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/multi_graph_tp_attention.py": "d94dc97ee9e251f0ba4ade7352de124acd626d87d236e278582b57f32e077685",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/aclgraph_bounded_lead_probe.py": "5ab0f138a175fee6260e1c5347a6e439843becd92baa5c9a39de3c2305eaf0ea",
+    "/workspace/aclgraph-two-layer-fused-v1/tools/aclgraph_bounded_lead_fia.py": "8a0c1f6ecad38ee907918c30a93f25b528f0c028aad884476107d1d05fb38db5"
+  },
+  "archived_analysis_sha256": "aba85bfed9a8c043e60a6c972149ff5ecc855ba9927059d0ae1fbf47b3fd8cd1",
+  "analyzer_sha256": {
+    "aclgraph_two_layer_fused_analysis.py": "1aab37a39cec90b76b44eda701ba4769a846f63789d25ad8a3ee58223744360b",
+    "aclgraph_bounded_lead_analysis.py": "b2d5a08e263ea5d65c3b0cf941b7dc90ab15330f489b50978985ea7238593e30",
+    "aclgraph_bounded_lead_probe.py": "5ab0f138a175fee6260e1c5347a6e439843becd92baa5c9a39de3c2305eaf0ea",
+    "aclgraph_full_path_budget.py": "6ab2699a40f2b5e4c5c1a1b13b408702a2fa75612906138db072d99db16a75e9"
+  },
+  "conditional_budget": {
+    "scope": "conditional cross-profile arithmetic; NOT measured gain, a universal bound or a latency prediction",
+    "assumptions": [
+      "Hold ordinary Down, ordinary reduction and projection totals at their saved profiled values.",
+      "After whole Down completes, reduction supplies contiguous row groups; projection consumes them in order.",
+      "Reduction and projection are independent servers with costs exactly proportional to group rows.",
+      "No norm, interference, extra launches, flags, copies, joins or final state costs are included.",
+      "Chunk capacities are from the unchanged default table, divisible by eight and sum to full capacity.",
+      "One total projection service time represents both required projections; this is optimistic aggregation.",
+      "Different communication or a preserved fused producer invalidates these fixed-cost numbers.",
+      "Per-rank optima are optimistic screens, not permission for rank-dependent collective ordering."
+    ],
+    "capacity_tokens": 400,
+    "rows": [
+      {
+        "rank": 0,
+        "ordinary_down_us": 204.504125,
+        "ordinary_reduce_us": 252.745,
+        "ordinary_input_projections_us": 170.643375,
+        "fused_inventory_us": 516.149875,
+        "fluid_ideal_inventory_us": 457.249125,
+        "fluid_ideal_difference_us": 58.90075,
+        "linear_default_capacity_pipeline": [
+          {
+            "groups": 1,
+            "chunks": [
+              400
+            ],
+            "reduction_projection_span_us": 423.388375,
+            "candidate_inventory_us": 627.8925,
+            "difference_from_fused_inventory_us": -111.742625
+          },
+          {
+            "groups": 2,
+            "chunks": [
+              240,
+              160
+            ],
+            "reduction_projection_span_us": 322.290375,
+            "candidate_inventory_us": 526.7945,
+            "difference_from_fused_inventory_us": -10.644625
+          },
+          {
+            "groups": 4,
+            "chunks": [
+              160,
+              112,
+              72,
+              56
+            ],
+            "reduction_projection_span_us": 276.6350725,
+            "candidate_inventory_us": 481.1391975,
+            "difference_from_fused_inventory_us": 35.0106775
+          },
+          {
+            "groups": 8,
+            "chunks": [
+              128,
+              88,
+              64,
+              40,
+              32,
+              24,
+              16,
+              8
+            ],
+            "reduction_projection_span_us": 258.057505,
+            "candidate_inventory_us": 462.56163,
+            "difference_from_fused_inventory_us": 53.588245
+          }
+        ]
+      },
+      {
+        "rank": 1,
+        "ordinary_down_us": 208.36,
+        "ordinary_reduce_us": 248.72,
+        "ordinary_input_projections_us": 172.48,
+        "fused_inventory_us": 520.18,
+        "fluid_ideal_inventory_us": 457.08,
+        "fluid_ideal_difference_us": 63.1,
+        "linear_default_capacity_pipeline": [
+          {
+            "groups": 1,
+            "chunks": [
+              400
+            ],
+            "reduction_projection_span_us": 421.2,
+            "candidate_inventory_us": 629.56,
+            "difference_from_fused_inventory_us": -109.38
+          },
+          {
+            "groups": 2,
+            "chunks": [
+              232,
+              168
+            ],
+            "reduction_projection_span_us": 321.1616,
+            "candidate_inventory_us": 529.5216,
+            "difference_from_fused_inventory_us": -9.3416
+          },
+          {
+            "groups": 4,
+            "chunks": [
+              152,
+              112,
+              80,
+              56
+            ],
+            "reduction_projection_span_us": 272.8672,
+            "candidate_inventory_us": 481.2272,
+            "difference_from_fused_inventory_us": 38.9528
+          },
+          {
+            "groups": 8,
+            "chunks": [
+              128,
+              88,
+              64,
+              40,
+              32,
+              24,
+              16,
+              8
+            ],
+            "reduction_projection_span_us": 254.4944,
+            "candidate_inventory_us": 462.8544,
+            "difference_from_fused_inventory_us": 57.3256
+          }
+        ]
+      }
+    ],
+    "common_plans": [
+      {
+        "groups": 1,
+        "chunks": [
+          400
+        ],
+        "per_rank_inventory_us": [
+          627.8925,
+          629.56
+        ],
+        "critical_inventory_us": 629.56,
+        "difference_from_critical_fused_inventory_us": -109.38
+      },
+      {
+        "groups": 2,
+        "chunks": [
+          232,
+          168
+        ],
+        "per_rank_inventory_us": [
+          528.9193425,
+          529.5216
+        ],
+        "critical_inventory_us": 529.5216,
+        "difference_from_critical_fused_inventory_us": -9.341600000000085
+      },
+      {
+        "groups": 4,
+        "chunks": [
+          152,
+          112,
+          80,
+          56
+        ],
+        "per_rank_inventory_us": [
+          481.1391975,
+          481.2272
+        ],
+        "critical_inventory_us": 481.2272,
+        "difference_from_critical_fused_inventory_us": 38.95279999999997
+      },
+      {
+        "groups": 8,
+        "chunks": [
+          128,
+          88,
+          64,
+          40,
+          32,
+          24,
+          16,
+          8
+        ],
+        "per_rank_inventory_us": [
+          462.56163,
+          462.8544
+        ],
+        "critical_inventory_us": 462.8544,
+        "difference_from_critical_fused_inventory_us": 57.32559999999995
+      }
+    ],
+    "common_plan_selection": "Evaluate both per-rank optimum proposals on both ranks; best of this set, not a joint-optimality claim; no inter-rank arrival skew model."
+  }
+}

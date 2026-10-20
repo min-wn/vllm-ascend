@@ -1,0 +1,101 @@
+{
+  "scope": "read-only public ELF files; no dlopen, symbol invocation or NPU initialization",
+  "queried_symbols": [
+    "HcclCommGetHandleWithName",
+    "HcclGetHcclBuffer",
+    "HcclCreateOpResCtx",
+    "HcclCommSymWinRegister",
+    "HcclSymWinGetPeerPointer",
+    "HcclThreadAcquireWithStream",
+    "HcclEngineCtxCreate"
+  ],
+  "libraries": [
+    {
+      "path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhccl.so",
+      "bytes": 9963544,
+      "sha256": "e7742392619bd0f7bfd1b55552070f9811b25ed3017eefd49ed2c1f9f45fc647",
+      "needed": [
+        "libhcomm.so",
+        "libhccl_compat.so",
+        "libacl_rt.so",
+        "libc_sec.so",
+        "libunified_dlog.so",
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libgcc_s.so.1",
+        "libc.so.6",
+        "ld-linux-aarch64.so.1"
+      ],
+      "matching_definitions": {
+        "HcclCreateOpResCtx": "000000000027c300 T HcclCreateOpResCtx"
+      }
+    },
+    {
+      "path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhcomm.so",
+      "bytes": 14300160,
+      "sha256": "648b248b39fb91164b08f20a12937ca31e780b28383b989590a7d6acc636fcb3",
+      "needed": [
+        "libhccl_alg.so",
+        "libhccl_plf.so",
+        "libhccl_v2.so",
+        "libdl.so.2",
+        "libpthread.so.0",
+        "libacl_rt.so",
+        "libc_sec.so",
+        "libstdc++.so.6",
+        "libgcc_s.so.1",
+        "libc.so.6",
+        "ld-linux-aarch64.so.1"
+      ],
+      "matching_definitions": {
+        "HcclCommGetHandleWithName": "00000000007c6a80 T HcclCommGetHandleWithName",
+        "HcclCommSymWinRegister": "00000000007c3450 T HcclCommSymWinRegister",
+        "HcclEngineCtxCreate": "0000000000ad74e0 T HcclEngineCtxCreate",
+        "HcclGetHcclBuffer": "0000000000ad5528 T HcclGetHcclBuffer",
+        "HcclThreadAcquireWithStream": "0000000000adfa18 T HcclThreadAcquireWithStream"
+      }
+    },
+    {
+      "path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhccl_compat.so",
+      "bytes": 132856,
+      "sha256": "264981562fb8b5e59a67f768e194522f071fa1900c19ce16237828e3843c4d2e",
+      "needed": [
+        "libunified_dlog.so",
+        "libacl_rt.so",
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libgcc_s.so.1",
+        "libc.so.6",
+        "ld-linux-aarch64.so.1"
+      ],
+      "matching_definitions": {
+        "HcclSymWinGetPeerPointer": "0000000000007318 W HcclSymWinGetPeerPointer"
+      }
+    }
+  ],
+  "found_in_these_libraries": {
+    "HcclCommGetHandleWithName": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhcomm.so"
+    ],
+    "HcclGetHcclBuffer": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhcomm.so"
+    ],
+    "HcclCreateOpResCtx": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhccl.so"
+    ],
+    "HcclCommSymWinRegister": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhcomm.so"
+    ],
+    "HcclSymWinGetPeerPointer": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhccl_compat.so"
+    ],
+    "HcclThreadAcquireWithStream": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhcomm.so"
+    ],
+    "HcclEngineCtxCreate": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/lib64/libhcomm.so"
+    ]
+  },
+  "limitations": "Exports establish neither ABI/call compatibility nor driver, capture or device-memory qualification; not an exhaustive library search.",
+  "ssh_host": "vllm-ascend-030"
+}

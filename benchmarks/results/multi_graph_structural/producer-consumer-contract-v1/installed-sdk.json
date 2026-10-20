@@ -1,0 +1,308 @@
+{
+  "scope": "read-only package, driver and SDK-header snapshot; no kernel execution",
+  "packages": {
+    "torch": "2.10.0+cpu",
+    "torch-npu": "2.10.0.post4",
+    "vllm": "0.30.0+empty",
+    "vllm-ascend": "0.30.0rc1+multigraph.732514948"
+  },
+  "driver": {
+    "path": "/usr/local/Ascend/driver/version.info",
+    "sha256": "fdb4e9d9c658d5e935f8be57f4f235d4d00e68f69d2e710a77448f2bee639709",
+    "fields": {
+      "Version": "24.1.rc3",
+      "ascendhal_version": "7.35.23",
+      "aicpu_version": "1.0",
+      "tdt_version": "1.0",
+      "log_version": "1.0",
+      "prof_version": "2.0",
+      "dvppkernels_version": "1.1",
+      "tsfw_version": "1.0",
+      "Innerversion": "V100R001C19SPC001B124",
+      "compatible_version": "[V100R001C13],[V100R001C15],[V100R001C17],[V100R001C18],[V100R001C19]",
+      "compatible_version_fw": "[7.0.0,7.5.99]",
+      "package_version": "24.1.rc3"
+    }
+  },
+  "resolved_sdk_include": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/include",
+  "headers": [
+    {
+      "file": "hccl/hccl_mc2.h",
+      "sha256": "dd033e0a0ffa578021066ba4c44b9d24c11768523e4146d8bc509ae62b1599db",
+      "bytes": 2942,
+      "symbols": [
+        {
+          "line": 25,
+          "declaration": "extern HcclResult HcclKfcAllocOpArgs(void **opArgs);"
+        },
+        {
+          "line": 31,
+          "declaration": "extern HcclResult HcclKfcFreeOpArgs(void *opArgs);"
+        },
+        {
+          "line": 38,
+          "declaration": "extern HcclResult HcclKfcOpArgsSetSrcDataType(void *opArgs, uint8_t srcDataType);"
+        },
+        {
+          "line": 45,
+          "declaration": "extern HcclResult HcclKfcOpArgsSetDstDataType(void *opArgs, uint8_t dstDataType);"
+        },
+        {
+          "line": 52,
+          "declaration": "extern HcclResult HcclKfcOpArgsSetReduceType(void *opArgs, uint32_t reduceType);"
+        },
+        {
+          "line": 59,
+          "declaration": "extern HcclResult HcclKfcOpArgsSetCount(void *opArgs, uint64_t count);"
+        },
+        {
+          "line": 66,
+          "declaration": "extern HcclResult HcclKfcOpArgsSetAlgConfig(void *opArgs, char *algConfig);"
+        },
+        {
+          "line": 73,
+          "declaration": "extern HcclResult HcclKfcOpArgsSetCommEngine(void *opArgs, uint8_t commEngine);"
+        },
+        {
+          "line": 82,
+          "declaration": "extern HcclResult HcclCreateOpResCtx(HcclComm comm, uint8_t opType, void *opArgs, void **opResCtx);"
+        }
+      ]
+    },
+    {
+      "file": "hccl/hccl_sym_win.h",
+      "sha256": "889bc809143bfb783d77674e08d7e365aeb4f5d82d49abec4f6b7772d222293f",
+      "bytes": 1433,
+      "symbols": [
+        {
+          "line": 33,
+          "declaration": "extern HcclResult HcclSymWinGetPeerPointer(HcclCommSymWindow winHandle, size_t offset, uint32_t peerRank, void** ptr);"
+        }
+      ]
+    },
+    {
+      "file": "hccl/hccl_comm.h",
+      "sha256": "8f6d9baa988a4673266601d83f0a5d112bbed2764ef34ba1efaa67279c099255",
+      "bytes": 15182,
+      "symbols": [
+        {
+          "line": 36,
+          "declaration": "extern HcclResult HcclCommInitClusterInfo(const char *clusterInfo, uint32_t rank, HcclComm *comm) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 48,
+          "declaration": "extern HcclResult HcclCommInitClusterInfoConfig(const char *clusterInfo, uint32_t rank,"
+        },
+        {
+          "line": 64,
+          "declaration": "extern HcclResult HcclCreateSubCommConfig(HcclComm *comm, uint32_t rankNum, uint32_t *rankIds,"
+        },
+        {
+          "line": 73,
+          "declaration": "extern HcclResult HcclGetRootInfo(HcclRootInfo *rootInfo) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 85,
+          "declaration": "extern HcclResult HcclCommInitRootInfo(uint32_t nRanks, const HcclRootInfo *rootInfo, uint32_t rank, HcclComm *comm) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 98,
+          "declaration": "extern HcclResult HcclCommInitRootInfoConfig(uint32_t nRanks, const HcclRootInfo *rootInfo, uint32_t rank,"
+        },
+        {
+          "line": 108,
+          "declaration": "extern HcclResult HcclSetConfig(HcclConfig config, HcclConfigValue configValue) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 109,
+          "declaration": "extern HcclResult HcclGetConfig(HcclConfig config, HcclConfigValue *configValue) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 120,
+          "declaration": "extern HcclResult HcclGetCommName(HcclComm comm, char* commName) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 129,
+          "declaration": "extern HcclResult HcclCommGetHandleWithName(const char* commName, HcclComm* comm);"
+        },
+        {
+          "line": 138,
+          "declaration": "extern HcclResult HcclGetRankSize(HcclComm comm, uint32_t *rankSize) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 147,
+          "declaration": "extern HcclResult HcclGetRankId(HcclComm comm, uint32_t *rank) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 155,
+          "declaration": "extern HcclResult HcclBarrier(HcclComm comm, aclrtStream stream) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 164,
+          "declaration": "extern HcclResult HcclCommDestroy(HcclComm comm) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 175,
+          "declaration": "extern HcclResult HcclCommInitAll(uint32_t ndev, int32_t* devices, HcclComm* comms) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 182,
+          "declaration": "extern HcclResult HcclGetCommAsyncError(HcclComm comm, HcclResult *asyncError) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 188,
+          "declaration": "extern const char *HcclGetErrorString(HcclResult code) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 193,
+          "declaration": "extern uint32_t HcclGetCommConfigCapability() HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 199,
+          "declaration": "static inline void HcclCommConfigInit(HcclCommConfig *config)"
+        },
+        {
+          "line": 242,
+          "declaration": "extern HcclResult HcclCommSuspend(HcclComm comm) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 252,
+          "declaration": "typedef HcclResult (*HcclCommStateCallback)(HcclComm comm, HcclCommStatePhase state, void *args);"
+        },
+        {
+          "line": 262,
+          "declaration": "extern HcclResult HcclCommRegCommStateCallback(const char *regName, HcclCommStateCallback cb, void *args);"
+        },
+        {
+          "line": 268,
+          "declaration": "extern HcclResult HcclCommResume(HcclComm comm) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 276,
+          "declaration": "extern HcclResult HcclCommGetStatus(const char *commId, HcclCommStatus *status);"
+        },
+        {
+          "line": 286,
+          "declaration": "extern HcclResult HcclCommSetMemoryRange(HcclComm comm, void *baseVirPtr, size_t size, size_t alignment, uint64_t flags) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 293,
+          "declaration": "extern HcclResult HcclCommUnsetMemoryRange(HcclComm comm, void *baseVirPtr) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 304,
+          "declaration": "extern HcclResult HcclCommActivateCommMemory(HcclComm comm, void *virPtr, size_t size, size_t offset, aclrtDrvMemHandle handle, uint64_t flags) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 311,
+          "declaration": "extern HcclResult HcclCommDeactivateCommMemory(HcclComm comm, void *virPtr) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 320,
+          "declaration": "extern HcclResult HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks, bool *useBackup, uint32_t nRanks) HCOMM_WEAK_SYMBOL;"
+        },
+        {
+          "line": 326,
+          "declaration": "extern HcclResult HcclGroupStart();"
+        },
+        {
+          "line": 332,
+          "declaration": "extern HcclResult HcclGroupEnd();"
+        },
+        {
+          "line": 338,
+          "declaration": "extern HcclResult HcclGroupStatusGet(bool *isGroupEnabled);"
+        },
+        {
+          "line": 350,
+          "declaration": "extern HcclResult HcclCommSymWinRegister(HcclComm comm, void *addr, uint64_t size, HcclCommSymWindow *winHandle, uint32_t flag);"
+        },
+        {
+          "line": 358,
+          "declaration": "extern HcclResult HcclCommSymWinDeregister(HcclCommSymWindow winHandle);"
+        },
+        {
+          "line": 370,
+          "declaration": "extern HcclResult HcclCommSymWinGet(HcclComm comm, void *ptr, size_t size, HcclCommSymWindow *winHandle, size_t *offset);"
+        },
+        {
+          "line": 390,
+          "declaration": "extern HcclResult HcclConfigGetInfo(HcclComm comm, HcclConfigType cfgType,"
+        }
+      ]
+    },
+    {
+      "file": "hccl/hccl_res.h",
+      "sha256": "fa0a85502e2754f8d1efb705a54ef762a392d7b6738d93f3c7b52a3cf5f638c7",
+      "bytes": 11823,
+      "symbols": [
+        {
+          "line": 73,
+          "declaration": "static inline HcclResult HcclChannelDescInit(HcclChannelDesc *channelDesc, uint32_t descNum)"
+        },
+        {
+          "line": 118,
+          "declaration": "extern HcclResult HcclGetHcclBuffer(HcclComm comm, void **buffer, uint64_t *size);"
+        },
+        {
+          "line": 132,
+          "declaration": "extern HcclResult HcclGetHcclBufferCleared(HcclComm comm, void **buffer, uint64_t *size);"
+        },
+        {
+          "line": 149,
+          "declaration": "extern HcclResult HcclThreadAcquire(HcclComm comm, CommEngine engine, uint32_t threadNum,"
+        },
+        {
+          "line": 164,
+          "declaration": "extern HcclResult HcclThreadAcquireWithConfig(HcclComm comm, CommEngine engine, uint32_t threadNum,"
+        },
+        {
+          "line": 177,
+          "declaration": "extern HcclResult HcclThreadAcquireWithStream(HcclComm comm, CommEngine engine, aclrtStream stream,"
+        },
+        {
+          "line": 197,
+          "declaration": "extern HcclResult HcclChannelAcquire(HcclComm comm, CommEngine engine, const HcclChannelDesc *channelDescs,"
+        },
+        {
+          "line": 208,
+          "declaration": "extern HcclResult HcclChannelGetHcclBuffer(HcclComm comm, ChannelHandle channel, void **buffer, uint64_t *size);"
+        },
+        {
+          "line": 224,
+          "declaration": "extern HcclResult HcclEngineCtxCreate(HcclComm comm, const char *ctxTag, CommEngine engine, uint64_t size, void **ctx);"
+        },
+        {
+          "line": 236,
+          "declaration": "extern HcclResult HcclEngineCtxGet(HcclComm comm, const char *ctxTag, CommEngine engine, void **ctx, uint64_t *size);"
+        },
+        {
+          "line": 249,
+          "declaration": "extern HcclResult HcclEngineCtxCopy(HcclComm comm, CommEngine engine, const char *ctxTag, const void *srcCtx,"
+        },
+        {
+          "line": 259,
+          "declaration": "extern HcclResult HcclEngineCtxDestroy(HcclComm comm, const char *ctxTag, CommEngine engine);"
+        },
+        {
+          "line": 271,
+          "declaration": "extern HcclResult HcclCommMemReg(HcclComm comm, const char *memTag, const CommMem *mem, HcclMemHandle *memHandle);"
+        },
+        {
+          "line": 283,
+          "declaration": "extern HcclResult HcclChannelGetRemoteMems(HcclComm comm, ChannelHandle channel, uint32_t *memNum, CommMem **remoteMems,"
+        },
+        {
+          "line": 311,
+          "declaration": "extern HcclResult HcclThreadResGetInfo(HcclComm comm, ThreadHandle thread, ThreadResType resType, uint32_t infoLen, void **info);"
+        }
+      ]
+    },
+    {
+      "file": "hccl/hccl_types.h",
+      "sha256": "e7a0f358e258b3dcbbc46303ee0d7bab5a68bc993602feaeded248dea57a3d95",
+      "bytes": 8893,
+      "symbols": []
+    }
+  ]
+}
