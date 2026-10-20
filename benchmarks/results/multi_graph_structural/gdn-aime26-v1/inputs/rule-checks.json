@@ -1,0 +1,109 @@
+{
+  "results": [
+    {
+      "text": "Reasoning. \\boxed{007}.",
+      "target": "7",
+      "expected": true,
+      "result": {
+        "filtered_prediction": "007",
+        "extracted": "007",
+        "matched": true,
+        "prediction_valid": true,
+        "reference_valid": true,
+        "reason": "matched"
+      }
+    },
+    {
+      "text": "\\boxed{1} then final \\boxed{27}.",
+      "target": "27",
+      "expected": true,
+      "result": {
+        "filtered_prediction": "27",
+        "extracted": "27",
+        "matched": true,
+        "prediction_valid": true,
+        "reference_valid": true,
+        "reason": "matched"
+      }
+    },
+    {
+      "text": "Wrong: \\boxed{28}.",
+      "target": "27",
+      "expected": false,
+      "result": {
+        "filtered_prediction": "28",
+        "extracted": "28",
+        "matched": false,
+        "prediction_valid": true,
+        "reference_valid": true,
+        "reason": "not_equivalent"
+      }
+    },
+    {
+      "text": "\\boxed{27.5}.",
+      "target": "27",
+      "expected": false,
+      "result": {
+        "filtered_prediction": "27.5",
+        "extracted": "27.5",
+        "matched": false,
+        "prediction_valid": true,
+        "reference_valid": true,
+        "reason": "integer_literal_required"
+      }
+    },
+    {
+      "text": "\\boxed{\\frac{54}{2}}.",
+      "target": "27",
+      "expected": false,
+      "result": {
+        "filtered_prediction": "\\frac{54}{2}",
+        "extracted": "\\frac{54}{2}",
+        "matched": false,
+        "prediction_valid": true,
+        "reference_valid": true,
+        "reason": "integer_literal_required"
+      }
+    },
+    {
+      "text": "No answer available.",
+      "target": "27",
+      "expected": false,
+      "result": {
+        "filtered_prediction": "",
+        "extracted": "",
+        "matched": false,
+        "prediction_valid": false,
+        "reference_valid": true,
+        "reason": "prediction_not_parsed"
+      }
+    },
+    {
+      "text": "Answer: \\boxed{0}.",
+      "target": "000",
+      "expected": true,
+      "result": {
+        "filtered_prediction": "0",
+        "extracted": "0",
+        "matched": true,
+        "prediction_valid": true,
+        "reference_valid": true,
+        "reason": "matched"
+      }
+    }
+  ],
+  "versions": {
+    "math-verify": "0.9.0",
+    "latex2sympy2-extended": "1.11.0",
+    "antlr4-python3-runtime": "4.13.2",
+    "pydantic": "2.14.1",
+    "sympy": "1.14.0",
+    "mpmath": "1.3.0"
+  },
+  "sources": {
+    "evalscope\\metrics\\math\\parser.py": "ec13cc2035f65b40867487cd1af249b88e3029a3378855dd27ad2eda7d7d52d1",
+    "evalscope\\metrics\\math\\contracts.py": "10213c0ca1ba90af45806af4341d0563f8bfa496f3427d7c5dc775ef80f744c0",
+    "evalscope\\api\\metric\\metric.py": "1d298dd62356d45adecf657022a3478fa790960e09531a1aa2747de6b1ad4e8f",
+    "evalscope\\benchmarks\\aime\\aime_adapter.py": "98abca36ac63d8e5fdba06d07a578fb1fbdcf01161b5c87f7523e4940ca84198"
+  }
+}
