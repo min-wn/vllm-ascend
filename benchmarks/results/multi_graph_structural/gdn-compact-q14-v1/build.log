@@ -1,0 +1,160 @@
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python: /usr/local/python3.12.13/bin/python (found version "3.12.13") found components: Interpreter Development Development.Module Development.Embed
+CMake Warning at /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  static library kineto_LIBRARY-NOTFOUND not found.
+Call Stack (most recent call first):
+  /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:125 (append_torchlib_if_found)
+  CMakeLists.txt:18 (find_package)
+
+
+-- Found Torch: /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch.so
+-- Configuring done (11.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v1
+[  2%] Creating directories for 'gdn_q14_kernels_precompile'
+[  4%] No download step for 'gdn_q14_kernels_precompile'
+[  6%] No update step for 'gdn_q14_kernels_precompile'
+[  9%] No patch step for 'gdn_q14_kernels_precompile'
+[ 11%] Performing configure step for 'gdn_q14_kernels_precompile'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v1/gdn_q14_kernels_precompile-prefix/src/gdn_q14_kernels_precompile-build
+[ 13%] Performing build step for 'gdn_q14_kernels_precompile'
+[ 50%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_state_kernel.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 15%] No install step for 'gdn_q14_kernels_precompile'
+[ 18%] Completed 'gdn_q14_kernels_precompile'
+[ 18%] Built target gdn_q14_kernels_precompile
+[ 20%] Creating directories for 'gdn_q14_kernels_preprocess'
+[ 22%] No download step for 'gdn_q14_kernels_preprocess'
+[ 25%] No update step for 'gdn_q14_kernels_preprocess'
+[ 27%] No patch step for 'gdn_q14_kernels_preprocess'
+[ 29%] Performing configure step for 'gdn_q14_kernels_preprocess'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v1/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build
+[ 31%] Performing build step for 'gdn_q14_kernels_preprocess'
+[ 16%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp.o
+[ 33%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp.o
+[ 50%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_state_kernel.cpp.o
+[ 50%] Built target preprocess_obj
+[ 66%] Building CXX object CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp.o
+In file included from /workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp:7:
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:124:32: error: non-constant-expression cannot be narrowed from type 'uint32_t' (aka 'unsigned int') to 'uint16_t' (aka 'unsigned short') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams qkParams{current_, kWidth * sizeof(bfloat16_t), (kKeyHeads - 1) * kWidth * sizeof(bfloat16_t), 0,
+                               ^~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:124:32: note: insert an explicit cast to silence this issue
+    DataCopyExtParams qkParams{current_, kWidth * sizeof(bfloat16_t), (kKeyHeads - 1) * kWidth * sizeof(bfloat16_t), 0,
+                               ^~~~~~~~
+                               static_cast<uint16_t>( )
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:126:31: error: non-constant-expression cannot be narrowed from type 'uint32_t' (aka 'unsigned int') to 'uint16_t' (aka 'unsigned short') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams vParams{current_, kWidth * sizeof(bfloat16_t), (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0, 0};
+                              ^~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:126:31: note: insert an explicit cast to silence this issue
+    DataCopyExtParams vParams{current_, kWidth * sizeof(bfloat16_t), (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0, 0};
+                              ^~~~~~~~
+                              static_cast<uint16_t>( )
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:131:37: error: non-constant-expression cannot be narrowed from type 'unsigned long' to 'uint32_t' (aka 'unsigned int') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams betaParams{1, current_ * kHeads * sizeof(bfloat16_t), 0, 0, 0};
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:131:37: note: insert an explicit cast to silence this issue
+    DataCopyExtParams betaParams{1, current_ * kHeads * sizeof(bfloat16_t), 0, 0, 0};
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                    static_cast<uint32_t>(                )
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:252:30: error: non-constant-expression cannot be narrowed from type 'uint32_t' (aka 'unsigned int') to 'uint16_t' (aka 'unsigned short') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams params{current_, kWidth * sizeof(bfloat16_t), 0, (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0};
+                             ^~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:252:30: note: insert an explicit cast to silence this issue
+    DataCopyExtParams params{current_, kWidth * sizeof(bfloat16_t), 0, (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0};
+                             ^~~~~~~~
+                             static_cast<uint16_t>( )
+4 errors generated.
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:79: CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp.o] Error 1
+gmake[4]: *** [CMakeFiles/Makefile2:134: CMakeFiles/aiv_obj.dir/all] Error 2
+gmake[4]: *** Waiting for unfinished jobs....
+[ 83%] Building CXX object CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_state_kernel.cpp.o
+In file included from /workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp:7:
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:124:32: error: non-constant-expression cannot be narrowed from type 'uint32_t' (aka 'unsigned int') to 'uint16_t' (aka 'unsigned short') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams qkParams{current_, kWidth * sizeof(bfloat16_t), (kKeyHeads - 1) * kWidth * sizeof(bfloat16_t), 0,
+                               ^~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:124:32: note: insert an explicit cast to silence this issue
+    DataCopyExtParams qkParams{current_, kWidth * sizeof(bfloat16_t), (kKeyHeads - 1) * kWidth * sizeof(bfloat16_t), 0,
+                               ^~~~~~~~
+                               static_cast<uint16_t>( )
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:126:31: error: non-constant-expression cannot be narrowed from type 'uint32_t' (aka 'unsigned int') to 'uint16_t' (aka 'unsigned short') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams vParams{current_, kWidth * sizeof(bfloat16_t), (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0, 0};
+                              ^~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:126:31: note: insert an explicit cast to silence this issue
+    DataCopyExtParams vParams{current_, kWidth * sizeof(bfloat16_t), (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0, 0};
+                              ^~~~~~~~
+                              static_cast<uint16_t>( )
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:131:37: error: non-constant-expression cannot be narrowed from type 'unsigned long' to 'uint32_t' (aka 'unsigned int') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams betaParams{1, current_ * kHeads * sizeof(bfloat16_t), 0, 0, 0};
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:131:37: note: insert an explicit cast to silence this issue
+    DataCopyExtParams betaParams{1, current_ * kHeads * sizeof(bfloat16_t), 0, 0, 0};
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                    static_cast<uint32_t>(                )
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:252:30: error: non-constant-expression cannot be narrowed from type 'uint32_t' (aka 'unsigned int') to 'uint16_t' (aka 'unsigned short') in initializer list [-Wc++11-narrowing]
+    DataCopyExtParams params{current_, kWidth * sizeof(bfloat16_t), 0, (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0};
+                             ^~~~~~~~
+/workspace/gdn-compact-q14-v1/build-v1/source/q14_tile_solve.h:252:30: note: insert an explicit cast to silence this issue
+    DataCopyExtParams params{current_, kWidth * sizeof(bfloat16_t), 0, (kHeads - 1) * kWidth * sizeof(bfloat16_t), 0};
+                             ^~~~~~~~
+                             static_cast<uint16_t>( )
+4 errors generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:79: CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v1/source/q14_pipeline_kernel.cpp.o] Error 1
+gmake[5]: *** Waiting for unfinished jobs....
+gmake[4]: *** [CMakeFiles/Makefile2:198: CMakeFiles/aic_obj.dir/all] Error 2
+gmake[3]: *** [Makefile:91: all] Error 2
+gmake[2]: *** [CMakeFiles/gdn_q14_kernels_preprocess.dir/build.make:86: gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-stamp/gdn_q14_kernels_preprocess-build] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:176: CMakeFiles/gdn_q14_kernels_preprocess.dir/all] Error 2
+gmake: *** [Makefile:136: all] Error 2
+Traceback (most recent call last):
+  File "/workspace/gdn-compact-q14-v1/source/benchmarks/multi_graph_gdn_q14_kernel/load.py", line 92, in <module>
+    print(build(args.build_dir), flush=True)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/gdn-compact-q14-v1/source/benchmarks/multi_graph_gdn_q14_kernel/load.py", line 76, in build
+    subprocess.run(["cmake", "--build", str(destination), "--parallel", "2"], check=True)
+  File "/usr/local/python3.12.13/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['cmake', '--build', '/workspace/gdn-compact-q14-v1/build-v1', '--parallel', '2']' returned non-zero exit status 2.
+[ERROR] 2026-10-21-15:07:50 (PID:1099669, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

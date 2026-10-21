@@ -1,0 +1,33 @@
+{
+  "cpu_protocol_tests": {
+    "passed": 66,
+    "seconds": 0.83,
+    "command": "python -X utf8 -m pytest --noconftest tests/ut/worker/multi_graph/test_gdn_q14_protocol.py -q"
+  },
+  "ruff_check": "passed_four_python_files",
+  "ruff_format_check": "four_files_already_formatted",
+  "device_build": "build-v2 success",
+  "device_correctness": "correctness-v2 and performance-v1 segment audit passed",
+  "uniform_ci": {
+    "command": "bash format.sh ci",
+    "status": "blocked_by_existing_CRLF",
+    "error": "format.sh line 22 syntax error; line2/21 CR command not found"
+  },
+  "old_source_files_unchanged": 12,
+  "probe_provenance": {
+    "correctness_v2_probe_sha256": "f58aad3887b76aebd6f783417ff85a8399d004e3975c97f58c46448bae1f3937",
+    "performance_v1_and_current_probe_sha256": "bde7a1c1e4d9e401f9ce37528e2442f018cd9c067ecec3877494c557d7872b5a",
+    "earlier_probe_source_snapshot_found": false,
+    "earlier_probe_change_scope_verified": false,
+    "extension_module_sha256_matches_between_runs": true,
+    "current_probe_has_own_16_step_compact_audit": true,
+    "archive_scope": "performance_v1_sources_and_recorded_build_v2_identity"
+  },
+  "not_claimed": [
+    "whole_model_quality",
+    "service_performance",
+    "native_optimal_implementation",
+    "original_ledger_consecutive_activations",
+    "capture_initial_cost"
+  ]
+}

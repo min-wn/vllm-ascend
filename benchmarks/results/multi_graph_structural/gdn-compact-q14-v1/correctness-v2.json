@@ -1,0 +1,129 @@
+{
+  "status": "complete_single_layer_only",
+  "phase": "correctness",
+  "input_mode": "real_site_reuse",
+  "initial_state_matches_original_ledger_step": false,
+  "boundary": "single real GDN recurrence site after Q/K normalization, no conv/projection/norm/TP/head",
+  "source_owners": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8,
+    10,
+    11
+  ],
+  "installed_native_mixed": "Q4 recurrence plus Q1 FLA chunk below normalization",
+  "precision": "BF16 operands/output, FP32 compact state/log/products; HF32 off; highest",
+  "q1_candidate_filler": 0,
+  "cube_columns": 8,
+  "cube_q1_useful_columns": 2,
+  "compact_qk_cast_rows": "fixed maximum 4*capacity in both implementations",
+  "metadata_and_fixture_gather_in_timing": true,
+  "service_claim": false,
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post4",
+  "sources": {
+    "/workspace/gdn-compact-q14-v1/source/benchmarks/multi_graph_gdn_q14_probe.py": "f58aad3887b76aebd6f783417ff85a8399d004e3975c97f58c46448bae1f3937",
+    "/workspace/gdn-ready-consumer-v1/sites/original/original.step7.rank0.pt": "5c44d613f5a2e6bc5c5d27a0f1eca634cb92b05a04d289db81d6477076866dc8",
+    "/workspace/gdn-compact-q14-v1/source/benchmarks/results/multi_graph_structural/gdn-compact-q14-v1/manifest.json": "db00238bcb49632aff0b3456f4067346cb1d2ed7139ed14e0ec67470d85b6c50",
+    "/workspace/gdn-compact-q14-v1/build-v2/gdn_q14.so": "45699a63672621047c4469beda8a97dfc19206ce28e54addc072b66dc1d492ec",
+    "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so": "b244dcbe372ab11c8b12b7965e8ccde5e628f781fd4bc35277bc791586142ff8",
+    "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so": "55be9250ed36220de088317b1d5241ee9e8e5c2076ae43f8966225eb6f9675cb"
+  },
+  "eager": {
+    "steps": [
+      {
+        "step": 0,
+        "graph": false,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 32,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 1,
+        "graph": false,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 20,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 2,
+        "graph": false,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 15,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 3,
+        "graph": false,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 20,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 4,
+        "graph": false,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 8,
+        "native_vs_compact_output": null
+      }
+    ],
+    "terminal_bitwise": true,
+    "quality_failures_preserved": true,
+    "native_vs_compact_terminal": null
+  },
+  "graph": {
+    "steps": [
+      {
+        "step": 0,
+        "graph": true,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 32,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 1,
+        "graph": true,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 20,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 2,
+        "graph": true,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 15,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 3,
+        "graph": true,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 20,
+        "native_vs_compact_output": null
+      },
+      {
+        "step": 4,
+        "graph": true,
+        "exact_schedule": true,
+        "exact_forced_valid_prefixes": true,
+        "actual_query_tokens": 8,
+        "native_vs_compact_output": null
+      }
+    ],
+    "terminal_bitwise": true,
+    "quality_failures_preserved": true,
+    "native_vs_compact_terminal": null
+  }
+}

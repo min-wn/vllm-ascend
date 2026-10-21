@@ -1,0 +1,18 @@
+[
+  "/usr/local/python3.12.13/bin/python",
+  "/workspace/gdn-compact-q14-v1/source/benchmarks/multi_graph_gdn_q14_probe.py",
+  "--new-extension",
+  "/workspace/gdn-compact-q14-v1/build-v2/gdn_q14.so",
+  "--old-extension",
+  "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so",
+  "--deferred-extension",
+  "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so",
+  "--site",
+  "/workspace/gdn-ready-consumer-v1/sites/original/original.step7.rank0.pt",
+  "--manifest",
+  "/workspace/gdn-compact-q14-v1/source/benchmarks/results/multi_graph_structural/gdn-compact-q14-v1/manifest.json",
+  "--phase",
+  "performance",
+  "--output",
+  "/workspace/gdn-compact-q14-v1/performance-v1.json"
+]

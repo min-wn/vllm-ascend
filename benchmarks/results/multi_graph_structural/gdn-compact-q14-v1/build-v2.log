@@ -1,0 +1,202 @@
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python: /usr/local/python3.12.13/bin/python (found version "3.12.13") found components: Interpreter Development Development.Module Development.Embed
+CMake Warning at /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  static library kineto_LIBRARY-NOTFOUND not found.
+Call Stack (most recent call first):
+  /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:125 (append_torchlib_if_found)
+  CMakeLists.txt:18 (find_package)
+
+
+-- Found Torch: /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch.so
+-- Configuring done (11.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v2
+[  2%] Creating directories for 'gdn_q14_kernels_precompile'
+[  4%] No download step for 'gdn_q14_kernels_precompile'
+[  6%] No update step for 'gdn_q14_kernels_precompile'
+[  9%] No patch step for 'gdn_q14_kernels_precompile'
+[ 11%] Performing configure step for 'gdn_q14_kernels_precompile'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_precompile-prefix/src/gdn_q14_kernels_precompile-build
+[ 13%] Performing build step for 'gdn_q14_kernels_precompile'
+[ 50%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 15%] No install step for 'gdn_q14_kernels_precompile'
+[ 18%] Completed 'gdn_q14_kernels_precompile'
+[ 18%] Built target gdn_q14_kernels_precompile
+[ 20%] Creating directories for 'gdn_q14_kernels_preprocess'
+[ 22%] No download step for 'gdn_q14_kernels_preprocess'
+[ 25%] No update step for 'gdn_q14_kernels_preprocess'
+[ 27%] No patch step for 'gdn_q14_kernels_preprocess'
+[ 29%] Performing configure step for 'gdn_q14_kernels_preprocess'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build
+[ 31%] Performing build step for 'gdn_q14_kernels_preprocess'
+[ 16%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o
+[ 33%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o
+[ 50%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o
+[ 50%] Built target preprocess_obj
+[ 66%] Building CXX object CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o
+[ 83%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o
+[100%] Building CXX object CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o
+[100%] Built target aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o[100%] Built target merge_aiv_obj_text
+[100%] Built target aic_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_preprocess-prefix/src/gdn_q14_kernels_preprocess-build/CMakeFiles/aic_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o[100%] Built target merge_aic_obj_text
+[WARNING]: Multiple kernel functions are detected. It is recommended to define only one kernel function per file.
+[100%] Built target _host_cpp
+[ 34%] No install step for 'gdn_q14_kernels_preprocess'
+[ 36%] Completed 'gdn_q14_kernels_preprocess'
+[ 36%] Built target gdn_q14_kernels_preprocess
+[ 40%] Creating directories for 'gdn_q14_kernels_aiv_device'
+[ 40%] Creating directories for 'gdn_q14_kernels_aic_device'
+[ 43%] No download step for 'gdn_q14_kernels_aic_device'
+[ 45%] No download step for 'gdn_q14_kernels_aiv_device'
+[ 47%] No update step for 'gdn_q14_kernels_aic_device'
+[ 50%] No update step for 'gdn_q14_kernels_aiv_device'
+[ 52%] No patch step for 'gdn_q14_kernels_aic_device'
+[ 54%] No patch step for 'gdn_q14_kernels_aiv_device'
+[ 56%] Performing configure step for 'gdn_q14_kernels_aic_device'
+[ 59%] Performing configure step for 'gdn_q14_kernels_aiv_device'
+-- The C compiler identification is GNU 11.4.0
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CXX compile features - done
+-- Configuring done (0.5s)
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aic_device-prefix/src/gdn_q14_kernels_aic_device-build
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device-prefix/src/gdn_q14_kernels_aiv_device-build
+[ 61%] Performing build step for 'gdn_q14_kernels_aic_device'
+[ 63%] Performing build step for 'gdn_q14_kernels_aiv_device'
+[100%] Building CXX object CMakeFiles/device_obj.dir/workspace/gdn-compact-q14-v1/build-v2/auto_gen/gdn_q14_kernels/auto_gen_q14_pipeline_kernel.cpp.o
+[ 50%] Building CXX object CMakeFiles/device_obj.dir/workspace/gdn-compact-q14-v1/build-v2/auto_gen/gdn_q14_kernels/auto_gen_q14_pipeline_kernel.cpp.o
+[ 50%] Built target device_obj
+[100%] Building CXX object CMakeFiles/device_aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/auto_gen/gdn_q14_kernels/auto_gen_q14_state_kernel.cpp.o
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aic_device-prefix/src/gdn_q14_kernels_aic_device-build/CMakeFiles/device_obj.dir/workspace/gdn-compact-q14-v1/build-v2/auto_gen/gdn_q14_kernels/auto_gen_q14_pipeline_kernel.cpp.o -static -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aic_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 65%] No install step for 'gdn_q14_kernels_aic_device'
+[ 68%] Completed 'gdn_q14_kernels_aic_device'
+[ 68%] Built target gdn_q14_kernels_aic_device
+[ 70%] Creating directories for 'gdn_q14_kernels_host'
+[ 72%] No download step for 'gdn_q14_kernels_host'
+[ 75%] No update step for 'gdn_q14_kernels_host'
+[ 77%] No patch step for 'gdn_q14_kernels_host'
+[ 79%] Performing configure step for 'gdn_q14_kernels_host'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    ASCEND_PYTHON_EXECUTABLE
+
+
+-- Build files have been written to: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_host-prefix/src/gdn_q14_kernels_host-build
+[ 81%] Performing build step for 'gdn_q14_kernels_host'
+[ 50%] Building CXX object CMakeFiles/host_bisheng_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o
+[100%] Built target device_aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device-prefix/src/gdn_q14_kernels_aiv_device-build/CMakeFiles/device_obj.dir/workspace/gdn-compact-q14-v1/build-v2/auto_gen/gdn_q14_kernels/auto_gen_q14_pipeline_kernel.cpp.o -static -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device_dir/device.o
+[100%] Built target merge_device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device-prefix/src/gdn_q14_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/workspace/gdn-compact-q14-v1/build-v2/auto_gen/gdn_q14_kernels/auto_gen_q14_state_kernel.cpp.o -static -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device_dir/device_aiv.o
+[100%] Built target merge_aiv_device_obj
+[ 84%] No install step for 'gdn_q14_kernels_aiv_device'
+[ 86%] Completed 'gdn_q14_kernels_aiv_device'
+[ 86%] Built target gdn_q14_kernels_aiv_device
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aic_device_dir/device.o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device_dir/device.o -static -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_merge_obj_dir/device.o
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_aiv_device_dir/device_aiv.o -static -o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_merge_obj_dir/device_aiv.o
+[ 86%] Built target gdn_q14_kernels_merge_obj
+[ 88%] Building CXX object CMakeFiles/gdn_q14_kernels_host_stub_obj.dir/auto_gen/gdn_q14_kernels/host_stub.cpp.o
+[ 88%] Built target gdn_q14_kernels_host_stub_obj
+[100%] Built target host_bisheng_obj
+[ 90%] Performing install step for 'gdn_q14_kernels_host'
+[100%] Built target host_bisheng_obj
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_host_dir/./objects-Release/host_bisheng_obj/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o
+-- Installing: /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_host_dir/./objects-Release/host_bisheng_obj/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o
+[ 93%] Completed 'gdn_q14_kernels_host'
+[ 93%] Built target gdn_q14_kernels_host
+[ 95%] Linking CXX shared library lib/libgdn_q14_kernels.so
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /workspace/gdn-compact-q14-v1/build-v2/CMakeFiles/gdn_q14_kernels_host_stub_obj.dir/auto_gen/gdn_q14_kernels/host_stub.cpp.o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_merge_obj_dir/device.o 0 /workspace/gdn-compact-q14-v1/build-v2/CMakeFiles/gdn_q14_kernels_host_stub_obj.dir/auto_gen/gdn_q14_kernels/host_stub.cpp.o
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /workspace/gdn-compact-q14-v1/build-v2/CMakeFiles/gdn_q14_kernels_host_stub_obj.dir/auto_gen/gdn_q14_kernels/host_stub.cpp.o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_merge_obj_dir/device_aiv.o 1 /workspace/gdn-compact-q14-v1/build-v2/CMakeFiles/gdn_q14_kernels_host_stub_obj.dir/auto_gen/gdn_q14_kernels/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -shared -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -Wl,-soname,libgdn_q14_kernels.so -o lib/libgdn_q14_kernels.so CMakeFiles/gdn_q14_kernels_host_stub_obj.dir/auto_gen/gdn_q14_kernels/host_stub.cpp.o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_host_dir/objects-Release/host_bisheng_obj/workspace/gdn-compact-q14-v1/build-v2/source/q14_pipeline_kernel.cpp.o /workspace/gdn-compact-q14-v1/build-v2/gdn_q14_kernels_host_dir/objects-Release/host_bisheng_obj/workspace/gdn-compact-q14-v1/build-v2/source/q14_state_kernel.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/Ascend910B3/lib  /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
+[ 95%] Built target gdn_q14_kernels
+[ 97%] Building CXX object CMakeFiles/gdn_q14.dir/torch_binding.cpp.o
+[100%] Linking CXX shared module gdn_q14.so
+[100%] Built target gdn_q14
+/workspace/gdn-compact-q14-v1/build-v2/gdn_q14.so

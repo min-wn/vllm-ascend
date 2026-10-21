@@ -1,0 +1,7 @@
+INFO 10-21 15:15:35 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-21 15:15:35 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-21 15:15:35 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-21 15:15:35 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-21 15:15:36 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+[W1021 15:15:47.224775506 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+{"status": "complete_single_layer_only", "output": "/workspace/gdn-compact-q14-v1/correctness-v2.json"}

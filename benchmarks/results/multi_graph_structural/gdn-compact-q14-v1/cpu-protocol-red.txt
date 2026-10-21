@@ -1,0 +1,17 @@
+............................................F....F................       [100%]
+================================== FAILURES ===================================
+___________ test_manifest_round_trip_and_integrity_rejection[None] ____________
+tests\ut\worker\multi_graph\test_gdn_q14_protocol.py:255: in test_manifest_round_trip_and_integrity_rejection
+    assert MODULE.load_manifest(path) == json.loads(json.dumps(document))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+benchmarks\multi_graph_gdn_q14_protocol.py:196: in load_manifest
+    raise ValueError("frozen mixed segment changed")
+E   ValueError: frozen mixed segment changed
+_ test_stability_requires_three_positive_gains_over_one_percent_and_twice_repeat_span[candidate1-baseline1-False] _
+tests\ut\worker\multi_graph\test_gdn_q14_protocol.py:281: in test_stability_requires_three_positive_gains_over_one_percent_and_twice_repeat_span
+    assert observed["stable"] is stable
+E   assert True is False
+=========================== short test summary info ===========================
+FAILED tests/ut/worker/multi_graph/test_gdn_q14_protocol.py::test_manifest_round_trip_and_integrity_rejection[None]
+FAILED tests/ut/worker/multi_graph/test_gdn_q14_protocol.py::test_stability_requires_three_positive_gains_over_one_percent_and_twice_repeat_span[candidate1-baseline1-False]
+2 failed, 64 passed in 0.96s

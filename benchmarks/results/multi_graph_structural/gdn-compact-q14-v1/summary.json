@@ -1,0 +1,134 @@
+{
+  "schema": "gdn-compact-q14-closeout-v1",
+  "status": "closed_no_incremental_lifecycle_gain",
+  "device_correctness_passed": true,
+  "original_q4_frozen": true,
+  "prior_quality_failures_preserved": true,
+  "input_mode": "real_site_reuse",
+  "initial_state_matches_original_ledger_step": false,
+  "measured_probe_sha256": "bde7a1c1e4d9e401f9ce37528e2442f018cd9c067ecec3877494c557d7872b5a",
+  "manifest_payload_sha256": "a25d1b7b23f52ccd65c4b7216cb43f19d40acfaced0716e05a34924c3240b664",
+  "measured_manifest_normalized_sha256": "db00238bcb49632aff0b3456f4067346cb1d2ed7139ed14e0ec67470d85b6c50",
+  "mode_costs": {
+    "forced_q4": {
+      "initialization_ms": 0.18272908333333335,
+      "execution_ms": 16.765155208333333,
+      "terminal_ms": 0.481952,
+      "lifecycle_ms": 17.429836291666668,
+      "execution_range_ms": [
+        16.558749,
+        17.041791
+      ]
+    },
+    "q14_ready": {
+      "initialization_ms": 0.18914366666666665,
+      "execution_ms": 17.9430185,
+      "terminal_ms": 0.45925741666666664,
+      "lifecycle_ms": 18.591419583333334,
+      "execution_range_ms": [
+        17.751514,
+        18.143166
+      ]
+    },
+    "native": {
+      "initialization_ms": 0.41885683333333334,
+      "execution_ms": 42.671002208333334,
+      "terminal_ms": 0.32307129166666665,
+      "lifecycle_ms": 43.412930333333335,
+      "execution_range_ms": [
+        42.304996,
+        43.641422
+      ]
+    }
+  },
+  "load_costs": {
+    "forced_q4": {
+      "q1_only": {
+        "step_endpoint_ms": 1.035307333866755,
+        "graph_interval_ms": 0.31473574979851643,
+        "prepare_interval_ms": 0.7205715817709764
+      },
+      "mixed": {
+        "step_endpoint_ms": 1.0450751437909074,
+        "graph_interval_ms": 0.3230973614586724,
+        "prepare_interval_ms": 0.7219777752955755
+      },
+      "q4_control_14_requests": {
+        "step_endpoint_ms": 1.076169992486636,
+        "graph_interval_ms": 0.12659916592140993,
+        "prepare_interval_ms": 0.9495708346366882
+      }
+    },
+    "q14_ready": {
+      "q1_only": {
+        "step_endpoint_ms": 1.105301415423552,
+        "graph_interval_ms": 0.23624783350775638,
+        "prepare_interval_ms": 0.8690535845855871
+      },
+      "mixed": {
+        "step_endpoint_ms": 1.1242669365472264,
+        "graph_interval_ms": 0.2623869446623656,
+        "prepare_interval_ms": 0.8618800002667638
+      },
+      "q4_control_14_requests": {
+        "step_endpoint_ms": 1.0236641764640808,
+        "graph_interval_ms": 0.1257633352652192,
+        "prepare_interval_ms": 0.8979008321960767
+      }
+    },
+    "native": {
+      "q1_only": {
+        "step_endpoint_ms": 1.4404520784815154,
+        "graph_interval_ms": 0.3472434169302384,
+        "prepare_interval_ms": 1.0932086696227392
+      },
+      "mixed": {
+        "step_endpoint_ms": 4.681951549318102,
+        "graph_interval_ms": 3.4887838860352836,
+        "prepare_interval_ms": 1.1931676359640229
+      },
+      "q4_control_14_requests": {
+        "step_endpoint_ms": 1.4569799999396007,
+        "graph_interval_ms": 0.28824250027537346,
+        "prepare_interval_ms": 1.1687375009059906
+      }
+    }
+  },
+  "screen": {
+    "paired_improvement_percent": [
+      -7.05086989059894,
+      -6.445650632124752,
+      -6.778575516502485
+    ],
+    "pooled_improvement_percent": -6.75740575397767,
+    "relative_repeat_span_percent": {
+      "candidate": 0.6543289757596171,
+      "baseline": 0.9765335558290145
+    },
+    "stable": false,
+    "scope": "single-layer screening only; not online service or whole-model qualification"
+  },
+  "native_screen": {
+    "paired_improvement_percent": [
+      57.12406068653127,
+      57.08135594085547,
+      56.977200973669326
+    ],
+    "pooled_improvement_percent": 57.060806731162806,
+    "relative_repeat_span_percent": {
+      "candidate": 0.6543289757596171,
+      "baseline": 0.31363120908582287
+    },
+    "stable": true,
+    "scope": "single-layer screening only; not online service or whole-model qualification"
+  },
+  "native_metric_limit": {
+    "max_output_nrmse": 0.001776222256012261,
+    "terminal": {
+      "max_abs": 0.001718372106552124,
+      "nrmse": 0.0008533233776688576,
+      "finite": true,
+      "quality_qualification": false
+    }
+  }
+}
