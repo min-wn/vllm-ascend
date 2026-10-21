@@ -5,6 +5,7 @@
 head_dtype path. ``generate`` is gated by both ranks' complete-vocabulary site
 results and calls the frozen autoregressive harness for Q28 only, at B1/Q4.
 The B1 comparison is independent of the old B6 evaluation.
+The optional BF16-head control changes only the head precision for compact/B1/Q28.
 """
 
 import argparse
@@ -104,11 +105,15 @@ def projection_audit(torch, weight):
 
 
 def real_fp32_projection(operations):
+    return real_projection(operations, FP32)
+
+
+def real_projection(operations, dtype):
     return any(
         event["op"] in ("aten.mm.default", "torch.nn.functional.linear")
         and len(event["inputs"]) == 2
-        and all(item.get("dtype") == FP32 for item in event["inputs"])
-        and event["output"].get("dtype") == FP32
+        and all(item.get("dtype") == dtype for item in event["inputs"])
+        and event["output"].get("dtype") == dtype
         for event in operations
     )
 
@@ -298,11 +303,12 @@ def generate(args, torch, torch_npu, dist, model, config, tokenizer, modules):
     if rows[0]["index"] != 27:
         raise AssertionError("only Q28 is in scope")
     original = model.language_model.compute_logits
+    expected_dtype = getattr(torch, args.head_dtype)
     counter = dict(
         calls=0,
         rows=0,
         input_dtype=BF16,
-        output_dtype=FP32,
+        output_dtype=str(expected_dtype),
         weight_dtype=str(model.language_model.lm_head.weight.dtype),
         weight_shape=list(model.language_model.lm_head.weight.shape),
         configured_head_dtype=str(model.language_model.logits_processor.head_dtype),
@@ -316,13 +322,13 @@ def generate(args, torch, torch_npu, dist, model, config, tokenizer, modules):
         if counter["calls"] < 2:
             with projection_audit(torch, model.language_model.lm_head.weight) as audit:
                 logits = original(hidden, *positional, **keywords)
-            if not real_fp32_projection(audit.operations):
-                raise AssertionError("first prefill and decode must expose real FP32 matmul")
+            if not real_projection(audit.operations, str(expected_dtype)):
+                raise AssertionError("first prefill and decode must expose the configured matmul precision")
             counter["audited_calls"].append(dict(rows=len(hidden), operations=audit.operations))
         else:
             logits = original(hidden, *positional, **keywords)
-        if hidden.dtype != torch.bfloat16 or logits.dtype != torch.float32:
-            raise AssertionError("all generation head calls must be real configured FP32 projections")
+        if hidden.dtype != torch.bfloat16 or logits.dtype != expected_dtype:
+            raise AssertionError("all generation head calls must use the configured projection dtype")
         if model.language_model.lm_head.weight.dtype != torch.bfloat16:
             raise AssertionError("do not change stored head weights")
         counter["calls"] += 1
@@ -351,12 +357,17 @@ def main():
         "--snapshots", type=Path, default=Path("/workspace/gdn-aime26-q28-divergence-v1/common-official")
     )
     parser.add_argument("--variant", choices=("official", "compact"), default="official")
+    parser.add_argument("--head-dtype", choices=("float32", "bfloat16"), default="float32")
     args = parser.parse_args()
     args.shard, args.qualify = 0, False
     if int(os.environ.get("WORLD_SIZE", "1")) != 2:
         parser.error("retain TP2")
     if args.stage == "generate" and args.site is None:
         parser.error("generation requires complete-vocabulary site evidence")
+    if args.stage == "site" and args.head_dtype != "float32":
+        parser.error("the frozen full-vocabulary site diagnostic requires float32 head configuration")
+    if args.head_dtype == "bfloat16" and args.variant != "compact":
+        parser.error("the additional BF16-head control is compact/B1/Q28 only")
     if int(os.environ.get("RANK", "0")) == 0:
         args.output.mkdir(parents=True, exist_ok=False)
     os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
@@ -394,10 +405,10 @@ def main():
     ):
         raise ValueError("retain the frozen thinking template and original Q28 prompt")
     options = engine_options(args.model, 2, eager=False)
-    options.update(max_model_len=MAX_MODEL_LEN, hf_overrides={"head_dtype": "float32"})
+    options.update(max_model_len=MAX_MODEL_LEN, hf_overrides={"head_dtype": args.head_dtype})
     args.capture_sizes = tuple(EngineArgs(**options).create_engine_config().compilation_config.cudagraph_capture_sizes)
     options = engine_options(args.model, 2, eager=True)
-    options.update(max_model_len=MAX_MODEL_LEN, hf_overrides={"head_dtype": "float32"})
+    options.update(max_model_len=MAX_MODEL_LEN, hf_overrides={"head_dtype": args.head_dtype})
     config = EngineArgs(**options).create_engine_config()
     executor = ExecutorWithExternalLauncher(config)
     try:
@@ -414,8 +425,8 @@ def main():
                     converted += 1
         if converted != 304:
             raise AssertionError("retain the same 304 decoder NZ29 projections")
-        if config.model_config.head_dtype != torch.float32:
-            raise AssertionError("head_dtype=float32 did not take effect")
+        if config.model_config.head_dtype != getattr(torch, args.head_dtype):
+            raise AssertionError("configured head_dtype did not take effect")
         modules = []
         if args.stage == "generate" and args.variant == "compact":
             roots = Path("/workspace/multi-graph-results")

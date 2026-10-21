@@ -12,6 +12,7 @@ from multi_graph_gdn_aime26_fp32_head import (  # noqa: E402
     generation_gate,
     projection_audit,
     real_fp32_projection,
+    real_projection,
 )
 from multi_graph_gdn_aime26_fp32_head_analyze import emission_site  # noqa: E402
 
@@ -81,6 +82,18 @@ def test_post_projection_cast_is_not_fp32_projection():
     assert not real_fp32_projection([event])
     event["op"] = "aten._to_copy.default"
     assert not real_fp32_projection([event])
+
+
+@pytest.mark.parametrize("dtype", ["torch.bfloat16", "torch.float32"])
+def test_head_control_requires_matching_operands_and_output(dtype):
+    event = dict(
+        op="torch.nn.functional.linear",
+        inputs=[dict(dtype=dtype), dict(dtype=dtype)],
+        output=dict(dtype=dtype),
+    )
+    assert real_projection([event], dtype)
+    event["inputs"][0]["dtype"] = "torch.float64"
+    assert not real_projection([event], dtype)
 
 
 def test_operand_audit_delegates_without_caching_or_changing_results():
