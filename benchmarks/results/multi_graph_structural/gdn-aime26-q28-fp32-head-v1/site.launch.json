@@ -1,0 +1,14 @@
+{
+  "command": [
+    "torchrun",
+    "--nproc_per_node=2",
+    "--master_port=29842",
+    "/workspace/gdn-aime26-q28-fp32-head-v1/tools/multi_graph_gdn_aime26_fp32_head.py",
+    "site",
+    "--output",
+    "/workspace/gdn-aime26-q28-fp32-head-v1/site"
+  ],
+  "devices": "0,1",
+  "pid": 988642,
+  "started": 1792550460.6783147
+}

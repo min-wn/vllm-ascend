@@ -1,0 +1,4 @@
+{
+  "current_sha256": "c83d7620b1dbfca8a09701114f9cfa858c71fc1158d3315eaaffd10bbc4e6369",
+  "reason": "TorchDispatchMode captured no Ascend custom-op internals; observe exact input/weight/output of unchanged F.linear plus Tensor.to calls; reuse existing costs and assert new full-vocab logits match original measurements"
+}

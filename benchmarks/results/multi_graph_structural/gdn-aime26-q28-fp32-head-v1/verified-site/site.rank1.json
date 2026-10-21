@@ -1,0 +1,889 @@
+{
+  "rank": 1,
+  "model_dtype": "torch.bfloat16",
+  "config_head_dtype": "torch.float32",
+  "processor_type": "vllm_ascend.ops.vocab_parallel_embedding.AscendLogitsProcessor",
+  "processor_head_dtype": "torch.float32",
+  "weight_dtype": "torch.bfloat16",
+  "weight_shape": [
+    124160,
+    5120
+  ],
+  "weight_bytes": 1271398400,
+  "weight_fp32_bytes": 2542796800,
+  "matmul": {
+    "allow_hf32": false,
+    "float32_matmul_precision": "highest",
+    "allow_internal_format_requested": true
+  },
+  "samples": {
+    "official": {
+      "source": "/workspace/gdn-aime26-q28-divergence-v1/common-official/official.rank1.pt",
+      "source_sha256": "80a51fa816f3646fbc7139bb7cc0b65f21bf533f935194bae505934bb19fdadd",
+      "hidden": {
+        "shape": [
+          24,
+          5120
+        ],
+        "dtype": "torch.bfloat16",
+        "device": "npu:1"
+      },
+      "bfloat16": {
+        "dtype": "torch.bfloat16",
+        "argmax": 866,
+        "top1_top2_gap": 0.125,
+        "top10": [
+          {
+            "token": 866,
+            "text": " any",
+            "logit": 27.0
+          },
+          {
+            "token": 660,
+            "text": " all",
+            "logit": 26.875
+          },
+          {
+            "token": 1396,
+            "text": " every",
+            "logit": 26.625
+          },
+          {
+            "token": 1754,
+            "text": " each",
+            "logit": 23.125
+          },
+          {
+            "token": 874,
+            "text": " no",
+            "logit": 23.125
+          },
+          {
+            "token": 393,
+            "text": " $",
+            "logit": 16.5
+          },
+          {
+            "token": 1010,
+            "text": " some",
+            "logit": 15.6875
+          },
+          {
+            "token": 279,
+            "text": " the",
+            "logit": 15.1875
+          },
+          {
+            "token": 12103,
+            "text": " distinct",
+            "logit": 14.875
+          },
+          {
+            "token": 264,
+            "text": " a",
+            "logit": 14.0625
+          }
+        ],
+        "candidates": {
+          "866": {
+            "logit": 27.0,
+            "rank_strict_greater_plus_one": 1,
+            "tied_tokens": 1
+          },
+          "660": {
+            "logit": 26.875,
+            "rank_strict_greater_plus_one": 2,
+            "tied_tokens": 1
+          }
+        },
+        "vocabulary": 248320,
+        "finite": true,
+        "operations": [
+          {
+            "op": "torch.nn.functional.linear",
+            "inputs": [
+              {
+                "shape": [
+                  24,
+                  5120
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "npu:1"
+              },
+              {
+                "shape": [
+                  124160,
+                  5120
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "npu:1"
+              }
+            ],
+            "output": {
+              "shape": [
+                24,
+                124160
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:1"
+            },
+            "weight_is_original_storage": true
+          }
+        ],
+        "fp32_operands_and_output": false,
+        "all_query_argmax": [
+          866,
+          248045,
+          248045,
+          248045
+        ],
+        "saved_logits_exact": true
+      },
+      "float32": {
+        "dtype": "torch.float32",
+        "argmax": 866,
+        "top1_top2_gap": 0.035858154296875,
+        "top10": [
+          {
+            "token": 866,
+            "text": " any",
+            "logit": 26.970233917236328
+          },
+          {
+            "token": 660,
+            "text": " all",
+            "logit": 26.934375762939453
+          },
+          {
+            "token": 1396,
+            "text": " every",
+            "logit": 26.63102912902832
+          },
+          {
+            "token": 874,
+            "text": " no",
+            "logit": 23.173860549926758
+          },
+          {
+            "token": 1754,
+            "text": " each",
+            "logit": 23.094284057617188
+          },
+          {
+            "token": 393,
+            "text": " $",
+            "logit": 16.4483642578125
+          },
+          {
+            "token": 1010,
+            "text": " some",
+            "logit": 15.705568313598633
+          },
+          {
+            "token": 279,
+            "text": " the",
+            "logit": 15.19826602935791
+          },
+          {
+            "token": 12103,
+            "text": " distinct",
+            "logit": 14.9048490524292
+          },
+          {
+            "token": 264,
+            "text": " a",
+            "logit": 14.08423900604248
+          }
+        ],
+        "candidates": {
+          "866": {
+            "logit": 26.970233917236328,
+            "rank_strict_greater_plus_one": 1,
+            "tied_tokens": 1
+          },
+          "660": {
+            "logit": 26.934375762939453,
+            "rank_strict_greater_plus_one": 2,
+            "tied_tokens": 1
+          }
+        },
+        "vocabulary": 248320,
+        "finite": true,
+        "operations": [
+          {
+            "op": "lm_head.weight.to",
+            "inputs": [
+              {
+                "shape": [
+                  124160,
+                  5120
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "npu:1"
+              }
+            ],
+            "output": {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:1"
+            },
+            "allocated_new_storage": true,
+            "output_bytes": 2542796800
+          },
+          {
+            "op": "torch.nn.functional.linear",
+            "inputs": [
+              {
+                "shape": [
+                  24,
+                  5120
+                ],
+                "dtype": "torch.float32",
+                "device": "npu:1"
+              },
+              {
+                "shape": [
+                  124160,
+                  5120
+                ],
+                "dtype": "torch.float32",
+                "device": "npu:1"
+              }
+            ],
+            "output": {
+              "shape": [
+                24,
+                124160
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:1"
+            },
+            "weight_is_original_storage": false
+          }
+        ],
+        "fp32_operands_and_output": true,
+        "all_query_argmax": [
+          866,
+          248045,
+          248045,
+          248045
+        ]
+      }
+    },
+    "compact_ready": {
+      "source": "/workspace/gdn-aime26-q28-divergence-v1/common-official/compact_ready.rank1.pt",
+      "source_sha256": "d0fea402602b111a9e34c45276e070cd975e108e8931fa0308abc92782edf74d",
+      "hidden": {
+        "shape": [
+          24,
+          5120
+        ],
+        "dtype": "torch.bfloat16",
+        "device": "npu:1"
+      },
+      "bfloat16": {
+        "dtype": "torch.bfloat16",
+        "argmax": 660,
+        "top1_top2_gap": 0.0,
+        "top10": [
+          {
+            "token": 660,
+            "text": " all",
+            "logit": 27.0
+          },
+          {
+            "token": 866,
+            "text": " any",
+            "logit": 27.0
+          },
+          {
+            "token": 1396,
+            "text": " every",
+            "logit": 26.625
+          },
+          {
+            "token": 1754,
+            "text": " each",
+            "logit": 23.125
+          },
+          {
+            "token": 874,
+            "text": " no",
+            "logit": 23.125
+          },
+          {
+            "token": 393,
+            "text": " $",
+            "logit": 16.5
+          },
+          {
+            "token": 1010,
+            "text": " some",
+            "logit": 15.6875
+          },
+          {
+            "token": 279,
+            "text": " the",
+            "logit": 15.1875
+          },
+          {
+            "token": 12103,
+            "text": " distinct",
+            "logit": 14.875
+          },
+          {
+            "token": 264,
+            "text": " a",
+            "logit": 14.0625
+          }
+        ],
+        "candidates": {
+          "866": {
+            "logit": 27.0,
+            "rank_strict_greater_plus_one": 1,
+            "tied_tokens": 2
+          },
+          "660": {
+            "logit": 27.0,
+            "rank_strict_greater_plus_one": 1,
+            "tied_tokens": 2
+          }
+        },
+        "vocabulary": 248320,
+        "finite": true,
+        "operations": [
+          {
+            "op": "torch.nn.functional.linear",
+            "inputs": [
+              {
+                "shape": [
+                  24,
+                  5120
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "npu:1"
+              },
+              {
+                "shape": [
+                  124160,
+                  5120
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "npu:1"
+              }
+            ],
+            "output": {
+              "shape": [
+                24,
+                124160
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:1"
+            },
+            "weight_is_original_storage": true
+          }
+        ],
+        "fp32_operands_and_output": false,
+        "all_query_argmax": [
+          660,
+          248045,
+          248045,
+          248045
+        ],
+        "saved_logits_exact": true
+      },
+      "float32": {
+        "dtype": "torch.float32",
+        "argmax": 866,
+        "top1_top2_gap": 0.03079986572265625,
+        "top10": [
+          {
+            "token": 866,
+            "text": " any",
+            "logit": 26.978363037109375
+          },
+          {
+            "token": 660,
+            "text": " all",
+            "logit": 26.94756317138672
+          },
+          {
+            "token": 1396,
+            "text": " every",
+            "logit": 26.657224655151367
+          },
+          {
+            "token": 1754,
+            "text": " each",
+            "logit": 23.144306182861328
+          },
+          {
+            "token": 874,
+            "text": " no",
+            "logit": 23.13701057434082
+          },
+          {
+            "token": 393,
+            "text": " $",
+            "logit": 16.4870548248291
+          },
+          {
+            "token": 1010,
+            "text": " some",
+            "logit": 15.688970565795898
+          },
+          {
+            "token": 279,
+            "text": " the",
+            "logit": 15.171987533569336
+          },
+          {
+            "token": 12103,
+            "text": " distinct",
+            "logit": 14.855572700500488
+          },
+          {
+            "token": 264,
+            "text": " a",
+            "logit": 14.038966178894043
+          }
+        ],
+        "candidates": {
+          "866": {
+            "logit": 26.978363037109375,
+            "rank_strict_greater_plus_one": 1,
+            "tied_tokens": 1
+          },
+          "660": {
+            "logit": 26.94756317138672,
+            "rank_strict_greater_plus_one": 2,
+            "tied_tokens": 1
+          }
+        },
+        "vocabulary": 248320,
+        "finite": true,
+        "operations": [
+          {
+            "op": "lm_head.weight.to",
+            "inputs": [
+              {
+                "shape": [
+                  124160,
+                  5120
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "npu:1"
+              }
+            ],
+            "output": {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:1"
+            },
+            "allocated_new_storage": true,
+            "output_bytes": 2542796800
+          },
+          {
+            "op": "torch.nn.functional.linear",
+            "inputs": [
+              {
+                "shape": [
+                  24,
+                  5120
+                ],
+                "dtype": "torch.float32",
+                "device": "npu:1"
+              },
+              {
+                "shape": [
+                  124160,
+                  5120
+                ],
+                "dtype": "torch.float32",
+                "device": "npu:1"
+              }
+            ],
+            "output": {
+              "shape": [
+                24,
+                124160
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:1"
+            },
+            "weight_is_original_storage": false
+          }
+        ],
+        "fp32_operands_and_output": true,
+        "all_query_argmax": [
+          866,
+          248045,
+          248045,
+          248045
+        ]
+      }
+    }
+  },
+  "weight_roundtrip_exact": true,
+  "costs": {
+    "1": {
+      "complete_head_bfloat16": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 1.523286,
+        "median_device_ms": 1.3725999593734741,
+        "samples": [
+          {
+            "wall_ms": 1.774277,
+            "device_ms": 1.5751399993896484,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 745984,
+            "retained_extra_allocated": 497152
+          },
+          {
+            "wall_ms": 1.466646,
+            "device_ms": 1.309399962425232,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 745984,
+            "retained_extra_allocated": 497152
+          },
+          {
+            "wall_ms": 1.523286,
+            "device_ms": 1.3725999593734741,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 745984,
+            "retained_extra_allocated": 497152
+          },
+          {
+            "wall_ms": 1.524836,
+            "device_ms": 1.3741600513458252,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 745984,
+            "retained_extra_allocated": 497152
+          },
+          {
+            "wall_ms": 1.473506,
+            "device_ms": 1.3319000005722046,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 745984,
+            "retained_extra_allocated": 497152
+          }
+        ]
+      },
+      "complete_head_float32": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 5.798513,
+        "median_device_ms": 5.650139808654785,
+        "samples": [
+          {
+            "wall_ms": 5.798513,
+            "device_ms": 5.650139808654785,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2543315456,
+            "retained_extra_allocated": 993792
+          },
+          {
+            "wall_ms": 5.774353,
+            "device_ms": 5.601960182189941,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2543315456,
+            "retained_extra_allocated": 993792
+          },
+          {
+            "wall_ms": 5.806193,
+            "device_ms": 5.660940170288086,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2543315456,
+            "retained_extra_allocated": 993792
+          },
+          {
+            "wall_ms": 5.835734,
+            "device_ms": 5.687880039215088,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2543315456,
+            "retained_extra_allocated": 993792
+          },
+          {
+            "wall_ms": 5.768753,
+            "device_ms": 5.6260199546813965,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2543315456,
+            "retained_extra_allocated": 993792
+          }
+        ]
+      }
+    },
+    "4": {
+      "complete_head_bfloat16": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 1.565977,
+        "median_device_ms": 1.4262399673461914,
+        "samples": [
+          {
+            "wall_ms": 1.513686,
+            "device_ms": 1.3855199813842773,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 4969984,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 1.565977,
+            "device_ms": 1.4262399673461914,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 4969984,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 1.586216,
+            "device_ms": 1.4531199932098389,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 4969984,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 1.503676,
+            "device_ms": 1.3757799863815308,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 4969984,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 2.264139,
+            "device_ms": 2.13919997215271,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 4969984,
+            "retained_extra_allocated": 1987072
+          }
+        ]
+      },
+      "complete_head_float32": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 5.941694,
+        "median_device_ms": 5.791039943695068,
+        "samples": [
+          {
+            "wall_ms": 5.956874,
+            "device_ms": 5.819459915161133,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2544866816,
+            "retained_extra_allocated": 3973632
+          },
+          {
+            "wall_ms": 6.001744,
+            "device_ms": 5.838699817657471,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2544866816,
+            "retained_extra_allocated": 3973632
+          },
+          {
+            "wall_ms": 5.941694,
+            "device_ms": 5.780580043792725,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2544866816,
+            "retained_extra_allocated": 3973632
+          },
+          {
+            "wall_ms": 5.909574,
+            "device_ms": 5.775879859924316,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2544866816,
+            "retained_extra_allocated": 3973632
+          },
+          {
+            "wall_ms": 5.925143,
+            "device_ms": 5.791039943695068,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2544866816,
+            "retained_extra_allocated": 3973632
+          }
+        ]
+      },
+      "weight_conversion_only": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 3.158842,
+        "median_device_ms": 3.0419399738311768,
+        "samples": [
+          {
+            "wall_ms": 3.150962,
+            "device_ms": 3.037480115890503,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2542797312,
+            "retained_extra_allocated": 2542797312
+          },
+          {
+            "wall_ms": 3.158842,
+            "device_ms": 3.035360097885132,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2542797312,
+            "retained_extra_allocated": 2542797312
+          },
+          {
+            "wall_ms": 3.193763,
+            "device_ms": 3.0505599975585938,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2542797312,
+            "retained_extra_allocated": 2542797312
+          },
+          {
+            "wall_ms": 3.158582,
+            "device_ms": 3.0419399738311768,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2542797312,
+            "retained_extra_allocated": 2542797312
+          },
+          {
+            "wall_ms": 3.161093,
+            "device_ms": 3.042259931564331,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2542797312,
+            "retained_extra_allocated": 2542797312
+          }
+        ]
+      },
+      "fp32_local_projection_only": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 2.41986,
+        "median_device_ms": 2.2909600734710693,
+        "samples": [
+          {
+            "wall_ms": 2.414179,
+            "device_ms": 2.2928199768066406,
+            "initial_allocated": 29602798592,
+            "peak_extra_allocated": 1987072,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 2.44105,
+            "device_ms": 2.285799980163574,
+            "initial_allocated": 29602798592,
+            "peak_extra_allocated": 1987072,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 2.40667,
+            "device_ms": 2.2909600734710693,
+            "initial_allocated": 29602798592,
+            "peak_extra_allocated": 1987072,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 2.41986,
+            "device_ms": 2.2792000770568848,
+            "initial_allocated": 29602798592,
+            "peak_extra_allocated": 1987072,
+            "retained_extra_allocated": 1987072
+          },
+          {
+            "wall_ms": 2.4382,
+            "device_ms": 2.2954399585723877,
+            "initial_allocated": 29602798592,
+            "peak_extra_allocated": 1987072,
+            "retained_extra_allocated": 1987072
+          }
+        ]
+      }
+    },
+    "24": {
+      "complete_head_bfloat16": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 1.929698,
+        "median_device_ms": 1.8011200428009033,
+        "samples": [
+          {
+            "wall_ms": 2.027358,
+            "device_ms": 1.8960599899291992,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 29801984,
+            "retained_extra_allocated": 11919872
+          },
+          {
+            "wall_ms": 1.940457,
+            "device_ms": 1.8043999671936035,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 29801984,
+            "retained_extra_allocated": 11919872
+          },
+          {
+            "wall_ms": 1.927088,
+            "device_ms": 1.7798000574111938,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 29801984,
+            "retained_extra_allocated": 11919872
+          },
+          {
+            "wall_ms": 1.929698,
+            "device_ms": 1.8011200428009033,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 29801984,
+            "retained_extra_allocated": 11919872
+          },
+          {
+            "wall_ms": 1.892628,
+            "device_ms": 1.728060007095337,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 29801984,
+            "retained_extra_allocated": 11919872
+          }
+        ]
+      },
+      "complete_head_float32": {
+        "warmup": 2,
+        "repeats": 5,
+        "median_wall_ms": 6.404926,
+        "median_device_ms": 6.237500190734863,
+        "samples": [
+          {
+            "wall_ms": 7.187199,
+            "device_ms": 6.313620090484619,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2555209216,
+            "retained_extra_allocated": 23839232
+          },
+          {
+            "wall_ms": 6.622947,
+            "device_ms": 6.4811201095581055,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2555209216,
+            "retained_extra_allocated": 23839232
+          },
+          {
+            "wall_ms": 6.404926,
+            "device_ms": 6.237500190734863,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2555209216,
+            "retained_extra_allocated": 23839232
+          },
+          {
+            "wall_ms": 6.342385,
+            "device_ms": 6.217919826507568,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2555209216,
+            "retained_extra_allocated": 23839232
+          },
+          {
+            "wall_ms": 6.355305,
+            "device_ms": 6.226200103759766,
+            "initial_allocated": 27059918848,
+            "peak_extra_allocated": 2555209216,
+            "retained_extra_allocated": 23839232
+          }
+        ]
+      }
+    }
+  },
+  "cost_scope": "head-only; 2 warmups/5 samples; wall and device; no decoder timing",
+  "costs_reused_from": "/workspace/gdn-aime26-q28-fp32-head-v1/site",
+  "previous_full_logits_exact": true
+}
