@@ -151,3 +151,14 @@
 /docs/source/developer_guide/Design_Documents/aclgraph_gdn_quality*_zh.md text eol=lf
 /benchmarks/results/multi_graph_structural/gdn-realtext-quality-v*/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
 /benchmarks/results/multi_graph_structural/gdn-realtext-quality-v*/format-ci.log -diff
+/docs/source/developer_guide/Design_Documents/aclgraph_gdn_aime26_result_zh.md text eol=lf
+# Preserve the exact evaluated score bytes referenced by the completed review.
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/paired-scores.json -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/continuous-generation-audit.json -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/answer-change-review.json -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/formal* -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/local-archive-verification.json -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/completion-verification.json -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/postprocessing-evidence* -text whitespace=cr-at-eol
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/report.md text eol=lf
+/benchmarks/results/multi_graph_structural/gdn-aime26-v1/format-ci.log -text -diff whitespace=cr-at-eol,-blank-at-eof

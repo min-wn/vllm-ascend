@@ -1,0 +1,99 @@
+{
+  "completed_utc": "2026-10-21T00:36:02Z",
+  "closed": true,
+  "scope": "30 questions; one actual generation per variant; no repeats or configuration search",
+  "frozen_implementation_commit": "7ac64e568",
+  "manifest_sha256": "851b74dbdc6cb8a8e1cecd26617e06080562896bcf882c9fbd15362d1b192fa8",
+  "checks": {
+    "all_60_generations_completed": true,
+    "all_30_question_indices_present": true,
+    "all_eight_continuous_generation_audits_passed": true,
+    "all_seven_answer_changes_reviewed": true,
+    "review_references_exact_score_bytes": true,
+    "all_formal_original_file_bytes_unchanged": true,
+    "all_four_generation_exit_codes_zero": true,
+    "frozen_runtime_sources_unchanged": true,
+    "frozen_native_and_runtime_binaries_unchanged": true,
+    "weight_sizes_and_mtimes_unchanged": true,
+    "all_frozen_manifest_checks_passed": true,
+    "zero_fallbacks_and_runtime_failures": true
+  },
+  "summary": {
+    "questions": 30,
+    "both_correct": 23,
+    "both_wrong": 4,
+    "official_only": 3,
+    "compact_only": 0,
+    "official": {
+      "correct": 26,
+      "accuracy": 0.8666666666666667,
+      "length_limited": 2,
+      "runtime_failures": 0,
+      "parse_failures": 0,
+      "fallback_calls": 0
+    },
+    "compact": {
+      "correct": 23,
+      "accuracy": 0.7666666666666667,
+      "length_limited": 3,
+      "runtime_failures": 0,
+      "parse_failures": 0,
+      "fallback_calls": 0
+    }
+  },
+  "formal_archive_files_verified": 99,
+  "format_check": {
+    "command": "Git Bash: bash format.sh ci",
+    "returncode": 1,
+    "passed": false,
+    "note": "pre-existing CRLF shell parsing failure; no whole-repository format pass claimed"
+  },
+  "final_artifacts": {
+    "paired-scores.json": {
+      "bytes": 181699,
+      "sha256": "b9f268e45ccd4e7aa36392ce64253c315ac5a0f9145358dbce9714d9c574316d"
+    },
+    "continuous-generation-audit.json": {
+      "bytes": 2273,
+      "sha256": "c50f6f19207ccff39c18f99a7c5babc00ac9462d6026431b7c389a50dcf30d0f"
+    },
+    "answer-change-review.json": {
+      "bytes": 111610,
+      "sha256": "f7ce52757d5beb2e86243e1e50d9537dcdeb472b6a5e2e746d1b6ba20a439c1c"
+    },
+    "formal-evidence.tar.gz": {
+      "bytes": 13469367,
+      "sha256": "bf4c0e58606f8a30e496aab9aea5c1b5b9b85d9ee20ae4ef8cd1b6a2a0701226"
+    },
+    "formal-evidence-identity.json": {
+      "bytes": 15584,
+      "sha256": "9f3088044146187c1855af62554e05ccbb7d3dd65151ed6e7f37de1ab2ba0e84"
+    },
+    "formal-closeout-verification.json": {
+      "bytes": 22546,
+      "sha256": "094b551c791e3ad12a2f6d07e7d0a3a0d1fb1d35501877f099c60965a15d6d72"
+    },
+    "local-archive-verification.json": {
+      "bytes": 355,
+      "sha256": "12cb57142e6667e5d618fa71d935293bfab2532ec8a0320fff6452cda4b282bf"
+    },
+    "report.md": {
+      "bytes": 15171,
+      "sha256": "700be9f9889c67e0708165b5f4f890ebc4a0c2d218f56d771b25738151bd3e24"
+    },
+    "postprocessing-evidence.tar.gz": {
+      "bytes": 56793,
+      "sha256": "c84bbfac77fd17673854e122b068b151e0e26d1f1a66f4d1bb914f6869a802e4"
+    },
+    "postprocessing-evidence-identity.json": {
+      "bytes": 3542,
+      "sha256": "0b17cdd06c4e2f02f6653a9cc16d1026f3957b7e7794c284cd8ba16de507a603"
+    },
+    "format-ci.log": {
+      "bytes": 278,
+      "sha256": "fb659dceef0255bb7cb1251fd8a252d08175a74b14314ce7c47e7d6c8c782610"
+    }
+  },
+  "old_numeric_and_realtext_screen_failures_preserved": true,
+  "no_new_performance_claim": true
+}
