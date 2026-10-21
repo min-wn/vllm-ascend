@@ -1,0 +1,20 @@
+{
+  "load": "original",
+  "steps": [
+    7,
+    31
+  ],
+  "batches": [
+    115,
+    86
+  ],
+  "reason": "original load has two positive independent pairs (4.670727823896148%, 4.425841200077663%); steps selected by input sizes",
+  "guard": "all 12 unprofiled groups must complete, cross-process byte audit pass, both original pairs remain positive",
+  "source_sha256": {
+    "multi_graph_gdn_ready_chain_analyze.py": "9b731daa0803df5879061890e98011e4483f352143cb0f2ab53579dbfa203fbf",
+    "multi_graph_gdn_ready_chain_profile.py": "a24e4c22dc86e34d9be4cc9a054503fea9ae32c56b57f837a4ca7b20f86b8669"
+  },
+  "simultaneous_with_unprofiled_timing": false,
+  "head": "unchanged BF16",
+  "new_kernels": false
+}

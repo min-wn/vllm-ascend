@@ -1,0 +1,27 @@
+Device_id,Level,API Name,Time(us),Count,Avg(us),Min(us),Max(us),Variance
+host,acl,aclmdlRICaptureGetInfo,2.57,1,2.57,2.57,2.57,0
+host,acl,aclmdlRICaptureTaskUpdateBegin,34.73,16,2.171,1.58,7.88,2.21
+host,acl,aclmdlRICaptureTaskUpdateEnd,42.74,16,2.671,2.14,4.86,0.541
+host,acl,aclmdlRIExecuteAsync,2639.62,1,2639.62,2639.62,2639.62,0
+host,acl,aclnnArange,46.8,1,46.8,46.8,46.8,0
+host,acl,aclnnIndexSelect,63.38,2,31.69,25.4,37.98,39.564
+host,acl,aclnnInnerFusedInferAttentionScore,2089.73,16,130.608,68.98,902.99,40426.127
+host,acl,aclnnInnerFusedInferAttentionScoreGetWorkspaceSize,391.04,16,24.44,19.75,83.53,233.39
+host,acl,aclnnInplaceCopy,159.84,7,22.834,6.12,33.96,62.049
+host,acl,aclnnInplaceCopyGetWorkspaceSize,164.82,7,23.546,15.26,59.56,218.858
+host,acl,aclnnInplaceFillScalar,111.48,3,37.16,35.4,39.22,2.477
+host,acl,aclnnSub,115.33,2,57.665,27.15,88.18,931.165
+host,acl,aclrtCtxGetSysParamOpt,20.6,16,1.288,1.06,3.33,0.281
+host,acl,aclrtGetDeviceCount,7.37,2,3.685,2.43,4.94,1.575
+host,acl,aclrtGetHardwareSyncAddr,17.84,16,1.115,0.9,2.49,0.129
+host,acl,aclrtGetResInCurrentThread,32.8,46,0.713,0.26,2.61,0.253
+host,acl,aclrtGetStreamAttribute,38.31,31,1.236,0.84,2.96,0.156
+host,acl,aclrtLaunchKernelWithHostArgs,1802.7,24,75.113,11.95,868.41,27651.97
+host,acl,aclrtMemcpy,616.24,11,56.022,35.46,90.59,433.025
+host,acl,aclrtMemcpyAsync,154.63,8,19.329,13.84,37.01,47.591
+host,acl,aclrtRecordEvent,59.03,2,29.515,26.04,32.99,12.076
+host,acl,aclrtStreamWaitEvent,56.67,3,18.89,13.89,24.87,20.574
+host,acl,aclrtSynchronizeDeviceWithTimeout,147390.18,2,73695.09,27.9,147362.28,5426854882.496
+host,acl,aclrtSynchronizeStream,78.62,11,7.147,4.16,21.52,28.986
+host,acl,aclrtValueWrite,155.99,16,9.749,7.65,17.58,7.695
+host,node,launch,1934.31,24,80.596,14.79,875.84,27891.571

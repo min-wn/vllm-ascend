@@ -1,0 +1,105 @@
+{
+  "packages": {
+    "torch": "2.10.0+cpu",
+    "torch-npu": "2.10.0.post4",
+    "vllm": "0.30.0+empty",
+    "vllm-ascend": "0.30.0rc1"
+  },
+  "builds": {
+    "extension": {
+      "gdn_q4_log.so": {
+        "bytes": 201728,
+        "sha256": "787efd722754a96e2fa5ef4194bec5b86bc070ae9ea3bc86f3826d233b2b1068"
+      },
+      "lib/libgdn_q4_log_kernels.so": {
+        "bytes": 383040,
+        "sha256": "4e3d2225a92a1f91b0954a33b11358d59bb577b1f43104083710383d271ed48f"
+      },
+      "source.sha256": {
+        "bytes": 65,
+        "sha256": "c79199a8e0e45ddded2f524930a06e5648617f8c53d10d0665d20eaeb791e88f"
+      }
+    },
+    "products-extension": {
+      "gdn_q4_products.so": {
+        "bytes": 191224,
+        "sha256": "49f2157b07d363f62a6a24969005973981e8f0b9a848d61e5b312cd22ee6cb6c"
+      },
+      "lib/libgdn_q4_products_kernels.so": {
+        "bytes": 393664,
+        "sha256": "25c9d6b11e523aaf41698badcb7f80e5117525b288a15c08bce4474eda1a375c"
+      },
+      "source/products_kernel.cpp": {
+        "bytes": 6113,
+        "sha256": "c988d5f81bdca601a628d60426f696a947f3891088287e07d3bba9e4f90f631e"
+      },
+      "source/q4_products_tiling.h": {
+        "bytes": 2803,
+        "sha256": "f40f63d530cea602751422a814aa6a27f0a545c713c6009c8b03eacaf6ae9996"
+      },
+      "source/tiling_generator.cpp": {
+        "bytes": 2682,
+        "sha256": "ae5037582fcd56d56115dda081a4e1c5c1fdb105d6bb2a399fa8cc2be41a15a5"
+      },
+      "source/torch_binding.cpp": {
+        "bytes": 3618,
+        "sha256": "1640d73bddec8af560aca05bb6f1fc22536f58e25f42635d62d3ecc1b6bda771"
+      },
+      "source.sha256": {
+        "bytes": 65,
+        "sha256": "677c8ae9e54c5f4aa5e3eaa2e9aa7b886a99ac7d0867b6c6dc8d94d0ed8bf397"
+      }
+    },
+    "deferred-extension": {
+      "gdn_q4_log_deferred.so": {
+        "bytes": 212568,
+        "sha256": "55be9250ed36220de088317b1d5241ee9e8e5c2076ae43f8966225eb6f9675cb"
+      },
+      "lib/libgdn_q4_log_deferred_kernels.so": {
+        "bytes": 384048,
+        "sha256": "2b50df952d7c1e16afb771b41d582ee9c56ef26b1f014660296f6e78c1b1517d"
+      },
+      "source.sha256": {
+        "bytes": 65,
+        "sha256": "ab8a64aabc49785b7e0ea77afe2d46167db773a4144ccab4404688240455617e"
+      }
+    },
+    "tile-extension": {
+      "gdn_q4_tile_pipeline.so": {
+        "bytes": 227680,
+        "sha256": "b244dcbe372ab11c8b12b7965e8ccde5e628f781fd4bc35277bc791586142ff8"
+      },
+      "lib/libgdn_q4_tile_pipeline_kernels.so": {
+        "bytes": 417096,
+        "sha256": "a99d216971799de5e6bfc939a341edd331585652de7eefb9f9ec5c5fe24f5c0c"
+      },
+      "source/q4_products_tiling.h": {
+        "bytes": 2803,
+        "sha256": "f40f63d530cea602751422a814aa6a27f0a545c713c6009c8b03eacaf6ae9996"
+      },
+      "source/q4_tile_solve.h": {
+        "bytes": 13477,
+        "sha256": "d013bb4f6dbe72b8ca807ec88d79f9a977aaacb5f2e5ff506c432ce92db44a39"
+      },
+      "source/tile_pipeline_kernel.cpp": {
+        "bytes": 15202,
+        "sha256": "e5d6a5aca8c64f6fc173a68c6a838fce8abd4a7e2c143fe9a1c4aea8de6b0675"
+      },
+      "source/tiling_generator.cpp": {
+        "bytes": 2682,
+        "sha256": "ae5037582fcd56d56115dda081a4e1c5c1fdb105d6bb2a399fa8cc2be41a15a5"
+      },
+      "source/torch_binding.cpp": {
+        "bytes": 13670,
+        "sha256": "184b2abf8fe6c1c5a39400051d52231c89f8d5d7a1c16bf427ea7f446c7b9944"
+      },
+      "source.sha256": {
+        "bytes": 65,
+        "sha256": "82d02fd9eb24fc49291e489b5d6207cb685db79d4a93214336cc9691b8f3d3ce"
+      }
+    }
+  },
+  "cann_version_files": {
+    "/usr/local/Ascend/cann-9.1.0/aarch64-linux/ascend_toolkit_install.info": "package_name=Ascend-cann-toolkit\nversion=9.1.0\ninnerversion=V100R001C11SPC001B243\ncompatible_version=[V100R001C15],[V100R001C21],[V100R001C23],[V100R001C10]\narch=aarch64\nos=linux\npath=/usr/local/Ascend/cann-9.1.0\n"
+  }
+}

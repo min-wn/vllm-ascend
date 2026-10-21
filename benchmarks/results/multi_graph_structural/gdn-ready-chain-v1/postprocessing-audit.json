@@ -1,0 +1,105 @@
+{
+  "checked_utc": "2026-10-21T11:38:11.869914+00:00",
+  "raw_files_sha256_verified": 195,
+  "independent_pair_audit_recomputed_exact": true,
+  "profile_untimed_trajectory_outputs_and_closed_states_match_unprofiled_reference": true,
+  "profile_trace_sha256_verified": 8,
+  "profiled_timing_not_pooled_with_unprofiled_samples": true,
+  "profile_comparisons": [
+    {
+      "step": 7,
+      "costs": {
+        "delayed": {
+          "gdn_mixed_us": 26976.899875,
+          "decoder_to_head_us": 155664.065,
+          "per_layer_pmu_us": {
+            "aicore_time(us)": 214.92182291666666,
+            "aic_mac_time(us)": 29.12925,
+            "aic_scalar_time(us)": 92.16198958333334,
+            "aic_mte1_time(us)": 36.36209375,
+            "aic_mte2_time(us)": 189.90043749999998,
+            "aic_fixpipe_time(us)": 206.25403125,
+            "aiv_time(us)": 552.3359895833333,
+            "aiv_vec_time(us)": 215.72710416666666,
+            "aiv_scalar_time(us)": 157.74927083333333,
+            "aiv_mte2_time(us)": 37.360364583333336,
+            "aiv_mte3_time(us)": 24.99009375
+          }
+        },
+        "ready": {
+          "gdn_mixed_us": 17902.459000000003,
+          "decoder_to_head_us": 146843.86712500002,
+          "per_layer_pmu_us": {
+            "aicore_time(us)": 365.59822916666667,
+            "aic_mac_time(us)": 29.129041666666666,
+            "aic_scalar_time(us)": 184.72625000000002,
+            "aic_mte1_time(us)": 35.96580208333333,
+            "aic_mte2_time(us)": 173.6120520833333,
+            "aic_fixpipe_time(us)": 186.20138541666665,
+            "aiv_time(us)": 364.64053125,
+            "aiv_vec_time(us)": 215.72700000000003,
+            "aiv_scalar_time(us)": 157.81244791666666,
+            "aiv_mte2_time(us)": 46.966750000000005,
+            "aiv_mte3_time(us)": 25.829395833333336
+          }
+        }
+      },
+      "gdn_mixed_delta_us": 9074.440874999997,
+      "decoder_span_delta_us": 8820.197874999983
+    },
+    {
+      "step": 31,
+      "costs": {
+        "delayed": {
+          "gdn_mixed_us": 20838.598250000003,
+          "decoder_to_head_us": 137480.16324999998,
+          "per_layer_pmu_us": {
+            "aicore_time(us)": 150.13770833333334,
+            "aic_mac_time(us)": 21.784781249999998,
+            "aic_scalar_time(us)": 72.14094791666668,
+            "aic_mte1_time(us)": 27.193125000000002,
+            "aic_mte2_time(us)": 128.71636458333333,
+            "aic_fixpipe_time(us)": 140.88336458333333,
+            "aiv_time(us)": 404.96057291666665,
+            "aiv_vec_time(us)": 165.40869791666665,
+            "aiv_scalar_time(us)": 122.559875,
+            "aiv_mte2_time(us)": 25.17575,
+            "aiv_mte3_time(us)": 18.472427083333333
+          }
+        },
+        "ready": {
+          "gdn_mixed_us": 14587.836,
+          "decoder_to_head_us": 131251.43125,
+          "per_layer_pmu_us": {
+            "aicore_time(us)": 281.3768229166667,
+            "aic_mac_time(us)": 21.78398958333333,
+            "aic_scalar_time(us)": 136.80379166666665,
+            "aic_mte1_time(us)": 26.9173125,
+            "aic_mte2_time(us)": 123.3534375,
+            "aic_fixpipe_time(us)": 132.84887500000002,
+            "aiv_time(us)": 280.48286458333337,
+            "aiv_vec_time(us)": 165.4085208333333,
+            "aiv_scalar_time(us)": 122.557875,
+            "aiv_mte2_time(us)": 32.34204166666667,
+            "aiv_mte3_time(us)": 19.404
+          }
+        }
+      },
+      "gdn_mixed_delta_us": 6250.762250000003,
+      "decoder_span_delta_us": 6228.731999999989
+    }
+  ],
+  "intrakernel_overlap_and_flag_exclusive_cost": "not identified; retained as null",
+  "sources": {
+    "benchmarks/multi_graph_gdn_ready_chain_analyze.py": "9b731daa0803df5879061890e98011e4483f352143cb0f2ab53579dbfa203fbf",
+    "benchmarks/multi_graph_gdn_ready_chain_profile.py": "1cf08bed2067d8949fe9b96d41bfb541ac2e3b2c4c65eda1d9454a0dbd474d20",
+    "tests/ut/worker/multi_graph/test_gdn_ready_chain_profile.py": "ee6fd18739e972a1a781a2f1256b8ffc6aea1195da4f892e38eacb5443e9f9ca"
+  },
+  "format_ci": {
+    "exit_code": 2,
+    "log": "format-ci.log",
+    "raw_log": "format-ci.raw.bin"
+  },
+  "staged_raw_sha256_verified": 195,
+  "raw_evidence_git_attributes": "-text -diff; original bytes preserved"
+}

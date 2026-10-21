@@ -8,6 +8,8 @@ from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 
+KERNEL_TASK_TYPES = frozenset(("AI_CORE", "AI_VECTOR_CORE", "MIX_AIC", "MIX_AIV", "AICORE"))
+
 
 def merged(intervals):
     output = []
@@ -45,7 +47,7 @@ def synchronization_counts(capacity, cores=20):
         groups_including_padding=groups,
         delayed=dict(ready_set=cores, ready_wait=2 * cores, consumed_set=0, consumed_wait=0),
         ready=dict(ready_set=groups, ready_wait=2 * groups, consumed_set=2 * groups, consumed_wait=groups),
-        scope="static instruction counts from unchanged mixed-kernel loops, not elapsed synchronization time",
+        scope="static API call counts from unchanged mixed-kernel loops, not elapsed synchronization time",
     )
 
 
@@ -59,7 +61,11 @@ def analyze_trace(path, capacity):
         start = float(Decimal(str(event["ts"])) - origin)
         return start, start + float(event["dur"])
 
-    kernels = [e for e in complete if e.get("args", {}).get("Task Type", "").startswith("KERNEL_")]
+    kernels = [
+        e
+        for e in complete
+        if (kind := e.get("args", {}).get("Task Type", "")) in KERNEL_TASK_TYPES or kind.startswith("KERNEL_")
+    ]
     communication = [e for e in complete if e.get("name", "").startswith("hcom_")]
     mixed = [e for e in kernels if "q4_tile_solve" in e["name"]]
     commits = [e for e in kernels if "q4_log_deferred" in e["name"]]
@@ -92,6 +98,8 @@ def analyze_trace(path, capacity):
         for name, items in groups.items()
     }
     device = [interval(e) for e in [*kernels, *communication, *sdma]]
+    first_matmul = min(interval(e)[0] for e in matmuls)
+    ordered_communication = sorted(communication, key=lambda e: interval(e)[0])
     markers = {e["name"]: float(e["dur"]) for e in complete if e.get("name", "").startswith("ready_chain/")}
     waits = [e for e in complete if e.get("args", {}).get("Task Type") in ("EVENT_WAIT", "Notify Wait", "NOTIFY_WAIT")]
     return dict(
@@ -99,9 +107,18 @@ def analyze_trace(path, capacity):
         tasks=summary,
         device_span_us=max(end for _, end in device) - min(start for start, _ in device),
         device_busy_union_us=length(device),
+        decoder_to_head_span_us=max(interval(e)[1] for e in [*kernels, *communication]) - first_matmul,
+        decoder_span_scope="first decoder matmul through final head/gather; excludes profiler-start embedding TP skew",
+        first_tp=(
+            dict(name=ordered_communication[0]["name"], duration_us=float(ordered_communication[0]["dur"]))
+            if ordered_communication
+            else None
+        ),
         state_commit_dense_overlap_us=intersection([interval(e) for e in commits], [interval(e) for e in dense]),
         tp_kernel_overlap_us=intersection([interval(e) for e in communication], [interval(e) for e in kernels]),
-        runtime_wait_tasks=dict(count=len(waits), sum_us=sum(float(e["dur"]) for e in waits)),
+        runtime_wait_tasks=dict(
+            count=len(waits), sum_us=sum(float(e["dur"]) for e in waits), union_us=length([interval(e) for e in waits])
+        ),
         host_markers_us=markers,
         synchronization=synchronization_counts(capacity),
         allgather=[
@@ -119,6 +136,38 @@ def analyze_trace(path, capacity):
             "mixed-kernel task span does not expose Cube/AIV intersection or separate flag latency",
             "profile durations are not unprofiled timing samples",
         ],
+    )
+
+
+def mixed_metrics(directory):
+    candidates = sorted(directory.rglob("kernel_details.csv"))
+    if len(candidates) != 1:
+        raise ValueError("exactly one kernel details table required for each profiled step/rank")
+    with candidates[0].open(encoding="utf-8-sig", newline="") as stream:
+        rows = [row for row in csv.DictReader(stream) if "q4_tile_solve" in row["Name"]]
+    if len(rows) != 48 or any(row["Block Num"] != "20" or row["Mix Block Num"] != "40" for row in rows):
+        raise ValueError("all 48 mixed kernels must preserve 20 AIC / 40 AIV")
+    fields = (
+        "aicore_time(us)",
+        "aic_mac_time(us)",
+        "aic_scalar_time(us)",
+        "aic_mte1_time(us)",
+        "aic_mte2_time(us)",
+        "aic_fixpipe_time(us)",
+        "aiv_time(us)",
+        "aiv_vec_time(us)",
+        "aiv_scalar_time(us)",
+        "aiv_mte2_time(us)",
+        "aiv_mte3_time(us)",
+    )
+    return dict(
+        path=str(candidates[0]),
+        count=len(rows),
+        mean_reported_per_core_us={field: sum(float(row[field]) for row in rows) / len(rows) for field in fields},
+        mean_task_us=sum(float(row["Duration(us)"]) for row in rows) / len(rows),
+        scope="mean of CANN per-core PMU times across 48 layers; pipes may overlap; not exclusive wait times",
+        flag_wait_us=None,
+        cube_vector_overlap_us=None,
     )
 
 
@@ -158,6 +207,7 @@ def main():
                         step=profile["step"],
                         capacity=profile["capacity"],
                         **analyze_trace(path, profile["capacity"]),
+                        mixed_pmu=mixed_metrics(directory / f"profile.step{profile['step']}.rank{rank}"),
                     )
                 )
     output = dict(
