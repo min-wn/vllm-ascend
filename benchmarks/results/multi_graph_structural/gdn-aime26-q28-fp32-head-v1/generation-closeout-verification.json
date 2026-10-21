@@ -1,0 +1,118 @@
+{
+  "stage": "fp32_pair_complete_matched_B1_BF16_running",
+  "archive_bytes": 1151611,
+  "archive_sha256": "781a26aa8fdcb53a4353fdec2178a8285df46713a787e159201dd07bf5ae72d4",
+  "archive_and_each_file_sha256_verified_by_fetch": true,
+  "frozen_evalscope_scoring_complete": true,
+  "head_calls_audited_both_ranks": true,
+  "pair_lifecycle_passed": true,
+  "pre_divergence_Q4_input_metadata_and_draft_schedule_same_through_step30": true,
+  "pair_first_difference_output_1based": 42,
+  "variants": {
+    "official": {
+      "head_calls_both_ranks": [
+        44874,
+        44874
+      ],
+      "head_output_dtype_both_ranks": [
+        "torch.float32",
+        "torch.float32"
+      ],
+      "finish_reason": "length",
+      "final_accepted": 2,
+      "processed": 82088,
+      "first_divergence_step": {
+        "step": 30,
+        "batch": 1,
+        "request_ids": [
+          0
+        ],
+        "seq_lengths": [
+          213
+        ],
+        "accepted_from_previous": [
+          1
+        ],
+        "proposals": [
+          []
+        ],
+        "predictions": [
+          283,
+          248045,
+          248045,
+          248045
+        ],
+        "decisions": [
+          {
+            "tokens": [
+              283
+            ],
+            "accepted": 1,
+            "matched_drafts": 0,
+            "finish_reason": null
+          }
+        ],
+        "question_indices": [
+          27
+        ],
+        "q4_calls": 48,
+        "fallback_calls": 0
+      }
+    },
+    "compact": {
+      "head_calls_both_ranks": [
+        15485,
+        15485
+      ],
+      "head_output_dtype_both_ranks": [
+        "torch.float32",
+        "torch.float32"
+      ],
+      "finish_reason": "eos",
+      "final_accepted": 1,
+      "processed": 23410,
+      "first_divergence_step": {
+        "step": 30,
+        "batch": 1,
+        "request_ids": [
+          0
+        ],
+        "seq_lengths": [
+          213
+        ],
+        "accepted_from_previous": [
+          1
+        ],
+        "proposals": [
+          []
+        ],
+        "predictions": [
+          12576,
+          248045,
+          248045,
+          248045
+        ],
+        "decisions": [
+          {
+            "tokens": [
+              12576
+            ],
+            "accepted": 1,
+            "matched_drafts": 0,
+            "finish_reason": null
+          }
+        ],
+        "question_indices": [
+          27
+        ],
+        "q4_calls": 48,
+        "fallback_calls": 0
+      }
+    }
+  },
+  "original_failures_remain_valid": true,
+  "complete_head_attribution_pending": true,
+  "no_new_model_or_performance_or_repetition_round": true,
+  "format_ci_current_attempt": "not passed: default WSL bash cannot parse checkout CRLF; previous normalized invocation also failed because pre-commit is unavailable",
+  "frozen_generation_source_sha256": "c83d7620b1dbfca8a09701114f9cfa858c71fc1158d3315eaaffd10bbc4e6369"
+}

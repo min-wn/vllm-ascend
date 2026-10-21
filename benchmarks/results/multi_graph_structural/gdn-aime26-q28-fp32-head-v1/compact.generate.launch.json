@@ -1,0 +1,25 @@
+{
+  "command": [
+    "torchrun",
+    "--nproc_per_node=2",
+    "--master_port=29844",
+    "/workspace/gdn-aime26-q28-fp32-head-v1/tools/multi_graph_gdn_aime26_fp32_head.py",
+    "generate",
+    "--variant",
+    "compact",
+    "--site",
+    "/workspace/gdn-aime26-q28-fp32-head-v1/verified-site",
+    "--output",
+    "/workspace/gdn-aime26-q28-fp32-head-v1/generation/compact"
+  ],
+  "devices": "2,3",
+  "pid": 993877,
+  "started": 1792550736.9954832,
+  "batch": 1,
+  "query": 4,
+  "hf_overrides": {
+    "head_dtype": "float32"
+  },
+  "independent_continuous_generation": true,
+  "performance_measurement": false
+}

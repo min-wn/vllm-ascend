@@ -1,0 +1,133 @@
+{
+  "calls": 44874,
+  "rows": 179493,
+  "input_dtype": "torch.bfloat16",
+  "output_dtype": "torch.float32",
+  "weight_dtype": "torch.bfloat16",
+  "weight_shape": [
+    124160,
+    5120
+  ],
+  "configured_head_dtype": "torch.float32",
+  "allow_hf32": false,
+  "float32_matmul_precision": "highest",
+  "audited_calls": [
+    {
+      "rows": 1,
+      "operations": [
+        {
+          "op": "lm_head.weight.to",
+          "inputs": [
+            {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:0"
+            }
+          ],
+          "output": {
+            "shape": [
+              124160,
+              5120
+            ],
+            "dtype": "torch.float32",
+            "device": "npu:0"
+          },
+          "allocated_new_storage": true,
+          "output_bytes": 2542796800
+        },
+        {
+          "op": "torch.nn.functional.linear",
+          "inputs": [
+            {
+              "shape": [
+                1,
+                5120
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:0"
+            },
+            {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:0"
+            }
+          ],
+          "output": {
+            "shape": [
+              1,
+              124160
+            ],
+            "dtype": "torch.float32",
+            "device": "npu:0"
+          },
+          "weight_is_original_storage": false
+        }
+      ]
+    },
+    {
+      "rows": 4,
+      "operations": [
+        {
+          "op": "lm_head.weight.to",
+          "inputs": [
+            {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:0"
+            }
+          ],
+          "output": {
+            "shape": [
+              124160,
+              5120
+            ],
+            "dtype": "torch.float32",
+            "device": "npu:0"
+          },
+          "allocated_new_storage": true,
+          "output_bytes": 2542796800
+        },
+        {
+          "op": "torch.nn.functional.linear",
+          "inputs": [
+            {
+              "shape": [
+                4,
+                5120
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:0"
+            },
+            {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.float32",
+              "device": "npu:0"
+            }
+          ],
+          "output": {
+            "shape": [
+              4,
+              124160
+            ],
+            "dtype": "torch.float32",
+            "device": "npu:0"
+          },
+          "weight_is_original_storage": false
+        }
+      ]
+    }
+  ],
+  "fallback_calls": 0
+}
