@@ -1,0 +1,70 @@
+--- a/q4_tile_solve.h
++++ b/q4_tile_solve.h
+@@ -51,6 +51,7 @@
+     pipe->InitBuffer(outputBf16Buffer_, kTokens * kWidth * sizeof(bfloat16_t));
+     pipe->InitBuffer(productsBuffer_, kWidth * 8 * sizeof(float));
+     pipe->InitBuffer(scalarBuffer_, 256 * sizeof(float));
++    pipe->InitBuffer(inputScalarsBuffer_, 2 * kTokens * kHeads * sizeof(float));
+     pipe->InitBuffer(temporary_, kWidth * sizeof(float));
+     pipe->InitBuffer(indicesBuffer_, kWidth * sizeof(uint32_t));
+     auto indices = indicesBuffer_.Get<uint32_t>();
+@@ -110,7 +111,8 @@
+     auto query = queryBuffer_.Get<float>();
+     auto key = keyBuffer_.Get<float>();
+     auto value = valueBuffer_.Get<float>();
+-    auto scalar = scalarBuffer_.Get<float>();
++    auto inputScalars = inputScalarsBuffer_.Get<float>();
++    const bool loadScalars = cachedBegin_ != static_cast<int32_t>(begin);
+     const uint64_t qkOffset = (static_cast<uint64_t>(begin) * kKeyHeads + head / 3) * kWidth;
+     const uint64_t vOffset = (static_cast<uint64_t>(begin) * kHeads + head) * kWidth;
+     DataCopyExtParams qkParams{kTokens, kWidth * sizeof(bfloat16_t), (kKeyHeads - 1) * kWidth * sizeof(bfloat16_t), 0,
+@@ -120,16 +122,21 @@
+     DataCopyPad(scratch, query_[qkOffset], qkParams, noPadding);
+     DataCopyPad(scratch[kTokens * kWidth], key_[qkOffset], qkParams, noPadding);
+     DataCopyPad(scratch[2 * kTokens * kWidth], value_[vOffset], vParams, noPadding);
+-    DataCopy(scratch[3 * kTokens * kWidth], beta_[begin * kHeads], kTokens * kHeads);
+-    DataCopy(scalar, gate_[begin * kHeads], kTokens * kHeads);
++    if (loadScalars) {
++      DataCopy(scratch[3 * kTokens * kWidth], beta_[begin * kHeads], kTokens * kHeads);
++      DataCopy(inputScalars, gate_[begin * kHeads], kTokens * kHeads);
++    }
+     DataCopy(productsBuffer_.Get<float>(), products_[static_cast<uint64_t>(row * kHeads + head) * kWidth * 8],
+              kWidth * 8);
+     Sync<HardEvent::MTE2_V>();
+     Cast(query, scratch, RoundMode::CAST_NONE, kTokens * kWidth);
+     Cast(key, scratch[kTokens * kWidth], RoundMode::CAST_NONE, kTokens * kWidth);
+     Cast(value, scratch[2 * kTokens * kWidth], RoundMode::CAST_NONE, kTokens * kWidth);
+-    Cast(scalar[kTokens * kHeads], scratch[3 * kTokens * kWidth], RoundMode::CAST_NONE, kTokens * kHeads);
+-    Exp(scalar, scalar, kTokens * kHeads);
++    if (loadScalars) {
++      Cast(inputScalars[kTokens * kHeads], scratch[3 * kTokens * kWidth], RoundMode::CAST_NONE, kTokens * kHeads);
++      Exp(inputScalars, inputScalars, kTokens * kHeads);
++      cachedBegin_ = static_cast<int32_t>(begin);
++    }
+     PipeBarrier<PIPE_V>();
+   }
+ 
+@@ -184,10 +191,11 @@
+     auto temporary = temporary_.Get<float>();
+     auto products = productsBuffer_.Get<float>();
+     auto indices = indicesBuffer_.Get<uint32_t>();
++    auto inputScalars = inputScalarsBuffer_.Get<float>();
+     float alpha[kTokens], beta[kTokens], decay[kTokens][kTokens];
+     for (uint32_t token = 0; token < kTokens; ++token) {
+-      gamma_[token] = scalar.GetValue(token * kHeads + head);
+-      beta[token] = scalar.GetValue(kTokens * kHeads + token * kHeads + head);
++      gamma_[token] = inputScalars.GetValue(token * kHeads + head);
++      beta[token] = inputScalars.GetValue(kTokens * kHeads + token * kHeads + head);
+       alpha[token] = token == 0 ? gamma_[token] : alpha[token - 1] * gamma_[token];
+       for (uint32_t previous = 0; previous <= token; ++previous) {
+         decay[token][previous] = 1.0f;
+@@ -266,6 +274,9 @@
+   GlobalTensor<int32_t> valid_, newValid_;
+   TBuf<TPosition::VECCALC> logBuffer_;
+   float gamma_[kTokens];
++  // WriteLog uses scalarBuffer_ as DMA flag scratch; keep cached inputs separate.
++  TBuf<TPosition::VECCALC> inputScalarsBuffer_;
++  int32_t cachedBegin_ = -1;
+   GlobalTensor<float> products_, gate_;
+   GlobalTensor<bfloat16_t> query_, key_, value_, beta_, output_;
+   GlobalTensor<int32_t> sequence_, ids_, accepted_;

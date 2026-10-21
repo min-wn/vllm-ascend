@@ -1,0 +1,50 @@
+[
+  {
+    "rank": 0,
+    "pid": 1068030,
+    "state": "finished",
+    "command": [
+      "/usr/local/python3.12.13/bin/python",
+      "/workspace/gdn-ready-consumer-v1/probe.py",
+      "--phase",
+      "diagnostic",
+      "--sites",
+      "/workspace/gdn-ready-consumer-v1/sites/original/original.step7.rank0.pt",
+      "/workspace/gdn-ready-consumer-v1/sites/original/original.step31.rank0.pt",
+      "/workspace/gdn-ready-consumer-v1/sites/low/low.step7.rank0.pt",
+      "--output",
+      "/workspace/gdn-ready-consumer-v1/diagnostic.rank0.json",
+      "--tile-extension",
+      "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so",
+      "--products-extension",
+      "/workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so",
+      "--deferred-extension",
+      "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so"
+    ],
+    "exit_code": 0
+  },
+  {
+    "rank": 1,
+    "pid": 1068812,
+    "state": "finished",
+    "command": [
+      "/usr/local/python3.12.13/bin/python",
+      "/workspace/gdn-ready-consumer-v1/probe.py",
+      "--phase",
+      "diagnostic",
+      "--sites",
+      "/workspace/gdn-ready-consumer-v1/sites/original/original.step7.rank1.pt",
+      "/workspace/gdn-ready-consumer-v1/sites/original/original.step31.rank1.pt",
+      "/workspace/gdn-ready-consumer-v1/sites/low/low.step7.rank1.pt",
+      "--output",
+      "/workspace/gdn-ready-consumer-v1/diagnostic.rank1.json",
+      "--tile-extension",
+      "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so",
+      "--products-extension",
+      "/workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so",
+      "--deferred-extension",
+      "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so"
+    ],
+    "exit_code": 0
+  }
+]
