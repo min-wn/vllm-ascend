@@ -1,0 +1,87 @@
+{
+  "calls": 39102,
+  "rows": 156405,
+  "input_dtype": "torch.bfloat16",
+  "output_dtype": "torch.bfloat16",
+  "weight_dtype": "torch.bfloat16",
+  "weight_shape": [
+    124160,
+    5120
+  ],
+  "configured_head_dtype": "torch.bfloat16",
+  "allow_hf32": false,
+  "float32_matmul_precision": "highest",
+  "audited_calls": [
+    {
+      "rows": 1,
+      "operations": [
+        {
+          "op": "torch.nn.functional.linear",
+          "inputs": [
+            {
+              "shape": [
+                1,
+                5120
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:1"
+            },
+            {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:1"
+            }
+          ],
+          "output": {
+            "shape": [
+              1,
+              124160
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "npu:1"
+          },
+          "weight_is_original_storage": true
+        }
+      ]
+    },
+    {
+      "rows": 4,
+      "operations": [
+        {
+          "op": "torch.nn.functional.linear",
+          "inputs": [
+            {
+              "shape": [
+                4,
+                5120
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:1"
+            },
+            {
+              "shape": [
+                124160,
+                5120
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "npu:1"
+            }
+          ],
+          "output": {
+            "shape": [
+              4,
+              124160
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "npu:1"
+          },
+          "weight_is_original_storage": true
+        }
+      ]
+    }
+  ],
+  "fallback_calls": 0
+}

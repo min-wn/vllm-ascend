@@ -1,0 +1,363 @@
+{
+  "stage": "three_B1_paths_complete_head_attribution_closed",
+  "model_generation_rerun": false,
+  "archive_bytes": 817566,
+  "archive_sha256": "d8b0a98a61b150a31d5d2f9f5ee28d9a1b3b3f23d6d36fb8b8f4ee088bfc0009",
+  "archive_and_each_file_sha256_verified": true,
+  "verified_archive_members": 20,
+  "frozen_identity_after": {
+    "frozen_tools_match": true,
+    "frozen_binaries_match": true,
+    "weight_sizes_and_mtime_match": true
+  },
+  "control_generation_source_sha256": "9ea78907059eff794712ae711adb906ddbf68382ec9bc71075f749fabdbabd68",
+  "frozen_evalscope_rules_reused": true,
+  "only_experiment_configuration_variable_in_compact_B1_pair": "hf_overrides.head_dtype",
+  "entrypoint_diff_preserved": true,
+  "variants": {
+    "official_fp32": {
+      "tokens": 81920,
+      "finish_reason": "length",
+      "length_limited": true,
+      "filtered_prediction": "n > 12",
+      "score_reason": "integer_literal_required",
+      "correct": false,
+      "steps": 44873,
+      "q4_layer_calls": [
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873,
+        44873
+      ],
+      "head_calls_both_ranks": [
+        44874,
+        44874
+      ],
+      "head_output_dtype_both_ranks": [
+        "torch.float32",
+        "torch.float32"
+      ],
+      "maximum_position": 82089,
+      "context_capacity": 82944,
+      "terminal": {
+        "kind": "official selected candidate retained",
+        "selectors": [
+          2
+        ]
+      },
+      "independent_history": true,
+      "lifecycle_audit_passed": true,
+      "fallback_calls": 0
+    },
+    "compact_fp32": {
+      "tokens": 23242,
+      "finish_reason": "eos",
+      "length_limited": false,
+      "filtered_prediction": "107",
+      "score_reason": "matched",
+      "correct": true,
+      "steps": 15484,
+      "q4_layer_calls": [
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484,
+        15484
+      ],
+      "head_calls_both_ranks": [
+        15485,
+        15485
+      ],
+      "head_output_dtype_both_ranks": [
+        "torch.float32",
+        "torch.float32"
+      ],
+      "maximum_position": 23412,
+      "context_capacity": 82944,
+      "terminal": {
+        "kind": "actual final accepted prefix materialized; logs cleared",
+        "selectors": [
+          1
+        ]
+      },
+      "independent_history": true,
+      "lifecycle_audit_passed": true,
+      "fallback_calls": 0
+    },
+    "compact_bf16": {
+      "tokens": 81920,
+      "finish_reason": "length",
+      "length_limited": true,
+      "filtered_prediction": "101",
+      "score_reason": "not_equivalent",
+      "correct": false,
+      "steps": 39101,
+      "q4_layer_calls": [
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101,
+        39101
+      ],
+      "head_calls_both_ranks": [
+        39102,
+        39102
+      ],
+      "head_output_dtype_both_ranks": [
+        "torch.bfloat16",
+        "torch.bfloat16"
+      ],
+      "maximum_position": 82089,
+      "context_capacity": 82944,
+      "terminal": {
+        "kind": "actual final accepted prefix materialized; logs cleared",
+        "selectors": [
+          2
+        ]
+      },
+      "independent_history": true,
+      "lifecycle_audit_passed": true,
+      "fallback_calls": 0
+    }
+  },
+  "pairs": {
+    "official_fp32__compact_fp32": {
+      "common_output_prefix": 41,
+      "first_difference_output_1based": 42,
+      "first_difference_step_0based": 30,
+      "complete_preceding_step_records_equal": true,
+      "preceding_actual_acceptance_decisions_equal": true,
+      "rejected_candidate_prediction_differences": [],
+      "input_metadata_and_draft_schedule_equal_through_divergence_step": true,
+      "compared_input_fields": [
+        "step",
+        "batch",
+        "request_ids",
+        "seq_lengths",
+        "accepted_from_previous",
+        "proposals",
+        "question_indices",
+        "q4_calls",
+        "fallback_calls"
+      ],
+      "actual_acceptance_at_divergence_equal": true
+    },
+    "official_fp32__compact_bf16": {
+      "common_output_prefix": 175,
+      "first_difference_output_1based": 176,
+      "first_difference_step_0based": 150,
+      "complete_preceding_step_records_equal": false,
+      "preceding_actual_acceptance_decisions_equal": true,
+      "rejected_candidate_prediction_differences": [
+        {
+          "step": 112,
+          "differing_query_offsets": [
+            2
+          ],
+          "accepted": 1,
+          "proposals": [
+            [
+              1088,
+              258,
+              326
+            ]
+          ],
+          "predictions": {
+            "official_fp32": [
+              10,
+              258,
+              345,
+              12576
+            ],
+            "compact_bf16": [
+              10,
+              258,
+              326,
+              12576
+            ]
+          }
+        }
+      ],
+      "input_metadata_and_draft_schedule_equal_through_divergence_step": true,
+      "compared_input_fields": [
+        "step",
+        "batch",
+        "request_ids",
+        "seq_lengths",
+        "accepted_from_previous",
+        "proposals",
+        "question_indices",
+        "q4_calls",
+        "fallback_calls"
+      ],
+      "actual_acceptance_at_divergence_equal": true
+    },
+    "compact_fp32__compact_bf16": {
+      "common_output_prefix": 41,
+      "first_difference_output_1based": 42,
+      "first_difference_step_0based": 30,
+      "complete_preceding_step_records_equal": true,
+      "preceding_actual_acceptance_decisions_equal": true,
+      "rejected_candidate_prediction_differences": [],
+      "input_metadata_and_draft_schedule_equal_through_divergence_step": true,
+      "compared_input_fields": [
+        "step",
+        "batch",
+        "request_ids",
+        "seq_lengths",
+        "accepted_from_previous",
+        "proposals",
+        "question_indices",
+        "q4_calls",
+        "fallback_calls"
+      ],
+      "actual_acceptance_at_divergence_equal": true
+    }
+  },
+  "controlled_observation": "controlled_answer_improvement_on_this_one_question",
+  "truncated_extracted_integer_is_not_a_final_answer": true,
+  "old_B6_site_tie_removed_but_not_proven_to_cause_entire_solution_recovery": true,
+  "old_B6_and_B1_not_used_for_head_only_causal_comparison": true,
+  "original_numerical_distribution_and_quality_failures_preserved": true,
+  "new_precision_has_no_end_to_end_performance_qualification": true,
+  "no_new_model_performance_precision_or_repetition_round": true,
+  "scope": "one known failure question, one generation per configuration; no general quality claim",
+  "format_ci_current_attempt": {
+    "command": "bash format.sh ci",
+    "exit_code": 2,
+    "passed": false,
+    "reason": "default WSL bash cannot parse checkout CRLF in format.sh",
+    "log": "format-ci.log",
+    "no_whole_repository_lint_pass_claim": true
+  }
+}

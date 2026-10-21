@@ -1,0 +1,8 @@
+Command: bash format.sh ci
+Exit code: 2
+Not passed: WSL bash cannot parse checkout CRLF in format.sh.
+Raw mixed-encoding WSL diagnostics retained in work/aime26_q28_head_format_ci_raw.log.
+format.sh: line 2: $'\r': command not found
+format.sh: line 21: $'\r': command not found
+format.sh: line 22: syntax error near unexpected token `$'{\r''
+format.sh: line 22: `check_command() {'

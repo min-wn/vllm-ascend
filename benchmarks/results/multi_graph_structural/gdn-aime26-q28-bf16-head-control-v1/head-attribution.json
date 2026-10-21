@@ -1,0 +1,1031 @@
+{
+  "scope": "one known question, three B1 paths; no aggregate quality or performance qualification",
+  "scores": {
+    "official_fp32": {
+      "filtered_prediction": "n > 12",
+      "extracted": "n > 12",
+      "matched": false,
+      "prediction_valid": true,
+      "reference_valid": true,
+      "reason": "integer_literal_required",
+      "correct": false,
+      "finish_reason": "length",
+      "length_limited": true,
+      "generated_token_count": 81920,
+      "q4_steps": 44873,
+      "fallback_calls": 0,
+      "final_text": "\n$p=8 \\implies 311 \\times 256 = 79616$.\n$p=7 \\implies 312 \\times 128 = 39936$.\n$p=6 \\implies 313 \\times 64 = 20032$.\n$p=5 \\implies 314 \\times 32 = 10048$.\nNo.\n$n=319$. $m=319$. Gaps 318.\n$S = (320 - p) 2^p$.\n$p=10 \\implies 310 \\times 1024 = 317440$.\n$p=9 \\implies 311 \\times 512 = 159232$.\n$p=8 \\implies 312 \\times 256 = 79872$.\n$p=7 \\implies 313 \\times 128 = 40064$.\n$p=6 \\implies 314 \\times 64 = 20096$.\n$p=5 \\implies 315 \\times 32 = 10080$.\nNo.\n$n=320$. $m=320$. Gaps 319.\n$S = (321 - p) 2^p$.\n$p=10 \\implies 311 \\times 1024 = 318464$.\n$p=9 \\implies 312 \\times 512 = 159744$.\n$p=8 \\implies 313 \\times 256 = 80128$.\n$p=7 \\implies 314 \\times 128 = 40192$.\n$p=6 \\implies 315 \\times 64 = 20160$.\n$p=5 \\implies 316 \\times 32 = 10112$.\nNo.\n$n=321$. $m=321$. Gaps 320.\n$S = (322 - p) 2^p$.\n$p=10 \\implies 312 \\times 1024 = 319488$.\n$p=9 \\implies 313 \\times 512 = 160256$.\n$p=8 \\implies 314 \\times 256 = 80384$.\n$p=7 \\implies 315 \\times 128 = 40320$.\n$p=6 \\implies 316 \\times 64 = 20224$.\n$p=5 \\implies 317 \\times 32 = 10144$.\nNo.\n$n=322$. $m=322$. Gaps 321.\n$S = (323 - p) 2^p$.\n$p=10 \\implies 313 \\times 1024 = 320512$.\n$p=9 \\implies 314 \\times 512 = 160768$.\n$p=8 \\implies 315 \\times 256 = 80640$.\n$p=7 \\implies 316 \\times 128 = 40448$.\n$p=6 \\implies 317 \\times 64 = 20288$.\n$p=5 \\implies 318 \\times 32 = 10176$.\nNo.\n$n=323$. $m=323$. Gaps 322.\n$S = (324 - p) 2^p$.\n$p=10 \\implies 314 \\times 1024 = 321536$.\n$p=9 \\implies 315 \\times 512 = 161280$.\n$p=8 \\implies 316 \\times 256 = 80896$.\n$p=7 \\implies 317 \\times 128 = 40576$.\n$p=6 \\implies 318 \\times 64 = 20352$.\n$p=5 \\implies 319 \\times 32 = 10208$.\n"
+    },
+    "compact_fp32": {
+      "filtered_prediction": "107",
+      "extracted": "107",
+      "matched": true,
+      "prediction_valid": true,
+      "reference_valid": true,
+      "reason": "matched",
+      "correct": true,
+      "finish_reason": "eos",
+      "length_limited": false,
+      "generated_token_count": 23242,
+      "q4_steps": 15484,
+      "fallback_calls": 0,
+      "final_text": "t 2. Within a block, the gaps between components are of size 1.\nFor a block consisting of $k$ singletons connected by gaps of size 1, the number of valid sets $T$ (cousins) is $k+1$.\nFor a block containing any pairs, the number of valid sets $T$ is 1 (or 0 if pairs are adjacent with gap 1, which is invalid).\nSince we want to maximize the number of cousins for a given number of elements (or minimize elements for a fixed number of cousins), we should avoid pairs, as they contribute 0 to the count of cousins but add 2 elements to $S$.\nThus, $S$ should consist only of singletons.\nLet $S$ be composed of $m$ blocks of singletons with sizes $k_1, k_2, \\dots, k_m$.\nThe total number of cousins is $N(S) = \\prod_{i=1}^m (k_i + 1)$.\nWe are given $N(S) = 4040$. We want to minimize $|S| = \\sum_{i=1}^m k_i$.\nLet $a_i = k_i + 1$. Then $k_i = a_i - 1$.\nWe need to minimize $\\sum_{i=1}^m (a_i - 1)$ subject to $\\prod_{i=1}^m a_i = 4040$ and $a_i \\ge 2$ (since $k_i \\ge 1$).\nTo minimize the sum of $(a_i - 1)$, we should choose $a_i$ to be as small as possible. This is achieved by taking the prime factorization of 4040.\n$4040 = 2^3 \\times 5 \\times 101$.\nThe factors are $2, 2, 2, 5, 101$.\nThe corresponding $k_i$ values are $1, 1, 1, 4, 100$.\nThe sum is $1 + 1 + 1 + 4 + 100 = 107$.\nAny other factorization would result in a larger sum. For example, combining two factors $a, b$ into $ab$ changes the sum from $(a-1) + (b-1) = a+b-2$ to $ab-1$. Since $(a-1)(b-1) > 0$ for $a, b \\ge 2$, we have $ab-1 > a+b-2$, so splitting factors reduces the sum.\nThus, the minimum number of elements is 107.\n\n\\boxed{107}"
+    },
+    "compact_bf16": {
+      "filtered_prediction": "101",
+      "extracted": "101",
+      "matched": false,
+      "prediction_valid": true,
+      "reference_valid": true,
+      "reason": "not_equivalent",
+      "correct": false,
+      "finish_reason": "length",
+      "length_limited": true,
+      "generated_token_count": 81920,
+      "q4_steps": 39101,
+      "fallback_calls": 0,
+      "final_text": " of Fibonacci numbers.\nSo there is no such set S.\nBut the problem asks for the least number of elements.\nThis implies such a set exists.\nSo my reasoning must be wrong.\n\nOkay, I will assume that 101 is a Fibonacci number for the sake of the problem.\nIf 101 is $F_k$, then $k \\approx 11.5$.\nIf $F_k = 101$, then $k$ is not integer.\nSo 101 is not a Fibonacci number.\nSo there is no solution.\nBut I must provide an answer.\nMaybe the answer is 0?\nNo.\nMaybe the answer is related to 101.\nIf 101 was a Fibonacci number, say $F_k$, then we would use it.\nSince it's not, maybe I should use the closest Fibonacci numbers?\nNo, exact number.\n\nWait, I found the solution to AIME 2020 Problem 10.\nThe number is 4040.\nThe solution says that 4040 is not a product of Fibonacci numbers.\nWait, no.\nThe solution says that 4040 = 2^3 * 5 * 101.\nAnd 101 is not a Fibonacci number.\nSo there is no such set S.\nBut the problem asks for the least number of elements.\nThis implies such a set exists.\nSo my reasoning must be wrong.\nLet's check the solution.\nThe solution says that the number of cousins is a product of Fibonacci numbers.\nAnd 4040 is not a product of Fibonacci numbers.\nSo there is no such set S.\nBut the problem asks for the least number of elements.\nThis implies such a set exists.\nSo my reasoning must be wrong.\nWait, maybe the problem is from a different year?\nAIME 2020 Problem 10.\nThe number is 4040.\nThe solution says that 4040 is not a product of Fibonacci numbers.\nSo there is no such set S.\nBut the problem asks for the least number of elements.\nThis implies such a set exists.\nSo my reasoning must be"
+    }
+  },
+  "pairs": {
+    "official_fp32__compact_fp32": {
+      "common_output_prefix": 41,
+      "first_difference": {
+        "output_0based": 41,
+        "output_1based": 42,
+        "variants": {
+          "official_fp32": {
+            "token": 283,
+            "text": " =",
+            "context": " and $T$ to be cousins are:\n1. $|S| = |T| = n$.\n2. $S \\cap T = \\emptyset$.\n3. There exists",
+            "site": {
+              "stage": "Q4",
+              "step": 30,
+              "batch": 1,
+              "owner": 0,
+              "query_offset": 0,
+              "sequence_length": 213,
+              "predictor_position": 209,
+              "output_position": 210,
+              "accepted_from_previous": 1,
+              "accepted_this_step": 1,
+              "proposals": [],
+              "predictions": [
+                283,
+                248045,
+                248045,
+                248045
+              ]
+            }
+          },
+          "compact_fp32": {
+            "token": 12576,
+            "text": "$.",
+            "context": " and $T$ to be cousins are:\n1. $|S| = |T|$. Let $n = |S|$.\n2. $S \\cap T = \\emptyset",
+            "site": {
+              "stage": "Q4",
+              "step": 30,
+              "batch": 1,
+              "owner": 0,
+              "query_offset": 0,
+              "sequence_length": 213,
+              "predictor_position": 209,
+              "output_position": 210,
+              "accepted_from_previous": 1,
+              "accepted_this_step": 1,
+              "proposals": [],
+              "predictions": [
+                12576,
+                248045,
+                248045,
+                248045
+              ]
+            }
+          }
+        }
+      }
+    },
+    "official_fp32__compact_bf16": {
+      "common_output_prefix": 175,
+      "first_difference": {
+        "output_0based": 175,
+        "output_1based": 176,
+        "variants": {
+          "official_fp32": {
+            "token": 866,
+            "text": " any",
+            "context": " S\\}$.\nAlso, $S \\cap T = \\emptyset$. This means for any $s \\in S$, $f(s) \\notin S$.\nSo, if $f",
+            "site": {
+              "stage": "Q4",
+              "step": 150,
+              "batch": 1,
+              "owner": 0,
+              "query_offset": 0,
+              "sequence_length": 347,
+              "predictor_position": 343,
+              "output_position": 344,
+              "accepted_from_previous": 1,
+              "accepted_this_step": 1,
+              "proposals": [],
+              "predictions": [
+                866,
+                248045,
+                248045,
+                248045
+              ]
+            }
+          },
+          "compact_bf16": {
+            "token": 660,
+            "text": " all",
+            "context": " S\\}$.\nAlso, $S \\cap T = \\emptyset$. This means for all $s \\in S$, $f(s) \\notin S$.\nSo, if $f",
+            "site": {
+              "stage": "Q4",
+              "step": 150,
+              "batch": 1,
+              "owner": 0,
+              "query_offset": 0,
+              "sequence_length": 347,
+              "predictor_position": 343,
+              "output_position": 344,
+              "accepted_from_previous": 1,
+              "accepted_this_step": 1,
+              "proposals": [],
+              "predictions": [
+                660,
+                248045,
+                248045,
+                248045
+              ]
+            }
+          }
+        }
+      }
+    },
+    "compact_fp32__compact_bf16": {
+      "common_output_prefix": 41,
+      "first_difference": {
+        "output_0based": 41,
+        "output_1based": 42,
+        "variants": {
+          "compact_fp32": {
+            "token": 12576,
+            "text": "$.",
+            "context": " and $T$ to be cousins are:\n1. $|S| = |T|$. Let $n = |S|$.\n2. $S \\cap T = \\emptyset",
+            "site": {
+              "stage": "Q4",
+              "step": 30,
+              "batch": 1,
+              "owner": 0,
+              "query_offset": 0,
+              "sequence_length": 213,
+              "predictor_position": 209,
+              "output_position": 210,
+              "accepted_from_previous": 1,
+              "accepted_this_step": 1,
+              "proposals": [],
+              "predictions": [
+                12576,
+                248045,
+                248045,
+                248045
+              ]
+            }
+          },
+          "compact_bf16": {
+            "token": 283,
+            "text": " =",
+            "context": " and $T$ to be cousins are:\n1. $|S| = |T| = n$.\n2. $S \\cap T = \\emptyset$.\n3. There exists",
+            "site": {
+              "stage": "Q4",
+              "step": 30,
+              "batch": 1,
+              "owner": 0,
+              "query_offset": 0,
+              "sequence_length": 213,
+              "predictor_position": 209,
+              "output_position": 210,
+              "accepted_from_previous": 1,
+              "accepted_this_step": 1,
+              "proposals": [],
+              "predictions": [
+                283,
+                248045,
+                248045,
+                248045
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "lifecycle_audit": {
+    "official_fp32": {
+      "variant": "official",
+      "group": 0,
+      "questions": 1,
+      "steps": 44873,
+      "q4_calls": 2153904,
+      "accepted_counts": {
+        "1": 27725,
+        "2": 5507,
+        "3": 3384,
+        "4": 8257
+      },
+      "passed": true
+    },
+    "compact_fp32": {
+      "variant": "compact",
+      "group": 0,
+      "questions": 1,
+      "steps": 15484,
+      "q4_calls": 743232,
+      "accepted_counts": {
+        "1": 11040,
+        "2": 2367,
+        "3": 841,
+        "4": 1236
+      },
+      "passed": true
+    },
+    "compact_bf16": {
+      "variant": "compact",
+      "group": 0,
+      "questions": 1,
+      "steps": 39101,
+      "q4_calls": 1876848,
+      "accepted_counts": {
+        "1": 19109,
+        "2": 7192,
+        "3": 2774,
+        "4": 10026
+      },
+      "passed": true
+    }
+  },
+  "head_audit": {
+    "official_fp32": [
+      {
+        "calls": 44874,
+        "rows": 179493,
+        "input_dtype": "torch.bfloat16",
+        "output_dtype": "torch.float32",
+        "weight_dtype": "torch.bfloat16",
+        "weight_shape": [
+          124160,
+          5120
+        ],
+        "configured_head_dtype": "torch.float32",
+        "allow_hf32": false,
+        "float32_matmul_precision": "highest",
+        "audited_calls": [
+          {
+            "rows": 1,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      1,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    1,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          },
+          {
+            "rows": 4,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      4,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    4,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          }
+        ],
+        "fallback_calls": 0
+      },
+      {
+        "calls": 44874,
+        "rows": 179493,
+        "input_dtype": "torch.bfloat16",
+        "output_dtype": "torch.float32",
+        "weight_dtype": "torch.bfloat16",
+        "weight_shape": [
+          124160,
+          5120
+        ],
+        "configured_head_dtype": "torch.float32",
+        "allow_hf32": false,
+        "float32_matmul_precision": "highest",
+        "audited_calls": [
+          {
+            "rows": 1,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      1,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    1,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          },
+          {
+            "rows": 4,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      4,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    4,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          }
+        ],
+        "fallback_calls": 0
+      }
+    ],
+    "compact_fp32": [
+      {
+        "calls": 15485,
+        "rows": 61937,
+        "input_dtype": "torch.bfloat16",
+        "output_dtype": "torch.float32",
+        "weight_dtype": "torch.bfloat16",
+        "weight_shape": [
+          124160,
+          5120
+        ],
+        "configured_head_dtype": "torch.float32",
+        "allow_hf32": false,
+        "float32_matmul_precision": "highest",
+        "audited_calls": [
+          {
+            "rows": 1,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      1,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    1,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          },
+          {
+            "rows": 4,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      4,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    4,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:0"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          }
+        ],
+        "fallback_calls": 0
+      },
+      {
+        "calls": 15485,
+        "rows": 61937,
+        "input_dtype": "torch.bfloat16",
+        "output_dtype": "torch.float32",
+        "weight_dtype": "torch.bfloat16",
+        "weight_shape": [
+          124160,
+          5120
+        ],
+        "configured_head_dtype": "torch.float32",
+        "allow_hf32": false,
+        "float32_matmul_precision": "highest",
+        "audited_calls": [
+          {
+            "rows": 1,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      1,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    1,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          },
+          {
+            "rows": 4,
+            "operations": [
+              {
+                "op": "lm_head.weight.to",
+                "inputs": [
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    124160,
+                    5120
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "allocated_new_storage": true,
+                "output_bytes": 2542796800
+              },
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      4,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.float32",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    4,
+                    124160
+                  ],
+                  "dtype": "torch.float32",
+                  "device": "npu:1"
+                },
+                "weight_is_original_storage": false
+              }
+            ]
+          }
+        ],
+        "fallback_calls": 0
+      }
+    ],
+    "compact_bf16": [
+      {
+        "calls": 39102,
+        "rows": 156405,
+        "input_dtype": "torch.bfloat16",
+        "output_dtype": "torch.bfloat16",
+        "weight_dtype": "torch.bfloat16",
+        "weight_shape": [
+          124160,
+          5120
+        ],
+        "configured_head_dtype": "torch.bfloat16",
+        "allow_hf32": false,
+        "float32_matmul_precision": "highest",
+        "audited_calls": [
+          {
+            "rows": 1,
+            "operations": [
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      1,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    1,
+                    124160
+                  ],
+                  "dtype": "torch.bfloat16",
+                  "device": "npu:0"
+                },
+                "weight_is_original_storage": true
+              }
+            ]
+          },
+          {
+            "rows": 4,
+            "operations": [
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      4,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:0"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    4,
+                    124160
+                  ],
+                  "dtype": "torch.bfloat16",
+                  "device": "npu:0"
+                },
+                "weight_is_original_storage": true
+              }
+            ]
+          }
+        ],
+        "fallback_calls": 0
+      },
+      {
+        "calls": 39102,
+        "rows": 156405,
+        "input_dtype": "torch.bfloat16",
+        "output_dtype": "torch.bfloat16",
+        "weight_dtype": "torch.bfloat16",
+        "weight_shape": [
+          124160,
+          5120
+        ],
+        "configured_head_dtype": "torch.bfloat16",
+        "allow_hf32": false,
+        "float32_matmul_precision": "highest",
+        "audited_calls": [
+          {
+            "rows": 1,
+            "operations": [
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      1,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    1,
+                    124160
+                  ],
+                  "dtype": "torch.bfloat16",
+                  "device": "npu:1"
+                },
+                "weight_is_original_storage": true
+              }
+            ]
+          },
+          {
+            "rows": 4,
+            "operations": [
+              {
+                "op": "torch.nn.functional.linear",
+                "inputs": [
+                  {
+                    "shape": [
+                      4,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  },
+                  {
+                    "shape": [
+                      124160,
+                      5120
+                    ],
+                    "dtype": "torch.bfloat16",
+                    "device": "npu:1"
+                  }
+                ],
+                "output": {
+                  "shape": [
+                    4,
+                    124160
+                  ],
+                  "dtype": "torch.bfloat16",
+                  "device": "npu:1"
+                },
+                "weight_is_original_storage": true
+              }
+            ]
+          }
+        ],
+        "fallback_calls": 0
+      }
+    ]
+  },
+  "output_sha256": {
+    "official_fp32": "f6455b0ccc638b8e9049916fb49f04b94e7b1759ba5fa363c2bd9334d514eb6c",
+    "compact_fp32": "9060df0d41a0a72143fdb6847a877b7248cbc069d5a74acdf238e08d1133eb34",
+    "compact_bf16": "2a28e2d70da6940d0cf69431a9090e27024b9ac6f8c0d43edcfeb57be11f33bf"
+  },
+  "old_B6_separate": {
+    "index": 27,
+    "id": 28,
+    "target": 107,
+    "official": {
+      "filtered_prediction": "107",
+      "extracted": "107",
+      "matched": true,
+      "prediction_valid": true,
+      "reference_valid": true,
+      "reason": "matched",
+      "correct": true,
+      "finish_reason": "eos",
+      "error": null,
+      "generated_token_count": 19587,
+      "q4_steps": 12625,
+      "fallback_calls": 0,
+      "output_file": "official.question27.json",
+      "output_stop_reason": "eos",
+      "generation_available": true
+    },
+    "compact": {
+      "filtered_prediction": "115",
+      "extracted": "115",
+      "matched": false,
+      "prediction_valid": true,
+      "reference_valid": true,
+      "reason": "not_equivalent",
+      "correct": false,
+      "finish_reason": "eos",
+      "error": null,
+      "generated_token_count": 35069,
+      "q4_steps": 22414,
+      "fallback_calls": 0,
+      "output_file": "compact.question27.json",
+      "output_stop_reason": "eos",
+      "generation_available": true
+    },
+    "answer_changed": true,
+    "correctness_changed": true
+  },
+  "compact_B1_head_only_answer_observation": "controlled_answer_improvement_on_this_one_question",
+  "original_failures_remain_valid": true,
+  "old_B6_vs_B1_head_attribution_is_confounded": true,
+  "no_new_head_cost_or_decoder_performance_round": true
+}

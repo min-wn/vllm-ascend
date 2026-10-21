@@ -1,0 +1,47 @@
+{
+  "official_fp32__compact_fp32": {
+    "common_output_prefix": 41,
+    "variants": {
+      "official_fp32": {
+        "token": 283,
+        "text": " =",
+        "context": " and $T$ to be cousins are:\n1. $|S| = |T| = n$.\n2. $S \\cap T = \\emptyset$.\n3. There exists"
+      },
+      "compact_fp32": {
+        "token": 12576,
+        "text": "$.",
+        "context": " and $T$ to be cousins are:\n1. $|S| = |T|$. Let $n = |S|$.\n2. $S \\cap T = \\emptyset"
+      }
+    }
+  },
+  "compact_bf16__compact_fp32": {
+    "common_output_prefix": 41,
+    "variants": {
+      "compact_bf16": {
+        "token": 283,
+        "text": " =",
+        "context": " and $T$ to be cousins are:\n1. $|S| = |T| = n$.\n2. $S \\cap T = \\emptyset$.\n3. There exists"
+      },
+      "compact_fp32": {
+        "token": 12576,
+        "text": "$.",
+        "context": " and $T$ to be cousins are:\n1. $|S| = |T|$. Let $n = |S|$.\n2. $S \\cap T = \\emptyset"
+      }
+    }
+  },
+  "official_fp32__compact_bf16": {
+    "common_output_prefix": 175,
+    "variants": {
+      "official_fp32": {
+        "token": 866,
+        "text": " any",
+        "context": " S\\}$.\nAlso, $S \\cap T = \\emptyset$. This means for any $s \\in S$, $f(s) \\notin S$.\nSo, if $f"
+      },
+      "compact_bf16": {
+        "token": 660,
+        "text": " all",
+        "context": " S\\}$.\nAlso, $S \\cap T = \\emptyset$. This means for all $s \\in S$, $f(s) \\notin S$.\nSo, if $f"
+      }
+    }
+  }
+}
