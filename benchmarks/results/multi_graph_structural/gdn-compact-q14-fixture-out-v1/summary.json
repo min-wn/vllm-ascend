@@ -1,0 +1,212 @@
+{
+  "status": "single_site_candidate_qualified",
+  "decision_metric": "out_q14_ready versus out_forced_q4 complete lifecycle",
+  "sample_count": 96,
+  "round_medians_lifecycle_ms": {
+    "legacy_forced_q4": [
+      17.7472505,
+      17.466784000000004,
+      17.4366845
+    ],
+    "legacy_q14_ready": [
+      18.285553,
+      18.413332999999998,
+      18.452574
+    ],
+    "out_forced_q4": [
+      14.615981999999999,
+      14.6736075,
+      14.7139575
+    ],
+    "out_q14_ready": [
+      14.276996,
+      14.343276,
+      14.3743605
+    ]
+  },
+  "primary_out_vs_out": {
+    "paired_improvement_percent": [
+      2.3192830970919265,
+      2.251194874879949,
+      2.3079922583710024
+    ],
+    "pooled_improvement_percent": 2.2928026688393914,
+    "relative_repeat_span_percent": {
+      "candidate": 0.678816331778036,
+      "baseline": 0.6676987918615136
+    },
+    "stable": true,
+    "scope": "single-layer screening only; not online service or whole-model qualification"
+  },
+  "legacy_vs_legacy": {
+    "paired_improvement_percent": [
+      -3.033159981598278,
+      -5.419137260757296,
+      -5.826162078002846
+    ],
+    "pooled_improvement_percent": -4.749680626393721,
+    "relative_repeat_span_percent": {
+      "candidate": 0.9070655486434658,
+      "baseline": 1.7780376742507458
+    },
+    "stable": false,
+    "scope": "single-layer screening only; not online service or whole-model qualification"
+  },
+  "preparation_change": {
+    "forced_q4": {
+      "paired_improvement_percent": [
+        17.643682327017366,
+        15.991361088566757,
+        15.614935281991247
+      ],
+      "pooled_improvement_percent": 16.423654157505435,
+      "relative_repeat_span_percent": {
+        "candidate": 0.6676987918615136,
+        "baseline": 1.7780376742507458
+      },
+      "stable": true,
+      "scope": "single-layer screening only; not online service or whole-model qualification"
+    },
+    "q14_ready": {
+      "paired_improvement_percent": [
+        21.921989452547592,
+        22.10385811194529,
+        22.101054844706212
+      ],
+      "pooled_improvement_percent": 22.04262135580817,
+      "relative_repeat_span_percent": {
+        "candidate": 0.678816331778036,
+        "baseline": 0.9070655486434658
+      },
+      "stable": true,
+      "scope": "single-layer screening only; not online service or whole-model qualification"
+    }
+  },
+  "costs": {
+    "legacy_forced_q4": {
+      "initialization_ms": 0.18967883333333332,
+      "execution_ms": 16.930273041666666,
+      "terminal_ms": 0.46472825,
+      "lifecycle_ms": 17.584680125000002,
+      "device_preparation_ms": 11.770112482210001,
+      "device_compute_ms": 5.028191667671005,
+      "device_step_endpoint_ms": 16.798304150501888,
+      "sample_range_lifecycle_ms": [
+        17.387524,
+        18.239297999999998
+      ],
+      "loads": {
+        "q1_only": {
+          "device_preparation_ms": 0.7344704161087672,
+          "device_compute_ms": 0.3108854999765754,
+          "device_step_endpoint_ms": 1.0453559150298437
+        },
+        "mixed": {
+          "device_preparation_ms": 0.7375680535203881,
+          "device_compute_ms": 0.3198894446508752,
+          "device_step_endpoint_ms": 1.0574575000339084
+        }
+      }
+    },
+    "legacy_q14_ready": {
+      "initialization_ms": 0.18284579166666667,
+      "execution_ms": 17.803544958333333,
+      "terminal_ms": 0.4585640833333333,
+      "lifecycle_ms": 18.444954833333334,
+      "device_preparation_ms": 13.628028328220049,
+      "device_compute_ms": 4.04724333435297,
+      "device_step_endpoint_ms": 17.67527164022128,
+      "sample_range_lifecycle_ms": [
+        18.244237,
+        19.377052
+      ],
+      "loads": {
+        "q1_only": {
+          "device_preparation_ms": 0.8558600840469202,
+          "device_compute_ms": 0.24529508302609127,
+          "device_step_endpoint_ms": 1.1011551653345426
+        },
+        "mixed": {
+          "device_preparation_ms": 0.844904581291808,
+          "device_compute_ms": 0.26571541734867626,
+          "device_step_endpoint_ms": 1.110619997812642
+        }
+      }
+    },
+    "out_forced_q4": {
+      "initialization_ms": 0.18734041666666668,
+      "execution_ms": 14.010703083333333,
+      "terminal_ms": 0.46595695833333334,
+      "lifecycle_ms": 14.664000458333334,
+      "device_preparation_ms": 8.77828082193931,
+      "device_compute_ms": 5.10558499271671,
+      "device_step_endpoint_ms": 13.88386583328247,
+      "sample_range_lifecycle_ms": [
+        14.542921999999999,
+        14.778333000000002
+      ],
+      "loads": {
+        "q1_only": {
+          "device_preparation_ms": 0.5492969147861004,
+          "device_compute_ms": 0.3157637495547533,
+          "device_step_endpoint_ms": 0.8650606669485569
+        },
+        "mixed": {
+          "device_preparation_ms": 0.5475519456797175,
+          "device_compute_ms": 0.3246579161948628,
+          "device_step_endpoint_ms": 0.8722098606328169
+        }
+      }
+    },
+    "out_q14_ready": {
+      "initialization_ms": 0.186727875,
+      "execution_ms": 13.687640083333333,
+      "terminal_ms": 0.4545498333333333,
+      "lifecycle_ms": 14.328917791666667,
+      "device_preparation_ms": 9.476448347171148,
+      "device_compute_ms": 4.08266334918638,
+      "device_step_endpoint_ms": 13.559111677110195,
+      "sample_range_lifecycle_ms": [
+        14.2371,
+        14.390621999999999
+      ],
+      "loads": {
+        "q1_only": {
+          "device_preparation_ms": 0.5865625850856304,
+          "device_compute_ms": 0.245380918122828,
+          "device_step_endpoint_ms": 0.8319435002903144
+        },
+        "mixed": {
+          "device_preparation_ms": 0.6018037493858073,
+          "device_compute_ms": 0.27147569465968346,
+          "device_step_endpoint_ms": 0.8732794457011752
+        }
+      }
+    }
+  },
+  "exact_out_calls": 315,
+  "tested_prefix_rows": [
+    8,
+    15,
+    20,
+    24,
+    32,
+    56,
+    98,
+    224
+  ],
+  "executed_source_sha256": {
+    "multi_graph_gdn_q14_fixture_out.py": "f78d6328af823c0b72406a7eb6b42b80a2b41579e32f57603bcb5554b19637e7",
+    "multi_graph_gdn_q14_fixture_out_probe.py": "0ec9d9d5f51f636a168c6ef64862d895578fe8c850749548bf19e0bea72a3165",
+    "multi_graph_gdn_q14_probe.py": "bde7a1c1e4d9e401f9ce37528e2442f018cd9c067ecec3877494c557d7872b5a",
+    "multi_graph_gdn_q14_protocol.py": "ee1e24049e26eeb78b673bb445970b36142800cf26cb17d1e9ff9a4d968b5915",
+    "multi_graph_gdn_q4_backend.py": "98499e60061f2ef73c2f766ee926b935d02642d9e5f2bf1b29cf0b4336fedf21"
+  },
+  "previous_failures_preserved": true,
+  "no_full_gdn_layer_or_runner": true,
+  "no_trace_collected": true,
+  "out_step_endpoint_improvement_percent": {
+    "q1_only": 3.828305681156567,
+    "mixed": -0.12262932542201299
+  }
+}
