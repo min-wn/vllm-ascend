@@ -1,0 +1,35 @@
+{
+  "status": "closed_bounded_diagnostic_no_production_fix",
+  "first_divergence_reproduced": true,
+  "original_aime_archive_unchanged": true,
+  "independent_continuous_states": true,
+  "shared_initial_prefill_verified": true,
+  "delayed_ready_match_both_ranks": true,
+  "local_state_import_exact": true,
+  "shared_fp64_reference": true,
+  "original_thresholds_unchanged": true,
+  "cpu_unit_tests_passed": 10,
+  "targeted_ruff_and_format": "passed",
+  "git_whitespace_check": "passed",
+  "format_ci": "not passed: pre-commit command unavailable in Git Bash",
+  "full_aime_or_performance_rerun": false,
+  "source_sha256": {
+    "multi_graph_gdn_aime26_divergence_probe.py": "9421ff23aa9d0b9edda326e56317b45df109841776767985d2a34efe14ea471c",
+    "multi_graph_gdn_aime26_divergence_analyze.py": "099f0751cc262621bb94cd561eca416e2a49539ef1e0d4c7b28ac6f7610df801"
+  },
+  "evidence_json_sha256": {
+    "alignment.json": "607b0fbc3e7cea047fd68d17eb156975547aff8a4827a67f4fae56895c02b0f8",
+    "analysis-with-head.json": "cccca4b82bbe2178fa32cf6b2f743a06cb27ea90e7f67f717c8a872feafdc853",
+    "analysis.json": "300a993bd7d38398e84eb4ceb4bdbb584a954a96e85bb840a752e38868b5d6fb",
+    "compact-trace.json": "a310b7f051a72770f87b23c4e61812038f7b562d922836fca405c0da0ddc3787",
+    "exit.json": "a91d11565f7cc8b391938feb00ee40e39ddd54dc57740ced2d8c0675eb2ce8c7",
+    "identity-after.json": "7b4ee694b8d92cfd00eced4fcdd06f815e719cb36479749d9e7536d771592118",
+    "identity-before.json": "ded1653ee363dd8e2def6919fa41f95d1b19f76f26edb6f6899d0a625545dfd4",
+    "launch.json": "7da9989d1990b5d6aa6a1534ef103c763f5f19a00ed5ed15a8a86b0c4b23b681",
+    "local-archive-verification.json": "580d7b11f16de832d6b6b1a1837ce45b0108e71b0e67ad16f38342a2f7faee09",
+    "official-trace.json": "63cb1c3835b6ed4a370176bae294ff6041ed67665b815962b75108bc6ed07700",
+    "snapshot-archives.json": "35ad9001998e415ad4d4c5ee8e63395b2779206a15fba1026673faf511b2b385"
+  },
+  "raw_archive_location": "work/gdn-aime26-q28-divergence-v1-raw",
+  "raw_archives_in_git": false
+}

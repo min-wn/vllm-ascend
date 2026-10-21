@@ -1,0 +1,17 @@
+{
+  "command": [
+    "torchrun",
+    "--nproc_per_node=2",
+    "--master_port=29841",
+    "/workspace/gdn-aime26-q28-divergence-v1/tools/multi_graph_gdn_aime26_divergence_probe.py",
+    "--trace",
+    "/workspace/gdn-aime26-q28-divergence-v1/official-trace.json",
+    "--output",
+    "/workspace/gdn-aime26-q28-divergence-v1/common-official"
+  ],
+  "devices": "0,1",
+  "pid": 977968,
+  "started": 1792547967.8765566,
+  "untimed": true,
+  "scope": "Q28 first divergence; 151 Q4 steps; no task scoring"
+}
