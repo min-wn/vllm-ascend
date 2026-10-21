@@ -698,7 +698,7 @@ def model_observer(model):
             handle.remove()
 
 
-def experiment(args, trace, runner, model, config):
+def experiment(args, trace, runner, model, config, *, replay_runner=None):
     import torch
     import torch.distributed as dist
     import torch_npu
@@ -888,7 +888,7 @@ def experiment(args, trace, runner, model, config):
                     packed=args.packed_join,
                 ).installed()
             with installed_log_registry(registry), schedule_context as schedule:
-                replay_trajectories(
+                (replay_trajectories if replay_runner is None else replay_runner)(
                     args,
                     torch,
                     dist,
