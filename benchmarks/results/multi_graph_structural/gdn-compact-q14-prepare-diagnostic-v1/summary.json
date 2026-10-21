@@ -1,0 +1,98 @@
+{
+  "schema": "gdn-q14-preparation-diagnosis-v1",
+  "status": "closed_diagnosis_only_prototype_frozen",
+  "formal_performance_gate": "failed_unchanged",
+  "kernel_modified": false,
+  "collection_count": 1,
+  "profiled_chains": 4,
+  "profiled_steps": 64,
+  "order": [
+    "forced_q4",
+    "q14_ready",
+    "q14_ready",
+    "forced_q4"
+  ],
+  "no_per_step_sync": true,
+  "terminal_bitwise": true,
+  "frozen_performance_sha256": "6c326b437688544e87c73e7583f7c2f4ebdee2ab01ab5d8fb842533820a165c7",
+  "diagnostic_trace_sha256": "895e986797e5578583b5468c5f5a3739e3f0a8b4f8dd482c341a205c1900d6e7",
+  "unit": "ms_per_16_step_chain",
+  "formal_costs": {
+    "forced_q4": {
+      "prepare_event_ms": 11.537582469483217,
+      "graph_event_ms": 5.085941666737199,
+      "execution_wall_ms": 16.765155208333333,
+      "lifecycle_ms": 17.429836291666668
+    },
+    "q14_ready": {
+      "prepare_event_ms": 13.861815847456455,
+      "graph_event_ms": 3.936800003051758,
+      "execution_wall_ms": 17.9430185,
+      "lifecycle_ms": 18.591419583333334
+    }
+  },
+  "diagnostic_costs": {
+    "forced_q4": {
+      "preparation_ms": 35.22485400000001,
+      "graph_ms": 6.122662000000012,
+      "visible_preparation_busy_union_ms": 1.25352437499999,
+      "visible_preparation_idle_ms": 33.97132962500002,
+      "host_prepare_wall_ms": 32.53745500000003
+    },
+    "q14_ready": {
+      "preparation_ms": 36.96515799999999,
+      "graph_ms": 5.137883499999967,
+      "visible_preparation_busy_union_ms": 1.0975432499999225,
+      "visible_preparation_idle_ms": 35.867614750000065,
+      "host_prepare_wall_ms": 34.25490500000003
+    }
+  },
+  "host_disjoint_partition": {
+    "forced_q4": {
+      "cpu_metadata": 2.55748,
+      "cpu_tensor_prefix_including_instrumentation": 2.602829999999987,
+      "metadata_h2d_host_call": 1.80796,
+      "metadata_suffix_including_instrumentation": 0.8222900000000154,
+      "index_conversion_marker": 2.8032649999999992,
+      "five_gather_host_calls": 3.777505,
+      "five_input_copy_host_calls": 3.33913,
+      "input_other_including_instrumentation": 8.560985,
+      "cpu_bookkeeping": 1.3561050000000001,
+      "between_stage_markers_including_instrumentation": 4.909905000000111
+    },
+    "q14_ready": {
+      "cpu_metadata": 2.222665,
+      "cpu_tensor_prefix_including_instrumentation": 2.5573250000000334,
+      "metadata_h2d_host_call": 1.709115,
+      "metadata_suffix_including_instrumentation": 0.8220299999999479,
+      "index_conversion_marker": 2.772765,
+      "five_gather_host_calls": 3.846205,
+      "five_input_copy_host_calls": 5.073645,
+      "input_other_including_instrumentation": 9.028505000000001,
+      "cpu_bookkeeping": 1.263525,
+      "between_stage_markers_including_instrumentation": 4.9591250000000215
+    }
+  },
+  "device_input_costs": {
+    "forced_q4": {
+      "host_copy_ms": 3.33913,
+      "copy_pre_enqueue_host_ms": 2.3248800000000003,
+      "device_copy_ms": 0.274285125,
+      "device_gather_ms": 0.961518875
+    },
+    "q14_ready": {
+      "host_copy_ms": 5.073645000000001,
+      "copy_pre_enqueue_host_ms": 3.85377,
+      "device_copy_ms": 0.107212625,
+      "device_gather_ms": 0.97192
+    }
+  },
+  "next_change_implemented": false,
+  "incremental_diagnostic_budget": {
+    "host_copy_ms": 1.734515000000001,
+    "copy_pre_enqueue_host_ms": 1.5288899999999996,
+    "device_copy_ms": -0.1670725,
+    "device_gather_ms": 0.010401125000000011
+  },
+  "budget_limit": "Observed host-work difference only, not a proven critical-path upper bound or formal-performance recovery."
+}

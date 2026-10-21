@@ -1,0 +1,12 @@
+INFO 10-21 15:47:46 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-21 15:47:46 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-21 15:47:46 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-21 15:47:46 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-21 15:47:46 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+[W1021 15:47:58.484945202 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[2026-10-21 15:47:58] [WARNING] [1108626] profiler.py: Please use level1 or level2 if you want to collect aic metrics, reset aic metrics to None!
+[2026-10-21 15:47:59] [WARNING] [1108626] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+[2026-10-21 15:47:59] [INFO] [1108955] profiler.py: Start parsing profiling data in sync mode at: /workspace/gdn-compact-q14-prepare-diagnostic-v1/export_only_prof_dir/16b0f9cecd11_1108626_20261021154758905_ascend_pt
+|/-\[2026-10-21 15:48:02] [INFO] [1108964] profiler.py: CANN profiling data parsed in a total time of 0:00:03.032560
+[2026-10-21 15:48:03] [INFO] [1108955] profiler.py: All profiling data parsed in a total time of 0:00:03.678092
+{"status": "complete_diagnostic_only", "output": "/workspace/gdn-compact-q14-prepare-diagnostic-v1/diagnostic.json", "trace": "/workspace/gdn-compact-q14-prepare-diagnostic-v1/trace.json"}

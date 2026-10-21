@@ -1,0 +1,14 @@
+{
+  "torch": "2.10.0+cpu",
+  "torch_npu": "2.10.0.post4",
+  "no_device_computation": true,
+  "aten::index_select.out": [
+    "PrivateUse1: registered at ../torch_npu/csrc/aten/RegisterNPU.cpp:34421 [kernel]",
+    "AutogradPrivateUse1: registered at /pytorch/torch/csrc/autograd/generated/VariableType_1.cpp:17226 [autograd kernel]"
+  ],
+  "aten::copy_": [
+    "PrivateUse1: registered at ../torch_npu/csrc/aten/RegisterNPU.cpp:34421 [kernel]",
+    "AutogradPrivateUse1: registered at /pytorch/torch/csrc/autograd/VariableTypeManual.cpp:350 [autograd kernel]"
+  ],
+  "frozen_source_sha256": "bde7a1c1e4d9e401f9ce37528e2442f018cd9c067ecec3877494c557d7872b5a"
+}
