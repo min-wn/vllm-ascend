@@ -1,0 +1,20 @@
+[
+  "torchrun",
+  "--nproc_per_node=2",
+  "--master_port=29905",
+  "/workspace/gdn-ready-generation-v1/tools/multi_graph_gdn_ready_generation_probe.py",
+  "--manifest",
+  "/workspace/gdn-ready-generation-v1/workload.json",
+  "--mode",
+  "ready",
+  "--output",
+  "/workspace/gdn-ready-generation-v1/pair0.ready/result.json",
+  "--extension",
+  "/workspace/multi-graph-results/q4-log-build-v3-ranges/gdn_q4_log.so",
+  "--products-extension",
+  "/workspace/multi-graph-results/q4-products-build-v9-ranges/gdn_q4_products.so",
+  "--deferred-extension",
+  "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so",
+  "--tile-extension",
+  "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so"
+]

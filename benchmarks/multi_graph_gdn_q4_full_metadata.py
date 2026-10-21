@@ -158,13 +158,13 @@ class FullCacheBundle:
         self.decode_ready = True
 
 
-def allocate_full_caches(torch, model, config, trace, *, device="npu", capture_sizes, format_cast):
+def allocate_full_caches(torch, model, config, trace, *, device="npu", capture_sizes, format_cast, expected_owners=128):
     pages = reserve_owner_pages(trace)
     owners = len(pages.pages)
     gdn_entries, fia_entries = [], []
     layers = model.language_model.model.layers
-    if len(layers) != 64 or owners != 128:
-        raise ValueError("complete allocation requires 64 real decoders and 128 fixed owners")
+    if len(layers) != 64 or not 1 <= expected_owners <= 128 or owners != expected_owners:
+        raise ValueError("complete allocation requires 64 real decoders and the declared owner count in 1..128")
     for index, layer in enumerate(layers):
         if layer.layer_type == "linear_attention":
             gdn = layer.linear_attn

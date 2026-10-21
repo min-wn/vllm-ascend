@@ -1,0 +1,265 @@
+{
+  "status": "complete_same_algorithm_offline_actual_generation",
+  "pairs": [
+    {
+      "pair": 0,
+      "costs": {
+        "delayed": {
+          "rank": 0,
+          "prefill_us": 21719520.071,
+          "state_import_us": 86721.672,
+          "generation_us": 21263809.73,
+          "terminal_us": 9441.489,
+          "batch_us": 43079492.962
+        },
+        "ready": {
+          "rank": 0,
+          "prefill_us": 23472668.221,
+          "state_import_us": 93052.959,
+          "generation_us": 20745801.641,
+          "terminal_us": 9466.729,
+          "batch_us": 44320989.55
+        }
+      },
+      "generation_gain_percent": 2.4361019759745584,
+      "batch_gain_percent": -2.8818737237578773,
+      "output_tokens": 10026,
+      "loop_output_tokens": 9970,
+      "steps": 239,
+      "loop_output_tokens_per_second": {
+        "delayed": 468.87176505976004,
+        "ready": 480.57916355935146
+      },
+      "batch_output_tokens_per_second": {
+        "delayed": 232.73254420250112,
+        "ready": 226.21336079803302
+      }
+    },
+    {
+      "pair": 1,
+      "costs": {
+        "delayed": {
+          "rank": 0,
+          "prefill_us": 23772981.614,
+          "state_import_us": 93142.528,
+          "generation_us": 21344074.215,
+          "terminal_us": 9467.99,
+          "batch_us": 45219666.347
+        },
+        "ready": {
+          "rank": 1,
+          "prefill_us": 23263872.271,
+          "state_import_us": 93860.971,
+          "generation_us": 20733098.487,
+          "terminal_us": 9497.41,
+          "batch_us": 44100329.139
+        }
+      },
+      "generation_gain_percent": 2.8625075130718214,
+      "batch_gain_percent": 2.4753327444094753,
+      "output_tokens": 10026,
+      "loop_output_tokens": 9970,
+      "steps": 239,
+      "loop_output_tokens_per_second": {
+        "delayed": 467.10857072420464,
+        "ready": 480.87361405490634
+      },
+      "batch_output_tokens_per_second": {
+        "delayed": 221.71769077338962,
+        "ready": 227.34524199125616
+      }
+    },
+    {
+      "pair": 2,
+      "costs": {
+        "delayed": {
+          "rank": 1,
+          "prefill_us": 23927455.457,
+          "state_import_us": 93632.75,
+          "generation_us": 21370034.694,
+          "terminal_us": 9497.479,
+          "batch_us": 45400620.379999995
+        },
+        "ready": {
+          "rank": 1,
+          "prefill_us": 22547968.015,
+          "state_import_us": 92998.337,
+          "generation_us": 20791632.691,
+          "terminal_us": 9577.29,
+          "batch_us": 43442176.333
+        }
+      },
+      "generation_gain_percent": 2.7066030134354158,
+      "batch_gain_percent": 4.313694461899331,
+      "output_tokens": 10026,
+      "loop_output_tokens": 9970,
+      "steps": 239,
+      "loop_output_tokens_per_second": {
+        "delayed": 466.5411237165304,
+        "ready": 479.51982165958896
+      },
+      "batch_output_tokens_per_second": {
+        "delayed": 220.83398676236328,
+        "ready": 230.7895424747389
+      }
+    }
+  ],
+  "mean_costs": {
+    "delayed": {
+      "prefill_us": 23139985.713999998,
+      "state_import_us": 91165.65000000001,
+      "generation_us": 21325972.879666667,
+      "terminal_us": 9468.985999999999,
+      "batch_us": 44566593.229666665
+    },
+    "ready": {
+      "prefill_us": 23094836.169,
+      "state_import_us": 93304.089,
+      "generation_us": 20756844.273,
+      "terminal_us": 9513.809666666666,
+      "batch_us": 43954498.34066667
+    }
+  },
+  "generation_gain_percent": 2.6687111058333324,
+  "batch_gain_percent": 1.373438812892136,
+  "repeat_spread": {
+    "delayed": {
+      "min_us": 21263809.73,
+      "max_us": 21370034.694,
+      "relative_range_percent": 0.49767894793650025
+    },
+    "ready": {
+      "min_us": 20733098.487,
+      "max_us": 20791632.691,
+      "relative_range_percent": 0.282149636889994
+    }
+  },
+  "stable_generation_benefit": true,
+  "output_tokens": 10026,
+  "loop_output_tokens": 9970,
+  "proposed_draft_tokens": 2691,
+  "matched_draft_tokens": 362,
+  "acceptance_histogram": {
+    "1": 9416,
+    "2": 79,
+    "3": 56,
+    "4": 57
+  },
+  "finish_reasons": [
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "eos",
+    "length",
+    "eos",
+    "eos",
+    "eos"
+  ],
+  "generated_lengths": [
+    256,
+    146,
+    101,
+    227,
+    246,
+    152,
+    101,
+    219,
+    256,
+    139,
+    101,
+    216,
+    256,
+    139,
+    101,
+    214,
+    256,
+    139,
+    101,
+    218,
+    256,
+    152,
+    101,
+    219,
+    256,
+    152,
+    101,
+    218,
+    245,
+    139,
+    101,
+    214,
+    256,
+    152,
+    101,
+    214,
+    245,
+    152,
+    101,
+    218,
+    256,
+    139,
+    101,
+    214,
+    256,
+    139,
+    101,
+    218,
+    246,
+    137,
+    101,
+    218,
+    256,
+    152,
+    101,
+    214
+  ],
+  "boundaries": "batch sums four measured phases; capture/validation gap excluded; not service throughput"
+}
