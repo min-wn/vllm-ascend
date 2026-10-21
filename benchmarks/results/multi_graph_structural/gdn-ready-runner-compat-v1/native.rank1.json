@@ -1,0 +1,1718 @@
+{
+  "status": "failed_native_inventory_no_retry",
+  "rank": 1,
+  "steps": [],
+  "compact_installed": false,
+  "performance_measurement": false,
+  "workload_sha256": "520c70cd7415449c2e8b53b78b8492a1e130b1c544d5a31a6bb3f3c35cb73181",
+  "engine_options": {
+    "model": "/models/Qwen3.5-27B-original",
+    "tensor_parallel_size": 2,
+    "distributed_executor_backend": "external_launcher",
+    "dtype": "bfloat16",
+    "max_model_len": 2048,
+    "max_num_seqs": 256,
+    "max_num_batched_tokens": 2048,
+    "speculative_config": {
+      "method": "ngram",
+      "num_speculative_tokens": 3,
+      "prompt_lookup_min": 2,
+      "prompt_lookup_max": 4
+    },
+    "gpu_memory_utilization": 0.6,
+    "enable_prefix_caching": false,
+    "limit_mm_per_prompt": {
+      "image": 0,
+      "video": 0
+    },
+    "seed": 42,
+    "additional_config": {
+      "ascend_compilation_config": {
+        "enable_npugraph_ex": false,
+        "enable_static_kernel": false,
+        "enable_super_kernel": false,
+        "fuse_norm_quant": true,
+        "fuse_qknorm_rope": true,
+        "fuse_muls_add": true
+      }
+    }
+  },
+  "cache_config": {
+    "mamba_cache_mode": "none",
+    "num_blocks": 389,
+    "groups": [
+      {
+        "layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "language_model.model.layers.7.self_attn.attn",
+          "language_model.model.layers.11.self_attn.attn",
+          "language_model.model.layers.15.self_attn.attn",
+          "language_model.model.layers.19.self_attn.attn",
+          "language_model.model.layers.23.self_attn.attn",
+          "language_model.model.layers.27.self_attn.attn",
+          "language_model.model.layers.31.self_attn.attn",
+          "language_model.model.layers.35.self_attn.attn",
+          "language_model.model.layers.39.self_attn.attn",
+          "language_model.model.layers.43.self_attn.attn",
+          "language_model.model.layers.47.self_attn.attn",
+          "language_model.model.layers.51.self_attn.attn",
+          "language_model.model.layers.55.self_attn.attn",
+          "language_model.model.layers.59.self_attn.attn",
+          "language_model.model.layers.63.self_attn.attn"
+        ],
+        "spec": "FullAttentionSpec(block_size=896, num_kv_heads=2, head_size=256, dtype=torch.bfloat16, head_size_v=256, kv_quant_mode=<KVQuantMode.NONE: 0>, page_size_padded=None, num_head_slots=None, state_content_bytes=None, tokens_per_state=1, sliding_window=None, attention_chunk_size=None, non_causal=False)"
+      },
+      {
+        "layers": [
+          "language_model.model.layers.0.linear_attn",
+          "language_model.model.layers.4.linear_attn",
+          "language_model.model.layers.8.linear_attn",
+          "language_model.model.layers.12.linear_attn",
+          "language_model.model.layers.16.linear_attn",
+          "language_model.model.layers.20.linear_attn",
+          "language_model.model.layers.24.linear_attn",
+          "language_model.model.layers.28.linear_attn",
+          "language_model.model.layers.32.linear_attn",
+          "language_model.model.layers.36.linear_attn",
+          "language_model.model.layers.40.linear_attn",
+          "language_model.model.layers.44.linear_attn",
+          "language_model.model.layers.48.linear_attn",
+          "language_model.model.layers.52.linear_attn",
+          "language_model.model.layers.56.linear_attn",
+          "language_model.model.layers.60.linear_attn"
+        ],
+        "spec": "MambaSpec(block_size=2048, shapes=((6, 5120), (24, 128, 128)), dtypes=(torch.bfloat16, torch.float32), page_size_padded=1835008, mamba_type=<MambaAttentionBackendEnum.GDN_ATTN: 'vllm.v1.attention.backends.gdn_attn.GDNAttentionBackend'>, mamba_cache_mode='none', num_speculative_blocks=3, num_prefill_checkpoint_blocks=0, prefill_checkpoint_alignment=None, num_heads=1, tokens_per_state=-1, tp_replicated=False)"
+      },
+      {
+        "layers": [
+          "language_model.model.layers.1.linear_attn",
+          "language_model.model.layers.5.linear_attn",
+          "language_model.model.layers.9.linear_attn",
+          "language_model.model.layers.13.linear_attn",
+          "language_model.model.layers.17.linear_attn",
+          "language_model.model.layers.21.linear_attn",
+          "language_model.model.layers.25.linear_attn",
+          "language_model.model.layers.29.linear_attn",
+          "language_model.model.layers.33.linear_attn",
+          "language_model.model.layers.37.linear_attn",
+          "language_model.model.layers.41.linear_attn",
+          "language_model.model.layers.45.linear_attn",
+          "language_model.model.layers.49.linear_attn",
+          "language_model.model.layers.53.linear_attn",
+          "language_model.model.layers.57.linear_attn",
+          "language_model.model.layers.61.linear_attn"
+        ],
+        "spec": "MambaSpec(block_size=2048, shapes=((6, 5120), (24, 128, 128)), dtypes=(torch.bfloat16, torch.float32), page_size_padded=1835008, mamba_type=<MambaAttentionBackendEnum.GDN_ATTN: 'vllm.v1.attention.backends.gdn_attn.GDNAttentionBackend'>, mamba_cache_mode='none', num_speculative_blocks=3, num_prefill_checkpoint_blocks=0, prefill_checkpoint_alignment=None, num_heads=1, tokens_per_state=-1, tp_replicated=False)"
+      },
+      {
+        "layers": [
+          "language_model.model.layers.2.linear_attn",
+          "language_model.model.layers.6.linear_attn",
+          "language_model.model.layers.10.linear_attn",
+          "language_model.model.layers.14.linear_attn",
+          "language_model.model.layers.18.linear_attn",
+          "language_model.model.layers.22.linear_attn",
+          "language_model.model.layers.26.linear_attn",
+          "language_model.model.layers.30.linear_attn",
+          "language_model.model.layers.34.linear_attn",
+          "language_model.model.layers.38.linear_attn",
+          "language_model.model.layers.42.linear_attn",
+          "language_model.model.layers.46.linear_attn",
+          "language_model.model.layers.50.linear_attn",
+          "language_model.model.layers.54.linear_attn",
+          "language_model.model.layers.58.linear_attn",
+          "language_model.model.layers.62.linear_attn"
+        ],
+        "spec": "MambaSpec(block_size=2048, shapes=((6, 5120), (24, 128, 128)), dtypes=(torch.bfloat16, torch.float32), page_size_padded=1835008, mamba_type=<MambaAttentionBackendEnum.GDN_ATTN: 'vllm.v1.attention.backends.gdn_attn.GDNAttentionBackend'>, mamba_cache_mode='none', num_speculative_blocks=3, num_prefill_checkpoint_blocks=0, prefill_checkpoint_alignment=None, num_heads=1, tokens_per_state=-1, tp_replicated=False)"
+      }
+    ]
+  },
+  "state_layouts": [
+    {
+      "layer": "language_model.model.layers.0.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.1.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.2.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.4.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.5.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.6.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.8.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.9.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.10.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.12.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.13.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.14.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.16.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.17.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.18.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.20.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.21.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.22.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.24.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.25.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.26.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.28.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.29.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.30.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.32.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.33.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.34.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.36.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.37.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.38.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.40.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.41.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.42.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.44.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.45.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.46.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.48.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.49.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.50.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.52.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.53.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.54.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.56.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.57.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.58.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.60.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.61.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    },
+    {
+      "layer": "language_model.model.layers.62.linear_attn",
+      "tensors": [
+        {
+          "shape": [
+            389,
+            6,
+            5120
+          ],
+          "stride": [
+            917504,
+            5120,
+            1
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        {
+          "shape": [
+            389,
+            24,
+            128,
+            128
+          ],
+          "stride": [
+            458752,
+            16384,
+            128,
+            1
+          ],
+          "dtype": "torch.float32"
+        }
+      ]
+    }
+  ],
+  "error": "NPUModelRunner init failed, error is NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903\n[ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.\nEE9999: Inner Error!\nEE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]\nTraceBack (most recent call last):\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py\", line 214, in __call__\n    output = self.runnable(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py\", line 380, in __call__\n    return range_entry.runnable(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1181, in _fn\n    return fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py\", line 1148, in forward\n    return compiled_fn(full_args)\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py\", line 357, in runtime_wrapper\n    all_outs = call_func_at_runtime_with_args(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py\", line 134, in call_func_at_runtime_with_args\n    out = normalize_as_list(f(args))\n                            ^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py\", line 531, in wrapper\n    return compiled_fn(runtime_args)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py\", line 729, in inner_fn\n    outs = compiled_fn(args)\n           ^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py\", line 108, in g\n    return f(*args)\n           ^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py\", line 936, in call_wrapped\n    return self._wrapped_call(self, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py\", line 455, in __call__\n    raise e\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py\", line 442, in __call__\n    return super(self.cls, obj).__call__(*args, **kwargs)  # type: ignore[misc]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1776, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1787, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<eval_with_key>.570 from /usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py:1507 in wrapped\", line 21, in forward\n    all_reduce = torch.ops.vllm.all_reduce.default(unquantized_gemm, 'tp:0');  unquantized_gemm = None\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py\", line 819, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/distributed/parallel_state.py\", line 199, in all_reduce\n    return group._all_reduce_out_place(tensor)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/distributed/parallel_state.py\", line 748, in _all_reduce_out_place\n    return self.device_communicator.all_reduce(input_)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/distributed/device_communicators/base_device_communicator.py\", line 232, in all_reduce\n    dist.all_reduce(input_, group=self.device_group)\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/c10d_logger.py\", line 83, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py\", line 3007, in all_reduce\n    work = group.allreduce([tensor], opts)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: LaunchWaitTask:../torch_npu/csrc/core/npu/interface/AsyncTaskQueueInterface.cpp:269 NPU function error: aclrtStreamWaitEvent(npuStream, eventParam_.event), error code is 207005\n[ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed\n[Error]: Failed to apply for memory.\n        Check the remaining storage space in the hardware environment.\n[PID: 1086806] 2026-10-21-13:51:23.257.690 Resource_Error(EE1023): Alloc Stream resource failed. Reason: Too many streams are created.\n        Solution: For details about the troubleshooting method, search for the keyword \"EE1023\" on https://www.hiascend.com/document/.\nTraceBack (most recent call last):\n        New capture stream failed, stream_id=6, event_id=[-1->5856].[FUNC:GetCaptureStream][FILE:capture_model_utils.cc][LINE:150]\n        Create capture stream failed, stream_id=6, event_id=-1, error=117571619.[FUNC:CaptureEventWait][FILE:api_impl_capture_event.cc][LINE:77]\n        Capture wait event failed.[FUNC:StreamWaitEvent][FILE:api_impl.cc][LINE:1576]\n        rtStreamWaitEvent execution failed, reason=driver error:resource alloc fail[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]\n\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6716, in _replace_gpu_model_runner_function_wrapper\n    yield\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6570, in capture_model\n    cuda_graph_size = GPUModelRunner.capture_model(self)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py\", line 6896, in capture_model\n    self._capture_cudagraphs(\n  File \"/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py\", line 7027, in _capture_cudagraphs\n    self._warmup_and_capture(\n  File \"/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py\", line 6972, in _warmup_and_capture\n    self._dummy_run(\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 4378, in _dummy_run\n    outputs = self._model_forward(\n              ^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 3352, in _model_forward\n    hidden_states = run_model()\n                    ^^^^^^^^^^^\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py\", line 169, in __call__\n    return self.runnable(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1776, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1787, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py\", line 591, in forward\n    hidden_states = self.language_model.model(\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/compilation/decorators.py\", line 522, in __call__\n    return self.aot_compiled_fn(self, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py\", line 124, in __call__\n    return self.fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py\", line 688, in forward\n    def forward(\n  File \"/vllm-workspace/vllm/vllm/compilation/caching.py\", line 225, in __call__\n    return self.optimized_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<string>\", line 1004, in execution_fn\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py\", line 211, in __call__\n    with torch.npu.graph(aclgraph, pool=self.graph_pool):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/graphs.py\", line 890, in __exit__\n    self.npu_graph.capture_end()\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/compilation/updatable_graph.py\", line 94, in capture_end\n    super().capture_end()\n  File \"/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/graphs.py\", line 636, in capture_end\n    super().capture_end()\nRuntimeError: capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903\n[ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.\nEE9999: Inner Error!\nEE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]\nTraceBack (most recent call last):\n\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6675, in _torch_cuda_wrapper\n    yield\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6569, in capture_model\n    with _torch_cuda_wrapper(), _replace_gpu_model_runner_function_wrapper(parent_module_name):\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6718, in _replace_gpu_model_runner_function_wrapper\n    raise RuntimeError(f\"NPUModelRunner failed, error is {e}\")\nRuntimeError: NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903\n[ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.\nEE9999: Inner Error!\nEE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]\nTraceBack (most recent call last):\n\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py\", line 243, in main\n    llm = LLM(**options)\n          ^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/entrypoints/llm.py\", line 343, in __init__\n    self.llm_engine = LLMEngine.from_engine_args(\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py\", line 184, in from_engine_args\n    return cls(\n           ^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py\", line 109, in __init__\n    self.engine_core = EngineCoreClient.make_client(\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/engine/core_client.py\", line 129, in make_client\n    return InprocClient(vllm_config, executor_class, log_stats)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/engine/core_client.py\", line 354, in __init__\n    self.engine_core = EngineCore(\n                       ^^^^^^^^^^^\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_profiling_chunk.py\", line 198, in _patched_engine_core_init\n    original_init(self, *args, **kwargs)\n  File \"/vllm-workspace/vllm/vllm/v1/engine/core.py\", line 145, in __init__\n    kv_cache_config = self._initialize_kv_caches(vllm_config)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/tracing/otel.py\", line 178, in sync_wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/engine/core.py\", line 356, in _initialize_kv_caches\n    self.model_executor.compile_or_warm_up_model()\n  File \"/vllm-workspace/vllm/vllm/v1/executor/abstract.py\", line 126, in compile_or_warm_up_model\n    compilation_times: list[CompilationTimes] = self.collective_rpc(\n                                                ^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py\", line 103, in collective_rpc\n    result = run_method(self.driver_worker, method, args, kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm/vllm/v1/serial_utils.py\", line 510, in run_method\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py\", line 903, in compile_or_warm_up_model\n    npugraph_memory_bytes = self.model_runner.capture_model()\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6569, in capture_model\n    with _torch_cuda_wrapper(), _replace_gpu_model_runner_function_wrapper(parent_module_name):\n         ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/python3.12.13/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py\", line 6685, in _torch_cuda_wrapper\n    raise RuntimeError(f\"NPUModelRunner init failed, error is {e}\")\nRuntimeError: NPUModelRunner init failed, error is NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903\n[ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.\nEE9999: Inner Error!\nEE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]\nTraceBack (most recent call last):\n\n"
+}

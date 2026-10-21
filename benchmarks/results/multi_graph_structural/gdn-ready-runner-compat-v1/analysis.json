@@ -1,0 +1,879 @@
+{
+  "schema": "gdn-ready-runner-compatibility-v1",
+  "workload_sha256": "520c70cd7415449c2e8b53b78b8492a1e130b1c544d5a31a6bb3f3c35cb73181",
+  "ledger_sha256": "4db07f4e6ebcd704ad462231105052e91e126a43602c7143d4cbf5edd8162588",
+  "metadata_sha256": "bcaa632dc433ed355fed92828cbb74500e4c02994bd5d7fff7d921d75b56ca89",
+  "ledger_inventory": {
+    "provenance": "counts of an existing real compact generation ledger; native widths are conditional reconstruction",
+    "native_generation_observation": false,
+    "steps": 239,
+    "request_steps": 9608,
+    "draft_counts": {
+      "0": 8711,
+      "3": 897
+    },
+    "accepted_previous_counts": {
+      "1": 9416,
+      "2": 79,
+      "3": 56,
+      "4": 57
+    },
+    "real_proposed_candidates": 2691,
+    "q4_filler": 26133,
+    "logical_q4_rows": 38432,
+    "native_unpadded_rows": 12299,
+    "executed_q4_graph_rows": 38520,
+    "graph_padding_rows": 88,
+    "native_query_lengths": {
+      "1": 8711,
+      "4": 897
+    },
+    "native_row_histogram": {
+      "9": 2,
+      "10": 6,
+      "12": 1,
+      "14": 5,
+      "15": 4,
+      "18": 3,
+      "22": 1,
+      "23": 2,
+      "28": 39,
+      "29": 1,
+      "31": 1,
+      "34": 5,
+      "35": 4,
+      "37": 7,
+      "41": 2,
+      "42": 17,
+      "43": 2,
+      "45": 6,
+      "46": 2,
+      "52": 1,
+      "56": 70,
+      "58": 2,
+      "60": 6,
+      "61": 1,
+      "63": 1,
+      "67": 1,
+      "68": 1,
+      "70": 6,
+      "74": 1,
+      "76": 1,
+      "77": 2,
+      "79": 2,
+      "84": 3,
+      "88": 1,
+      "98": 23,
+      "103": 1,
+      "104": 2,
+      "112": 2,
+      "134": 1,
+      "140": 1
+    },
+    "q4_capacity_histogram": {
+      "40": 9,
+      "48": 1,
+      "56": 5,
+      "64": 8,
+      "72": 1,
+      "88": 2,
+      "96": 2,
+      "112": 66,
+      "136": 6,
+      "144": 7,
+      "168": 34,
+      "224": 98
+    },
+    "batch_modes": {
+      "all_q1": 157,
+      "mixed_or_short_spec": 80,
+      "all_q4": 2
+    },
+    "request_mode_transitions": {
+      "q1_to_spec": 831,
+      "spec_to_q1": 829
+    },
+    "per_request": [
+      {
+        "owner": 0,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 1,
+        "draft_counts": {
+          "0": 131,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 2,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 3,
+        "draft_counts": {
+          "0": 200,
+          "3": 24
+        },
+        "transitions": {
+          "q1_to_spec": 20,
+          "spec_to_q1": 20
+        }
+      },
+      {
+        "owner": 4,
+        "draft_counts": {
+          "0": 211,
+          "3": 19
+        },
+        "transitions": {
+          "q1_to_spec": 19,
+          "spec_to_q1": 19
+        }
+      },
+      {
+        "owner": 5,
+        "draft_counts": {
+          "0": 137,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 6,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 7,
+        "draft_counts": {
+          "0": 195,
+          "3": 21
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 16
+        }
+      },
+      {
+        "owner": 8,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 9,
+        "draft_counts": {
+          "0": 124,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 10,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 11,
+        "draft_counts": {
+          "0": 195,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 12,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 13,
+        "draft_counts": {
+          "0": 124,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 14,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 15,
+        "draft_counts": {
+          "0": 193,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 16,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 17,
+        "draft_counts": {
+          "0": 124,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 18,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 19,
+        "draft_counts": {
+          "0": 197,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 20,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 21,
+        "draft_counts": {
+          "0": 137,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 22,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 23,
+        "draft_counts": {
+          "0": 195,
+          "3": 21
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 16
+        }
+      },
+      {
+        "owner": 24,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 25,
+        "draft_counts": {
+          "0": 137,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 26,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 27,
+        "draft_counts": {
+          "0": 197,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 28,
+        "draft_counts": {
+          "0": 210,
+          "3": 19
+        },
+        "transitions": {
+          "q1_to_spec": 19,
+          "spec_to_q1": 19
+        }
+      },
+      {
+        "owner": 29,
+        "draft_counts": {
+          "0": 124,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 30,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 31,
+        "draft_counts": {
+          "0": 193,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 32,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 33,
+        "draft_counts": {
+          "0": 137,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 34,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 35,
+        "draft_counts": {
+          "0": 193,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 36,
+        "draft_counts": {
+          "0": 210,
+          "3": 19
+        },
+        "transitions": {
+          "q1_to_spec": 19,
+          "spec_to_q1": 19
+        }
+      },
+      {
+        "owner": 37,
+        "draft_counts": {
+          "0": 137,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 38,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 39,
+        "draft_counts": {
+          "0": 197,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 40,
+        "draft_counts": {
+          "0": 213,
+          "3": 24
+        },
+        "transitions": {
+          "q1_to_spec": 23,
+          "spec_to_q1": 23
+        }
+      },
+      {
+        "owner": 41,
+        "draft_counts": {
+          "0": 124,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 42,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 43,
+        "draft_counts": {
+          "0": 193,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 44,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 45,
+        "draft_counts": {
+          "0": 124,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 46,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 47,
+        "draft_counts": {
+          "0": 197,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 48,
+        "draft_counts": {
+          "0": 211,
+          "3": 19
+        },
+        "transitions": {
+          "q1_to_spec": 19,
+          "spec_to_q1": 19
+        }
+      },
+      {
+        "owner": 49,
+        "draft_counts": {
+          "0": 122,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 50,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 51,
+        "draft_counts": {
+          "0": 197,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      },
+      {
+        "owner": 52,
+        "draft_counts": {
+          "0": 214,
+          "3": 25
+        },
+        "transitions": {
+          "q1_to_spec": 25,
+          "spec_to_q1": 25
+        }
+      },
+      {
+        "owner": 53,
+        "draft_counts": {
+          "0": 137,
+          "3": 8
+        },
+        "transitions": {
+          "q1_to_spec": 7,
+          "spec_to_q1": 7
+        }
+      },
+      {
+        "owner": 54,
+        "draft_counts": {
+          "0": 84,
+          "3": 14
+        },
+        "transitions": {
+          "q1_to_spec": 12,
+          "spec_to_q1": 12
+        }
+      },
+      {
+        "owner": 55,
+        "draft_counts": {
+          "0": 193,
+          "3": 18
+        },
+        "transitions": {
+          "q1_to_spec": 17,
+          "spec_to_q1": 17
+        }
+      }
+    ]
+  },
+  "installed_metadata_replay": {
+    "provenance": "installed dispatcher and installed GDN metadata builder on CPU; no model, kernel or physical allocation",
+    "effective": {
+      "graph_mode": "FULL_AND_PIECEWISE",
+      "capture_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        24,
+        32,
+        40,
+        48,
+        56,
+        64,
+        72,
+        80,
+        88,
+        96,
+        104,
+        112,
+        120,
+        128,
+        136,
+        144,
+        152,
+        160,
+        168,
+        176,
+        184,
+        192,
+        200,
+        208,
+        216,
+        224,
+        232,
+        240,
+        248,
+        256,
+        272,
+        288,
+        304,
+        320,
+        336,
+        352,
+        368,
+        384,
+        400,
+        416,
+        432,
+        448,
+        464,
+        480,
+        496,
+        512
+      ],
+      "async_scheduling": false,
+      "cache_mode": "none"
+    },
+    "graph_modes": {
+      "FULL": 2,
+      "PIECEWISE": 237
+    },
+    "capacity_histogram": {
+      "16": 18,
+      "24": 6,
+      "32": 41,
+      "40": 16,
+      "48": 29,
+      "56": 71,
+      "64": 10,
+      "72": 8,
+      "80": 6,
+      "88": 4,
+      "104": 26,
+      "112": 2,
+      "136": 1,
+      "144": 1
+    },
+    "head_row_histogram": {
+      "9": 2,
+      "10": 6,
+      "12": 1,
+      "14": 5,
+      "15": 4,
+      "18": 3,
+      "22": 1,
+      "23": 2,
+      "28": 39,
+      "29": 1,
+      "31": 1,
+      "34": 5,
+      "35": 4,
+      "37": 7,
+      "41": 2,
+      "42": 17,
+      "43": 2,
+      "45": 6,
+      "46": 2,
+      "52": 1,
+      "56": 70,
+      "58": 2,
+      "60": 6,
+      "61": 1,
+      "63": 1,
+      "67": 1,
+      "68": 1,
+      "70": 6,
+      "74": 1,
+      "76": 1,
+      "77": 2,
+      "79": 2,
+      "84": 3,
+      "88": 1,
+      "98": 23,
+      "103": 1,
+      "104": 2,
+      "112": 2,
+      "134": 1,
+      "140": 1
+    },
+    "total_capacity_rows": 13008,
+    "total_head_rows": 12299,
+    "graph_padding_rows": 709,
+    "gdn_work": {
+      "num_spec": 897,
+      "num_spec_tokens": 3588,
+      "num_decodes": 6383,
+      "num_decode_tokens": 6383,
+      "num_prefills": 2328,
+      "num_prefill_tokens": 2328
+    },
+    "allocation_budget": {
+      "cpu_bookkeeping_only": true,
+      "live_requests": 56,
+      "max_query_end": 297,
+      "scheduler_block_size": 14336,
+      "hash_block_size": 128,
+      "total_blocks": 389,
+      "free_blocks": 388,
+      "blocks_per_request": 13,
+      "all_56_required": 728,
+      "resident_upper_bound_without_other_reservations": 29,
+      "physical_blocks_allocated": false
+    }
+  },
+  "conversion_scenario": {
+    "scenario": "separate dense/compact storage, one accepted FP32 state transferred per owner mode switch",
+    "implemented": false,
+    "applies_to": "existing compact ledger reconstruction only, not observed native requests",
+    "fp32_state_bytes_per_owner_per_rank": 75497472,
+    "owner_switches": 1660,
+    "state_payload_bytes_per_rank": 125325803520,
+    "copy_read_write_bytes_per_rank": 250651607040,
+    "excludes": "flush arithmetic, logs, conv shift, owner metadata, launches, synchronization, initialization and terminal",
+    "previous_loop_saving_seconds": 0.5691290000000002,
+    "break_even_seconds_per_owner_switch": 0.000342848795180723,
+    "required_extra_copy_bandwidth_bytes_per_second": 440412642898.18286,
+    "caveat": "sharing storage could change this cost, but requires an explicit consumer/ownership adapter; no latency measured"
+  },
+  "decision": "defer_native_runner_integration_frozen_q4_contract_incompatible_and_native_capture_failed",
+  "native_generation_measured": false,
+  "quality_failures_preserved": true
+}

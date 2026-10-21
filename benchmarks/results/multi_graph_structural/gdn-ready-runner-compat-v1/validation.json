@@ -1,0 +1,87 @@
+{
+  "analysis": {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_compat.py",
+      "--ledger",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\gdn-ready-generation-v1\\pair0.ready\\result.rank0.json",
+      "--metadata",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\gdn-ready-runner-compat-v1\\metadata-replay.json",
+      "--root",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\results\\multi_graph_structural\\gdn-ready-runner-compat-v1"
+    ],
+    "cwd": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm",
+    "exit_code": 0
+  },
+  "tests": {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "-m",
+      "pytest",
+      "-q",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_runner_compat.py",
+      "--noconftest"
+    ],
+    "cwd": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm",
+    "exit_code": 0
+  },
+  "ruff": {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "-m",
+      "ruff",
+      "check",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_compat.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_metadata_probe.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_probe.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_runner_compat.py"
+    ],
+    "cwd": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm",
+    "exit_code": 0
+  },
+  "format": {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_compat.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_metadata_probe.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_probe.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_runner_compat.py"
+    ],
+    "cwd": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm",
+    "exit_code": 0
+  },
+  "syntax": {
+    "command": [
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\multi-graph-clean-venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "-m",
+      "compileall",
+      "-q",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_compat.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_metadata_probe.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\benchmarks\\multi_graph_gdn_ready_runner_probe.py",
+      "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm\\work\\vllm-ascend\\tests\\ut\\worker\\multi_graph\\test_gdn_ready_runner_compat.py"
+    ],
+    "cwd": "C:\\Users\\yc\\Documents\\Codex\\2026-10-13\\https-github-com-min-wn-vllm",
+    "exit_code": 0
+  },
+  "format_ci": {
+    "command": "bash format.sh ci",
+    "exit_code": 1,
+    "scope": "required repository entry point outside sandbox; no model",
+    "output_encoding": "tool UTF-8 text preserved"
+  }
+}

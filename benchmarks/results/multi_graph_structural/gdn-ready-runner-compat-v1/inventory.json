@@ -1,0 +1,626 @@
+{
+  "packages": {
+    "vllm": {
+      "path": "/vllm-workspace/vllm/vllm/__init__.py",
+      "version": "0.30.0+empty"
+    },
+    "vllm_ascend": {
+      "path": "/vllm-workspace/vllm-ascend/vllm_ascend/__init__.py",
+      "version": "0.30.0rc1"
+    },
+    "torch": {
+      "path": "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/__init__.py",
+      "version": "2.10.0+cpu"
+    },
+    "torch_npu": {
+      "path": "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/__init__.py",
+      "version": "2.10.0.post4"
+    }
+  },
+  "git": {
+    "vllm": {
+      "head": {
+        "code": 0,
+        "output": "ced6857afa0ea7b2e3f0846a62e1394e90f15607\n"
+      },
+      "status": {
+        "code": 0,
+        "output": ""
+      }
+    },
+    "vllm_ascend": {
+      "head": {
+        "code": 0,
+        "output": "cf67a3cc9f6ffd7891cceb8b84869f7acedbb195\n"
+      },
+      "status": {
+        "code": 0,
+        "output": " M ../docs/source/developer_guide/Design_Documents/multi_graph_split_parallel_plan.md\n M ops/triton/linearnorm/split_qkv_rmsnorm_mrope.py\n M worker/multi_graph/validation.py\n?? ../benchmarks/grouped_device_length_kernel.py\n?? ../benchmarks/grouped_device_length_probe.py\n?? ../benchmarks/multi_graph_acl_conditional_probe.py\n?? ../benchmarks/multi_graph_bucket_block.py\n?? ../benchmarks/multi_graph_bucket_replay.py\n?? ../benchmarks/multi_graph_bucket_trace.py\n?? ../benchmarks/multi_graph_default_capture.py\n?? ../benchmarks/multi_graph_dense_probe.py\n?? ../benchmarks/multi_graph_dynamic_trace.py\n?? ../benchmarks/multi_graph_ffn_readiness.py\n?? ../benchmarks/multi_graph_fia_hybrid_owner_probe.py\n?? ../benchmarks/multi_graph_gdn_compact_probe.py\n?? ../benchmarks/multi_graph_gdn_compact_state/\n?? ../benchmarks/multi_graph_gdn_hybrid_owner_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_backend.py\n?? ../benchmarks/multi_graph_gdn_q4_block_kernel/\n?? ../benchmarks/multi_graph_gdn_q4_block_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_block_reference.py\n?? ../benchmarks/multi_graph_gdn_q4_full_checks.py\n?? ../benchmarks/multi_graph_gdn_q4_full_loader.py\n?? ../benchmarks/multi_graph_gdn_q4_full_metadata.py\n?? ../benchmarks/multi_graph_gdn_q4_full_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_full_stream_audit.py\n?? ../benchmarks/multi_graph_gdn_q4_log_backend.py\n?? ../benchmarks/multi_graph_gdn_q4_log_deferred_kernel/\n?? ../benchmarks/multi_graph_gdn_q4_log_deferred_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_log_kernel/\n?? ../benchmarks/multi_graph_gdn_q4_log_layer_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_log_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_products_kernel/\n?? ../benchmarks/multi_graph_gdn_q4_products_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_tile_pipeline_kernel/\n?? ../benchmarks/multi_graph_gdn_q4_tile_solve_probe.py\n?? ../benchmarks/multi_graph_gdn_q4_tile_transport_probe.py\n?? ../benchmarks/multi_graph_hybrid_memory_budget.py\n?? ../benchmarks/multi_graph_model_probe.py\n?? ../benchmarks/multi_graph_model_scaling.py\n?? ../benchmarks/multi_graph_native_update.cpp\n?? ../benchmarks/multi_graph_native_update.py\n?? ../benchmarks/multi_graph_numerical_assessment.py\n?? ../benchmarks/multi_graph_projection_trace.py\n?? ../benchmarks/multi_graph_replay.py\n?? ../benchmarks/multi_graph_resource_probe.py\n?? ../benchmarks/multi_graph_shared_dense.py\n?? ../benchmarks/multi_graph_tp_attention.py\n?? ../benchmarks/multi_graph_tp_attention_mlp_pilot.py\n?? ../benchmarks/multi_graph_tp_boundary.py\n?? ../benchmarks/multi_graph_tp_boundary_loader.py\n?? ../benchmarks/multi_graph_tp_contention.py\n?? ../benchmarks/multi_graph_tp_gdn.py\n?? ../benchmarks/multi_graph_tp_gdn_compute_overlap.py\n?? ../benchmarks/multi_graph_tp_gdn_owner_boundary.py\n?? ../benchmarks/multi_graph_tp_gdn_owner_core.py\n?? ../benchmarks/multi_graph_tp_gdn_owner_mlp.py\n?? ../benchmarks/multi_graph_tp_gdn_ownership.py\n?? ../benchmarks/multi_graph_tp_gdn_phases.py\n?? ../benchmarks/multi_graph_tp_kv_balance.py\n?? ../benchmarks/multi_graph_tp_mlp_causal.py\n?? ../benchmarks/multi_graph_tp_mlp_causal_v2.py\n?? ../benchmarks/multi_graph_tp_mlp_causal_v3.py\n?? ../benchmarks/multi_graph_tp_mlp_numeric.py\n?? ../benchmarks/multi_graph_tp_parallel_probe.py\n?? ../benchmarks/multi_graph_tp_priority_probe.py\n?? ../benchmarks/multi_graph_tp_stream_budget.py\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_bucket_diagnosis.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_bucket_internal_parallel.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_bucket_parallel_optimization.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_compiled_layout.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_default_capture_case.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_ffn_readiness.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_host_submission_bottlenecks.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_legal_bucket_replay.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_model_scaling.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_native_submission.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_padding_frontier.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_parallel_directions.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_parallel_phases.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_projection_diagnosis.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_resource_complementarity.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_tp_attention.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_tp_attention_mlp.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_tp_boundary.md\n?? ../docs/source/developer_guide/Design_Documents/multi_graph_tp_fusion_next.md\n?? ../export_only_prof_dir/\n?? ../extra-info/\n?? ../tests/e2e/pull_request/one_card/test_multi_graph_replay.py\n?? ../tests/ut/ops/test_split_qkv_rmsnorm_mrope.py\n?? ../tests/ut/worker/multi_graph/test_bucket_block.py\n?? ../tests/ut/worker/multi_graph/test_bucket_replay.py\n?? ../tests/ut/worker/multi_graph/test_bucket_trace.py\n?? ../tests/ut/worker/multi_graph/test_projection_trace.py\n?? ../tests/ut/worker/multi_graph/test_replay_benchmark.py\n?? ../tests/ut/worker/multi_graph/test_tp_attention.py\n?? ../tools/run_multi_graph_replay_tests.py\n?? worker/multi_graph/replay_benchmark.py\n"
+      }
+    }
+  },
+  "active": [],
+  "files": {
+    "vllm/config/cache.py": {
+      "source": "/vllm-workspace/vllm/vllm/config/cache.py",
+      "sha256": "f1c226ba679c884930dbfcaf41a57248b137a9a20d3ed8e3d3b31752bb484c07",
+      "size": 17129
+    },
+    "vllm/config/compilation.py": {
+      "source": "/vllm-workspace/vllm/vllm/config/compilation.py",
+      "sha256": "c9cec5c7200e8e559810ec8c30113ad61dab6780f9f7fb3c116bd0d9b5a43065",
+      "size": 69731
+    },
+    "vllm/config/speculative.py": {
+      "source": "/vllm-workspace/vllm/vllm/config/speculative.py",
+      "sha256": "9c642a87264339c0dbc1d0b57330572149df0f9d5e16c6893b9895e50a619e19",
+      "size": 87011
+    },
+    "vllm/model_executor/layers/logits_processor.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/logits_processor.py",
+      "sha256": "6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f",
+      "size": 11953
+    },
+    "vllm/model_executor/layers/mamba/__init__.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm/model_executor/layers/mamba/abstract.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/abstract.py",
+      "sha256": "dfdc8c836894f574e41d93d76ab989cacd3d7ecf59c97a929abfa48d9364e8ad",
+      "size": 3478
+    },
+    "vllm/model_executor/layers/mamba/gdn/__init__.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/gdn/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm/model_executor/layers/mamba/gdn/base.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/gdn/base.py",
+      "sha256": "7fec748fc74131f5a45bcaf2644b3fa3a0598fd437d7347f8207ea3644a951c5",
+      "size": 2072
+    },
+    "vllm/model_executor/layers/mamba/gdn/kimi_gdn_linear_attn.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/gdn/kimi_gdn_linear_attn.py",
+      "sha256": "1cec4da5c9da73557e192bfb36cd540aae51d3e91283b554449c4a97f0f89bd9",
+      "size": 25946
+    },
+    "vllm/model_executor/layers/mamba/gdn/olmo_gdn_linear_attn.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/gdn/olmo_gdn_linear_attn.py",
+      "sha256": "60873ca3bb0c4d17c33bd259b62b658db4883cd23138f47dd4ead62cd2ff0605",
+      "size": 24167
+    },
+    "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "sha256": "b80f8e6f3fff442fb880aebb3209c52f814f66490009f4ac4003de603576d10a",
+      "size": 77101
+    },
+    "vllm/model_executor/layers/mamba/mamba_mixer.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/mamba_mixer.py",
+      "sha256": "a485e937ad9db14d3ad03fde5a9fe795cfa863649563e52fc7e6c52ef631164e",
+      "size": 20557
+    },
+    "vllm/model_executor/layers/mamba/mamba_mixer2.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/mamba_mixer2.py",
+      "sha256": "d58d93e90d9eb90bc5133b79f07c7c62d0032b35d6cf916e3fe34367b81c5cd5",
+      "size": 53716
+    },
+    "vllm/model_executor/layers/mamba/mamba_utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/mamba_utils.py",
+      "sha256": "ce9845b4a4ef4bc46577a33038ed69d59ceccb52f30e9c5bdaa36e48be3b2ca4",
+      "size": 14805
+    },
+    "vllm/model_executor/layers/mamba/short_conv.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/layers/mamba/short_conv.py",
+      "sha256": "228494efab185ee17374f762874f4c8b9a26aac9decfa8c906ce38446e0de51a",
+      "size": 14171
+    },
+    "vllm/model_executor/models/qwen3_5.py": {
+      "source": "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py",
+      "sha256": "3abeac36180df7bd1bd96b1a7c698a8f212d92c063026420cbdd16d1980e90e6",
+      "size": 27792
+    },
+    "vllm/v1/attention/backends/gdn_attn.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/attention/backends/gdn_attn.py",
+      "sha256": "3831019404a92200a38b43571c040cffeb6638bbdc71e4cb5e680dbc6c93d054",
+      "size": 22952
+    },
+    "vllm/v1/core/__init__.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm/v1/core/block_pool.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/block_pool.py",
+      "sha256": "34c2fd67148cecb7763ff49ad694a57073759b0fa67572a4270dc995b4acf8fc",
+      "size": 36034
+    },
+    "vllm/v1/core/encoder_cache_manager.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/encoder_cache_manager.py",
+      "sha256": "45f167e4f5a8ae3448ef61ba8d13c21dbb13a90fc55ab49098b7aacedd52e0d1",
+      "size": 17002
+    },
+    "vllm/v1/core/kv_cache_coordinator.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/kv_cache_coordinator.py",
+      "sha256": "bf342f79f2bc8d6acb69d3becefb334509e84cae888d42bbd421a8dc8ca9eca3",
+      "size": 45268
+    },
+    "vllm/v1/core/kv_cache_manager.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/kv_cache_manager.py",
+      "sha256": "58800535eda854580d84e1025bf32fe01b2a43ce0bba501b4f3d125e4f2c8afa",
+      "size": 41398
+    },
+    "vllm/v1/core/kv_cache_metrics.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/kv_cache_metrics.py",
+      "sha256": "efedec04feff5f04a6d51c6c464290b52ab8c249d65121a9ab9f1370d6b67f47",
+      "size": 3138
+    },
+    "vllm/v1/core/kv_cache_utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/kv_cache_utils.py",
+      "sha256": "2666c9f113584e52e7521058efd2c0d9598544559dc942d3a3da87001a3fedf2",
+      "size": 114648
+    },
+    "vllm/v1/core/sched/__init__.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm/v1/core/sched/async_scheduler.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/async_scheduler.py",
+      "sha256": "e586a0ef3c6778be56a93e7f9bb712d4de9de6e7d7fe7e3e1d51dae83ecfc508",
+      "size": 3283
+    },
+    "vllm/v1/core/sched/interface.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/interface.py",
+      "sha256": "be6c008664096c5660a8879de72b315bbe479bf1d688be9b25891063ec53a367",
+      "size": 9881
+    },
+    "vllm/v1/core/sched/output.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/output.py",
+      "sha256": "3a66c8efaefe10c572f6f33cf1f8aa4610758c945130cad62eb9f7331005677c",
+      "size": 12558
+    },
+    "vllm/v1/core/sched/request_queue.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/request_queue.py",
+      "sha256": "4b8d938e5fb8152fe61030b8aa991f983fcac9a405c37ed8908045e05e82ae5e",
+      "size": 6989
+    },
+    "vllm/v1/core/sched/scheduler.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/scheduler.py",
+      "sha256": "c1db45f3bbad3a875dd8638331b8870c4380ac1ab4734265ba5c863833a82884",
+      "size": 152786
+    },
+    "vllm/v1/core/sched/utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/sched/utils.py",
+      "sha256": "1ed988044eb8028c77ede875bd1a5fd05ff6998b455d61e3997d6a3d7fc1c3a7",
+      "size": 4351
+    },
+    "vllm/v1/core/single_type_kv_cache_manager.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/core/single_type_kv_cache_manager.py",
+      "sha256": "0233531d85aeced9e57a38c76d83db970519c92902b7e55484390cb2b64985bf",
+      "size": 116729
+    },
+    "vllm/v1/cudagraph_dispatcher.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/cudagraph_dispatcher.py",
+      "sha256": "51f632753af729aeee6ce4a802d9d74b64f22eef02a524f36e2a24b07ef0cf63",
+      "size": 15494
+    },
+    "vllm/v1/engine/core.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/engine/core.py",
+      "sha256": "268bf40534a853812867ae8e80040f190983cb364b41182b55969aace20c93f5",
+      "size": 106584
+    },
+    "vllm/v1/kv_cache_interface.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py",
+      "sha256": "1cf202f1a44d5bc5c3832b70b41507687ecceea3784e67a4f003bc0210d6eecb",
+      "size": 59289
+    },
+    "vllm/v1/spec_decode/__init__.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm/v1/spec_decode/custom_class_proposer.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/custom_class_proposer.py",
+      "sha256": "86de6921a9108138fda118fa47cf7fde4c03bd2a447cbcf8efba53496b23e237",
+      "size": 2369
+    },
+    "vllm/v1/spec_decode/dflash.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/dflash.py",
+      "sha256": "076a7cef13a781a6d2cc2d40f3cd6f9043ee4b64a00a63ba2ece7866b86319da",
+      "size": 12935
+    },
+    "vllm/v1/spec_decode/draft_model.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/draft_model.py",
+      "sha256": "6b884f49a75f01d1aa6b2d27159b63fa27f7ba7f0518d2810d1a5b565e14f026",
+      "size": 4489
+    },
+    "vllm/v1/spec_decode/eagle.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/eagle.py",
+      "sha256": "b2b1f7d15117b43108be368756d9c6e9334d9415a070e46178e18bb7c6476378",
+      "size": 554
+    },
+    "vllm/v1/spec_decode/extract_hidden_states.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/extract_hidden_states.py",
+      "sha256": "a115bde14c46d2c44829242a959f85e70528536eb6fafe37aaf99e7aaf52d45c",
+      "size": 17074
+    },
+    "vllm/v1/spec_decode/gemma4.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/gemma4.py",
+      "sha256": "7de751aca809b5d121d65a4643eeba6c52b01b4ec2776df38292ac6564ec0c88",
+      "size": 15433
+    },
+    "vllm/v1/spec_decode/llm_base_proposer.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py",
+      "sha256": "5bd11c41f0a8cf1272b5880d9878043f876bee6c7e04fb781e613f92930b15ab",
+      "size": 84767
+    },
+    "vllm/v1/spec_decode/medusa.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/medusa.py",
+      "sha256": "56dfb67044949db376a0bba400b8e88ffe53b134e52bba4f8ff01de8a1e7f71e",
+      "size": 2878
+    },
+    "vllm/v1/spec_decode/metadata.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/metadata.py",
+      "sha256": "a6696487b3c8823c119f601de81504341bdefefe95bafe673c1f570ab2028da8",
+      "size": 2353
+    },
+    "vllm/v1/spec_decode/metrics.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/metrics.py",
+      "sha256": "35e0a709042471559937f1a1979a721af9b910476efaa8b6e29865bace985afe",
+      "size": 10521
+    },
+    "vllm/v1/spec_decode/ngram_proposer.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/ngram_proposer.py",
+      "sha256": "5051e1bca645fe4befec0a6340f0dfc169fbcbe070ac1da508b72f8ee9c91736",
+      "size": 11160
+    },
+    "vllm/v1/spec_decode/ngram_proposer_gpu.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/ngram_proposer_gpu.py",
+      "sha256": "6b304fb5a2b7a2e4b6ac05c90c49d228975a7b1f7d566dc1445f048992163b72",
+      "size": 25334
+    },
+    "vllm/v1/spec_decode/step3p5.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/step3p5.py",
+      "sha256": "8397f1742d7c6bc69d8c69ab9515667b7f65ef619c86fbd74107a9cbfbe39d6d",
+      "size": 19610
+    },
+    "vllm/v1/spec_decode/suffix_decoding.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/suffix_decoding.py",
+      "sha256": "5ce2f64f9c6bec815a10f51eb328934a112eb432d29fb5a4d93926128977844e",
+      "size": 4548
+    },
+    "vllm/v1/spec_decode/utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/utils.py",
+      "sha256": "318067397e6827153b484953b4f245e64b0a04308cfe05fa6760418b83a15ed8",
+      "size": 32977
+    },
+    "vllm/v1/spec_decode/vocab_mapping.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/spec_decode/vocab_mapping.py",
+      "sha256": "3c877da8f1e5777a33c95d48b97c0f81600af1f027f9984a3604f16f41cef3f7",
+      "size": 5838
+    },
+    "vllm/v1/worker/__init__.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm/v1/worker/block_table.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/block_table.py",
+      "sha256": "a09b8819e1417b7a186cf3472224e2138fc5d41a291c6692bb7df711b0c44259",
+      "size": 20556
+    },
+    "vllm/v1/worker/cp_utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/cp_utils.py",
+      "sha256": "e32625d83a641b8dd8df82e92d1b6fb20af0cdf2e8fbd2fb131aa3c215415448",
+      "size": 10814
+    },
+    "vllm/v1/worker/cpu_model_runner.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/cpu_model_runner.py",
+      "sha256": "92111aba92f00571f1a3c4c6e43cf1da6ccb4d2afac2f4d5abc018a4a6e7e8bd",
+      "size": 9423
+    },
+    "vllm/v1/worker/cpu_worker.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/cpu_worker.py",
+      "sha256": "a8051b9e510ef0af9cc34004f2cbe5c0f902bd0cebc32c9464e744344dfdf849",
+      "size": 12035
+    },
+    "vllm/v1/worker/dp_utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/dp_utils.py",
+      "sha256": "8cd19f1bfbc5c4f6ec60df89aea7c8a19b400ebc264f372b103014152e92158c",
+      "size": 10143
+    },
+    "vllm/v1/worker/ec_connector_model_runner_mixin.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/ec_connector_model_runner_mixin.py",
+      "sha256": "fe9b11cebb8562f1bfe98b98a5647b2b081a6e424cb60d4ffe2412c91a99215e",
+      "size": 3135
+    },
+    "vllm/v1/worker/encoder_cudagraph.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/encoder_cudagraph.py",
+      "sha256": "6a08d3779bca1b47dbf9daf6eafe2d3c70dbcb8aeb7d63ba7efacc68241ee3bc",
+      "size": 28265
+    },
+    "vllm/v1/worker/encoder_cudagraph_defs.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/encoder_cudagraph_defs.py",
+      "sha256": "bb7be050fcaa8868e7816c84caec875da57050d65fe7eaf00f3d41473df25e3a",
+      "size": 4540
+    },
+    "vllm/v1/worker/gpu_input_batch.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/gpu_input_batch.py",
+      "sha256": "18cf455c9d0eea61cc581c7932f2e6cd09786914e82dd35eef1c1430da359a0f",
+      "size": 48714
+    },
+    "vllm/v1/worker/gpu_model_runner.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py",
+      "sha256": "87c29d08c0bbf66993d8b984811e7325e35e6436242a773feb55ec88f16b2c51",
+      "size": 340999
+    },
+    "vllm/v1/worker/gpu_ubatch_wrapper.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/gpu_ubatch_wrapper.py",
+      "sha256": "4233cfbe8c9884b042c4363890108f616483b694ebe9a6e69578dcf89c6dac5c",
+      "size": 17724
+    },
+    "vllm/v1/worker/gpu_worker.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/gpu_worker.py",
+      "sha256": "6994436e4547c0996ab555b3e814e8ccea26b650dfc1b378b97d640745309347",
+      "size": 65620
+    },
+    "vllm/v1/worker/kv_connector_model_runner_mixin.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/kv_connector_model_runner_mixin.py",
+      "sha256": "e1cc76d065a7e60aacddb190ae795a480b65cd02ba71a1fc699a02a85c1a3de2",
+      "size": 4468
+    },
+    "vllm/v1/worker/lora_model_runner_mixin.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/lora_model_runner_mixin.py",
+      "sha256": "fef6092a15d8d37f6fa22495e6106e2e5280180908d61ce43d9ff5bf4eef3f2f",
+      "size": 11538
+    },
+    "vllm/v1/worker/mamba_utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/mamba_utils.py",
+      "sha256": "23fdaa4e8f63ee8f938eaa1a2b39f803cb04fa6ecd69789563254b1a0691413a",
+      "size": 69566
+    },
+    "vllm/v1/worker/mm_encoder_model_runner.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/mm_encoder_model_runner.py",
+      "sha256": "780c41be84ad022205c21c1decb6bb8d5afb03bc7be120c1f7df03b710acc3d7",
+      "size": 5631
+    },
+    "vllm/v1/worker/startup_plan.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/startup_plan.py",
+      "sha256": "84bcbb4f7a9fd7c8d10c9c895aadd9673d44c767b9132368d11eb5e017afe86b",
+      "size": 7332
+    },
+    "vllm/v1/worker/ubatch_utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/ubatch_utils.py",
+      "sha256": "b34dce551b5195c414e6a3a997c75961cc7a17f24c7c980487fe3d3e2ba7a798",
+      "size": 12917
+    },
+    "vllm/v1/worker/ubatching.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/ubatching.py",
+      "sha256": "40391241c564feb5f16c77898ae6ae152ed6e71a4682e2a406387785d8de02d7",
+      "size": 8394
+    },
+    "vllm/v1/worker/utils.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/utils.py",
+      "sha256": "0ca3ec6bf4d20076145b7fe64e564962adebedc8f75a856b517ba0b2f2d77acf",
+      "size": 31607
+    },
+    "vllm/v1/worker/worker_base.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py",
+      "sha256": "4a1a5266b912fe97991d8dc89d92b923990da9f6cb4b817d00d52e9c0d26dd7c",
+      "size": 14284
+    },
+    "vllm/v1/worker/workspace.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/workspace.py",
+      "sha256": "d21c08167d1d0d1c0cddaa80453a53a0b4dec5d81b5a537c94a21324344976b3",
+      "size": 11181
+    },
+    "vllm/v1/worker/xpu_model_runner.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/xpu_model_runner.py",
+      "sha256": "07fa0390d28f2b8c3c3c0019eb9c3b126e2397aea268ba47c889f06b423deb23",
+      "size": 2166
+    },
+    "vllm/v1/worker/xpu_worker.py": {
+      "source": "/vllm-workspace/vllm/vllm/v1/worker/xpu_worker.py",
+      "sha256": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3",
+      "size": 10645
+    },
+    "vllm_ascend/attention/attention_v1.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/attention/attention_v1.py",
+      "sha256": "aa1b18fec2a29b37a6c87e3905581ec58e8211fac042d4c5e96e51f8eb78f696",
+      "size": 79606
+    },
+    "vllm_ascend/compilation/__init__.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm_ascend/compilation/acl_graph.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py",
+      "sha256": "1e211ba7cafc30960d026235f86d1572cb244055b0f438d50381d504659874e8",
+      "size": 18814
+    },
+    "vllm_ascend/compilation/breakable_aclgraph.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/breakable_aclgraph.py",
+      "sha256": "98300feade9457b67cfb5a3300ce07aab56d1086b4d1d7bd4c3998e96dd6c5f0",
+      "size": 3114
+    },
+    "vllm_ascend/compilation/compiler_interface.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/compiler_interface.py",
+      "sha256": "45f25b7f711a5c69e67646ae3323dd4bef3e5e9414a87b32cf9a61653ff750d6",
+      "size": 16615
+    },
+    "vllm_ascend/compilation/graph_fusion_pass_manager.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/graph_fusion_pass_manager.py",
+      "sha256": "38e1a649abefd3bc8f81713faa14256589f9651dc6572552efe6f68863f3268b",
+      "size": 3204
+    },
+    "vllm_ascend/compilation/updatable_graph.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/updatable_graph.py",
+      "sha256": "d41d912ce8f4183228fdc182dbdb6a504f07642fddb8872c657e7f4429ac0729",
+      "size": 7183
+    },
+    "vllm_ascend/ops/gdn.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn.py",
+      "sha256": "e9ed210b4ca4431ee40916f06f0272e5e781eb04b61b084bacea216799fbca98",
+      "size": 33354
+    },
+    "vllm_ascend/ops/gdn_attn_builder.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py",
+      "sha256": "66c1475836292660b6502cfcfc08f8a0dcd3e25f4941dcec11d6db0baa96987a",
+      "size": 45243
+    },
+    "vllm_ascend/patch/worker/patch_bind_kv_cache.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_bind_kv_cache.py",
+      "sha256": "3076e899374cb26848f1360eaa2584161c9c97a2e6bcbeb91ac833c889046974",
+      "size": 3534
+    },
+    "vllm_ascend/patch/worker/patch_cudagraph.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_cudagraph.py",
+      "sha256": "c8140662d0411f5c9b292420efe8a3d072b6d0c20c6a5c6500a170d9eb097ad7",
+      "size": 1257
+    },
+    "vllm_ascend/patch/worker/patch_deepseek_v2.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_deepseek_v2.py",
+      "sha256": "eff4dc9ab181b5f3cdbe34e2df71334522093362dba30834f51b8db81b540b9c",
+      "size": 16336
+    },
+    "vllm_ascend/patch/worker/patch_distributed.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_distributed.py",
+      "sha256": "7ea4353f2dd0fa7cd222e47617b03074b678225dd6d7595a0c3e3d85e3c38943",
+      "size": 9213
+    },
+    "vllm_ascend/patch/worker/patch_eagle3_init.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_eagle3_init.py",
+      "sha256": "10910a2689ecf0ccb7ffe8f2cc51a3c43fb83a2a2a304f2d78e10b5cf3bd6a0b",
+      "size": 5137
+    },
+    "vllm_ascend/patch/worker/patch_eagle3_pp_aux.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_eagle3_pp_aux.py",
+      "sha256": "4b2784430c4fc2b25ba3c761f9a3bb0ea0e2e2621b23071284c0e87609542009",
+      "size": 9534
+    },
+    "vllm_ascend/patch/worker/patch_fused_moe.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_fused_moe.py",
+      "sha256": "dcbab5dddcade80a1fad3e6f1b5bb1fb3fe8a39a7528399ea5df23fdc36be7e6",
+      "size": 883
+    },
+    "vllm_ascend/patch/worker/patch_idex_310.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_idex_310.py",
+      "sha256": "acb50ca711fc17a591020d4c70debcc5506ee962d6c8926dfcce46c6aa4b8aa5",
+      "size": 2855
+    },
+    "vllm_ascend/patch/worker/patch_kimi_k25.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_kimi_k25.py",
+      "sha256": "afd0cc302700ab41a869ef97764f82898d7caa91235062a691b6feca27909873",
+      "size": 3536
+    },
+    "vllm_ascend/patch/worker/patch_kv_cache_dtype.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_kv_cache_dtype.py",
+      "sha256": "a76ec7cb8d52e914b8f2531d0e12b399875ac755afe4c29aa32651d7ba3da7cb",
+      "size": 7186
+    },
+    "vllm_ascend/patch/worker/patch_mamba_utils.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_mamba_utils.py",
+      "sha256": "a54ad360d5e377e19b50e6bf8bd467fca4ea6e8b330f5f88b1ae99c963b29ec6",
+      "size": 21873
+    },
+    "vllm_ascend/patch/worker/patch_minimax_m2.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_minimax_m2.py",
+      "sha256": "143509dcc2383dea7db8aa3235eaf1fff9158e369ab398f58841fb50528fef14",
+      "size": 1871
+    },
+    "vllm_ascend/patch/worker/patch_qwen3_5.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py",
+      "sha256": "a9a71634ed138f590fbc3ad0de277a5f56a06451522fd091b2657d6daf6084b0",
+      "size": 9763
+    },
+    "vllm_ascend/patch/worker/patch_qwen3_dflash.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_dflash.py",
+      "sha256": "d1f87f4444fc0596e3484d7dc08c7a4ba0583cc31dce5c5601eaf654822f1076",
+      "size": 2811
+    },
+    "vllm_ascend/patch/worker/patch_qwen3vl.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3vl.py",
+      "sha256": "428cb83b7d9d2277323ced374460f64490c576f4b674153f6cd0964984933ad0",
+      "size": 3905
+    },
+    "vllm_ascend/patch/worker/patch_rejection_sampler.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_rejection_sampler.py",
+      "sha256": "f037f710e0b7f80e73b94d9b93ce87aacddf58af2b3e6f5df53426717d95e7a3",
+      "size": 450
+    },
+    "vllm_ascend/patch/worker/patch_routed_experts_capture.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_routed_experts_capture.py",
+      "sha256": "4358e31c9945c1f3a5ad6a0123c40b244424f8a1b2ce54e747638af3b3e1484c",
+      "size": 8969
+    },
+    "vllm_ascend/patch/worker/patch_step3p5.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_step3p5.py",
+      "sha256": "7510880d2da851ea2f79380f1b9e9c913748c53e081af94c35b8b82a24e47c31",
+      "size": 16456
+    },
+    "vllm_ascend/patch/worker/patch_triton.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_triton.py",
+      "sha256": "cabb0e067bf5d430182f6e1257e382af0bf1d7fd9434176dd70edb5df4b00fba",
+      "size": 12444
+    },
+    "vllm_ascend/platform.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/platform.py",
+      "sha256": "04a9c5bc978c29e7e4b9ca3ac5e944aef72b64eac9be78d60de5f837b420d1f3",
+      "size": 89179
+    },
+    "vllm_ascend/worker/__init__.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "vllm_ascend/worker/block_table.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/block_table.py",
+      "sha256": "bf6b7dd1185cdfe7e08a16fd8256c96aec0219bd24fa1591367206565d2465c3",
+      "size": 26108
+    },
+    "vllm_ascend/worker/dcp_utils.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/dcp_utils.py",
+      "sha256": "8042ce92ae54461ad7a174f3ef04e35bec0a0738a742c1850fc54116c834c415",
+      "size": 29473
+    },
+    "vllm_ascend/worker/device_metadata.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/device_metadata.py",
+      "sha256": "efe13f0e801b70d7fba7498ac44062a8eccfd78e5b6303cf658d33dd22217580",
+      "size": 11293
+    },
+    "vllm_ascend/worker/encoder_acl_graph.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/encoder_acl_graph.py",
+      "sha256": "210478ac1b8780d56b829b413770b99f0783ca7d2653f57dfead723b7067d8fd",
+      "size": 16379
+    },
+    "vllm_ascend/worker/kvpp_cache.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/kvpp_cache.py",
+      "sha256": "6b5f5950a9a9f68aa870ce05cabb318581259691e7257bf329b483dd48544538",
+      "size": 2445
+    },
+    "vllm_ascend/worker/model_runner_v1.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py",
+      "sha256": "beb7d491e7faf11ba222593e75e5986edde5389f93f7ef89a4018bfda213d237",
+      "size": 326871
+    },
+    "vllm_ascend/worker/npu_input_batch.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/npu_input_batch.py",
+      "sha256": "091187802ece762ecd8a18b1b269dab254f48bf7decc926933cb496ffaf1b870",
+      "size": 11605
+    },
+    "vllm_ascend/worker/utils.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/utils.py",
+      "sha256": "c1909a0f266728bcd977d48c015f03f840699248f73d6559174cf56c310c2724",
+      "size": 11362
+    },
+    "vllm_ascend/worker/worker.py": {
+      "source": "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py",
+      "sha256": "a4c408fb2827b59d5ecc90d6668ba6c9e83c898edeb23fd6548b088179c154e6",
+      "size": 64716
+    }
+  },
+  "archive_sha256": "e869a2b8da80c103f1e431a014df3c2aa7a858ef87b6de3e8cf55a0e6438f57a"
+}

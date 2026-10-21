@@ -1,0 +1,657 @@
+INFO 10-21 13:47:53 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-21 13:47:53 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-21 13:47:53 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-21 13:47:53 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-21 13:47:53 [__init__.py:52] Available plugins for group vllm.platform_plugins:
+INFO 10-21 13:47:53 [__init__.py:54] - ascend -> vllm_ascend:register
+INFO 10-21 13:47:53 [__init__.py:57] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-21 13:47:53 [__init__.py:272] Platform plugin ascend is activated
+INFO 10-21 13:47:53 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+INFO 10-21 13:47:53 [platform.py:75] Breakable CUDAGraph on Ascend is opt-in; using VLLM_USE_BREAKABLE_CUDAGRAPH=0.
+WARNING 10-21 13:48:04 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+WARNING 10-21 13:48:05 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+2026-10-21 13:48:06,621 - 1086806 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+INFO 10-21 13:48:06 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-21 13:48:06 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-21 13:48:06 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-21 13:48:06 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-21 13:48:06 [api_utils.py:286] non-default args: {'dtype': 'bfloat16', 'seed': 42, 'max_model_len': 2048, 'distributed_executor_backend': 'external_launcher', 'tensor_parallel_size': 2, 'eplb_config': EPLBConfig(window_size=1000, step_interval=3000, num_redundant_experts=0, log_balancedness=False, log_balancedness_interval=1, use_async=True, policy='default', communicator=None), 'enable_prefix_caching': False, 'gpu_memory_utilization': 0.6, 'max_num_batched_tokens': 2048, 'max_num_seqs': 256, 'disable_log_stats': True, 'limit_mm_per_prompt': {'image': 0, 'video': 0}, 'speculative_config': {'method': 'ngram', 'num_speculative_tokens': 3, 'prompt_lookup_min': 2, 'prompt_lookup_max': 4}, 'additional_config': {'ascend_compilation_config': {'enable_npugraph_ex': False}}, 'model': '/models/Qwen3.5-27B-original'}
+WARNING 10-21 13:48:06 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-21 13:48:06 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-21 13:48:06 [model.py:2030] Using max model len 2048
+WARNING 10-21 13:48:06 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+2026-10-21 13:48:07,576 - 1086805 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.30.0+empty: default 1
+INFO 10-21 13:48:07 [patch_indexer_kv_dtype.py:102] Patched AttentionConfig.indexer_kv_dtype to accept 'int8' (DeepSeek V4 Ascend indexer K cache dtype).
+INFO 10-21 13:48:07 [patch_kv_cache_dtype.py:117] Patched CacheConfig.cache_dtype to accept 'int8' and 'mxfp8' (Ascend KV cache dtypes).
+INFO 10-21 13:48:07 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-21 13:48:07 [__init__.py:112] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-21 13:48:07 [api_utils.py:286] non-default args: {'dtype': 'bfloat16', 'seed': 42, 'max_model_len': 2048, 'distributed_executor_backend': 'external_launcher', 'tensor_parallel_size': 2, 'eplb_config': EPLBConfig(window_size=1000, step_interval=3000, num_redundant_experts=0, log_balancedness=False, log_balancedness_interval=1, use_async=True, policy='default', communicator=None), 'enable_prefix_caching': False, 'gpu_memory_utilization': 0.6, 'max_num_batched_tokens': 2048, 'max_num_seqs': 256, 'disable_log_stats': True, 'limit_mm_per_prompt': {'image': 0, 'video': 0}, 'speculative_config': {'method': 'ngram', 'num_speculative_tokens': 3, 'prompt_lookup_min': 2, 'prompt_lookup_max': 4}, 'additional_config': {'ascend_compilation_config': {'enable_npugraph_ex': False}}, 'model': '/models/Qwen3.5-27B-original'}
+WARNING 10-21 13:48:07 [arg_utils.py:1812] The global random seed is set to 42. Since VLLM_ENABLE_V1_MULTIPROCESSING is set to False, this may affect the random state of the Python process that launched vLLM.
+INFO 10-21 13:48:07 [model.py:692] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-21 13:48:07 [model.py:2030] Using max model len 2048
+WARNING 10-21 13:48:07 [model.py:994] Model does not support mm_device_do_normalize, forcing mm_device_do_normalize = False.
+INFO 10-21 13:48:08 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-21 13:48:08 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-21 13:48:08 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-21 13:48:08 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-21 13:48:08 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-21 13:48:08 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-21 13:48:08 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-21 13:48:08 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-21 13:48:08 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-21 13:48:08 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-21 13:48:08 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-21 13:48:08 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-21 13:48:08 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-21 13:48:08 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-21 13:48:08 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-21 13:48:08 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+INFO 10-21 13:48:09 [registry.py:146] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+INFO 10-21 13:48:09 [model.py:900] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+INFO 10-21 13:48:09 [parallel.py:883] Using external launcher for distributed inference.
+INFO 10-21 13:48:09 [parallel.py:964] Disabling V1 multiprocessing for external launcher.
+INFO 10-21 13:48:09 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=2048.
+WARNING 10-21 13:48:09 [vllm.py:1457] Async scheduling not supported with ngram-based speculative decoding and will be disabled.
+INFO 10-21 13:48:09 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-21 13:48:09 [vllm.py:2135] max_num_scheduled_tokens is set to 2048 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate the additional draft token slots, or decrease num_speculative_tokens.
+INFO 10-21 13:48:09 [utils.py:209] No ModelSlim quantization signature detected from model files for "/models/Qwen3.5-27B-original". To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-21 13:48:09 [platform.py:748] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-21 13:48:09 [platform.py:962] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-21 13:48:09 [ascend_config.py:324] Dynamic EPLB is False
+INFO 10-21 13:48:09 [ascend_config.py:325] The number of redundant experts is 0
+INFO 10-21 13:48:09 [ascend_config.py:760] FlashComm1 is disabled. Using flashinfer_all2allv as the all2all backend.
+INFO 10-21 13:48:09 [platform.py:1547] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-21 13:48:09 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+INFO 10-21 13:48:17 [core.py:123] Initializing a V1 LLM engine (v0.30.0) with config: model='/models/Qwen3.5-27B-original', speculative_config=SpeculativeConfig(method='ngram', model=None, num_spec_tokens=3), tokenizer='/models/Qwen3.5-27B-original', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=2048, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=42, served_model_name=/models/Qwen3.5-27B-original, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::qwen4_exp_ple_short_conv', 'vllm::qwen4_exp_qsa_with_output', 'vllm::linear_attention', 'vllm::qwen_gdn_attention_core', 'vllm::qwen_gdn_attention_core_fused_norm_packed', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update', 'vllm::mla_forward', 'vllm::dsa_forward'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+INFO 10-21 13:48:18 [core.py:123] Initializing a V1 LLM engine (v0.30.0) with config: model='/models/Qwen3.5-27B-original', speculative_config=SpeculativeConfig(method='ngram', model=None, num_spec_tokens=3), tokenizer='/models/Qwen3.5-27B-original', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=2048, download_dir=None, load_format=auto, tensor_parallel_size=2, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=42, served_model_name=/models/Qwen3.5-27B-original, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::qwen4_exp_ple_short_conv', 'vllm::qwen4_exp_qsa_with_output', 'vllm::linear_attention', 'vllm::qwen_gdn_attention_core', 'vllm::qwen_gdn_attention_core_fused_norm_packed', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update', 'vllm::mla_forward', 'vllm::dsa_forward'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+WARNING 10-21 13:48:19 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+WARNING 10-21 13:48:20 [patch_triton.py:345] NPU Triton causal_conv1d_update is unavailable (cannot import name 'causal_conv1d_update_npu' from 'vllm_ascend.ops.triton.mamba.causal_conv1d' (/vllm-workspace/vllm-ascend/vllm_ascend/ops/triton/mamba/causal_conv1d.py)); falling back to the PyTorch implementation, which syncs per request and therefore stalls ACL graph capture at decode-FULL.
+INFO 10-21 13:48:21 [parallel_state.py:1827] world_size=2 rank=1 local_rank=1 distributed_init_method=env:// backend=hccl
+INFO 10-21 13:48:22 [parallel_state.py:1827] world_size=2 rank=0 local_rank=0 distributed_init_method=env:// backend=hccl
+[Gloo] Rank [Gloo] Rank 01 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+INFO 10-21 13:48:28 [parallel_state.py:2267] rank 0 in world size 2 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank N/A, EPLB rank N/A
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 11 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 11
+
+WARNING 10-21 13:48:28 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-21 13:48:28 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+[rank0]:[W1021 13:48:28.628940624 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+INFO 10-21 13:48:28 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-21 13:48:28 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+WARNING 10-21 13:48:28 [utils.py:1270] The max_cudagraph_capture_size (512) is smaller than the potential max tokens required for decode (1024). This may lead to suboptimal performance. Consider adjusting max_cudagraph_capture_size or scheduler_config (max_num_batched_tokens or max_num_seqs) to ensure max_cudagraph_capture_size can accommodate the decode workload. For more details, see the issue #8240(https://github.com/vllm-project/vllm-ascend/issues/8240).
+WARNING 10-21 13:48:28 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+WARNING 10-21 13:48:28 [__init__.py:205] min_p and logit_bias parameters won't work with speculative decoding.
+INFO 10-21 13:48:28 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-21 13:48:28 [model_runner_v1.py:4497] Starting to load model /models/Qwen3.5-27B-original...
+INFO 10-21 13:48:29 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-21 13:48:29 [interface.py:414] Using default backend AttentionBackendEnum.TORCH_SDPA for vit attention
+INFO 10-21 13:48:29 [mm_encoder_attention.py:372] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+INFO 10-21 13:48:29 [qwen_gdn_linear_attn.py:176] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO 10-21 13:48:29 [qwen_gdn_linear_attn.py:528] GDN decode kernel: cuda
+INFO 10-21 13:48:29 [compilation.py:1114] Using OOT custom backend for compilation.
+INFO 10-21 13:48:29 [platform.py:1570] FA3 will not be enabled when rl_config.enable_training_consistency is false. Note that Ascend NPU will use its registered plugin backend instead.
+INFO 10-21 13:48:30 [compilation.py:1114] Using OOT custom backend for compilation.
+INFO 10-21 13:48:30 [weight_utils.py:895] Filesystem type for checkpoints: XFS. Checkpoint size: 51.75 GiB. Available RAM: 1966.08 GiB.
+INFO 10-21 13:48:30 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (XFS) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:03,  3.33it/s]
+Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.66it/s]
+Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.44it/s]
+Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.41it/s]
+Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.37it/s]
+Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.33it/s]
+Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:03,  1.33it/s]
+Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.45it/s]
+Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.52it/s]
+INFO 10-21 13:48:37 [model_runner_v1.py:4522] Loading drafter model...
+Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:07<00:00,  1.23it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.36it/s]
+Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.40it/s]
+
+INFO 10-21 13:48:38 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-21 13:48:38 [model_runner_v1.py:4671] Model runner load_model total time: 9.63 seconds
+INFO 10-21 13:48:38 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-21 13:48:38 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-21 13:48:38 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+INFO 10-21 13:48:38 [default_loader.py:430] Loading weights took 7.89 seconds
+INFO 10-21 13:48:38 [model_runner_v1.py:4522] Loading drafter model...
+INFO 10-21 13:48:39 [model_runner_v1.py:4584] Loading model weights took 25.1767 GB
+INFO 10-21 13:48:39 [model_runner_v1.py:4671] Model runner load_model total time: 11.01 seconds
+INFO 10-21 13:48:39 [interface.py:635] Setting kv cache block size to 128 for CUSTOM backend.
+INFO 10-21 13:48:39 [interface.py:933] Setting attention block size to 896 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-21 13:48:39 [interface.py:957] Padding mamba page size by 12.28% to ensure that mamba page size and attention page size are exactly equal.
+INFO 10-21 13:48:39 [utils.py:320] Using LBNHC KV cache layout.
+INFO 10-21 13:48:56 [compiler_interface.py:254] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': False, 'enable_static_kernel': False, 'enable_super_kernel': False}
+INFO 10-21 13:48:59 [compiler_interface.py:254] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': False, 'enable_static_kernel': False, 'enable_super_kernel': False}
+INFO 10-21 13:48:59 [backends.py:1094] Using cache directory: /root/.cache/vllm/torch_compile_cache/efbe1599aa/rank_0_0/backbone for vLLM's torch.compile
+INFO 10-21 13:48:59 [backends.py:1155] Dynamo bytecode transform time: 18.61 s
+INFO 10-21 13:49:42 [backends.py:393] Compiling a graph for compile range (1, 2048) takes 36.92 s
+INFO 10-21 13:49:48 [decorators.py:719] saved AOT compiled function to /root/.cache/vllm/torch_compile_cache/torch_aot_compile/5c8bb3cdb69e1880260155a8e218f9fc1e4824a5892e5deba990a4f2dd3f694d/rank_0_0/model
+INFO 10-21 13:49:48 [monitor.py:53] torch.compile took 68.24 s in total
+INFO 10-21 13:49:53 [monitor.py:81] Initial profiling/warmup run took 4.30 s
+INFO 10-21 13:49:55 [worker.py:661] Available KV cache memory: 10.65 GiB
+INFO 10-21 13:49:55 [kv_cache_utils.py:2395] NPU KV cache size: 53,111 tokens, Maximum concurrency for 2,048 tokens per request: 25.93x
+INFO 10-21 13:49:55 [kernel_warmup.py:44] Starting Triton kernel warmup.
+INFO 10-21 13:49:55 [kernel_warmup.py:44] Starting Triton kernel warmup.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] rejection_sampler Triton warmup complete in 77.192s.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] penalties Triton warmup complete in 0.052s.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] rms Triton warmup complete in 0.000s.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] indexer Triton warmup complete in 0.000s.
+INFO 10-21 13:51:12 [kernel_warmup.py:53] Triton kernel warmup finished in 77.246s.
+INFO 10-21 13:51:12 [gpu_model_runner.py:6883] Rank 0: Torch profiler disabled for CUDA graph capture
+INFO 10-21 13:51:12 [kernel_warmup.py:36] rejection_sampler Triton warmup complete in 77.314s.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] penalties Triton warmup complete in 0.043s.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] rms Triton warmup complete in 0.000s.
+INFO 10-21 13:51:12 [kernel_warmup.py:36] indexer Triton warmup complete in 0.000s.
+INFO 10-21 13:51:12 [kernel_warmup.py:53] Triton kernel warmup finished in 77.359s.
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/49 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/49 [00:00<00:38,  1.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/49 [00:01<00:33,  1.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/49 [00:02<00:30,  1.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/49 [00:02<00:29,  1.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|█         | 5/49 [00:03<00:28,  1.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/49 [00:03<00:27,  1.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▍        | 7/49 [00:04<00:26,  1.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▋        | 8/49 [00:05<00:26,  1.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/49 [00:05<00:25,  1.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|██        | 10/49 [00:06<00:25,  1.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/49 [00:07<00:24,  1.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▍       | 12/49 [00:07<00:24,  1.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 13/49 [00:08<00:24,  1.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 14/49 [00:09<00:23,  1.49it/s]2026-10-21 13:51:23,263 - ERROR - NPUGraph: ERROR — capture failed: RuntimeError: LaunchWaitTask:../torch_npu/csrc/core/npu/interface/AsyncTaskQueueInterface.cpp:269 NPU function error: aclrtStreamWaitEvent(npuStream, eventParam_.event), error code is 207005
+[ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed
+[Error]: Failed to apply for memory.
+        Check the remaining storage space in the hardware environment.
+[PID: 1086806] 2026-10-21-13:51:23.257.690 Resource_Error(EE1023): Alloc Stream resource failed. Reason: Too many streams are created.
+        Solution: For details about the troubleshooting method, search for the keyword "EE1023" on https://www.hiascend.com/document/.
+TraceBack (most recent call last):
+        New capture stream failed, stream_id=6, event_id=[-1->5856].[FUNC:GetCaptureStream][FILE:capture_model_utils.cc][LINE:150]
+        Create capture stream failed, stream_id=6, event_id=-1, error=117571619.[FUNC:CaptureEventWait][FILE:api_impl_capture_event.cc][LINE:77]
+        Capture wait event failed.[FUNC:StreamWaitEvent][FILE:api_impl.cc][LINE:1576]
+        rtStreamWaitEvent execution failed, reason=driver error:resource alloc fail[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+, graph_id=281467931499056, stream=<torch_npu.npu.Stream device=npu:1 npu_stream=0xaaab1f4e0228>, pool=((0, 1),), device=1
+2026-10-21 13:51:23,263 - WARNING - NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+2026-10-21 13:51:23,273 - ERROR - NPUGraph: ERROR — capture failed: RuntimeError: LaunchWaitTask:../torch_npu/csrc/core/npu/interface/AsyncTaskQueueInterface.cpp:269 NPU function error: aclrtStreamWaitEvent(npuStream, eventParam_.event), error code is 207005
+[ERROR] 2026-10-21-13:51:23 (PID:1086805, Device:0, RankID:0) ERR00100 PTA call acl api failed
+[Error]: Failed to apply for memory.
+        Check the remaining storage space in the hardware environment.
+[PID: 1086805] 2026-10-21-13:51:23.268.596 Resource_Error(EE1023): Alloc Stream resource failed. Reason: Too many streams are created.
+        Solution: For details about the troubleshooting method, search for the keyword "EE1023" on https://www.hiascend.com/document/.
+TraceBack (most recent call last):
+        New capture stream failed, stream_id=6, event_id=[-1->5856].[FUNC:GetCaptureStream][FILE:capture_model_utils.cc][LINE:150]
+        Create capture stream failed, stream_id=6, event_id=-1, error=117571619.[FUNC:CaptureEventWait][FILE:api_impl_capture_event.cc][LINE:77]
+        Capture wait event failed.[FUNC:StreamWaitEvent][FILE:api_impl.cc][LINE:1576]
+        rtStreamWaitEvent execution failed, reason=driver error:resource alloc fail[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+, graph_id=281467669613840, stream=<torch_npu.npu.Stream device=npu:0 npu_stream=0xaaab35e47eb8>, pool=((0, 1),), device=0
+2026-10-21 13:51:23,274 - WARNING - NPUGRAPH DFX common causes: default stream, CPU ops, multi-device tensors, dynamic control flow on tensor values
+Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 14/49 [00:09<00:24,  1.41it/s]
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 214, in __call__
+[rank1]:     output = self.runnable(*args, **kwargs)
+[rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py", line 380, in __call__
+[rank1]:     return range_entry.runnable(*args)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+[rank1]:     return fn(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py", line 1148, in forward
+[rank1]:     return compiled_fn(full_args)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 357, in runtime_wrapper
+[rank1]:     all_outs = call_func_at_runtime_with_args(
+[rank1]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+[rank1]:     out = normalize_as_list(f(args))
+[rank1]:                             ^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 531, in wrapper
+[rank1]:     return compiled_fn(runtime_args)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 729, in inner_fn
+[rank1]:     outs = compiled_fn(args)
+[rank1]:            ^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 108, in g
+[rank1]:     return f(*args)
+[rank1]:            ^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py", line 936, in call_wrapped
+[rank1]:     return self._wrapped_call(self, *args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py", line 455, in __call__
+[rank1]:     raise e
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py", line 442, in __call__
+[rank1]:     return super(self.cls, obj).__call__(*args, **kwargs)  # type: ignore[misc]
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<eval_with_key>.570 from /usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py:1507 in wrapped", line 21, in forward
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 819, in __call__
+[rank1]:     return self._op(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/distributed/parallel_state.py", line 199, in all_reduce
+[rank1]:     return group._all_reduce_out_place(tensor)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/distributed/parallel_state.py", line 748, in _all_reduce_out_place
+[rank1]:     return self.device_communicator.all_reduce(input_)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/distributed/device_communicators/base_device_communicator.py", line 232, in all_reduce
+[rank1]:     dist.all_reduce(input_, group=self.device_group)
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 3007, in all_reduce
+[rank1]:     work = group.allreduce([tensor], opts)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: RuntimeError: LaunchWaitTask:../torch_npu/csrc/core/npu/interface/AsyncTaskQueueInterface.cpp:269 NPU function error: aclrtStreamWaitEvent(npuStream, eventParam_.event), error code is 207005
+[rank1]: [ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed
+[rank1]: [Error]: Failed to apply for memory.
+[rank1]:         Check the remaining storage space in the hardware environment.
+[rank1]: [PID: 1086806] 2026-10-21-13:51:23.257.690 Resource_Error(EE1023): Alloc Stream resource failed. Reason: Too many streams are created.
+[rank1]:         Solution: For details about the troubleshooting method, search for the keyword "EE1023" on https://www.hiascend.com/document/.
+[rank1]: TraceBack (most recent call last):
+[rank1]:         New capture stream failed, stream_id=6, event_id=[-1->5856].[FUNC:GetCaptureStream][FILE:capture_model_utils.cc][LINE:150]
+[rank1]:         Create capture stream failed, stream_id=6, event_id=-1, error=117571619.[FUNC:CaptureEventWait][FILE:api_impl_capture_event.cc][LINE:77]
+[rank1]:         Capture wait event failed.[FUNC:StreamWaitEvent][FILE:api_impl.cc][LINE:1576]
+[rank1]:         rtStreamWaitEvent execution failed, reason=driver error:resource alloc fail[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+
+
+[rank1]: During handling of the above exception, another exception occurred:
+
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6716, in _replace_gpu_model_runner_function_wrapper
+[rank1]:     yield
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6570, in capture_model
+[rank1]:     cuda_graph_size = GPUModelRunner.capture_model(self)
+[rank1]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6896, in capture_model
+[rank1]:     self._capture_cudagraphs(
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 7027, in _capture_cudagraphs
+[rank1]:     self._warmup_and_capture(
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6972, in _warmup_and_capture
+[rank1]:     self._dummy_run(
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 4378, in _dummy_run
+[rank1]:     outputs = self._model_forward(
+[rank1]:               ^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3352, in _model_forward
+[rank1]:     hidden_states = run_model()
+[rank1]:                     ^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 169, in __call__
+[rank1]:     return self.runnable(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591, in forward
+[rank1]:     hidden_states = self.language_model.model(
+[rank1]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 522, in __call__
+[rank1]:     return self.aot_compiled_fn(self, *args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 124, in __call__
+[rank1]:     return self.fn(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 688, in forward
+[rank1]:     def forward(
+[rank1]:   File "/vllm-workspace/vllm/vllm/compilation/caching.py", line 225, in __call__
+[rank1]:     return self.optimized_call(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "<string>", line 1004, in execution_fn
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 211, in __call__
+[rank1]:     with torch.npu.graph(aclgraph, pool=self.graph_pool):
+[rank1]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/graphs.py", line 890, in __exit__
+[rank1]:     self.npu_graph.capture_end()
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/updatable_graph.py", line 94, in capture_end
+[rank1]:     super().capture_end()
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/graphs.py", line 636, in capture_end
+[rank1]:     super().capture_end()
+[rank1]: RuntimeError: capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903
+[rank1]: [ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.
+[rank1]: EE9999: Inner Error!
+[rank1]: EE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+[rank1]: TraceBack (most recent call last):
+
+
+[rank1]: During handling of the above exception, another exception occurred:
+
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6675, in _torch_cuda_wrapper
+[rank1]:     yield
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6569, in capture_model
+[rank1]:     with _torch_cuda_wrapper(), _replace_gpu_model_runner_function_wrapper(parent_module_name):
+[rank1]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 158, in __exit__
+[rank1]:     self.gen.throw(value)
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6718, in _replace_gpu_model_runner_function_wrapper
+[rank1]:     raise RuntimeError(f"NPUModelRunner failed, error is {e}")
+[rank1]: RuntimeError: NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903
+[rank1]: [ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.
+[rank1]: EE9999: Inner Error!
+[rank1]: EE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+[rank1]: TraceBack (most recent call last):
+
+
+[rank1]: During handling of the above exception, another exception occurred:
+
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py", line 278, in <module>
+[rank1]:     main()
+[rank1]:   File "/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py", line 243, in main
+[rank1]:     llm = LLM(**options)
+[rank1]:           ^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/entrypoints/llm.py", line 343, in __init__
+[rank1]:     self.llm_engine = LLMEngine.from_engine_args(
+[rank1]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py", line 184, in from_engine_args
+[rank1]:     return cls(
+[rank1]:            ^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py", line 109, in __init__
+[rank1]:     self.engine_core = EngineCoreClient.make_client(
+[rank1]:                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 129, in make_client
+[rank1]:     return InprocClient(vllm_config, executor_class, log_stats)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 354, in __init__
+[rank1]:     self.engine_core = EngineCore(
+[rank1]:                        ^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_profiling_chunk.py", line 198, in _patched_engine_core_init
+[rank1]:     original_init(self, *args, **kwargs)
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 145, in __init__
+[rank1]:     kv_cache_config = self._initialize_kv_caches(vllm_config)
+[rank1]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 356, in _initialize_kv_caches
+[rank1]:     self.model_executor.compile_or_warm_up_model()
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 126, in compile_or_warm_up_model
+[rank1]:     compilation_times: list[CompilationTimes] = self.collective_rpc(
+[rank1]:                                                 ^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 103, in collective_rpc
+[rank1]:     result = run_method(self.driver_worker, method, args, kwargs)
+[rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm/vllm/v1/serial_utils.py", line 510, in run_method
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 903, in compile_or_warm_up_model
+[rank1]:     npugraph_memory_bytes = self.model_runner.capture_model()
+[rank1]:                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6569, in capture_model
+[rank1]:     with _torch_cuda_wrapper(), _replace_gpu_model_runner_function_wrapper(parent_module_name):
+[rank1]:          ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 158, in __exit__
+[rank1]:     self.gen.throw(value)
+[rank1]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6685, in _torch_cuda_wrapper
+[rank1]:     raise RuntimeError(f"NPUModelRunner init failed, error is {e}")
+[rank1]: RuntimeError: NPUModelRunner init failed, error is NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903
+[rank1]: [ERROR] 2026-10-21-13:51:23 (PID:1086806, Device:1, RankID:1) ERR00100 PTA call acl api failed.
+[rank1]: EE9999: Inner Error!
+[rank1]: EE9999[PID: 1086806] 2026-10-21-13:51:23.264.927 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+[rank1]: TraceBack (most recent call last):
+
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 214, in __call__
+[rank0]:     output = self.runnable(*args, **kwargs)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py", line 380, in __call__
+[rank0]:     return range_entry.runnable(*args)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+[rank0]:     return fn(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py", line 1148, in forward
+[rank0]:     return compiled_fn(full_args)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 357, in runtime_wrapper
+[rank0]:     all_outs = call_func_at_runtime_with_args(
+[rank0]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+[rank0]:     out = normalize_as_list(f(args))
+[rank0]:                             ^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 531, in wrapper
+[rank0]:     return compiled_fn(runtime_args)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 729, in inner_fn
+[rank0]:     outs = compiled_fn(args)
+[rank0]:            ^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 108, in g
+[rank0]:     return f(*args)
+[rank0]:            ^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py", line 936, in call_wrapped
+[rank0]:     return self._wrapped_call(self, *args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py", line 455, in __call__
+[rank0]:     raise e
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/graph_module.py", line 442, in __call__
+[rank0]:     return super(self.cls, obj).__call__(*args, **kwargs)  # type: ignore[misc]
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<eval_with_key>.570 from /usr/local/python3.12.13/lib/python3.12/site-packages/torch/fx/experimental/proxy_tensor.py:1507 in wrapped", line 21, in forward
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 819, in __call__
+[rank0]:     return self._op(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/distributed/parallel_state.py", line 199, in all_reduce
+[rank0]:     return group._all_reduce_out_place(tensor)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/distributed/parallel_state.py", line 748, in _all_reduce_out_place
+[rank0]:     return self.device_communicator.all_reduce(input_)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/distributed/device_communicators/base_device_communicator.py", line 232, in all_reduce
+[rank0]:     dist.all_reduce(input_, group=self.device_group)
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 3007, in all_reduce
+[rank0]:     work = group.allreduce([tensor], opts)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: RuntimeError: LaunchWaitTask:../torch_npu/csrc/core/npu/interface/AsyncTaskQueueInterface.cpp:269 NPU function error: aclrtStreamWaitEvent(npuStream, eventParam_.event), error code is 207005
+[rank0]: [ERROR] 2026-10-21-13:51:23 (PID:1086805, Device:0, RankID:0) ERR00100 PTA call acl api failed
+[rank0]: [Error]: Failed to apply for memory.
+[rank0]:         Check the remaining storage space in the hardware environment.
+[rank0]: [PID: 1086805] 2026-10-21-13:51:23.268.596 Resource_Error(EE1023): Alloc Stream resource failed. Reason: Too many streams are created.
+[rank0]:         Solution: For details about the troubleshooting method, search for the keyword "EE1023" on https://www.hiascend.com/document/.
+[rank0]: TraceBack (most recent call last):
+[rank0]:         New capture stream failed, stream_id=6, event_id=[-1->5856].[FUNC:GetCaptureStream][FILE:capture_model_utils.cc][LINE:150]
+[rank0]:         Create capture stream failed, stream_id=6, event_id=-1, error=117571619.[FUNC:CaptureEventWait][FILE:api_impl_capture_event.cc][LINE:77]
+[rank0]:         Capture wait event failed.[FUNC:StreamWaitEvent][FILE:api_impl.cc][LINE:1576]
+[rank0]:         rtStreamWaitEvent execution failed, reason=driver error:resource alloc fail[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+
+
+[rank0]: During handling of the above exception, another exception occurred:
+
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6716, in _replace_gpu_model_runner_function_wrapper
+[rank0]:     yield
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6570, in capture_model
+[rank0]:     cuda_graph_size = GPUModelRunner.capture_model(self)
+[rank0]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6896, in capture_model
+[rank0]:     self._capture_cudagraphs(
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 7027, in _capture_cudagraphs
+[rank0]:     self._warmup_and_capture(
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6972, in _warmup_and_capture
+[rank0]:     self._dummy_run(
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 4378, in _dummy_run
+[rank0]:     outputs = self._model_forward(
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3352, in _model_forward
+[rank0]:     hidden_states = run_model()
+[rank0]:                     ^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 169, in __call__
+[rank0]:     return self.runnable(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 591, in forward
+[rank0]:     hidden_states = self.language_model.model(
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 522, in __call__
+[rank0]:     return self.aot_compiled_fn(self, *args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 124, in __call__
+[rank0]:     return self.fn(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 688, in forward
+[rank0]:     def forward(
+[rank0]:   File "/vllm-workspace/vllm/vllm/compilation/caching.py", line 225, in __call__
+[rank0]:     return self.optimized_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "<string>", line 1004, in execution_fn
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 211, in __call__
+[rank0]:     with torch.npu.graph(aclgraph, pool=self.graph_pool):
+[rank0]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/graphs.py", line 890, in __exit__
+[rank0]:     self.npu_graph.capture_end()
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/updatable_graph.py", line 94, in capture_end
+[rank0]:     super().capture_end()
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/graphs.py", line 636, in capture_end
+[rank0]:     super().capture_end()
+[rank0]: RuntimeError: capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903
+[rank0]: [ERROR] 2026-10-21-13:51:23 (PID:1086805, Device:0, RankID:0) ERR00100 PTA call acl api failed.
+[rank0]: EE9999: Inner Error!
+[rank0]: EE9999[PID: 1086805] 2026-10-21-13:51:23.275.432 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+[rank0]: TraceBack (most recent call last):
+
+
+[rank0]: During handling of the above exception, another exception occurred:
+
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6675, in _torch_cuda_wrapper
+[rank0]:     yield
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6569, in capture_model
+[rank0]:     with _torch_cuda_wrapper(), _replace_gpu_model_runner_function_wrapper(parent_module_name):
+[rank0]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 158, in __exit__
+[rank0]:     self.gen.throw(value)
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6718, in _replace_gpu_model_runner_function_wrapper
+[rank0]:     raise RuntimeError(f"NPUModelRunner failed, error is {e}")
+[rank0]: RuntimeError: NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903
+[rank0]: [ERROR] 2026-10-21-13:51:23 (PID:1086805, Device:0, RankID:0) ERR00100 PTA call acl api failed.
+[rank0]: EE9999: Inner Error!
+[rank0]: EE9999[PID: 1086805] 2026-10-21-13:51:23.275.432 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+[rank0]: TraceBack (most recent call last):
+
+
+[rank0]: During handling of the above exception, another exception occurred:
+
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py", line 278, in <module>
+[rank0]:     main()
+[rank0]:   File "/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py", line 243, in main
+[rank0]:     llm = LLM(**options)
+[rank0]:           ^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/entrypoints/llm.py", line 343, in __init__
+[rank0]:     self.llm_engine = LLMEngine.from_engine_args(
+[rank0]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py", line 184, in from_engine_args
+[rank0]:     return cls(
+[rank0]:            ^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py", line 109, in __init__
+[rank0]:     self.engine_core = EngineCoreClient.make_client(
+[rank0]:                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 129, in make_client
+[rank0]:     return InprocClient(vllm_config, executor_class, log_stats)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 354, in __init__
+[rank0]:     self.engine_core = EngineCore(
+[rank0]:                        ^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_profiling_chunk.py", line 198, in _patched_engine_core_init
+[rank0]:     original_init(self, *args, **kwargs)
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 145, in __init__
+[rank0]:     kv_cache_config = self._initialize_kv_caches(vllm_config)
+[rank0]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 356, in _initialize_kv_caches
+[rank0]:     self.model_executor.compile_or_warm_up_model()
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 126, in compile_or_warm_up_model
+[rank0]:     compilation_times: list[CompilationTimes] = self.collective_rpc(
+[rank0]:                                                 ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/executor/uniproc_executor.py", line 103, in collective_rpc
+[rank0]:     result = run_method(self.driver_worker, method, args, kwargs)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm/vllm/v1/serial_utils.py", line 510, in run_method
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 903, in compile_or_warm_up_model
+[rank0]:     npugraph_memory_bytes = self.model_runner.capture_model()
+[rank0]:                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6569, in capture_model
+[rank0]:     with _torch_cuda_wrapper(), _replace_gpu_model_runner_function_wrapper(parent_module_name):
+[rank0]:          ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 158, in __exit__
+[rank0]:     self.gen.throw(value)
+[rank0]:   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 6685, in _torch_cuda_wrapper
+[rank0]:     raise RuntimeError(f"NPUModelRunner init failed, error is {e}")
+[rank0]: RuntimeError: NPUModelRunner init failed, error is NPUModelRunner failed, error is capture_end:../torch_npu/csrc/core/npu/NPUGraph.cpp:240 NPU function error: c10_npu::acl::AclmdlRICaptureEnd(capture_stream_, &model_ri), error code is 507903
+[rank0]: [ERROR] 2026-10-21-13:51:23 (PID:1086805, Device:0, RankID:0) ERR00100 PTA call acl api failed.
+[rank0]: EE9999: Inner Error!
+[rank0]: EE9999[PID: 1086805] 2026-10-21-13:51:23.275.432 (EE9999):  rtStreamEndCapture execution failed, reason=an error has invalidated the stream capture sequence[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+[rank0]: TraceBack (most recent call last):
+
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+E1021 13:51:33.047000 1086789 site-packages/torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 0 (pid: 1086805) of binary: /usr/local/python3.12.13/bin/python3
+Traceback (most recent call last):
+  File "/usr/local/python3.12.13/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-10-21_13:51:33
+  host      : 16b0f9cecd11
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 1086806)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-10-21_13:51:33
+  host      : 16b0f9cecd11
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 1086805)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+[ERROR] 2026-10-21-13:51:33 (PID:1086789, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "torchrun",
+    "--nproc_per_node=2",
+    "--master_port=29931",
+    "/workspace/gdn-ready-runner-compat-v1/multi_graph_gdn_ready_runner_probe.py",
+    "--root",
+    "/workspace/gdn-ready-runner-compat-v1",
+    "--manifest",
+    "/workspace/gdn-ready-generation-v1/workload.json"
+  ],
+  "env": {
+    "ASCEND_RT_VISIBLE_DEVICES": "0,1",
+    "TASK_QUEUE_ENABLE": "0",
+    "HCCL_DETERMINISTIC": "true",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  }
+}
