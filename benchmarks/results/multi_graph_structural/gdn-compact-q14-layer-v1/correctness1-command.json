@@ -1,0 +1,22 @@
+[
+  "/usr/local/python3.12.13/bin/python",
+  "-m",
+  "torch.distributed.run",
+  "--nproc_per_node=2",
+  "--master_port=29741",
+  "/workspace/gdn-compact-q14-layer-v1/source/multi_graph_gdn_q14_layer_probe.py",
+  "--phase",
+  "correctness",
+  "--artifacts",
+  "/workspace/gdn-compact-q14-layer-v1/artifacts",
+  "--output",
+  "/workspace/gdn-compact-q14-layer-v1/correctness1.json",
+  "--manifest",
+  "/workspace/gdn-compact-q14-layer-v1/source/manifest.json",
+  "--new-extension",
+  "/workspace/gdn-compact-q14-v1/build-v2/gdn_q14.so",
+  "--old-extension",
+  "/workspace/multi-graph-results/q4-tile-build-v3-balanced/gdn_q4_tile_pipeline.so",
+  "--deferred-extension",
+  "/workspace/multi-graph-results/q4-log-deferred-build-v1/gdn_q4_log_deferred.so"
+]
