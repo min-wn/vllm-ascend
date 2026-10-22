@@ -1,5 +1,7 @@
 # Q1/Q4 共用 compact 状态的单层原型
 
+> 状态更新（2026-10-22）：当前compact Q1/Q4部署扩展已正式结束。本文是历史阶段记录，旧候选资格、runner接入及补救建议不再是待办；数值、性能和失败数据保持原样。当前边界见[最终收口结论](aclgraph_gdn_compact_closeout_zh.md)。
+
 本轮保留原 Q4 ready 基线、约 2.67% 离线真实生成循环收益，以及全部跨算法数值与任务质量失败记录。
 新原型只检查 Q1/Q4 是否能连续使用同一份 compact FP32 base/log，并判断其单层成本是否有竞争力。
 不接 runner、不排查 stream 故障、不做 dense/compact 双状态桥接，也不扩展 Q2/Q3。
